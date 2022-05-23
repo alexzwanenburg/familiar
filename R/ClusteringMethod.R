@@ -7,11 +7,15 @@ setClass("clusterMethod",
          slots=list("method" = "character",
                     "data_type" = "character",
                     "cluster_cut_method" = "character",
-                    "representation_method"="character"),
+                    "representation_method" = "character",
+                    "similarity_table" = "ANY",
+                    "object"="ANY"),
          prototype=list("method" = NA_character_,
                         "data_type" = NA_character_,
                         "cluster_cut_method" = "none",
-                        "representation_method"="none"))
+                        "representation_method"="none",
+                        "similarity_table" = NULL,
+                        "object"=NULL))
 
 setClass("clusterMethodHierarchical",
          contains="clusterMethod",
@@ -50,7 +54,26 @@ setClass("similarityTable",
                         "similarity_metric"=NA_character_,
                         "data_type"=NA_character_))
 
-#### Cluster object ------------------------------------------------------------
+setClass("noSimilarityTable",
+         slots=list("data"="ANY",
+                    "data_type"="character"),
+         prototype=list("data"=NULL,
+                        "data_type"=NA_character_))
+
+#### Clustering object ---------------------------------------------------------
+setClass("clusteringObject",
+         slots=list("representation_method"="character",
+                    "cluster_features"="character"),
+         prototype=list("representation_method"="none",
+                        "cluster_features"=NA_character_))
+
+setClass("singularClusteringObject",
+         slots=list("cluster_features"="character"),
+         prototype=list("cluster_features"=NA_character_))
+
+
+
+
 
 create_cluster_method_object <- function(cluster_method,
                                          data_type,
@@ -59,7 +82,6 @@ create_cluster_method_object <- function(cluster_method,
                                          cluster_similarity_threshold=NULL,
                                          cluster_similarity_metric=NULL,
                                          cluster_representation_method=NULL){
-  
   
   # Check that method is applicable.
   .check_parameter_value_is_valid(x=cluster_method,
@@ -274,124 +296,106 @@ setMethod("set_object_parameters", signature(object="clusterMethodDiana"),
           })
 
 
-
-#### get_distance_matrix (none, ANY) -------------------------------------------
-setMethod("get_distance_matrix", signature(object="clusterMethodNone", data="ANY"),
-          function(object, data, ...){
-            # Specific method for objects that indicate that no clustering
-            # should be performed..
-            return(NULL)
-          })
-
-
-
-#### get_distance_matrix (clusterMethod, NULL) ---------------------------------
-setMethod("get_distance_matrix", signature(object="clusterMethod", data="NULL"),
-          function(object, data, ...){
-            # Generic method to handle cases where the data are NULL, i.e. a
-            # similarity table could not be computed.
-            return(NULL)
-          })
-
-
-
-#### get_distance_matrix (clusterMethod, dataObject) ---------------------------
-setMethod("get_distance_matrix", signature(object="clusterMethod", data="dataObject"),
+#### set_similarity_table (none, dataObject) -----------------------------------
+setMethod("set_similarity_table", signature(object="clusterMethodNone", data="dataObject"),
           function(object,
                    data,
+                   feature_info_list,
+                   ...){
+            # Try to get similarity table
+            similarity_table <- .set_similarity_table(object=object,
+                                                      data=data,
+                                                      feature_info_list=feature_info_list,
+                                                      ...)
+            
+            # Set the similarity_table attribute.
+            object@similarity_table <- similarity_table
+            
+            return(object)
+          })
+
+
+
+#### set_similarity_table (clusterMethod, dataObject) -----------------------------------
+setMethod("set_similarity_table", signature(object="clusterMethod", data="dataObject"),
+          function(object,
+                   data,
+                   feature_info_list,
                    ...){
             
-            # Create similarity table first.
-            similarity_table <- do.call(get_similarity_table, args=c(list("object"=object,
-                                                                          "data"=data),
-                                                                     list(...)))
+            # Try to get similarity table
+            similarity_table <- .set_similarity_table(object=object,
+                                                      data=data,
+                                                      feature_info_list=feature_info_list,
+                                                      ...)
             
-            # Push to get_distance_matrix for similarity tables.
-            return(get_distance_matrix(object=object,
-                                       data=similarity_table,
-                                       ...))
-          })
-
-
-#### get_distance_matrix (clusterMethod, similarityTable) ----------------------
-setMethod("get_distance_matrix", signature(object="clusterMethod", data="similarityTable"),
-          function(object,
-                   data,
-                   ...){
-            # Converts a similarity table into a distance matrix.
-            # Suppress NOTES due to non-standard evaluation in data.table
-            value <- NULL
+            # If setting the similarity table does not work, we cannot create
+            # clusters. Switch to "none" method instead.
+            if(is.null(similarity_table)){
+              object <- create_cluster_method_object(cluster_method="none",
+                                                     data_type=object@data_type)
+              
+              return(set_similarity_table(object=object,
+                                          data=data,
+                                          feature_info_list=feature_info_list))
+            }
             
-            # Extract similarity table.
-            similarity_metric <- data@similarity_metric
+            # Set the similarity_table attribute.
+            object@similarity_table <- similarity_table
             
-            # Copy data from the similarity table.
-            lower_triangle <- data.table::copy(data@data)
-            
-            # Determine whether the similarity table is for features (columns)
-            # or samples (rows).
-            element_1 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_1", "sample_1")
-            element_2 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_2", "sample_2")
-            
-            # Find elements from the distance table.
-            elements <- union(lower_triangle[[element_1]],
-                              lower_triangle[[element_2]])
-            
-            # Convert similarity to distance.
-            lower_triangle[, "value":=similarity.to_distance(x=value,
-                                                             similarity_metric=similarity_metric)]
-            
-            # Add in other triangle of the table by switching around the columns.
-            upper_triangle <- data.table::copy(lower_triangle)
-            data.table::setnames(upper_triangle,
-                                 old=c(element_1, element_2),
-                                 new=c(element_2, element_1))
-            
-            # Create diagonals that always have distance 0.
-            diagonal_table <- data.table::data.table("element_1"=elements,
-                                                     "element_2"=elements,
-                                                     "value"=as.double(0))
-            
-            # Add names to the diagonal table.
-            data.table::setnames(diagonal_table,
-                                 old=c("element_1", "element_2"),
-                                 new=c(element_1, element_2))
-            
-            # Combine to single, long, table
-            distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
-            
-            # Create n x n table
-            distance_table  <- data.table::dcast(distance_table,
-                                                 stats::as.formula(paste(element_1, "~", element_2)),
-                                                 value.var="value")
-            
-            # Add rownames into the distance table -- I know. Blasphemy.
-            # Otherwise as.dist doesn't function.
-            rownames(distance_table) <- distance_table[[element_1]]
-            distance_table[, (element_1):=NULL]
-            
-            # Create dissimilarity matrix
-            distance_matrix <- stats::as.dist(distance_table)
-            
-            return(distance_matrix)
+            return(object)
           })
 
 
 
-#### get_similarity_table (none, ANY) ------------------------------------------
-setMethod("get_similarity_table", signature(object="clusterMethodNone", data="ANY"),
+#### .set_similarity_table (none, dataObject) -----------------------------------
+setMethod(".set_similarity_table", signature(object="clusterMethodNone", data="dataObject"),
           function(object,
                    data,
+                   feature_info_list,
                    ...){
             # Specific method for objects that indicate that no clustering
             # should be performed.
-            return(NULL)
+            
+            # Check that the data are not empty.
+            if(is_empty(data)) return(NULL)
+            
+            # Get feature columns.
+            feature_columns <- get_feature_columns(data)
+            
+            # Sanity check.
+            if(!(setequal(feature_columns, get_available_features(feature_info_list=feature_info_list)))){
+              ..error_reached_unreachable_code(paste0(".set_similarity_table,clusterMethodNone,dataObject:",
+                                                      "features in data and the feature info list are expect to be the same, ",
+                                                      "but were not."))
+            }
+            
+            if(object@data_type %in% c("cluster", "feature")){
+              similarity_data <- feature_columns
+              
+            } else if(object@data_type == "sample"){
+              # Create unique row names.
+              similarity_data <- get_unique_row_names(x=data)
+              
+            } else {
+              ..error_reached_unreachable_code(paste0(".set_similarity_table,clusterMethodNone,dataObject:",
+                                                      "encountered an unknown data_type: ",
+                                                      object@data_type))
+            }
+            
+            # Create (no) similarity table.
+            similarity_table <- methods::new("noSimilarityTable",
+                                             "data"=similarity_data,
+                                             "data_type"=object@data_type)
+            
+            
+            return(similarity_table)
           })
 
 
 
-#### get_similarity_table (clusterMethod, dataObject) --------------------------
-setMethod("get_similarity_table", signature(object="clusterMethod", data="dataObject"),
+#### .set_similarity_table (clusterMethod, dataObject) --------------------------
+setMethod(".set_similarity_table", signature(object="clusterMethod", data="dataObject"),
           function(object,
                    data,
                    feature_info_list,
@@ -411,7 +415,7 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
             
             # Sanity check.
             if(!(setequal(feature_columns, get_available_features(feature_info_list=feature_info_list)))){
-              ..error_reached_unreachable_code(paste0("get_similarity_table,clusterMethod,dataObject:",
+              ..error_reached_unreachable_code(paste0(".set_similarity_table,clusterMethod,dataObject:",
                                                       "features in data and the feature info list are expect to be the same, ",
                                                       "but were not."))
             }
@@ -481,7 +485,7 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
               }
               
               # Determine if data requires normalisation
-              if(similarity.requires_normalisation(similarity_metric=similarity_metric)){
+              if(similarity.requires_normalisation(similarity_metric=object@similarity_metric)){
                 # Identify numerical features
                 numerical_features <- feature_columns[!categorical_mask]
                 
@@ -489,10 +493,10 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
                 data@data <- data.table::copy(data@data)
                 
                 # Find the normalisation method.
-                if(grepl(pattern="_trim", x=similarity_metric, fixed=TRUE)){
+                if(grepl(pattern="_trim", x=object@similarity_metric, fixed=TRUE)){
                   norm_method <- "normalisation_trim"
                   
-                } else if(grepl(pattern="_winsor", x=similarity_metric, fixed=TRUE)){
+                } else if(grepl(pattern="_winsor", x=object@similarity_metric, fixed=TRUE)){
                   norm_method <- "normalisation_winsor"
                   
                 } else {
@@ -537,7 +541,7 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
                                                          "value"=similarity)
               
             } else {
-              ..error_reached_unreachable_code(paste0("get_similarity_table,clusterMethod,dataObject:",
+              ..error_reached_unreachable_code(paste0(".set_similarity_table,clusterMethod,dataObject:",
                                                       "encountered an unknown data_type: ",
                                                       object@data_type))
             }
@@ -548,22 +552,692 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
                                              "similarity_metric"=object@similarity_metric,
                                              "data_type"=object@data_type)
             
+            # Set similarity table,
             return(similarity_table)
           })
 
 
-#### create_cluster_object (none, ANY) -----------------------------------------
 
-#### create_cluster_object (clusterMethod, NULL) -------------------------------
-
-#### create_cluster_object (clusterMethod, dataObject) -------------------------
-
-#### create_cluster_object (clusterMethod, similarityTable) --------------------
-
-#### create_cluster_object (clusterMethod, dist) -------------------------------
+#### get_similarity_names (NULL) -----------------------------------------------
+setMethod("get_similarity_names", signature(object=NULL),
+          return(object, ...){
+            return(NULL)
+          })
 
 
 
+#### get_similarity_names (similarityTable) ------------------------------------
+setMethod("get_similarity_names", signature(object="similarityTable"),
+          return(object, ...){
+            
+            element_names <- NULL
+            if(object@data_type %in% c("cluster", "feature")){
+              if(!is.null(object@data)){
+                element_names <- unique(c(object@data$feature_1,
+                                          object@data$feature_2))
+              }
+              
+            } else if(object@data_type == "sample"){
+              if(!is.null(object@data)){
+                element_names <- unique(c(object@data$sample_1,
+                                          object@data$sample_2))
+              }
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("get_similarity_names,similarityTable:",
+                                                      "encountered an unknown data_type: ",
+                                                      object@data_type))
+            }
+            
+            return(element_names)
+          })
+
+
+
+#### get_similarity_names (noSimilarityTable) ----------------------------------
+setMethod("get_similarity_names", signature(object="noSimilarityTable"),
+          return(object, ...){
+            
+            element_names <- NULL
+            if(object@data_type %in% c("cluster", "feature", "sample")){
+              
+              if(!is.null(object@data)) element_names <- object@data
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("get_similarity_names,noSimilarityTable:",
+                                                      "encountered an unknown data_type: ",
+                                                      object@data_type))
+            }
+            
+            return(element_names)
+          })
+
+
+
+#### get_distance_matrix (clusterMethod) ---------------------------------------
+setMethod("get_distance_matrix", signature(object="clusterMethod"),
+          function(object, ...){
+            
+            # Check that similarity table is set.
+            if(is.null(object@similarity_table)){
+              # Create similarity table first.
+              object <- do.call(set_similarity_table, args=c(list("object"=object),
+                                                             list(...)))
+            }
+            
+            # Push to get_distance_matrix for similarity tables.
+            return(.get_distance_matrix(object=object@similarity_table,
+                                        ...))
+          })
+
+
+
+#### .get_distance_matrix (clusterMethod) ---------------------------
+setMethod(".get_distance_matrix", signature(object="clusterMethod"),
+          function(object,
+                   ...){
+            return(.get_distance_matrix(object=object@similarity_table))
+          })
+
+
+
+#### get_distance_matrix (similarityTable) -------------------------------------
+setMethod("get_distance_matrix", signature(object="similarityTable"),
+          function(object,
+                   ...){
+            # Converts a similarity table into a distance matrix.
+            # Suppress NOTES due to non-standard evaluation in data.table
+            value <- NULL
+            
+            # Extract similarity table.
+            similarity_metric <- object@similarity_metric
+            
+            # Copy data from the similarity table.
+            lower_triangle <- data.table::copy(object@data)
+            
+            # Determine whether the similarity table is for features (columns)
+            # or samples (rows).
+            element_1 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_1", "sample_1")
+            element_2 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_2", "sample_2")
+            
+            # Find elements from the distance table.
+            elements <- union(lower_triangle[[element_1]],
+                              lower_triangle[[element_2]])
+            
+            # Convert similarity to distance.
+            lower_triangle[, "value":=similarity.to_distance(x=value,
+                                                             similarity_metric=similarity_metric)]
+            
+            # Add in other triangle of the table by switching around the columns.
+            upper_triangle <- data.table::copy(lower_triangle)
+            data.table::setnames(upper_triangle,
+                                 old=c(element_1, element_2),
+                                 new=c(element_2, element_1))
+            
+            # Create diagonals that always have distance 0.
+            diagonal_table <- data.table::data.table("element_1"=elements,
+                                                     "element_2"=elements,
+                                                     "value"=as.double(0))
+            
+            # Add names to the diagonal table.
+            data.table::setnames(diagonal_table,
+                                 old=c("element_1", "element_2"),
+                                 new=c(element_1, element_2))
+            
+            # Combine to single, long, table
+            distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
+            
+            # Create n x n table
+            distance_table  <- data.table::dcast(distance_table,
+                                                 stats::as.formula(paste(element_1, "~", element_2)),
+                                                 value.var="value")
+            
+            # Add rownames into the distance table -- I know. Blasphemy.
+            # Otherwise as.dist doesn't function.
+            rownames(distance_table) <- distance_table[[element_1]]
+            distance_table[, (element_1):=NULL]
+            
+            # Create dissimilarity matrix
+            distance_matrix <- stats::as.dist(distance_table)
+            
+            return(distance_matrix)
+          })
+
+
+
+#### get_distance_matrix (clusterMethod, noSimilarityTable) ----------------------
+setMethod("get_distance_matrix", signature(object="noSimilarityTable"),
+          function(object,
+                   ...){
+            
+            return(NULL)
+          })
+
+
+
+#### apply_cluster_method (clusterMethod) -----------------------------------
+setMethod("apply_cluster_method", signature(object="clusterMethod"),
+          function(object, ...){
+            # Generic method where no clustering object is generated.
+            return(object)
+          })
+
+
+
+
+#### apply_cluster_method (hclust) ---------------------------------------------
+setMethod("apply_cluster_method", signature(object="clusterMethodHClust"),
+          function(object, ...){
+            
+            # Get distance matrix.
+            distance_matrix <- do.call(get_distance_matrix,
+                                       args=c(list("object"=object,
+                                                   list(...))))
+            
+            # Skip if the distance matrix is NULL.
+            if(is.null(distance_matrix)) return(object)
+            
+            # Convert general linkage names to stats::hclust linkage names.
+            linkage_method <- object@linkage_method
+            if(object@linkage == "ward")          {
+              linkage_method <- "ward.D2"
+              
+            } else if(linkage_method == "weighted") {
+              linkage_method <- "mcquitty"
+            }
+            
+            if(is_package_installed("fastcluster")){
+              object@object <- fastcluster::hclust(d=distance_matrix,
+                                                   method=linkage_method)
+              
+            } else {
+              object@object <- stats::hclust(d=distance_matrix,
+                                             method=linkage_method)
+            }
+            
+            return(object)
+          })
+
+
+
+#### apply_cluster_method (agnes) ----------------------------------------------
+setMethod("apply_cluster_method", signature(object="clusterMethodAgnes"),
+          function(object, ...){
+            
+            # Get distance matrix.
+            distance_matrix <- do.call(get_distance_matrix,
+                                       args=c(list("object"=object,
+                                                   list(...))))
+            
+            # Skip if the distance matrix is NULL.
+            if(is.null(distance_matrix)) return(object)
+            
+            require_package(x="cluster",
+                            purpose="to cluster similar features together")
+            
+            # Compute agglomerative hierarchical clustering of the data set
+            object@object <- cluster::agnes(x=distance_matrix,
+                                            method=object@linkage_method,
+                                            keep.diss=FALSE,
+                                            keep.data=FALSE)
+            
+            return(object)
+          })
+
+
+
+#### apply_cluster_method (diana) ----------------------------------------------
+setMethod("apply_cluster_method", signature(object="clusterMethodDiana"),
+          function(object,  ...){
+            
+            # Get distance matrix.
+            distance_matrix <- do.call(get_distance_matrix,
+                                       args=c(list("object"=object,
+                                                   list(...))))
+            
+            # Skip if the distance matrix is NULL.
+            if(is.null(distance_matrix)) return(object)
+            
+            require_package(x="cluster",
+                            purpose="to cluster similar features together")
+            
+            # Compute DIvisive ANAlysis hierarchical clustering of the data set
+            object@object <- cluster::diana(x=distance_matrix,
+                                            keep.diss=FALSE,
+                                            keep.data=FALSE)
+            
+            return(object)
+          })
+
+
+
+#### create_clusters (generic hierarchical) ------------------------------------
+setMethod("create_clusters", signature(object="clusterMethodHierarchical"),
+          function(object, ...){
+            
+            cluster_table <- NULL
+            if(object@cluster_cut_method == "silhouette"){
+              # Cluster by silhouette.
+              cluster_table <- .cluster_by_silhouette(object=object)
+              
+              # Attempt to create a cluster table if the cluster table returned
+              # empty. Attempt to set singular clusters instead.
+              if(is_empty(cluster_table)){
+                # Add names. Each cluster is singular.
+                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              }
+              
+            } else if(object@cluster_cut_method == "fixed_cut"){
+              # Cluster by cutting the tree at a fixed height.
+              cluster_table <- .cluster_by_fixed_cut(object=object)
+              
+              # Attempt to create a cluster table if the cluster table returned
+              # empty. Attempt to set singular clusters instead.
+              if(is_empty(cluster_table)){
+                # Add names. Each cluster is singular.
+                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              }
+              
+            } else if(object@cluster_cut_method == "none"){
+              # Add names. Each cluster is singular.
+              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodHierarchical: encountered an unknown cluster cut method: ",
+                                                      object@cluster_method))
+            }
+            
+            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                             representation_method=object@representation_method))
+          })
+
+
+
+#### create_clusters (hclust) --------------------------------------------------
+setMethod("create_clusters", signature(object="clusterMethodHClust"),
+          function(object, ...){
+            
+            if(object@cluster_cut_method %in% c("silhouette", "fixed_cut")){
+              # Silhouette and fixed cut are implemented for the parent class
+              # (clusterMethodHierarchical).
+              return(callNextMethod())
+              
+            } else if(object@cluster_cut_method == "dynamic_cut"){
+              # Cluster by cutting the tree at a fixed height.
+              cluster_table <- .cluster_by_dynamic_cut(object=object)
+              
+              # Attempt to create a cluster table if the cluster table returned
+              # empty. Attempt to set singular clusters instead.
+              if(is_empty(cluster_table)){
+                # Add names. Each cluster is singular.
+                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              }
+              
+            } else if(object@cluster_cut_method == "none"){
+              # Add names. Each cluster is singular.
+              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodHClust: encountered an unknown cluster cut method: ",
+                                                      object@cluster_method))
+            }
+            
+            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                             representation_method=object@representation_method))
+          })
+
+
+
+#### create_clusters (PAM) -----------------------------------------------------
+setMethod("create_clusters", signature(object="clusterMethodPAM"),
+          function(object, ...){
+            
+            cluster_table <- NULL
+            if(object@cluster_cut_method == "silhouette"){
+              # Cluster by silhouette.
+              cluster_table <- .cluster_by_silhouette(object=object)
+              
+              # Attempt to create a cluster table if the cluster table returned
+              # empty. Attempt to set singular clusters instead.
+              if(is_empty(cluster_table)){
+                # Add names. Each cluster is singular.
+                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              }
+              
+            } else if(object@cluster_cut_method == "none"){
+              # Add names. Each cluster is singular.
+              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodPAM: encountered an unknown cluster cut method: ",
+                                                      object@cluster_method))
+            }
+            
+            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                             representation_method=object@representation_method))
+          })
+
+
+
+#### create_clusters (none) ----------------------------------------------------
+setMethod("create_clusters", signature(object="clusterMethodNone"),
+          function(object, ...){
+            
+            # Add names. Each cluster is singular.
+            cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
+                                                    "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+            
+            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                             representation_method="none"))
+          })
+
+
+
+#### .cluster_by_silhouette (PAM) ----------------------------------------------
+setMethod(".cluster_by_silhouette", signature(object="clusterMethodPAM"),
+          function(object, ...){
+            
+            # Get distance matrix.
+            distance_matrix <- do.call(get_distance_matrix,
+                                       args=c(list("object"=object,
+                                                   list(...))))
+            
+            # Skip if the distance matrix is NULL.
+            if(is.null(distance_matrix)) return(NULL)
+            
+            require_package(x="cluster",
+                            purpose="to cluster similar features together")
+            
+            # Determine optimal numbers of clusters based on silhouette
+            n_clusters <- .optimise_cluster_silhouette(object=object,
+                                                       distance_matrix=distance_matrix)
+            
+            # PAM clustering doesn't like it when you n_clusters is equal to the
+            # number of features.
+            if(n_clusters == length(get_similarity_names(object))) return(NULL)
+
+            # Create clustering.
+            cluster_object <- cluster::pam(x=distance_matrix,
+                                           k=n_clusters,
+                                           keep.diss=FALSE,
+                                           keep.data=FALSE)
+            
+            return(data.table::data.table("name"=names(cluster_object$clustering),
+                                          "cluster_id"=cluster_object$clustering))
+          })
+
+
+
+#### .cluster_by_silhouette (generic hierarchical) -----------------------------
+setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"),
+          function(object, ...){
+            
+            # Get distance matrix.
+            distance_matrix <- do.call(get_distance_matrix,
+                                       args=c(list("object"=object,
+                                                   list(...))))
+            
+            # Skip if the distance matrix is NULL.
+            if(is.null(distance_matrix)) return(NULL)
+            
+            browser()
+            # Attempt to create the dendrogram.
+            if(is.null(object@object)){
+              object <- apply_cluster_method(object)
+            }
+            
+            # Check if a dendrogram could be created.
+            if(is.null(object@object)) return(NULL)
+            
+            require_package(x="cluster",
+                            purpose="to cluster similar features together by silhouette")
+            
+            # Determine optimal numbers of clusters based on silhouette
+            n_clusters <- .optimise_cluster_silhouette(object=object,
+                                                       distance_matrix=distance_matrix)
+            
+            # PAM clustering doesn't like it when you n_clusters is equal to the
+            # number of features.
+            if(n_clusters == length(get_similarity_names(object))) return(NULL)
+            
+            # Cut the tree for the optimal number of clusters
+            cluster_object <- stats::cutree(tree=object@object,
+                                            k=n_clusters)
+            
+            return(data.table::data.table("name"=names(cluster_object),
+                                          "cluster_id"=cluster_object))
+          })
+
+
+
+.optimise_cluster_silhouette <- function(object, distance_matrix){
+  browser()
+  # Determine the number of features.
+  n_features <- length(get_similarity_names(object))
+  
+  # Check problematic values.
+  if(n_features == 1){
+    return(1L)
+    
+  } else if(n_features == 2){
+    
+    if(all(distance_matrix == 0.0)){
+      # Zero distance can be safely imputed as being identical.
+      return(1L)
+      
+    } else {
+      # Otherwise interpret as singular clusters.
+      return(n_features)
+    }
+  }
+  
+  # If all elements have distance 0, return 1 cluster.
+  if(all(distance_matrix == 0.0)) return(1)
+  
+  # The optimiser doesn't like a singular interval, which occurs for n_features
+  # == 3.
+  if(n_features == 3) return(2)
+  
+  # Determine optimal number of clusters k.
+  k_optimal <- suppressWarnings(stats::optimise(..optimise_cluster_silhouette,
+                                                interval=c(2, n_features-1),
+                                                distance_matrix=distance_matrix,
+                                                object=object,
+                                                maximum=TRUE))
+  
+  # Set the optimal number of features.
+  k_optimal <- round(k_optimal$maximum, digits=0)
+  max_silhouette <- k_optimal$objective
+  
+  # Determine if the silhoutte indicates reasonable structure (> 0.50), see
+  # Kaufman and Rousseeuw: Finding groups in data.
+  if(max_silhouette < 0.50) k_optimal <- n_features
+  
+  return(k_optimal)
+}
+
+
+
+..optimise_cluster_silhouette <- function(k, distance_matrix, object){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  sil_width <- cluster_size <- NULL
+  
+  # Round k to integer value.
+  k <- round(k, digits=0)
+  browser()
+  if(is(object, "clusterMethodPAM")){
+    # Generate partioning around medoids cluster
+    cluster_object <- cluster::pam(x=distance_matrix,
+                                   k=k,
+                                   keep.diss=FALSE,
+                                   keep.data=FALSE)
+    
+    # Extract silhouette table
+    silhouette_table <- data.table::as.data.table(cluster_object$silinfo$widths,
+                                                  keep.rownames=FALSE)
+    
+    # Compute the size and average silhouette in each cluster
+    silhouette_table <- silhouette_table[, list("average_cluster_silhouette"=mean(sil_width),
+                                                "cluster_size"=.N),
+                                         by="cluster"]
+    
+    # Maintain only non-singular clusters
+    silhouette_table <- silhouette_table[cluster_size > 1]
+    
+    # Return average silhouette in the formed non-singular clusters.
+    if(!is_empty(silhouette_table)){
+      return(mean(silhouette_table$average_cluster_silhouette))
+      
+    } else {
+      return(0.0)
+    }
+    
+  } else if(is(object, "clusterMethodHierarchical")){
+    
+    # Compute silhouette.
+    silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=object@object,
+                                                             k=k),
+                                             dist=distance_matrix)
+    
+    # Parse to matrix by changing the class. 
+    class(silhouette_matrix) <- "matrix"
+    
+    # Extract silhouette table
+    silhouette_table <- data.table::as.data.table(silhouette_matrix,
+                                                  keep.rownames=FALSE)
+    
+    # Compute the size and average silhouette in each cluster
+    silhouette_table <- silhouette_table[, list("average_cluster_silhouette"=mean(sil_width),
+                                                "cluster_size"=.N),
+                                         by="cluster"]
+    
+    # Maintain only non-singular clusters
+    silhouette_table <- silhouette_table[cluster_size > 1]
+    
+    # Return average silhouette in the formed non-singular clusters.
+    if(!is_empty(silhouette_table)){
+      return(mean(silhouette_table$avg_sil))
+      
+    } else {
+      return(0.0)
+    }
+    
+  } else {
+    ..error_reached_unreachable_code("..optimise_cluster_silhouette: unknown clustering object encountered.")
+  }
+}
+
+
+
+#### .cluster_by_fixed_cut (generic hierarchical) ------------------------------
+setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical"),
+          function(object, ...){
+            browser()
+            # Attempt to create the dendrogram.
+            if(is.null(object@object)){
+              object <- apply_cluster_method(object)
+            }
+            
+            # Check if a dendrogram could be created.
+            if(is.null(object@object)) return(NULL)
+            
+            # Compute the height at which the dendrogram should be cut.
+            cut_height <- similarity.to_distance(x=object@similarity_threshold,
+                                                 similarity_metric=object@similarity_metric)
+            
+            # Cut the dendrogram at the given height.
+            cluster_object <- stats::cutree(tree=object@object,
+                                            h=cut_height)
+            
+            # Define clusters
+            return(data.table::data.table("name"=names(cluster_object),
+                                          "cluster_id"=cluster_object))
+          })
+
+
+
+#### .cluster_by_dynamic_cut (hclust) --------------------------------------------
+setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
+          function(object, ...){
+            
+            browser()
+            # Attempt to create the dendrogram.
+            if(is.null(object@object)){
+              object <- apply_cluster_method(object)
+            }
+            
+            # Check if a dendrogram could be created.
+            if(is.null(object@object)) return(NULL)
+            
+            require_package(x="dynamicTreeCut",
+                            purpose="to cluster similar features together through dynamic dendrogram cutting")
+            
+            # Compute the height at which the dendrogram should be cut anyway.
+            cut_height <- similarity.to_distance(x=object@similarity_threshold,
+                                                 similarity_metric=object@similarity_metric)
+            
+            # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters
+            # from a hierarchical cluster tree: the Dynamic Tree Cut package for
+            # R. Bioinformatics 2008 24(5):719-720
+            cluster_object <- dynamicTreeCut::cutreeDynamicTree(dendro=object@object,
+                                                                maxTreeHeight=cut_height,
+                                                                deepSplit=TRUE,
+                                                                minModuleSize=1)
+            
+            # Define clusters
+            return(data.table::data.table("name"=cluster_object$labels,
+                                          "cluster_id"=cluster_object))
+          })
+
+
+
+
+.convert_cluster_table_to_cluster_objects <- function(cluster_table,
+                                                      representation_method){
+  
+  # Check that the cluster table is not empty.
+  if(is_empty(cluster_table)) return(NULL)
+  
+  # Check that the expect columns are present.
+  if(!(all(c("name", "cluster_id") %in% colnames(cluster_table)))){
+    ..error_reached_unreachable_code(paste0(".convert_cluster_table_to_cluster_objects: expected name and cluster_id columns were not found."))
+  }
+  
+  return(lapply(split(cluster_table, by="cluster_id"),
+                ..convert_cluster_table_to_cluster_objects,
+                representation_method=representation_method))
+}
+
+
+
+..convert_cluster_table_to_cluster_objects <- function(cluster_table,
+                                                       representation_method){
+  if(nrow(cluster_table) == 1){
+    # Create singular cluster object.
+    object <- methods::new("singularClusteringObject",
+                           cluster_features=cluster_table$name)
+    
+  } else {
+    # Create cluster object with multiple features or instances.
+    object <- methods::new("clusteringObject",
+                           cluster_features=cluster_table$name,
+                           representation_method=representation_method)
+  }
+  
+  return(object)
+}
+
+
+
+            
 .check_cluster_parameters <- function(cluster_method,
                                       cluster_linkage=NULL,
                                       cluster_cut_method=NULL,

@@ -2,6 +2,7 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+#### Parameter objecter --------------------------------------------------------
 setClass("featureInfoCluster",
          contains="featureInfoParameters",
          slots=list("method" = "ANY",
@@ -17,7 +18,24 @@ setClass("featureInfoCluster",
                         "cluster_name" = NA_character_,
                         "cluster_size" = NA_integer_,
                         "cluster_features" = NA_character_,
-                        "required_features"=NULL))
+                        "required_features" = NULL))
+
+
+#### Representation object -----------------------------------------------------
+setClass("clusterRepresentationObject",
+         slots=list("name" = "character",
+                    "weight" = "numeric",
+                    "invert" = "logical",
+                    "cluster_name" = "character",
+                    "cluster_size" = "integer",
+                    "cluster_features" = "character",
+                    "required_features"="ANY"),
+         prototype=list("weight" = NA_real_,
+                        "invert" = NA,
+                        "cluster_name" = NA_character_,
+                        "cluster_size" = NA_integer_,
+                        "cluster_features" = NA_character_,
+                        "required_features" = NULL))
 
 
 create_cluster_parameter_skeleton <- function(feature_info_list,
@@ -77,13 +95,13 @@ create_cluster_parameter_skeleton <- function(feature_info_list,
                          method=method)
   
   # Set feature name
-  object@name <- feature_name
+  object@name <- feature_info@name
   
   # Update the familiar version.
   object <- add_package_version(object=object)
   
   # Check that the feature was not removed and is not set as a signature.
-  if(!available(feature_info) || is_in_signature(feature_info)) method <- "none"
+  if(!is_available(feature_info) || is_in_signature(feature_info)) method <- "none"
   
   # Create the cluster method object.
   object@method <- create_cluster_method_object(cluster_method=method,
@@ -124,8 +142,6 @@ add_cluster_info <- function(cl=NULL,
   # parameters assigned on purpose, e.g. signature features or externally
   # provided features.
   
-  # List of cluster groups that use the same method.
-  cluster_group_lists <- NULL
   
   # Eliminate features that are already complete.
   feature_names <- feature_names[!sapply(feature_info_list[feature_names],
@@ -135,17 +151,23 @@ add_cluster_info <- function(cl=NULL,
   # completed.
   if(length(feature_names) == 0) return(feature_info_list)  
   
-  # Identify all features that are not to be clustered.
-  none_features <- feature_names[sapply(feature_info_list[feature_names],
-                                                          function(x) (is(x@cluster_parameters@method, "clusterMethodNone")))]
-  
-  # Identify features that should still be sorted.
-  feature_names <- setdiff(feature_names, none_features)
   browser()
-  # Iterate to create feature groups.
+  
+  # # Identify all features that are not to be clustered.
+  # none_features <- feature_names[sapply(feature_info_list[feature_names],
+  #                                                         function(x) (is(x@cluster_parameters@method, "clusterMethodNone")))]
+  # 
+  # # Identify features that should still be sorted.
+  # feature_names <- setdiff(feature_names, none_features)
+  # browser()
+  
+  # Set unassigned features.
+  unassigned_features <- feature_names
+  
+  # Iterate to eliminate any groups that would be smaller than 2.
   while(TRUE){
     # Break once all features have been assigned.
-    if(length(feature_names) == 0) break()
+    if(length(unassigned_features) == 0) break()
     
     # Get the cluster method object of the first feature that still needs to be
     # sorted.
@@ -156,129 +178,137 @@ add_cluster_info <- function(cl=NULL,
                                                  function(x, y) (identical(x@cluster_parameters@method, y)),
                                                  y=cluster_method_object)]
     
-    # Append to the cluster group list. Note that the list is nested to avoid
-    # concatenating list elements.
-    cluster_group_lists <- c(cluster_group_lists,
-                             list(list("features"=same_method_features,
-                                       "cluster_method_object"=cluster_method_object)))
-    
-    # Remove features from feature names.
-    feature_names <- setdiff(feature_names, same_method_features)
-  }
-  
-  # Now process data that use clustering.
-  if(length(cluster_group_lists) > 0){
-    # Iterate over lists of features that have unique clustering parameters.
-    for(cluster_group in cluster_group_lists){
-      
-      # Check that at least 3 features are present. Otherwise no sensible
-      # clusters may be formed.
-      if(length(cluster_group$features) <= 2){
-        
-        # Update feature info so that these features now have "none" cluster objects.
-        feature_info_list <- create_cluster_parameter_skeleton(feature_info_list,
-                                                               feature_names=cluster_group$features,
-                                                               cluster_method="none")
-        # Add features to none_features
-        none_features <- c(none_features,
-                           cluster_group$features)
-        
-        # And skip to the next group.
-        next()
-      }
-      
-      # Compute distance matrix from data.
-      distance_matrix <- get_distance_matrix(object=cluster_group$cluster_method_object,
-                                             data=filter_features(data=data,
-                                                                  available_features=cluster_group$features),
-                                             feature_info_list=feature_info_list[cluster_group$features])
+    # Check that at least 3 features are present. Otherwise no sensible
+    # clusters may be formed.
+    if(length(same_method_features) <= 2){
+      feature_info_list[same_method_features] <- create_cluster_parameter_skeleton(feature_info_list[same_method_features],
+                                                                                   cluster_method="none")
       
     }
+    
+    # Update the number of features that have not been assigned.
+    unassigned_features <- setdiff(unassigned_features, same_method_features)
   }
   
-  # Determine feature columns. Novelty features are clustered.
-  feature_columns <- get_available_features(feature_info_list=feature_info_list,
-                                            data_obj=data_obj,
-                                            exclude_signature=TRUE,
-                                            exclude_novelty=FALSE)
+  # Set unassigned features and the initial grouping list
+  unassigned_features <- feature_names
   
-  if(length(feature_columns) <= 2 | settings$prep$cluster_method=="none"){
-    # Message that no clustering was performed
-    logger.message(paste0("Pre-processing: No feature clustering was performed."),
-                   indent=message_indent,
-                   verbose=verbose)
+  # Iterate to create feature groups and add feature information.
+  while(TRUE){
+    # Break once all features have been assigned.
+    if(length(unassigned_features) == 0) break()
     
-    return(feature_info_list)
+    # Get the cluster method object of the first feature that still needs to be
+    # sorted.
+    cluster_method_object <- feature_info_list[[feature_names[1L]]]@cluster_parameters@method
+    
+    # Find other unsorted features that have the same method.
+    same_method_features <- feature_names[sapply(feature_info_list[feature_names],
+                                                 function(x, y) (identical(x@cluster_parameters@method, y)),
+                                                 y=cluster_method_object)] 
+  
+    # Compute similarity.
+    cluster_method_object <- set_similarity_table(object=cluster_method_object,
+                                                  data=filter_features(data=data, available_features=same_method_features),
+                                                  feature_info_list=feature_info_list[same_method_features],
+                                                  cl=cl,
+                                                  verbose=verbose)
+    
+    # Create clustering objects. These are used to update the
+    # feature_info_lists.
+    clustering_objects <- create_clusters(object=cluster_method_object)
+    
+    # Update feature info lists.
+    updated_feature_info <- fam_lapply(cl=cl,
+                                       clustering_objects,
+                                       FUN=.add_cluster_info,
+                                       cluster_method_object = cluster_method_object,
+                                       feature_info_list = feature_info_list,
+                                       data = data,
+                                       progress_bar = FALSE)
+    
+    # Flatten lists feature info.
+    updated_feature_info <- unlist(updated_feature_info,
+                                   recursive=FALSE)
+    
+    # Replace list elements without reordering.
+    feature_info_list[same_method_features] <- updated_feature_info[same_method_features]
+    
+    # Remove features from the list of unassigned features.
+    unassigned_features <- setdiff(unassigned_features, same_method_features)
   }
-  
-  # Find distances
-  dist_mat <- cluster.get_distance_matrix(cl=cl,
-                                          data_obj=data_obj,
-                                          feature_columns=feature_columns,
-                                          settings=settings,
-                                          message_indent=message_indent,
-                                          verbose=verbose)
-
-  # Determine if there are any reasonable cluster candidates
-  if(all(dist_mat > similarity.to_distance(x=settings$prep$cluster_sim_thresh,
-                                           similarity_metric=settings$prep$cluster_similarity_metric))){
-    
-    # Message that no clustering was performed due to distances
-    logger.message(paste0("Pre-processing: No feature clustering was performed as no feature pairs were within the distance to form a cluster."),
-                   indent=message_indent,
-                   verbose=verbose)
-    
-    return(feature_info_list)
-  }
-  
-  # Identify clusters
-  cluster_table <- cluster.get_cluster_table(cl=cl,
-                                             require_representation=TRUE,
-                                             distance_matrix=dist_mat,
-                                             data_obj=data_obj,
-                                             feature_info_list=feature_info_list,
-                                             settings=settings,
-                                             message_indent=message_indent,
-                                             verbose=verbose)
-
-  # Generate the update list
-  upd_list <- lapply(cluster_table$name, function(ii, feature_info_list, cluster_table, cluster_repr_method){
-    
-    # Find featureInfo object
-    object <- feature_info_list[[ii]]
-    
-    # Select the table entry
-    table_entry <- cluster_table[name==ii]
-    
-    # Add cluster parameters
-    object@cluster_parameters <- list("method" = cluster_repr_method,
-                                      "weight" = table_entry$weight,
-                                      "invert" = table_entry$inversion,
-                                      "required_features" = cluster_table[cluster_id==table_entry$cluster_id & weight > 0.0]$name,
-                                      "cluster_name" = paste0(table_entry$cluster_repr_feature, "_cluster"),
-                                      "cluster_size" = table_entry$cluster_size)
-    
-    return(object)
-  }, feature_info_list=feature_info_list, cluster_table=cluster_table, cluster_repr_method=settings$prep$cluster_repr_method)
-  
-  # Set names of the update object list
-  names(upd_list) <- cluster_table$name
-  
-  # Update feature_info_list
-  feature_info_list[cluster_table$name] <- upd_list
-  
-  # Message results of clustering
-  n_clusters          <- data.table::uniqueN(cluster_table[cluster_size > 1]$cluster_id)
-  n_singular_clusters <- data.table::uniqueN(cluster_table[cluster_size == 1]$cluster_id)
-  
-  logger.message(paste0("Pre-processing: ", n_clusters, " non-singular ",
-                        ifelse(n_clusters==1, "cluster was", "clusters were"), " formed. ",
-                        n_clusters + n_singular_clusters, " features remain."),
-                 indent=message_indent,
-                 verbose=verbose)
   
   return(feature_info_list)
 }
+
+
+
+.add_cluster_info <- function(clustering_object,
+                              cluster_method_object,
+                              feature_info_list,
+                              data){
+  
+  # Limit feature info list and data to the features in the cluster
+  data <- filter_features(data=data,
+                          available_features=clustering_object@cluster_features)
+  
+  # Find representation.
+  representation_objects <- add_feature_info_parameters(object=clustering_object,
+                                                        data=data,
+                                                        feature_info=feature_info_list[clustering_object@cluster_features],
+                                                        cluster_method_object=cluster_method_object)
+  
+  # Update cluster_parameters attribute in the feature info objects.
+  updated_feature_info <- fam_mapply(FUN=..add_cluster_info,
+                                     feature_info=feature_info_list[clustering_object@cluster_features],
+                                     representation_object=representation_objects[clustering_object@cluster_features])
+  
+  # Update names.
+  names(updated_feature_info) <- sapply(updated_feature_info, function(x) (x@name))
+  
+  return(updated_feature_info)
+}
+
+
+
+..add_cluster_info <- function(feature_info,
+                               representation_object){
+  
+  # Use the representation object to update the featureInfoCluster object in
+  # cluster_parameters.
+  object <- add_feature_info_parameters(object=feature_info@cluster_parameters,
+                                        data=representation_object)
+  browser()
+  # Attach updated information object.
+  feature_info@cluster_parameters <- object
+  
+  return(feature_info)
+}
+
+
+
+#### add_feature_info_parameters (cluster info, representation object) ---------
+setMethod("add_feature_info_parameters", signature(object="featureInfoCluster", data="clusterRepresentationObject"),
+          function(object,
+                   data,
+                   ...){
+            # Sanity check: check that names are correct.
+            if(object@name != data@name){
+              ..error_reached_unreachable_code(paste0("add_feature_info_parameters,featureInfoCluster,clusterRepresentationObject: ",
+                                                      "the cluster information object and representation object were not specified for ",
+                                                      "the same feature: ", object@name, " (info) and ", data@name, " (representation)"))
+            }
+            
+            # Copy contents
+            object@weight <- data@weight
+            object@invert <- data@invert
+            object@cluster_name <- data@cluster_name
+            object@cluster_size <- data@cluster_size
+            object@cluster_features <- data@cluster_features
+            object@required_features <- data@required_features
+            
+            return(object)
+          })
 
 
 
@@ -533,279 +563,279 @@ add_cluster_info <- function(cl=NULL,
 
 
 
-cluster.get_cluster_object <- function(cl=NULL,
-                                       distance_matrix,
-                                       settings=NULL,
-                                       cluster_method=NULL,
-                                       cluster_linkage=NULL,
-                                       message_indent=0L,
-                                       verbose=FALSE){
+# cluster.get_cluster_object <- function(cl=NULL,
+#                                        distance_matrix,
+#                                        settings=NULL,
+#                                        cluster_method=NULL,
+#                                        cluster_linkage=NULL,
+#                                        message_indent=0L,
+#                                        verbose=FALSE){
+# 
+#   # Read and check settings required to form a cluster object.
+#   if(!is.null(settings)){
+#     cluster_method <- settings$prep$cluster_method
+#     cluster_linkage <- settings$prep$cluster_linkage
+#     
+#   } else if(is.null(cluster_method)){
+#     ..error_reached_unreachable_code("cluster.get_cluster_object: no cluster_method argument was provided.")
+#   }
+#   
+#   if(cluster_method %in% c("agnes", "diana", "hclust") & is.null(cluster_linkage)){
+#     ..error_reached_unreachable_code("cluster.get_cluster_object: no cluster_linkage argument was provided.")
+#   }
+#   
+#   if(cluster_method %in% c("pam")){
+#     ##### Partitioning methods #############################################################
+#     
+#     # Message the algorithm
+#     logger.message(paste0("Pre-processing: Clustering using partitioning around medioids (PAM)."),
+#                    indent=message_indent,
+#                    verbose=verbose)
+#     
+#     # Determine optimal numbers of clusters based on silhouette
+#     n_clusters <- cluster.optimise_silhoutte(n_features=attr(distance_matrix, "Size"),
+#                                              dist_mat=distance_matrix,
+#                                              cluster_method=cluster_method)
+#     
+#     # Message the number of clusters
+#     logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
+#                    indent=message_indent,
+#                    verbose=verbose)
+#     
+#     # Message representation
+#     logger.message(paste0("Pre-processing: A cluster is represented by its medioid feature."),
+#                    indent=message_indent,
+#                    verbose=verbose)
+#     
+#     # Create clusters
+#     cluster_object <- cluster.pam(dist_mat=distance_matrix, n_clusters=n_clusters)
+#     
+#   } else if(cluster_method %in% c("agnes", "diana", "hclust")){
+#     
+#     ##### Hierarchical methods #############################################################
+#     
+#     # Create clusters
+#     if(cluster_method=="agnes"){
+#       # Message the algorithm
+#       logger.message(paste0("Pre-processing: Clustering using agglomerative hierarchical clustering (AGNES) with ", cluster_linkage, " linkage."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#       
+#       # Create dendrogram
+#       cluster_object <- cluster.agnes(dist_mat=distance_matrix,
+#                                       linkage=cluster_linkage)
+#       
+#     } else if(cluster_method=="hclust") {
+#       # Message the algorithm
+#       logger.message(paste0("Pre-processing: Clustering using hierarchical clustering with ", cluster_linkage, " linkage."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#       
+#       # Create dendrogram
+#       cluster_object <- cluster.hclust(dist_mat=distance_matrix,
+#                                        linkage=cluster_linkage)
+#       
+#     } else if(cluster_method == "diana") {
+#       # Message the algorithm
+#       logger.message(paste0("Pre-processing: Clustering using divisive analysis hierarchical clustering (DIANA)."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#       
+#       # Create dendrogram
+#       cluster_object <- cluster.diana(dist_mat=distance_matrix)
+#     }
+#     
+#     # Convert to hierarchical cluster object
+#     cluster_object <- stats::as.hclust(cluster_object)
+#     
+#   } else {
+#     ..error_reached_unreachable_code("cluster.get_cluster_object: unknown cluster_method.")
+#   }
+#   
+#   return(cluster_object)
+# }
 
-  # Read and check settings required to form a cluster object.
-  if(!is.null(settings)){
-    cluster_method <- settings$prep$cluster_method
-    cluster_linkage <- settings$prep$cluster_linkage
-    
-  } else if(is.null(cluster_method)){
-    ..error_reached_unreachable_code("cluster.get_cluster_object: no cluster_method argument was provided.")
-  }
-  
-  if(cluster_method %in% c("agnes", "diana", "hclust") & is.null(cluster_linkage)){
-    ..error_reached_unreachable_code("cluster.get_cluster_object: no cluster_linkage argument was provided.")
-  }
-  
-  if(cluster_method %in% c("pam")){
-    ##### Partitioning methods #############################################################
-    
-    # Message the algorithm
-    logger.message(paste0("Pre-processing: Clustering using partitioning around medioids (PAM)."),
-                   indent=message_indent,
-                   verbose=verbose)
-    
-    # Determine optimal numbers of clusters based on silhouette
-    n_clusters <- cluster.optimise_silhoutte(n_features=attr(distance_matrix, "Size"),
-                                             dist_mat=distance_matrix,
-                                             cluster_method=cluster_method)
-    
-    # Message the number of clusters
-    logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
-                   indent=message_indent,
-                   verbose=verbose)
-    
-    # Message representation
-    logger.message(paste0("Pre-processing: A cluster is represented by its medioid feature."),
-                   indent=message_indent,
-                   verbose=verbose)
-    
-    # Create clusters
-    cluster_object <- cluster.pam(dist_mat=distance_matrix, n_clusters=n_clusters)
-    
-  } else if(cluster_method %in% c("agnes", "diana", "hclust")){
-    
-    ##### Hierarchical methods #############################################################
-    
-    # Create clusters
-    if(cluster_method=="agnes"){
-      # Message the algorithm
-      logger.message(paste0("Pre-processing: Clustering using agglomerative hierarchical clustering (AGNES) with ", cluster_linkage, " linkage."),
-                     indent=message_indent,
-                     verbose=verbose)
-      
-      # Create dendrogram
-      cluster_object <- cluster.agnes(dist_mat=distance_matrix,
-                                      linkage=cluster_linkage)
-      
-    } else if(cluster_method=="hclust") {
-      # Message the algorithm
-      logger.message(paste0("Pre-processing: Clustering using hierarchical clustering with ", cluster_linkage, " linkage."),
-                     indent=message_indent,
-                     verbose=verbose)
-      
-      # Create dendrogram
-      cluster_object <- cluster.hclust(dist_mat=distance_matrix,
-                                       linkage=cluster_linkage)
-      
-    } else if(cluster_method == "diana") {
-      # Message the algorithm
-      logger.message(paste0("Pre-processing: Clustering using divisive analysis hierarchical clustering (DIANA)."),
-                     indent=message_indent,
-                     verbose=verbose)
-      
-      # Create dendrogram
-      cluster_object <- cluster.diana(dist_mat=distance_matrix)
-    }
-    
-    # Convert to hierarchical cluster object
-    cluster_object <- stats::as.hclust(cluster_object)
-    
-  } else {
-    ..error_reached_unreachable_code("cluster.get_cluster_object: unknown cluster_method.")
-  }
-  
-  return(cluster_object)
-}
 
 
-
-cluster.get_cluster_table <- function(cl=NULL,
-                                      require_representation=TRUE,
-                                      cluster_object=NULL, 
-                                      distance_matrix=NULL,
-                                      data_obj=NULL,
-                                      feature_info_list=NULL,
-                                      settings=NULL,
-                                      cluster_method=NULL, 
-                                      cluster_linkage=NULL,
-                                      cluster_cut_method=NULL,
-                                      cluster_similarity_threshold=NULL,
-                                      cluster_similarity_metric=NULL,
-                                      cluster_representation_method=NULL,
-                                      message_indent=0L,
-                                      verbose=FALSE){
-
-  if(is.null(distance_matrix)){
-    if(is.null(cluster_object)) ..error_reached_unreachable_code("cluster.get_cluster_table: distance_matrix is required to create a cluster_object.")
-    if(require_representation) ..error_reached_unreachable_code("cluster.get_cluster_table: distance_matrix is required to find representative features.")
-  }
-  
-  # Create a cluster object if required.
-  if(is.null(cluster_object)){
-    cluster_object <- cluster.get_cluster_object(cl=cl, distance_matrix=distance_matrix, settings=settings, cluster_method=cluster_method,
-                                                 cluster_linkage=cluster_linkage, verbose=verbose)
-  }
-  
-  # Read and check settings required to form a cluster table
-  if(!is.null(settings)){
-    cluster_method <- settings$prep$cluster_method
-
-  } else if(is.null(cluster_method)){
-    ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_method argument was provided.")
-  }
-  
-  if(!is.null(settings)){
-    cluster_cut_method <- settings$prep$cluster_cut_method
-    cluster_similarity_threshold <- settings$prep$cluster_sim_thresh
-    cluster_similarity_metric <- settings$prep$cluster_similarity_metric
-    
-  } else if(is.null(cluster_cut_method) & cluster_method %in% c("agnes", "diana", "hclust")){
-    ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_cut_method argument was provided.")
-    
-  } else if(is.null(cluster_similarity_threshold) & cluster_method %in% c("agnes", "diana", "hclust")){
-    ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_similarity_threshold argument was provided.")
-    
-  } else if(is.null(cluster_similarity_metric) & cluster_method %in% c("agnes", "diana", "hclust")){
-    ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_similarity_metric argument was provided.")
-  }
-  
-  # Check whether a distance matrix is present to optimise n_clusters.
-  if(is.null(distance_matrix) & cluster_method %in% c("agnes", "diana", "hclust")){
-    if(cluster_cut_method == "silhouette"){
-      ..error_reached_unreachable_code(paste0("cluster.get_cluster_table: no distance_matrix argument",
-                                       " was provided to derive an optimal number of clusters using silhouette for hierarchical clustering."))
-    }
-  }
-  
-  # cluster_representation_method
-  if(is.null(cluster_representation_method) & require_representation & cluster_method != "pam"){
-    cluster_representation_method <- settings$prep$cluster_repr_method
-  }
-  
-  if(is.null(data_obj)){
-    if(require_representation){
-      if(!cluster_representation_method %in% c("first") & !cluster_method %in% c("pam")){
-      ..error_reached_unreachable_code("cluster.get_cluster_table: data_obj is required to find representative features.")
-      }
-    } 
-  }
-  
-  if(is.null(feature_info_list)){
-    if(require_representation){
-      if(!cluster_representation_method %in% c("first") & !cluster_method %in% c("pam")){
-        ..error_reached_unreachable_code("cluster.get_cluster_table: feature_info_list is required to find representative features.")
-      }
-    }
-  }
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  cluster_repr_feature <- name <- NULL
-  
-  if(cluster_method %in% c("pam")){
-    ##### Partitioning methods #############################################################
-    
-    # Get cluster medoids and the corresponding cluster id.
-    temp_cluster_table <- data.table::data.table("cluster_id"=seq_len(length(cluster_object$id.med)),
-                                                 "cluster_repr_feature"=names(cluster_object$clustering)[cluster_object$id.med])
-    
-    # Combine with all cluster features based on the cluster id.
-    cluster_table <- data.table::data.table("name"=names(cluster_object$clustering),
-                                                   "cluster_id"=cluster_object$clustering)
-    cluster_table <- merge(cluster_table, temp_cluster_table, by="cluster_id", all.x=TRUE)
-    
-    # Add inversion and weight columns
-    cluster_table[, ":="("inversion"=FALSE, "weight"=0.0)]
-    cluster_table[name==cluster_repr_feature, "weight":=1.0]
-    
-  } else if(cluster_method %in% c("agnes", "diana", "hclust")){
-    ##### Hierarchical methods #############################################################
-  
-    # Compute the cut-height
-    cut_height <- similarity.to_distance(x=cluster_similarity_threshold, similarity_metric=cluster_similarity_metric)
-    
-    # Determine cuts
-    if(cluster_cut_method=="fixed_cut"){
-      # Cut the tree at the given height
-      cluster_id <- stats::cutree(tree=cluster_object, h=cut_height)
-      
-      # Define clusters
-      cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
-      
-      # Message the number of clusters
-      logger.message(paste0("Pre-processing: Clusters were created by cutting the dendrogram below ", cut_height, ", which corresponds to ",
-                            similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
-                     indent=message_indent,
-                     verbose=verbose)
-      
-      
-    } else if(cluster_cut_method=="dynamic_cut"){
-      
-      if(!is_package_installed("dynamicTreeCut")){
-        logger.stop("Please install the dynamicTreeCut package.")
-      }
-      
-      # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics 2008 24(5):719-720
-      cluster_id <- dynamicTreeCut::cutreeDynamicTree(dendro=cluster_object, maxTreeHeight=cut_height, deepSplit=TRUE, minModuleSize=1)
-      
-      # Define clusters
-      cluster_table <- data.table::data.table("name"=cluster_object$labels, "cluster_id"=cluster_id)
-      
-      # Message the number of clusters
-      logger.message(paste0("Pre-processing: Clusters were determined using the dynamic tree cut algorithm with maximum height of ", cut_height, ", which corresponds to ",
-                            similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
-                     indent=message_indent,
-                     verbose=verbose)
-      
-      
-    } else if(cluster_cut_method=="silhouette"){
-      
-      # Determine the optimal number of clusters based on the average cluster silhouette
-      n_clusters <- cluster.optimise_silhoutte(tree=cluster_object, n_features=attr(distance_matrix, "Size"),
-                                               dist_mat=distance_matrix, cluster_method=cluster_method)
-      
-      # Cut the tree for the optimal number of clusters
-      cluster_id <- stats::cutree(tree=cluster_object, k=n_clusters)
-      
-      # Define clusters
-      cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
-      
-      # Message the number of clusters
-      logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
-                     indent=message_indent,
-                     verbose=verbose)
-    }
-    
-    if(require_representation){
-      
-      # Find representative features
-      cluster_table <- fam_lapply_lb(cl=cl,
-                                     assign=NULL,
-                                     X=split(cluster_table, by="cluster_id"),
-                                     FUN=cluster.find_representation,
-                                     progress_bar=FALSE,
-                                     data_obj=data_obj,
-                                     feature_info_list=feature_info_list,
-                                     dist_mat=distance_matrix,
-                                     method=cluster_representation_method)
-      
-      # Combine into single table
-      cluster_table <- data.table::rbindlist(cluster_table)
-    }
-  }
-
-  # Determine cluster size
-  cluster_table[, "cluster_size":=.N, by="cluster_id"]
-  
-  return(cluster_table)
-}
+# cluster.get_cluster_table <- function(cl=NULL,
+#                                       require_representation=TRUE,
+#                                       cluster_object=NULL, 
+#                                       distance_matrix=NULL,
+#                                       data_obj=NULL,
+#                                       feature_info_list=NULL,
+#                                       settings=NULL,
+#                                       cluster_method=NULL, 
+#                                       cluster_linkage=NULL,
+#                                       cluster_cut_method=NULL,
+#                                       cluster_similarity_threshold=NULL,
+#                                       cluster_similarity_metric=NULL,
+#                                       cluster_representation_method=NULL,
+#                                       message_indent=0L,
+#                                       verbose=FALSE){
+# 
+#   if(is.null(distance_matrix)){
+#     if(is.null(cluster_object)) ..error_reached_unreachable_code("cluster.get_cluster_table: distance_matrix is required to create a cluster_object.")
+#     if(require_representation) ..error_reached_unreachable_code("cluster.get_cluster_table: distance_matrix is required to find representative features.")
+#   }
+#   
+#   # Create a cluster object if required.
+#   if(is.null(cluster_object)){
+#     cluster_object <- cluster.get_cluster_object(cl=cl, distance_matrix=distance_matrix, settings=settings, cluster_method=cluster_method,
+#                                                  cluster_linkage=cluster_linkage, verbose=verbose)
+#   }
+#   
+#   # Read and check settings required to form a cluster table
+#   if(!is.null(settings)){
+#     cluster_method <- settings$prep$cluster_method
+# 
+#   } else if(is.null(cluster_method)){
+#     ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_method argument was provided.")
+#   }
+#   
+#   if(!is.null(settings)){
+#     cluster_cut_method <- settings$prep$cluster_cut_method
+#     cluster_similarity_threshold <- settings$prep$cluster_sim_thresh
+#     cluster_similarity_metric <- settings$prep$cluster_similarity_metric
+#     
+#   } else if(is.null(cluster_cut_method) & cluster_method %in% c("agnes", "diana", "hclust")){
+#     ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_cut_method argument was provided.")
+#     
+#   } else if(is.null(cluster_similarity_threshold) & cluster_method %in% c("agnes", "diana", "hclust")){
+#     ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_similarity_threshold argument was provided.")
+#     
+#   } else if(is.null(cluster_similarity_metric) & cluster_method %in% c("agnes", "diana", "hclust")){
+#     ..error_reached_unreachable_code("cluster.get_cluster_table: no cluster_similarity_metric argument was provided.")
+#   }
+#   
+#   # Check whether a distance matrix is present to optimise n_clusters.
+#   if(is.null(distance_matrix) & cluster_method %in% c("agnes", "diana", "hclust")){
+#     if(cluster_cut_method == "silhouette"){
+#       ..error_reached_unreachable_code(paste0("cluster.get_cluster_table: no distance_matrix argument",
+#                                        " was provided to derive an optimal number of clusters using silhouette for hierarchical clustering."))
+#     }
+#   }
+#   
+#   # cluster_representation_method
+#   if(is.null(cluster_representation_method) & require_representation & cluster_method != "pam"){
+#     cluster_representation_method <- settings$prep$cluster_repr_method
+#   }
+#   
+#   if(is.null(data_obj)){
+#     if(require_representation){
+#       if(!cluster_representation_method %in% c("first") & !cluster_method %in% c("pam")){
+#       ..error_reached_unreachable_code("cluster.get_cluster_table: data_obj is required to find representative features.")
+#       }
+#     } 
+#   }
+#   
+#   if(is.null(feature_info_list)){
+#     if(require_representation){
+#       if(!cluster_representation_method %in% c("first") & !cluster_method %in% c("pam")){
+#         ..error_reached_unreachable_code("cluster.get_cluster_table: feature_info_list is required to find representative features.")
+#       }
+#     }
+#   }
+#   
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   cluster_repr_feature <- name <- NULL
+#   
+#   if(cluster_method %in% c("pam")){
+#     ##### Partitioning methods #############################################################
+#     
+#     # Get cluster medoids and the corresponding cluster id.
+#     temp_cluster_table <- data.table::data.table("cluster_id"=seq_len(length(cluster_object$id.med)),
+#                                                  "cluster_repr_feature"=names(cluster_object$clustering)[cluster_object$id.med])
+#     
+#     # Combine with all cluster features based on the cluster id.
+#     cluster_table <- data.table::data.table("name"=names(cluster_object$clustering),
+#                                                    "cluster_id"=cluster_object$clustering)
+#     cluster_table <- merge(cluster_table, temp_cluster_table, by="cluster_id", all.x=TRUE)
+#     
+#     # Add inversion and weight columns
+#     cluster_table[, ":="("inversion"=FALSE, "weight"=0.0)]
+#     cluster_table[name==cluster_repr_feature, "weight":=1.0]
+#     
+#   } else if(cluster_method %in% c("agnes", "diana", "hclust")){
+#     ##### Hierarchical methods #############################################################
+#   
+#     # Compute the cut-height
+#     cut_height <- similarity.to_distance(x=cluster_similarity_threshold, similarity_metric=cluster_similarity_metric)
+#     
+#     # Determine cuts
+#     if(cluster_cut_method=="fixed_cut"){
+#       # Cut the tree at the given height
+#       cluster_id <- stats::cutree(tree=cluster_object, h=cut_height)
+#       
+#       # Define clusters
+#       cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
+#       
+#       # Message the number of clusters
+#       logger.message(paste0("Pre-processing: Clusters were created by cutting the dendrogram below ", cut_height, ", which corresponds to ",
+#                             similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#       
+#       
+#     } else if(cluster_cut_method=="dynamic_cut"){
+#       
+#       if(!is_package_installed("dynamicTreeCut")){
+#         logger.stop("Please install the dynamicTreeCut package.")
+#       }
+#       
+#       # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics 2008 24(5):719-720
+#       cluster_id <- dynamicTreeCut::cutreeDynamicTree(dendro=cluster_object, maxTreeHeight=cut_height, deepSplit=TRUE, minModuleSize=1)
+#       
+#       # Define clusters
+#       cluster_table <- data.table::data.table("name"=cluster_object$labels, "cluster_id"=cluster_id)
+#       
+#       # Message the number of clusters
+#       logger.message(paste0("Pre-processing: Clusters were determined using the dynamic tree cut algorithm with maximum height of ", cut_height, ", which corresponds to ",
+#                             similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#       
+#       
+#     } else if(cluster_cut_method=="silhouette"){
+#       
+#       # Determine the optimal number of clusters based on the average cluster silhouette
+#       n_clusters <- cluster.optimise_silhoutte(tree=cluster_object, n_features=attr(distance_matrix, "Size"),
+#                                                dist_mat=distance_matrix, cluster_method=cluster_method)
+#       
+#       # Cut the tree for the optimal number of clusters
+#       cluster_id <- stats::cutree(tree=cluster_object, k=n_clusters)
+#       
+#       # Define clusters
+#       cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
+#       
+#       # Message the number of clusters
+#       logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
+#                      indent=message_indent,
+#                      verbose=verbose)
+#     }
+#     
+#     if(require_representation){
+#       
+#       # Find representative features
+#       cluster_table <- fam_lapply_lb(cl=cl,
+#                                      assign=NULL,
+#                                      X=split(cluster_table, by="cluster_id"),
+#                                      FUN=cluster.find_representation,
+#                                      progress_bar=FALSE,
+#                                      data_obj=data_obj,
+#                                      feature_info_list=feature_info_list,
+#                                      dist_mat=distance_matrix,
+#                                      method=cluster_representation_method)
+#       
+#       # Combine into single table
+#       cluster_table <- data.table::rbindlist(cluster_table)
+#     }
+#   }
+# 
+#   # Determine cluster size
+#   cluster_table[, "cluster_size":=.N, by="cluster_id"]
+#   
+#   return(cluster_table)
+# }
 
 
 
@@ -834,222 +864,222 @@ cluster.extract_label_order <- function(cluster_object, cluster_method){
 
 
 
-cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_method){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  sil_width <- cluster_size <- NULL
-  
-  if(cluster_method == "pam"){
-    # Generate partioning around medoids cluster
-    clust_obj <- cluster.pam(dist_mat=dist_mat, n_clusters=n_clusters)
-    
-    # Extract silhoutte table
-    silhouette_table <- data.table::as.data.table(clust_obj$silinfo$widths, keep.rownames=FALSE)
-    
-    # Compute the size and average silhouette in each cluster
-    silhouette_table <- silhouette_table[, list("avg_sil"=mean(sil_width), "cluster_size"=.N), by="cluster"]
-    
-    # Maintain only non-singular clusters
-    silhouette_table <- silhouette_table[cluster_size > 1]
-    
-    # Return average silhouette in the formed non-singular clusters.
-    if(!is_empty(silhouette_table)){
-      return(mean(silhouette_table$avg_sil))
-      
-    } else {
-      return(0.0)
-    }
-    
-  } else if(cluster_method %in% c("agnes", "diana", "hclust")){
-    
-    require_package(x="cluster",
-                    purpose="to cluster similar features together")
-    
-    # Compute silhouette.
-    silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=tree, k=n_clusters), dist=dist_mat)
-    
-    # Parse to matrix by changing the class. 
-    class(silhouette_matrix) <- "matrix"
-
-    # Extract silhoutte table
-    silhouette_table <- data.table::as.data.table(silhouette_matrix, keep.rownames=FALSE)
-    
-    # Compute the size and average silhouette in each cluster
-    silhouette_table <- silhouette_table[, list("avg_sil"=mean(sil_width), "cluster_size"=.N), by="cluster"]
-    
-    # Maintain only non-singular clusters
-    silhouette_table <- silhouette_table[cluster_size > 1]
-    
-    # Return average silhouette in the formed non-singular clusters.
-    if(!is_empty(silhouette_table)){
-      return(mean(silhouette_table$avg_sil))
-      
-    } else {
-      return(0.0)
-    }
-    
-  } else {
-    ..error_reached_unreachable_code("cluster.get_silhouette: unknown cluster method encountered.")
-  }
-}
-
-
-
-cluster.optimise_silhoutte <- function(n_features, tree=NULL, dist_mat, cluster_method){
-
-  # Check problematic values
-  if(n_features == 1){
-    return(1)
-    
-  } else if(n_features == 2){
-    
-    if(dist_mat[1] == 0){
-      # Zero distance can be safely imputed as being identical.
-      return(1)
-      
-    } else {
-      warning("Optimal number of clusters for silhouette could not be determined as only 2 features were available.")
-      
-      return(2)
-    }
-  }
-  
-  # Get cluster silhouettes
-  clust_k         <- seq(from=2, to=n_features-1, by=1)
-  clust_sil       <- sapply(clust_k, cluster.get_silhouette, tree=tree, dist_mat=dist_mat, cluster_method=cluster_method)
-
-  # Determine width of moving average filter as well as padding
-  n_pad_width     <- floor((0.5 * sqrt(n_features) - 1))
-  n_pad_width     <- max(c(0, n_pad_width))
-
-  # Set filter width
-  n_filt_width    <- 2 * n_pad_width + 1
-
-  # Pad silhouettes before filtering
-  if(n_pad_width > 0){
-    clust_sil <- c(rep(head(clust_sil, n=1), times=n_pad_width),
-                   clust_sil,
-                   rep(tail(clust_sil, n=1), times=n_pad_width))
-  }
-
-  # Create moving average filter
-  mov_avg_filter <- rep(1/n_filt_width, times=n_filt_width)
-
-  # Apply filter
-  clust_sil_avg  <- as.numeric(stats::filter(x=clust_sil, filter=mov_avg_filter, sides=2))
-
-  # Drop edge values
-  clust_sil_avg  <- clust_sil_avg[!is.na(clust_sil_avg)]
-
-  # Find maximum silhouette value.
-  max_sil_avg    <- max(clust_sil_avg)
-  
-  # Determine if the silhoutte indicates reasonable structure (> 0.50), see
-  # Kaufman and Rousseeuw: Finding groups in data.
-  if(max_sil_avg > 0.50){
-    optim_k      <- clust_k[which.max(clust_sil_avg)]
-    
-  } else {
-    optim_k      <- n_features
-  }
-
-  return(optim_k)
-}
-
-
-
-cluster.pam <- function(dist_mat, n_clusters){
-  # Create partioning-around-medoids cluster Kaufman, L. and Rousseeuw, P.J.
-  # (1987), Clustering by means of Medoids, in Statistical Data Analysis Based
-  # on the L 1 {\displaystyle L_{1}} L_{1}–Norm and Related Methods, edited by
-  # Y. Dodge, North-Holland, 405–416.)
-  
-  if(n_clusters == length(attr(dist_mat, "Labels"))){
-    # PAM clustering doesn't like it when you n_clusters is equal to the number
-    # of features.
-    
-    # Obtain features
-    features <- attr(dist_mat, "Labels")
-    
-    # Create fake pam object
-    h <- list("medoids"=features,
-              "id.med"=seq_along(features),
-              "clustering"=seq_along(features),
-              "isolation"=factor(rep_len("no", length(features)), levels=c("no", "L", "L*")),
-              "silinfo"=list("widths"=matrix(data=0.0,
-                                             nrow=length(features),
-                                             ncol=3L,
-                                             dimnames=list(features, c("cluster", "neighbor", "sil_width"))),
-                             "clus.avg.widths"=rep_len(0.0, length(features)),
-                             "avg.width"=0.0))
-    
-    # Name cluster indices
-    names(h$clustering) <- features
-    
-    # Name isolation for each cluster.
-    names(h$isolation) <- as.character(seq_along(features))
-    
-    # Adept silhouette info.
-    h$silinfo$widths[, 1] <- as.numeric(seq_along(features))
-    h$silinfo$widths[, 2] <- as.numeric(data.table::shift(seq_along(features), n=1L,type="lead", fill=1L))
-    
-    # Set class
-    class(h) <- c("pam", "partition")
-    
-    return(h)
-     
-  } else {
-    
-    require_package(x="cluster",
-                    purpose="to cluster similar features together")
-    
-    return(cluster::pam(x=dist_mat, k=n_clusters, keep.diss=FALSE, keep.data=FALSE))
-  }
-}
-
-
-
-cluster.agnes <- function(dist_mat, linkage){
-  
-  require_package(x="cluster",
-                  purpose="to cluster similar features together")
-  
-  # Compute agglomerative hierarchical clustering of the data set
-  return(cluster::agnes(x=dist_mat, method=linkage, keep.diss=FALSE, keep.data=FALSE))
-}
-
-
-
-cluster.diana <- function(dist_mat){
-  
-  require_package(x="cluster",
-                  purpose="to cluster similar features together")
-  
-  # Compute DIvisive ANAlysis hierarchical clustering of the data set
-  return(cluster::diana(x=dist_mat, keep.diss=FALSE, keep.data=FALSE))
-}
-
-
-
-cluster.hclust <- function(dist_mat, linkage){
-  # Hierarchical clustering
-
-  # Convert general linkage names to stats::hclust linkage names.
-  if(linkage == "ward")          {
-    linkage <- "ward.D2"
-    
-  } else if(linkage == "weighted") {
-    linkage <- "mcquitty"
-  }
-  
-  if(is_package_installed("fastcluster")){
-    return(fastcluster::hclust(d=dist_mat, method=linkage))
-    
-  } else {
-    return(stats::hclust(d=dist_mat, method=linkage))
-  }
-  
-}
+# cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_method){
+#   
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   sil_width <- cluster_size <- NULL
+#   
+#   if(cluster_method == "pam"){
+#     # Generate partioning around medoids cluster
+#     clust_obj <- cluster.pam(dist_mat=dist_mat, n_clusters=n_clusters)
+#     
+#     # Extract silhoutte table
+#     silhouette_table <- data.table::as.data.table(clust_obj$silinfo$widths, keep.rownames=FALSE)
+#     
+#     # Compute the size and average silhouette in each cluster
+#     silhouette_table <- silhouette_table[, list("avg_sil"=mean(sil_width), "cluster_size"=.N), by="cluster"]
+#     
+#     # Maintain only non-singular clusters
+#     silhouette_table <- silhouette_table[cluster_size > 1]
+#     
+#     # Return average silhouette in the formed non-singular clusters.
+#     if(!is_empty(silhouette_table)){
+#       return(mean(silhouette_table$avg_sil))
+#       
+#     } else {
+#       return(0.0)
+#     }
+#     
+#   } else if(cluster_method %in% c("agnes", "diana", "hclust")){
+#     
+#     require_package(x="cluster",
+#                     purpose="to cluster similar features together")
+#     
+#     # Compute silhouette.
+#     silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=tree, k=n_clusters), dist=dist_mat)
+#     
+#     # Parse to matrix by changing the class. 
+#     class(silhouette_matrix) <- "matrix"
+# 
+#     # Extract silhoutte table
+#     silhouette_table <- data.table::as.data.table(silhouette_matrix, keep.rownames=FALSE)
+#     
+#     # Compute the size and average silhouette in each cluster
+#     silhouette_table <- silhouette_table[, list("avg_sil"=mean(sil_width), "cluster_size"=.N), by="cluster"]
+#     
+#     # Maintain only non-singular clusters
+#     silhouette_table <- silhouette_table[cluster_size > 1]
+#     
+#     # Return average silhouette in the formed non-singular clusters.
+#     if(!is_empty(silhouette_table)){
+#       return(mean(silhouette_table$avg_sil))
+#       
+#     } else {
+#       return(0.0)
+#     }
+#     
+#   } else {
+#     ..error_reached_unreachable_code("cluster.get_silhouette: unknown cluster method encountered.")
+#   }
+# }
+# 
+# 
+# 
+# cluster.optimise_silhoutte <- function(n_features, tree=NULL, dist_mat, cluster_method){
+# 
+#   # Check problematic values
+#   if(n_features == 1){
+#     return(1)
+#     
+#   } else if(n_features == 2){
+#     
+#     if(dist_mat[1] == 0){
+#       # Zero distance can be safely imputed as being identical.
+#       return(1)
+#       
+#     } else {
+#       warning("Optimal number of clusters for silhouette could not be determined as only 2 features were available.")
+#       
+#       return(2)
+#     }
+#   }
+#   
+#   # Get cluster silhouettes
+#   clust_k         <- seq(from=2, to=n_features-1, by=1)
+#   clust_sil       <- sapply(clust_k, cluster.get_silhouette, tree=tree, dist_mat=dist_mat, cluster_method=cluster_method)
+# 
+#   # Determine width of moving average filter as well as padding
+#   n_pad_width     <- floor((0.5 * sqrt(n_features) - 1))
+#   n_pad_width     <- max(c(0, n_pad_width))
+# 
+#   # Set filter width
+#   n_filt_width    <- 2 * n_pad_width + 1
+# 
+#   # Pad silhouettes before filtering
+#   if(n_pad_width > 0){
+#     clust_sil <- c(rep(head(clust_sil, n=1), times=n_pad_width),
+#                    clust_sil,
+#                    rep(tail(clust_sil, n=1), times=n_pad_width))
+#   }
+# 
+#   # Create moving average filter
+#   mov_avg_filter <- rep(1/n_filt_width, times=n_filt_width)
+# 
+#   # Apply filter
+#   clust_sil_avg  <- as.numeric(stats::filter(x=clust_sil, filter=mov_avg_filter, sides=2))
+# 
+#   # Drop edge values
+#   clust_sil_avg  <- clust_sil_avg[!is.na(clust_sil_avg)]
+# 
+#   # Find maximum silhouette value.
+#   max_sil_avg    <- max(clust_sil_avg)
+#   
+#   # Determine if the silhoutte indicates reasonable structure (> 0.50), see
+#   # Kaufman and Rousseeuw: Finding groups in data.
+#   if(max_sil_avg > 0.50){
+#     optim_k      <- clust_k[which.max(clust_sil_avg)]
+#     
+#   } else {
+#     optim_k      <- n_features
+#   }
+# 
+#   return(optim_k)
+# }
+# 
+# 
+# 
+# cluster.pam <- function(dist_mat, n_clusters){
+#   # Create partioning-around-medoids cluster Kaufman, L. and Rousseeuw, P.J.
+#   # (1987), Clustering by means of Medoids, in Statistical Data Analysis Based
+#   # on the L 1 {\displaystyle L_{1}} L_{1}–Norm and Related Methods, edited by
+#   # Y. Dodge, North-Holland, 405–416.)
+#   
+#   if(n_clusters == length(attr(dist_mat, "Labels"))){
+#     # PAM clustering doesn't like it when you n_clusters is equal to the number
+#     # of features.
+#     
+#     # Obtain features
+#     features <- attr(dist_mat, "Labels")
+#     
+#     # Create fake pam object
+#     h <- list("medoids"=features,
+#               "id.med"=seq_along(features),
+#               "clustering"=seq_along(features),
+#               "isolation"=factor(rep_len("no", length(features)), levels=c("no", "L", "L*")),
+#               "silinfo"=list("widths"=matrix(data=0.0,
+#                                              nrow=length(features),
+#                                              ncol=3L,
+#                                              dimnames=list(features, c("cluster", "neighbor", "sil_width"))),
+#                              "clus.avg.widths"=rep_len(0.0, length(features)),
+#                              "avg.width"=0.0))
+#     
+#     # Name cluster indices
+#     names(h$clustering) <- features
+#     
+#     # Name isolation for each cluster.
+#     names(h$isolation) <- as.character(seq_along(features))
+#     
+#     # Adept silhouette info.
+#     h$silinfo$widths[, 1] <- as.numeric(seq_along(features))
+#     h$silinfo$widths[, 2] <- as.numeric(data.table::shift(seq_along(features), n=1L,type="lead", fill=1L))
+#     
+#     # Set class
+#     class(h) <- c("pam", "partition")
+#     
+#     return(h)
+#      
+#   } else {
+#     
+#     require_package(x="cluster",
+#                     purpose="to cluster similar features together")
+#     
+#     return(cluster::pam(x=dist_mat, k=n_clusters, keep.diss=FALSE, keep.data=FALSE))
+#   }
+# }
+# 
+# 
+# 
+# cluster.agnes <- function(dist_mat, linkage){
+#   
+#   require_package(x="cluster",
+#                   purpose="to cluster similar features together")
+#   
+#   # Compute agglomerative hierarchical clustering of the data set
+#   return(cluster::agnes(x=dist_mat, method=linkage, keep.diss=FALSE, keep.data=FALSE))
+# }
+# 
+# 
+# 
+# cluster.diana <- function(dist_mat){
+#   
+#   require_package(x="cluster",
+#                   purpose="to cluster similar features together")
+#   
+#   # Compute DIvisive ANAlysis hierarchical clustering of the data set
+#   return(cluster::diana(x=dist_mat, keep.diss=FALSE, keep.data=FALSE))
+# }
+# 
+# 
+# 
+# cluster.hclust <- function(dist_mat, linkage){
+#   # Hierarchical clustering
+# 
+#   # Convert general linkage names to stats::hclust linkage names.
+#   if(linkage == "ward")          {
+#     linkage <- "ward.D2"
+#     
+#   } else if(linkage == "weighted") {
+#     linkage <- "mcquitty"
+#   }
+#   
+#   if(is_package_installed("fastcluster")){
+#     return(fastcluster::hclust(d=dist_mat, method=linkage))
+#     
+#   } else {
+#     return(stats::hclust(d=dist_mat, method=linkage))
+#   }
+#   
+# }
 
 
 
@@ -1295,8 +1325,6 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
   return(cluster_data)
   
 }
-
-
 
 
 
