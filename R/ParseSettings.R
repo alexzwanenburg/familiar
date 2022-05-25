@@ -3616,15 +3616,15 @@
   
   # Check the proposed cluster parameters.
   if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)){
-    check_cluster_parameters(cluster_method=settings$feature_cluster_method,
-                             cluster_linkage=settings$feature_linkage_method,
-                             cluster_cut_method=settings$feature_cluster_cut_method,
-                             cluster_similarity_threshold=settings$feature_similarity_threshold,
-                             cluster_similarity_metric=settings$feature_similarity_metric,
-                             data_type="feature",
-                             message_type="backend_error")
+    .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
+                              cluster_linkage=settings$feature_linkage_method,
+                              cluster_cut_method=settings$feature_cluster_cut_method,
+                              cluster_similarity_threshold=settings$feature_similarity_threshold,
+                              cluster_similarity_metric=settings$feature_similarity_metric,
+                              data_type="feature",
+                              message_type="backend_error")
   }
-  .
+  
   ##### sample_cluster_method ##################################################
   # Sample cluster method
   settings$sample_cluster_method <- .parse_arg(x_config=config$sample_cluster_method,
