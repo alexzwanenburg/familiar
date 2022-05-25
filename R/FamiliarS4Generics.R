@@ -90,6 +90,7 @@ setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("ex
 
 setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_object_parameters"))
 
+
 ##### Clustering methods -------------------------------------------------------
 setGeneric("set_similarity_table", function(object, data, ...) standardGeneric("set_similarity_table"))
 
@@ -97,19 +98,19 @@ setGeneric(".set_similarity_table", function(object, data, ...) standardGeneric(
 
 setGeneric("get_similarity_names", function(object, ...) standardGeneric("get_similarity_names"))
 
+setGeneric("get_distance_table", function(object, ...) standardGeneric("get_distance_table"))
+
 setGeneric("get_distance_matrix", function(object, ...) standardGeneric("get_distance_matrix"))
 
-setGeneric(".get_distance_matrix", function(object, ...) standardGeneric(".get_distance_matrix"))
-
-setGeneric("apply_cluster_method", function(object, ...) standardGeneric("create_cluster_object"))
+setGeneric("apply_cluster_method", function(object, ...) standardGeneric("apply_cluster_method"))
 
 setGeneric("create_clusters", function(object, ...) standardGeneric("create_clusters"))
 
-setGeneric(".cluster_by_silhouette", function(object, ...) standardGeneric("cluster_by_silhouette"))
+setGeneric(".cluster_by_silhouette", function(object, ...) standardGeneric(".cluster_by_silhouette"))
 
-setGeneric(".cluster_by_fixed_cut", function(object, ...) standardGeneric("cluster_by_fixed_cut"))
+setGeneric(".cluster_by_fixed_cut", function(object, ...) standardGeneric(".cluster_by_fixed_cut"))
 
-setGeneric(".cluster_by_dynamic_cut", function(object, ...) standardGeneric("cluster_by_dynamic_cut"))
+setGeneric(".cluster_by_dynamic_cut", function(object, ...) standardGeneric(".cluster_by_dynamic_cut"))
 
 
 ##### Methods to see and update labels of data in familiarCollection objects.

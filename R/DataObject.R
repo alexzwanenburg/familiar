@@ -1513,20 +1513,18 @@ setMethod("cluster_features", signature(data="dataObject"),
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
             
-            # Identify features that form non-singular clusters
-            clustering_features <- find_clustering_features(features=feature_columns, feature_info_list=feature_info_list)
+            # Derive clustering table.
+            cluster_table <- .create_clustering_table(feature_info_list=feature_info_list,
+                                                      selected_features=feature_columns)
+            browser()
+            # Update data.
+            clustered_data <- lapply(split(cluster_table, by="cluster_name"),
+                                     set_clustered_data,
+                                     data=data,
+                                     feature_info_list=feature_info_list)
             
-            # Skip if all clusters are singular
-            if(length(clustering_features) == 0) return(data)
-            
-            # Reconstitute a cluster table
-            cluster_table <- get_cluster_table(feature_info_list=feature_info_list, selected_features=clustering_features)
-
-            # Cluster data
-            clustered_data <- data.table::setDT(unlist(unname(lapply(split(cluster_table, by="cluster_name"), cluster.compute_cluster, data_obj=data)), recursive=FALSE))
-            
-            # Combine with non-clustered input data
-            data@data <- cbind(data@data[, !clustering_features, with=FALSE], clustered_data)
+            # Attach the clustered data.
+            data@data <- data.table::data.table(clustered_data)
             
             return(data)
           })

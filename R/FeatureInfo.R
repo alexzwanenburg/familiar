@@ -266,31 +266,31 @@ add_missing_value_fractions <- function(cl=NULL, feature_info_list, data, thresh
 }
 
 
-find_clustering_features <- function(features, feature_info_list){
-  # Determine features that form non-singular clusters
-  
-  clustering_features <- features[sapply(features, function(ii, feature_info_list){
-    
-    # Get featureInfo for the current feature
-    object <- feature_info_list[[ii]]
-    
-    # A valid cluster column contains cluster parameters
-    # Cluster parameters will be missing for features that are part of a signature.
-    if(is.null(object@cluster_parameters)){
-      return(FALSE)
-    }
-    
-    # A non-singular cluster has a size larger than 1
-    if(object@cluster_parameters$cluster_size > 1){
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-    
-  }, feature_info_list=feature_info_list)]
-  
-  return(clustering_features)
-}
+# find_clustering_features <- function(features, feature_info_list){
+#   # Determine features that form non-singular clusters
+#   
+#   clustering_features <- features[sapply(features, function(ii, feature_info_list){
+#     
+#     # Get featureInfo for the current feature
+#     object <- feature_info_list[[ii]]
+#     
+#     # A valid cluster column contains cluster parameters
+#     # Cluster parameters will be missing for features that are part of a signature.
+#     if(is.null(object@cluster_parameters)){
+#       return(FALSE)
+#     }
+#     
+#     # A non-singular cluster has a size larger than 1
+#     if(object@cluster_parameters$cluster_size > 1){
+#       return(TRUE)
+#     } else {
+#       return(FALSE)
+#     }
+#     
+#   }, feature_info_list=feature_info_list)]
+#   
+#   return(clustering_features)
+# }
 
 
 add_required_features <- function(feature_info_list){
@@ -299,7 +299,7 @@ add_required_features <- function(feature_info_list){
   available_features <- get_available_features(feature_info_list=feature_info_list)
   
   # Add required features slot
-  upd_list <- lapply(available_features, function(ii,feature_info_list){
+  upd_list <- lapply(available_features, function(ii, feature_info_list){
     
     # featureInfo object for the current feature
     object <- feature_info_list[[ii]]
@@ -308,18 +308,14 @@ add_required_features <- function(feature_info_list){
     required_features <- object@name
     
     # Required features for imputation
-    if(is.list(object@imputation_parameters)){
-      if(!is.null(object@imputation_parameters)){
+    if(is(object@imputation_parameters, "featureInfoParametersImputation")){
         browser()
         required_features <- c(required_features, object@imputation_parameters@required_features)
-      }
     }
     
     # Required features for clustering
-    if(is.list(object@cluster_parameters)){
-      if(!is.null(object@cluster_parameters$required_features)){
-        required_features <- c(required_features, object@cluster_parameters$required_features)
-      }
+    if(is(object@cluster_parameters, "featureInfoParametersCluster")){
+      required_features <- c(required_features, object@cluster_parameters@required_features)
     }
     
     # Add required features
@@ -844,112 +840,6 @@ find_novelty_features <- function(model_features=NULL, feature_info_list){
   return(union(model_features, novelty_features))
 }
 
-
-features_before_clustering <- function(features, cluster_table=NULL, feature_info_list=NULL){
-  # Convert input features to original features
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  cluster_name <- NULL
-  
-  # Create a cluster table if it is not provided
-  if(is.null(cluster_table) & is.null(feature_info_list)){
-    ..error_reached_unreachable_code("feature_before_clustering_feature_info_list_missing")
-    
-  } else if(is.null(cluster_table)){
-    cluster_table <- get_cluster_table(feature_info_list=feature_info_list)
-  }
-  
-  # Find names of clusters in the data
-  cluster_names <- unique(cluster_table$cluster_name)
-  
-  # Determine all input features that are not clusters
-  original_features <- setdiff(features, cluster_names)
-  
-  # Find clusters in the input features
-  cluster_names <- intersect(features, cluster_names)
-  
-  # Find original features corresponding to clusters
-  if(length(cluster_names) > 0){
-    original_features <- c(original_features, cluster_table[cluster_name %in% cluster_names]$name)
-  }
-  
-  # Return original features
-  return(unique(original_features))
-}
-
-
-features_after_clustering <- function(features, feature_info_list){
-  # Convert input features to features after clustering
-
-  # Filter out names that might be clusters
-  post_clustering_features <- setdiff(features, get_available_features(feature_info_list=feature_info_list))
-  features <- setdiff(features, post_clustering_features)
-  
-  # Identify features that form non-singular clusters
-  clustering_features <- find_clustering_features(features=features, feature_info_list=feature_info_list)
-  
-  # Add singular features, as these are not changed
-  post_clustering_features <- c(post_clustering_features, setdiff(features, clustering_features))
-  
-  # Identify cluster names
-  if(length(clustering_features) > 0){
-    post_clustering_features <- c(post_clustering_features, unique(get_cluster_table(feature_info_list=feature_info_list,
-                                                                                     selected_features=clustering_features)$cluster_name))
-  }
-  
-  return(post_clustering_features)
-}
-
-
-get_cluster_table <- function(feature_info_list, selected_features=NULL){
-  
-  # Get selected columns (all features aside from those in a signature)
-  if(is.null(selected_features)){
-    selected_features <- get_available_features(feature_info_list=feature_info_list, exclude_signature=TRUE)
-  }
-  
-  # Return an empty table in case there are no selected columns
-  if(length(selected_features) == 0){
-    return(data.table::data.table("name"=character(0),
-                                  "type"=character(0),
-                                  "cluster_name"=character(0),
-                                  "invert"=logical(0),
-                                  "weight"=logical(0)))
-  }
-  
-  # Generate a cluster table
-  cluster_table <- data.table::rbindlist(lapply(selected_features, function(ii, feature_info_list){
-    
-    # Get featureInfo for the current feature
-    object <- feature_info_list[[ii]]
-    
-    if(is.null(object@cluster_parameters)){
-      # Do not collect data from features that do not form clusters
-      return(data.table::data.table("name"=character(0),
-                                    "type"=character(0),
-                                    "cluster_name"=character(0),
-                                    "invert"=logical(0),
-                                    "weight"=logical(0)))
-       
-    } else if(object@cluster_parameters$weight == 0.0){
-      # Do not collect data from features that have no weight.
-      return(data.table::data.table("name"=character(0),
-                                    "type"=character(0),
-                                    "cluster_name"=character(0),
-                                    "invert"=logical(0),
-                                    "weight"=logical(0)))
-      
-    } else {
-      return(data.table::data.table("name" = object@name,
-                                    "type" = object@feature_type,
-                                    "cluster_name" = object@cluster_parameters$cluster_name,
-                                    "invert" = object@cluster_parameters$invert,
-                                    "weight" = object@cluster_parameters$weight))
-    }
-  }, feature_info_list=feature_info_list))
-  
-  return(cluster_table)
-}
 
 
 

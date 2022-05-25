@@ -565,8 +565,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
   # Extract clustering information
   feature_info_list  <- add_cluster_info(cl=cl,
                                          feature_info_list=feature_info_list,
-                                         data_obj=data,
-                                         settings=settings,
+                                         data=data,
                                          message_indent=message_indent,
                                          verbose=verbose)
 

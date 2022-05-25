@@ -559,8 +559,8 @@ setMethod(".set_similarity_table", signature(object="clusterMethod", data="dataO
 
 
 #### get_similarity_names (NULL) -----------------------------------------------
-setMethod("get_similarity_names", signature(object=NULL),
-          return(object, ...){
+setMethod("get_similarity_names", signature(object="NULL"),
+          function(object, ...){
             return(NULL)
           })
 
@@ -568,7 +568,7 @@ setMethod("get_similarity_names", signature(object=NULL),
 
 #### get_similarity_names (similarityTable) ------------------------------------
 setMethod("get_similarity_names", signature(object="similarityTable"),
-          return(object, ...){
+          function(object, ...){
             
             element_names <- NULL
             if(object@data_type %in% c("cluster", "feature")){
@@ -596,7 +596,7 @@ setMethod("get_similarity_names", signature(object="similarityTable"),
 
 #### get_similarity_names (noSimilarityTable) ----------------------------------
 setMethod("get_similarity_names", signature(object="noSimilarityTable"),
-          return(object, ...){
+          function(object, ...){
             
             element_names <- NULL
             if(object@data_type %in% c("cluster", "feature", "sample")){
@@ -614,9 +614,10 @@ setMethod("get_similarity_names", signature(object="noSimilarityTable"),
 
 
 
-#### get_distance_matrix (clusterMethod) ---------------------------------------
-setMethod("get_distance_matrix", signature(object="clusterMethod"),
-          function(object, ...){
+#### get_distance_table (clusterMethod) ----------------------------------------
+setMethod("get_distance_table", signature(object="noSimilarityTable"),
+          function(object,
+                   ...){
             
             # Check that similarity table is set.
             if(is.null(object@similarity_table)){
@@ -626,26 +627,18 @@ setMethod("get_distance_matrix", signature(object="clusterMethod"),
             }
             
             # Push to get_distance_matrix for similarity tables.
-            return(.get_distance_matrix(object=object@similarity_table,
-                                        ...))
+            return(get_distance_table(object=object@similarity_table,
+                                      ...))
           })
 
 
 
-#### .get_distance_matrix (clusterMethod) ---------------------------
-setMethod(".get_distance_matrix", signature(object="clusterMethod"),
+#### get_distance_table (similarityTable) --------------------------------------
+setMethod("get_distance_table", signature(object="similarityTable"),
           function(object,
+                   include_diagonal=TRUE,
                    ...){
-            return(.get_distance_matrix(object=object@similarity_table))
-          })
-
-
-
-#### get_distance_matrix (similarityTable) -------------------------------------
-setMethod("get_distance_matrix", signature(object="similarityTable"),
-          function(object,
-                   ...){
-            # Converts a similarity table into a distance matrix.
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             value <- NULL
             
@@ -657,12 +650,11 @@ setMethod("get_distance_matrix", signature(object="similarityTable"),
             
             # Determine whether the similarity table is for features (columns)
             # or samples (rows).
-            element_1 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_1", "sample_1")
-            element_2 <- ifelse(data@data_type %in% c("feature", "cluster"), "feature_name_2", "sample_2")
+            element_names <- .get_cluster_data_type_element_name(data_type=object@data_type)
             
             # Find elements from the distance table.
-            elements <- union(lower_triangle[[element_1]],
-                              lower_triangle[[element_2]])
+            elements <- union(lower_triangle[[element_names[1]]],
+                              lower_triangle[[element_names[2]]])
             
             # Convert similarity to distance.
             lower_triangle[, "value":=similarity.to_distance(x=value,
@@ -671,31 +663,83 @@ setMethod("get_distance_matrix", signature(object="similarityTable"),
             # Add in other triangle of the table by switching around the columns.
             upper_triangle <- data.table::copy(lower_triangle)
             data.table::setnames(upper_triangle,
-                                 old=c(element_1, element_2),
-                                 new=c(element_2, element_1))
+                                 old=element_names,
+                                 new=rev(element_names))
             
-            # Create diagonals that always have distance 0.
-            diagonal_table <- data.table::data.table("element_1"=elements,
-                                                     "element_2"=elements,
-                                                     "value"=as.double(0))
+            if(include_diagonal){
+              # Create diagonals that always have distance 0.
+              diagonal_table <- data.table::data.table("element_1"=elements,
+                                                       "element_2"=elements,
+                                                       "value"=as.double(0))
+              
+              # Add names to the diagonal table.
+              data.table::setnames(diagonal_table,
+                                   old=c("element_1", "element_2"),
+                                   new=element_names)
+              
+              # Combine to single, long, table
+              distance_table <- rbind(lower_triangle, diagonal_table, upper_triangle)
+              
+            } else {
+              # Combine upper and lower triangles.
+              distance_table <- rbind(lower_triangle, upper_triangle)
+            }
             
-            # Add names to the diagonal table.
-            data.table::setnames(diagonal_table,
-                                 old=c("element_1", "element_2"),
-                                 new=c(element_1, element_2))
+            return(distance_table)
+          })
+
+
+
+#### get_distance_table (noSimilarityTable) ------------------------------------
+setMethod("get_distance_table", signature(object="noSimilarityTable"),
+          function(object,
+                   ...){
+            # For noSimilarityTable objects, return NULL.
             
-            # Combine to single, long, table
-            distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
+            return(NULL)
+          })
+
+
+
+#### get_distance_matrix (clusterMethod) --------------------------------------
+setMethod("get_distance_matrix", signature(object="clusterMethod"),
+          function(object,
+                   ...){
+            
+            # Check that similarity table is set.
+            if(is.null(object@similarity_table)){
+              # Create similarity table first.
+              object <- do.call(set_similarity_table, args=c(list("object"=object),
+                                                             list(...)))
+            }
+            
+            return(get_distance_matrix(object=object@similarity_table))
+          })
+
+
+
+#### get_distance_matrix (similarityTable) -------------------------------------
+setMethod("get_distance_matrix", signature(object="similarityTable"),
+          function(object,
+                   ...){
+            # Converts a similarity table into a distance matrix.
+            
+            # Determine whether the similarity table is for features (columns)
+            # or samples (rows).
+            element_names <- .get_cluster_data_type_element_name(data_type=object@data_type)
+            
+            # Convert a similarity table to a full distance table first.
+            distance_table <- get_distance_table(object=object)
             
             # Create n x n table
             distance_table  <- data.table::dcast(distance_table,
-                                                 stats::as.formula(paste(element_1, "~", element_2)),
+                                                 stats::as.formula(paste(element_names[1], "~", element_names[2])),
                                                  value.var="value")
             
             # Add rownames into the distance table -- I know. Blasphemy.
             # Otherwise as.dist doesn't function.
-            rownames(distance_table) <- distance_table[[element_1]]
-            distance_table[, (element_1):=NULL]
+            rownames(distance_table) <- distance_table[[element_names[1]]]
+            distance_table[, (element_names[1]):=NULL]
             
             # Create dissimilarity matrix
             distance_matrix <- stats::as.dist(distance_table)
@@ -705,7 +749,7 @@ setMethod("get_distance_matrix", signature(object="similarityTable"),
 
 
 
-#### get_distance_matrix (clusterMethod, noSimilarityTable) ----------------------
+#### get_distance_matrix (noSimilarityTable) -----------------------------------
 setMethod("get_distance_matrix", signature(object="noSimilarityTable"),
           function(object,
                    ...){
@@ -715,7 +759,7 @@ setMethod("get_distance_matrix", signature(object="noSimilarityTable"),
 
 
 
-#### apply_cluster_method (clusterMethod) -----------------------------------
+#### apply_cluster_method (clusterMethod) --------------------------------------
 setMethod("apply_cluster_method", signature(object="clusterMethod"),
           function(object, ...){
             # Generic method where no clustering object is generated.
@@ -1286,4 +1330,14 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
       }
     }
   }
+}
+
+
+.get_cluster_data_type_element_name <- function(data_type){
+  # Determine whether the similarity table is for features (columns)
+  # or samples (rows).
+  element_1 <- ifelse(data_type %in% c("feature", "cluster"), "feature_name_1", "sample_1")
+  element_2 <- ifelse(data_type %in% c("feature", "cluster"), "feature_name_2", "sample_2")
+  
+  return(c(element_1, element_2))
 }
