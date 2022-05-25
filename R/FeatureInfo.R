@@ -1167,28 +1167,40 @@ setMethod("show", signature(object="featureInfo"),
             cluster_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(!is.null(object@cluster_parameters)){
-              if(object@cluster_parameters$cluster_size > 1){
+            if(!is(object@cluster_parameters, "featureInfoParametersCluster")){
+              if(object@cluster_parameters@cluster_size > 1){
                 
                 # Find the feature(s) required to form the cluster.
-                cluster_feature_names <- object@cluster_parameters$required_features
+                cluster_feature_names <- object@cluster_parameters@required_features
                 
+                # Find the clustering method.
+                if(is(object@cluster_parameters@method, "clusterMethod")){
+                  cluster_method_str <- paste0("(", object@cluster_parameters@method@method, ") ")
+                  
+                } else if(is(object@cluster_parameters@method, "character")){
+                  cluster_method_str <- paste0("(", object@cluster_parameters@method, ") ")
+                  
+                } else {
+                  cluster_method_str <- NULL
+                }
+                
+
                 if(length(cluster_feature_names) == 1){
                   # Only one feature is required to form the cluster.
                   if(cluster_feature_names == object@name){
                     # The current feature is the reference feature.
-                    cluster_str <- paste0("  forms cluster (",
-                                          object@cluster_parameters$method,
-                                          ") with ",
-                                          object@cluster_parameters$cluster_size - 1,
+                    cluster_str <- paste0("  forms cluster ",
+                                          cluster_method_str,
+                                          "with ",
+                                          object@cluster_parameters@cluster_size - 1,
                                           " other features, and is the reference feature.\n")
                     
                   } else {
                     # The current feature is not the reference feature.
-                    cluster_str <- paste0("  forms cluster (",
-                                          object@cluster_parameters$method,
-                                          ") with ",
-                                          object@cluster_parameters$cluster_size - 1,
+                    cluster_str <- paste0("  forms cluster ",
+                                          cluster_method_str,
+                                          "with ",
+                                          object@cluster_parameters@cluster_size - 1,
                                           " other features, with ",
                                           cluster_feature_names,
                                           " as the reference feature.\n")
@@ -1196,9 +1208,9 @@ setMethod("show", signature(object="featureInfo"),
                   
                 } else {
                   # Multiple features are required to form the cluster.
-                  cluster_str <- paste0("  forms cluster (",
-                                        object@cluster_parameters$method,
-                                        ") with ",
+                  cluster_str <- paste0("  forms cluster ",
+                                        cluster_method_str,
+                                        "with ",
                                         paste_s(setdiff(cluster_feature_names, object@name)),
                                         ".\n")
                 }
