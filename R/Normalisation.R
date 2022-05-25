@@ -929,11 +929,11 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   
   # Obtain normalisation parameters.
   object <- add_feature_info_parameters(object=object,
-                                        data=data)
+                                        data=x)
   
   # Apply normalisation parameters.
   y <- apply_feature_info_parameters(object=object,
-                                     data=data)
+                                     data=x)
   
   # Output to certain range (if provided).
   if(!is.null(range)){
