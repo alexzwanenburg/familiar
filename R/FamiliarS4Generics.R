@@ -112,6 +112,8 @@ setGeneric(".cluster_by_fixed_cut", function(object, ...) standardGeneric(".clus
 
 setGeneric(".cluster_by_dynamic_cut", function(object, ...) standardGeneric(".cluster_by_dynamic_cut"))
 
+setGeneric(".cluster_by_generic", function(object, ...) standardGeneric(".cluster_by_generic"))
+
 
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))

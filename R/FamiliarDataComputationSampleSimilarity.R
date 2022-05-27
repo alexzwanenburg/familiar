@@ -158,12 +158,17 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   # Aggregate features.
   data <- aggregate_data(data=data)
   
+  # Identify eligible columns.
+  feature_columns <- get_feature_columns(x=data)
+  
   # Compute the similarity table
-  data_element@data <- cluster.get_samplewise_similarity_table(cl=cl,
-                                                               data_obj=data,
-                                                               similarity_metric=data_element@similarity_metric,
-                                                               verbose=verbose,
-                                                               message_indent=message_indent + 1L)
+  data_element@data <- set_similarity_table(data=data,
+                                            feature_info_list=object@feature_info[feature_columns],
+                                            similarity_metric=data_element@similarity_metric,
+                                            data_type="sample",
+                                            cl=cl,
+                                            message_indent=message_indent + 1L,
+                                            verbose=verbose)
   
   # Merge data elements
   data_elements <- merge_data_elements(list(data_element))
@@ -175,24 +180,73 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
 
 
 
-..compute_sample_similarity_dendrogram <- function(x){
+.append_sample_similarity_dendrogram <- function(x){
   
   if(is_empty(x)) return(x)
   
-  # Generate a distance matrix from the similarity table
-  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data[, mget(c("sample_1", "sample_2", "value"))],
-                                                 similarity_metric=x@similarity_metric)
+  # Create a cluster method object using data stored in x.
+  cluster_method_object <- .create_sample_similarity_cluster_method_object(x=x)
   
-  # Obtain cluster object.
-  h <- cluster.get_cluster_object(distance_matrix=distance_matrix,
-                                  cluster_method=x@cluster_method,
-                                  cluster_linkage=x@linkage_method)
+  if(is.null(cluster_method_object)) return(x)
+  browser()
+  # Create the cluster object.
+  object <- apply_cluster_method(object=cluster_method_object)
   
   # Attach to data element.
-  x@dendrogram <- h
+  x@dendrogram <- object@object
   
   return(x)
 }
+
+
+
+.compute_sample_similarity_cluster_table <- function(x){
+  # Computes the sample similarity cluster table from the similarity table in
+  # x.
+  
+  # Create a cluster method object using data stored in x.
+  cluster_method_object <- .create_sample_similarity_cluster_method_object(x=x)
+  
+  if(is.null(cluster_method_object)) return(NULL)
+  
+  # Compute the cluster table.
+  cluster_table <- create_clusters(object=cluster_method_object,
+                                   as_cluster_object=FALSE)
+  
+  return(cluster_table)
+}
+
+
+
+.create_sample_similarity_cluster_method_object <- function(x){
+  
+  if(is_empty(x)) return(NULL)
+  
+  if(length(x@similarity_threshold) > 1){
+    # Remove 1.0 because that does not yield clustering info.
+    available_thresholds <- setdiff(x@similarity_threshold, 1.0)
+    
+    # Select the maximum threshold.
+    x@similarity_threshold <- max(available_thresholds)
+  }
+  
+  # Create cluster method object.
+  cluster_method_object <- create_cluster_method_object(cluster_method=x@cluster_method,
+                                                        data_type = "sample",
+                                                        cluster_linkage=x@linkage_method,
+                                                        cluster_cut_method="none",
+                                                        # cluster_similarity_threshold=x@similarity_threshold,
+                                                        cluster_similarity_metric=x@similarity_metric,
+                                                        cluster_representation_method="none")
+  
+  # Attach the similarity table to the cluster_method_object.
+  cluster_method_object@similarity_table <- methods::new("similarityTable",
+                                                         data=x@data[, mget(c("sample_name_1", "sample_name_2", "value"))],
+                                                         similarity_metric=x@similarity_metric,
+                                                         data_type=cluster_method_object@data_type)
+  return(cluster_method_object)
+}
+
 
 
 
@@ -318,21 +372,27 @@ setMethod("export_sample_similarity", signature(object="familiarCollection"),
               sample_limit <- Inf
             }
             
-            # Check whether the input parameters are valid.
+            # Check whether the input parameters are valid and create a cluster
+            # object.
             .check_cluster_parameters(cluster_method=x[[1]]@cluster_method,
+                                      data_type = "sample",
                                       cluster_linkage=x[[1]]@linkage_method,
+                                      cluster_cut_method="none",
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
-                                      data_type="sample")
+                                      cluster_representation_method="none")
             
             if(aggregate_results | export_dendrogram){
               x <- .compute_data_element_estimates(x)
               
               # Limit the number of samples.
-              if(is.finite(sample_limit)) x <- lapply(x, ..limit_sample_similarity_samples, sample_limit=sample_limit)
+              if(is.finite(sample_limit)) x <- lapply(x,
+                                                      ..limit_sample_similarity_samples,
+                                                      sample_limit=sample_limit)
               
               # Add clustering information.
               if(export_dendrogram){
-                x <- lapply(x, ..compute_sample_similarity_dendrogram)
+                x <- lapply(x,
+                            .append_sample_similarity_dendrogram)
               }
               
             }

@@ -326,14 +326,17 @@ setMethod("update_object", signature(object="featureInfo"),
               if(!is.null(object@imputation_parameters)){
                 
                 # Create an S4 skeleton.
-                imputation_object <- ..create_imputation_parameter_skeleton(feature_name=object@feature_name,
+                imputation_object <- ..create_imputation_parameter_skeleton(feature_name=object@name,
                                                                             feature_type=object@feature_type,
                                                                             available=is_available(object),
                                                                             method="simple")
                 
                 # Attach to imputation object.
                 imputation_object@model <- object@imputation_parameters$common_value
-                imputation_object@required_features <- object@feature_name
+                imputation_object@required_features <- object@name
+                
+                # Mark complete
+                imputation_object@complete <- TRUE
                 
                 # Attach to object.
                 object@imputation_parameters <- imputation_object
@@ -341,8 +344,54 @@ setMethod("update_object", signature(object="featureInfo"),
               
               # Update cluster parameters to a proper S4 object.
               if(!is.null(object@cluster_parameters)){
+                # Set parameters -- we can't really infer cluster linkage or the
+                # similarity metric from available information, and set
+                # placeholders that will allow the cluster parameter object to
+                # be formed.
+                cluster_parameter_options <- list("feature_info"=object,
+                                                  "cluster_method"=object@cluster_parameters$method,
+                                                  "cluster_linkage"="average",
+                                                  "similarity_metric"="mcfadden_r2")
                 
+                # Form parameter object.
+                cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
+                                                    args=cluster_parameter_options)
+                                        
+                # Set parameters.                                       
+                cluster_parameter_object@weight <- object@cluster_parameters$weight
+                cluster_parameter_object@invert <- object@cluster_parameters$invert
+                cluster_parameter_object@cluster_name <- object@cluster_parameters$cluster_name
+                cluster_parameter_object@cluster_size <- object@cluster_parameters$cluster_size
+                cluster_parameter_object@required_features <- object@cluster_parameters$required_features
+                
+                # Previously, features that form the cluster were not stored as
+                # information. To prevent issues with functions that generate a
+                # cluster table, set the required features instead.
+                cluster_parameter_object@cluster_features <- object@cluster_parameters$required_features
+                
+              } else {
+                # Assume singular cluster.
+                cluster_parameter_options <- list("feature_info"=object,
+                                                  "cluster_method"="none")
+                
+                # Form parameter object.
+                cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
+                                                    args=cluster_parameter_options)
+                
+                # Set parameters.                                       
+                cluster_parameter_object@weight <- 1.0
+                cluster_parameter_object@invert <- FALSE
+                cluster_parameter_object@cluster_name <- object@name
+                cluster_parameter_object@cluster_size <- 1L
+                cluster_parameter_object@required_features <- object@name
+                cluster_parameter_object@cluster_features <- object@name
               }
+              
+              # Mark complete.
+              cluster_parameter_object@complete <- TRUE
+              
+              # Replace in the feature info object.
+              object@cluster_parameters <- cluster_parameter_object
             }
             
             if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")

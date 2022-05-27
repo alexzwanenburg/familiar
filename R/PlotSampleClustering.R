@@ -1538,8 +1538,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-                                                cluster_method=sample_similarity@cluster_method)
+    browser()
+    sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
+    # sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
+    #                                             cluster_method=sample_similarity@cluster_method)
   }
   
   # Correctly order the samples
@@ -1823,8 +1825,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    feature_order <- cluster.extract_label_order(cluster_object=feature_similarity@dendrogram,
-                                                 cluster_method=feature_similarity@cluster_method)
+    browser()
+    feature_order <- .compute_feature_similarity_cluster_table(x=feature_similarity)
+    
+    # feature_order <- cluster.extract_label_order(cluster_object=feature_similarity@dendrogram,
+    #                                              cluster_method=feature_similarity@cluster_method)
   }
   
   # Determine sample order.
@@ -1840,8 +1845,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-                                                cluster_method=sample_similarity@cluster_method)
+    browser()
+    sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
+    # sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
+    #                                             cluster_method=sample_similarity@cluster_method)
   }
   
   # Keep only features and samples that are in feature order and sample order.

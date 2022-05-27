@@ -296,6 +296,34 @@ setMethod("set_object_parameters", signature(object="clusterMethodDiana"),
           })
 
 
+
+#### set_similarity_table (missing, dataObject ---------------------------------
+setMethod("set_similarity_table", signature(object="missing", data="dataObject"),
+          function(object,
+                   data,
+                   feature_info_list,
+                   similarity_metric,
+                   data_type,
+                   ...){
+            # For calls where we just want to create the similarity table, e.g.
+            # in ..extract_feature_similarity. Here we create a generic
+            # clusterMethodPAM object just to create the similarity table.
+            object <- methods::new("clusterMethodPAM",
+                                   data_type=data_type,
+                                   similarity_metric=similarity_metric)
+            
+            # Pass to set_similarity_table.
+            object <- set_similarity_table(object=object,
+                                           data=data,
+                                           feature_info_list=feature_info_list,
+                                           ...)
+            
+            # Return the table itself.
+            return(object@similarity_table@data)
+          })
+
+
+
 #### set_similarity_table (none, dataObject) -----------------------------------
 setMethod("set_similarity_table", signature(object="clusterMethodNone", data="dataObject"),
           function(object,
@@ -857,7 +885,7 @@ setMethod("apply_cluster_method", signature(object="clusterMethodDiana"),
 
 #### create_clusters (generic hierarchical) ------------------------------------
 setMethod("create_clusters", signature(object="clusterMethodHierarchical"),
-          function(object, ...){
+          function(object, as_cluster_objects=TRUE, ...){
             
             cluster_table <- NULL
             if(object@cluster_cut_method == "silhouette"){
@@ -868,8 +896,7 @@ setMethod("create_clusters", signature(object="clusterMethodHierarchical"),
               # empty. Attempt to set singular clusters instead.
               if(is_empty(cluster_table)){
                 # Add names. Each cluster is singular.
-                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+                cluster_table <- .cluster_by_generic(object=object)
               }
               
             } else if(object@cluster_cut_method == "fixed_cut"){
@@ -880,29 +907,33 @@ setMethod("create_clusters", signature(object="clusterMethodHierarchical"),
               # empty. Attempt to set singular clusters instead.
               if(is_empty(cluster_table)){
                 # Add names. Each cluster is singular.
-                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+                cluster_table <- .cluster_by_generic(object=object)
               }
               
             } else if(object@cluster_cut_method == "none"){
               # Add names. Each cluster is singular.
-              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              cluster_table <- .cluster_by_generic(object=object)
               
             } else {
               ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodHierarchical: encountered an unknown cluster cut method: ",
                                                       object@cluster_method))
             }
             
-            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
-                                                             representation_method=object@representation_method))
+            # Determine how to return the results.
+            if(as_cluster_objects){
+              return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                               representation_method=object@representation_method))
+              
+            } else {
+              return(cluster_table)
+            }
           })
 
 
 
 #### create_clusters (hclust) --------------------------------------------------
 setMethod("create_clusters", signature(object="clusterMethodHClust"),
-          function(object, ...){
+          function(object, as_cluster_objects=TRUE, ...){
             
             if(object@cluster_cut_method %in% c("silhouette", "fixed_cut")){
               # Silhouette and fixed cut are implemented for the parent class
@@ -917,29 +948,33 @@ setMethod("create_clusters", signature(object="clusterMethodHClust"),
               # empty. Attempt to set singular clusters instead.
               if(is_empty(cluster_table)){
                 # Add names. Each cluster is singular.
-                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+                cluster_table <- .cluster_by_generic(object=object)
               }
               
             } else if(object@cluster_cut_method == "none"){
               # Add names. Each cluster is singular.
-              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              cluster_table <- .cluster_by_generic(object=object)
               
             } else {
               ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodHClust: encountered an unknown cluster cut method: ",
                                                       object@cluster_method))
             }
             
-            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
-                                                             representation_method=object@representation_method))
+            # Determine how to return the results.
+            if(as_cluster_objects){
+              return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                               representation_method=object@representation_method))
+              
+            } else {
+              return(cluster_table)
+            }
           })
 
 
 
 #### create_clusters (PAM) -----------------------------------------------------
 setMethod("create_clusters", signature(object="clusterMethodPAM"),
-          function(object, ...){
+          function(object, as_cluster_objects=TRUE, ...){
             
             cluster_table <- NULL
             if(object@cluster_cut_method == "silhouette"){
@@ -950,37 +985,97 @@ setMethod("create_clusters", signature(object="clusterMethodPAM"),
               # empty. Attempt to set singular clusters instead.
               if(is_empty(cluster_table)){
                 # Add names. Each cluster is singular.
-                cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                        "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+                cluster_table <- .cluster_by_generic(object=object)
               }
               
             } else if(object@cluster_cut_method == "none"){
               # Add names. Each cluster is singular.
-              cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                      "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+              cluster_table <- .cluster_by_generic(object=object)
               
             } else {
               ..error_reached_unreachable_code(paste0("create_clusters,clusterMethodPAM: encountered an unknown cluster cut method: ",
                                                       object@cluster_method))
             }
             
-            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
-                                                             representation_method=object@representation_method))
+            # Determine how to return the results.
+            if(as_cluster_objects){
+              return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                               representation_method=object@representation_method))
+              
+            } else {
+              return(cluster_table)
+            }
           })
 
 
 
 #### create_clusters (none) ----------------------------------------------------
 setMethod("create_clusters", signature(object="clusterMethodNone"),
-          function(object, ...){
+          function(object, as_cluster_objects=TRUE, ...){
             
             # Add names. Each cluster is singular.
-            cluster_table <- data.table::data.table("name"=get_similarity_names(object@similarity_table),
-                                                    "cluster_id"=seq_along(get_similarity_names(object@similarity_table)))
+            cluster_table <- .cluster_by_generic(object=object)
             
-            return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
-                                                             representation_method="none"))
+            # Determine how to return the results.
+            if(as_cluster_objects){
+              return(.convert_cluster_table_to_cluster_objects(cluster_table=cluster_table,
+                                                               representation_method="none"))
+              
+            } else {
+              return(cluster_table)
+            }
           })
+
+
+
+#### .cluster_by_generic (generic hierarchical) --------------------------------
+setMethod(".cluster_by_generic", signature(object="clusterMethodHierarchical"),
+          function(object, ...){
+            
+            # Attempt to create the dendrogram.
+            if(is.null(object@object)) object <- apply_cluster_method(object)
+            
+            # Find element names.
+            element_names <- get_similarity_names(object)
+            
+            if(is.null(object@object)){
+              # A dendrogram wasn't formed, and we use the element names
+              # instead.
+              if(is.null(element_names)){
+                return(NULL)
+                
+              } else {
+                # Set 
+                return(data.table::data.table("name"=element_names,
+                                              "cluster_id"=seq_along(element_names),
+                                              "label_order"=seq_along(element_names)))
+              }
+              
+            } else {
+              # Use ordering from the dendrogram.
+              return(data.table::data.table("name"=object@object$labels[object@object$order],
+                                            "cluster_id"=seq_along(object@object$labels),
+                                            "label_order"=seq_along(object@object$labels)))
+            }
+          })
+
+
+
+#### .cluster_by_generic (generic) ---------------------------------------------
+setMethod(".cluster_by_generic", signature(object="clusterMethod"),
+          function(object, ...){
+            
+            # Find element names.
+            element_names <- get_similarity_names(object)
+            
+            # Check that any element names are present.
+            if(is.null(element_names)) return(NULL)
+            
+            return(data.table::data.table("name"=element_names,
+                                          "cluster_id"=seq_along(element_names),
+                                          "label_order"=seq_along(element_names)))
+          })
+
 
 
 
@@ -1014,7 +1109,8 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodPAM"),
                                            keep.data=FALSE)
             
             return(data.table::data.table("name"=names(cluster_object$clustering),
-                                          "cluster_id"=cluster_object$clustering))
+                                          "cluster_id"=cluster_object$clustering,
+                                          "label_order"=seq_along(cluster_object$clustering)))
           })
 
 
@@ -1022,6 +1118,9 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodPAM"),
 #### .cluster_by_silhouette (generic hierarchical) -----------------------------
 setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"),
           function(object, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
             
             # Get distance matrix.
             distance_matrix <- do.call(get_distance_matrix,
@@ -1055,9 +1154,21 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
             cluster_object <- stats::cutree(tree=object@object,
                                             k=n_clusters)
             
-            return(data.table::data.table("name"=names(cluster_object),
-                                          "cluster_id"=cluster_object))
+            # Set initial cluster table.
+            cluster_table <- data.table::data.table("name"=names(cluster_object),
+                                                    "cluster_id"=cluster_object)
+
+            # Get an ordering table.
+            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
+                                                  "label_order"=seq_along(object@object$labels))
+            
+            # Insert label order into the cluster table.
+            browser()
+            cluster_table <- cluster_table[order_table, on=.NATURAL]
+            
+            return(cluster_table)
           })
+
 
 
 
@@ -1185,6 +1296,9 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
 setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical"),
           function(object, ...){
             browser()
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
             # Attempt to create the dendrogram.
             if(is.null(object@object)){
               object <- apply_cluster_method(object)
@@ -1201,9 +1315,19 @@ setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical")
             cluster_object <- stats::cutree(tree=object@object,
                                             h=cut_height)
             
-            # Define clusters
-            return(data.table::data.table("name"=names(cluster_object),
-                                          "cluster_id"=cluster_object))
+            # Set initial cluster table.
+            cluster_table <- data.table::data.table("name"=names(cluster_object),
+                                                    "cluster_id"=cluster_object)
+            
+            # Get an ordering table.
+            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
+                                                  "label_order"=seq_along(object@object$labels))
+            
+            # Insert label order into the cluster table.
+            browser()
+            cluster_table <- cluster_table[order_table, on=.NATURAL]
+            
+            return(cluster_table)
           })
 
 
@@ -1211,6 +1335,8 @@ setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical")
 #### .cluster_by_dynamic_cut (hclust) --------------------------------------------
 setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
           function(object, ...){
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
             
             browser()
             # Attempt to create the dendrogram.
@@ -1236,9 +1362,22 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
                                                                 deepSplit=TRUE,
                                                                 minModuleSize=1)
             
+            # Set initial cluster table.
+            cluster_table <- data.table::data.table("name"=cluster_object$labels,
+                                                    "cluster_id"=cluster_object)
+            
+            # Get an ordering table.
+            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
+                                                  "label_order"=seq_along(object@object$labels))
+            
+            # Insert label order into the cluster table.
+            browser()
+            cluster_table <- cluster_table[order_table, on=.NATURAL]
+            
+            return(cluster_table)
+            
             # Define clusters
-            return(data.table::data.table("name"=cluster_object$labels,
-                                          "cluster_id"=cluster_object))
+            return()
           })
 
 
@@ -1278,7 +1417,6 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
   
   return(object)
 }
-
 
 
             

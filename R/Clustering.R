@@ -437,31 +437,6 @@ set_clustered_data <- function(cluster_table,
 
 
 
-cluster.extract_label_order <- function(cluster_object, cluster_method){
-  
-  if(cluster_method %in% c("hclust", "diana", "agnes")){
-
-    # Extract order from hierarchical clusters.
-    return(data.table::data.table("name"=cluster_object$labels[cluster_object$order],
-                                  "label_order"=seq_along(cluster_object$labels)))
-    
-  } else if(cluster_method %in% c("pam")){
-    
-    # Use the silhouette info matrix to determine label order.
-    silhouette_matrix <- cluster_object$silinfo$widths
-    order_table <- data.table::data.table("name"=rownames(silhouette_matrix))
-    order_table[,  "label_order":=.I]
-    
-    return(order_table)
-
-  } else {
-    ..error_reached_unreachable_code(paste0("cluster.extract_label_order: label order cannot be extracted"
-                                            ," because the cluster_method was not recognized."))
-  }
-}
-
-
-
 .get_available_cluster_methods <- function(){
   return(c("none", "pam", "agnes", "diana", "hclust"))
 }
