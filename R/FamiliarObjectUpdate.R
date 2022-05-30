@@ -24,7 +24,7 @@ setGeneric("update_object", function(object, ...) standardGeneric("update_object
 setMethod("update_object", signature(object="familiarModel"),
           function(object, ...){
             
-            if(object@familiar_version < "0.0.0.54"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.54"){
               
               # Rename req_feature_cols to required_features
               attr(object, "required_features") <- attr(object, "req_feature_cols")
@@ -54,7 +54,7 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "name") <- NA_character_
             }
             
-            if(object@familiar_version < "0.0.0.55"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.55"){
               
               # Add missing attributes.
               attr(object, "trimmed_function") <- list()
@@ -66,7 +66,7 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "is_anonymised") <- NULL
             }
             
-            if(object@familiar_version < "1.0.0"){
+            if(tail(object@familiar_version, n=1L) < "1.0.0"){
               # Rename learner_package to package
               attr(object, "package") <- attr(object, "learner_package")
               if(is.na(object@package)) methods::slot(object, "package", check=FALSE) <- NULL
@@ -84,7 +84,7 @@ setMethod("update_object", signature(object="familiarModel"),
               methods::slot(object, "novelty_detector", check=FALSE) <- NULL
             }
             
-            if(object@familiar_version < "1.1.0"){
+            if(tail(object@familiar_version, n=1L) < "1.1.0"){
               # Add placeholder messages attribute.
               attr(object, "messages") <- list()
             }
@@ -115,7 +115,7 @@ setMethod("update_object", signature(object="familiarModel"),
 setMethod("update_object", signature(object="familiarEnsemble"),
           function(object, ...){
             
-            if(object@familiar_version < "0.0.0.54"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.54"){
               
               # Rename req_feature_cols to required_features
               attr(object, "required_features") <- attr(object, "req_feature_cols")
@@ -135,13 +135,13 @@ setMethod("update_object", signature(object="familiarEnsemble"),
               attr(object, "name") <- NA_character_
             }
             
-            if(object@familiar_version < "0.0.0.55"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.55"){
 
               # Remove is_anonymised.
               attr(object, "is_anonymised") <- NULL
             }
             
-            if(object@familiar_version < "1.2.0"){
+            if(tail(object@familiar_version, n=1L) < "1.2.0"){
               # Update attached feature info objects.
               feature_names <- names(object@feature_info)
               object@feature_info <- lapply(object@feature_info, update_object)
@@ -162,7 +162,7 @@ setMethod("update_object", signature(object="familiarEnsemble"),
 setMethod("update_object", signature(object="familiarData"),
           function(object, ...){
             
-            if(object@familiar_version < "0.0.0.54"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.54"){
               
               # Rename req_feature_cols to required_features
               attr(object, "required_features") <- attr(object, "req_feature_cols")
@@ -180,7 +180,7 @@ setMethod("update_object", signature(object="familiarData"),
               attr(object, "sample_similarity") <- attr(list(), "non_existing_element")
             }
             
-            if(object@familiar_version < "0.0.0.55"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.55"){
               
               # Remove is_anonymised.
               attr(object, "is_anonymised") <- NULL
@@ -200,7 +200,7 @@ setMethod("update_object", signature(object="familiarData"),
 setMethod("update_object", signature(object="familiarCollection"),
           function(object, ...){
             
-            if(object@familiar_version < "0.0.0.54"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.54"){
               
               # Rename req_feature_cols to required_features
               attr(object, "required_features") <- attr(object, "req_feature_cols")
@@ -222,7 +222,7 @@ setMethod("update_object", signature(object="familiarCollection"),
               attr(object, "sample_similarity") <- attr(list(), "non_existing_element")
             }
             
-            if(object@familiar_version < "0.0.0.55"){
+            if(tail(object@familiar_version, n=1L) < "0.0.0.55"){
               
               # Remove is_anonymised.
               attr(object, "is_anonymised") <- NULL
@@ -268,7 +268,7 @@ setMethod("update_object", signature(object="featureInfo"),
               attr(object, "familiar_version") <- "0.0.0"
             }
             
-            if(object@familiar_version < "1.2.0"){
+            if(tail(object@familiar_version, n=1L) < "1.2.0"){
               # Upgrade transformation parameters to a proper S4 object.
               if(!is.null(object@transformation_parameters)){
                 object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,

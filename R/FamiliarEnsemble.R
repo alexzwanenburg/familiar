@@ -98,13 +98,13 @@ setMethod("show", signature(object="familiarEnsemble"),
               cat(paste0("An ensemble of ", length(object@model_list), " ",
                          object@learner, " ",
                          ifelse(length(object@model_list) == 1, "model", "models"),
-                         " (v", object@familiar_version, ").\n"))
+                         " (", .familiar_version_string(object), ").\n"))
               
             } else {
               cat(paste0("An ensemble of ", length(object@model_list), " ",
                          object@learner, " ",
                          ifelse(length(object@model_list) == 1, "model", "models"),
-                         " (v", object@familiar_version, ").\n"))
+                         " (", .familiar_version_string(object), ").\n"))
               
               # Determine how many models are trained.
               model_trained <- sapply(object@model_list, model_is_trained)

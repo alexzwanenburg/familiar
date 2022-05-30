@@ -166,7 +166,7 @@ setMethod("show", signature(object="familiarModel"),
             
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                         ") that was not successfully trained (v", object@familiar_version, ").\n"))
+                         ") that was not successfully trained (", .familiar_version_string(object), ").\n"))
               
               if(length(object@messages$warning) > 0){
                 condition_messages <- condition_summary(object@messages$warning)
@@ -189,7 +189,7 @@ setMethod("show", signature(object="familiarModel"),
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
-                                    "; v", object@familiar_version, ")")
+                                    "; ", .familiar_version_string(object), ")")
               
               # Describe the package(s), if any
               if(!is.null(object@package)){

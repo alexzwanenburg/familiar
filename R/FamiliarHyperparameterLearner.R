@@ -145,12 +145,12 @@ setMethod("show", signature(object="familiarHyperparameterLearner"),
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") for inferring hyperparameters of the ", object@target_learner, ". ",
-                         "This hyperparameter model could not successfully be trained (v", object@familiar_version, ").\n"))
+                         "This hyperparameter model could not successfully be trained (", .familiar_version_string(object), ").\n"))
               
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
-                                    "; v", object@familiar_version, ") ",
+                                    "; ", .familiar_version_string(object), ") ",
                                     "for inferring hyperparameters of the ", object@target_learner, " learner. ")
               
               # Describe the package(s), if any

@@ -8,6 +8,8 @@
 
 -   It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
 
+-   Updated objects now both show initial and current familiar versions.
+
 ## Bug fixes
 
 -   Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.

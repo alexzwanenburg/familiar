@@ -69,12 +69,12 @@ setMethod("show", signature(object="familiarNoveltyDetector"),
             
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " novelty detector (class: ", class(object)[1],
-                         ") that was not successfully trained (v", object@familiar_version, ").\n"))
+                         ") that was not successfully trained (", .familiar_version_string(object), ").\n"))
               
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " novelty detector (class: ", class(object)[1],
-                                    "; v", object@familiar_version, ")")
+                                    "; ", .familiar_version_string(object), ")")
               
               # Describe the package(s), if any
               if(!is.null(object@package)){
