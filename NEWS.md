@@ -1,3 +1,8 @@
+# Version 1.1.3 (Hoarse Horse)
+
+## Bug fixes
+
+- Fixed an issue with the parenthesis check in nested experimental designs.
 # Version 1.1.2 (Gregarious Gopher)
 
 ## Bug fixes
