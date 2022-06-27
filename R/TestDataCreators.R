@@ -246,7 +246,7 @@ test.create_empty_data_set <- function(outcome_type){
 test.create_bootstrapped_data_set <- function(outcome_type, to_data_object=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  .NATURAL <- sample_id <- NULL
+  sample_id <- NULL
   
   # Create good dataset first and work from there.
   data <- test.create_good_data_set(outcome_type=outcome_type,
@@ -254,14 +254,19 @@ test.create_bootstrapped_data_set <- function(outcome_type, to_data_object=TRUE)
   
   # Now keep only the first sample.
   if(to_data_object){
-    data@data[fam_sample(data@data, replace=TRUE), on=.NATURAL][order(sample_id)]
+    data@data <- data@data[fam_sample(seq_len(nrow(data@data)),
+                                      size=nrow(data@data),
+                                      replace=TRUE,
+                                      seed=1844)][order(sample_id)]
     
   } else {
-    data[fam_sample(data, replace=TRUE), on=.NATURAL][order(sample_id)]
+    data@data <- data[fam_sample(seq_len(nrow(data)),
+                                 size=nrow(data),
+                                 replace=TRUE,
+                                 seed=1844)][order(sample_id)]
   }
   
   return(data)
-  
 }
 
 

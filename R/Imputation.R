@@ -237,9 +237,22 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
       # Impute values
       imputed_values <- lapply(object@imputation_parameters$lasso_model, function(model_object, validation_data, response_type){
 
+        # Skip if NULL.
+        if(is.null(model_object)) return(NULL)
+        
+        if(is.list(model_object) && !inherits(model_object, "glmnet")) model_object <- model_object[[1]]
+        
+        # Required features
+        if(inherits(model_object$beta, "dgCMatrix")){
+          required_features <- model_object$beta@Dimnames[[1]]
+          
+        } else {
+          required_features <- unique(unlist(lapply(model_object$beta, function(x) (x@Dimnames[[1]]))))
+        }
+        
         # Predict values.
         imputed_value_table <- data.table::data.table("values"=drop(predict(object=model_object,
-                                                                            newx=as.matrix(validation_data),
+                                                                            newx=as.matrix(validation_data[, mget(required_features)]),
                                                                             type=response_type)))
         
         # Add temporary sample id
@@ -253,16 +266,22 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
       
       # The desired output is determined by the feature type (numeric or
       # factor).
-      if(object@feature_type == "numeric"){
-        y[censored_entries] <- imputed_values[,
-                                              list("values"=mean(values, na.rm=TRUE)),
-                                              by="temp_sample_id"]$values
-
+      if(!is_empty(imputed_values)){
+        if(object@feature_type == "numeric"){
+          y[censored_entries] <- imputed_values[,
+                                                list("values"=mean(values, na.rm=TRUE)),
+                                                by="temp_sample_id"]$values
+          
+        } else {
+          y[censored_entries] <- imputed_values[,
+                                                list("values"=get_mode(values)),
+                                                by="temp_sample_id"]$values
+        }
+        
       } else {
-        y[censored_entries] <- imputed_values[,
-                                              list("values"=get_mode(values)),
-                                              by="temp_sample_id"]$values
+        y[censored_entries] <- object@imputation_parameters$common_value
       }
+      
     }
     
     return(y)
