@@ -1103,6 +1103,9 @@ setMethod("aggregate_data", signature(data="dataObject"),
               return(data)
             }
             
+            # Drop any duplicates (e.g. from bootstraps).
+            data@data <- unique(data@data)
+            
             # Identify the columns containing outcome, series, sample, and batch
             # identifiers.
             id_cols <- get_non_feature_columns(x=data, id_depth="series")
