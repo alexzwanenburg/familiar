@@ -6,6 +6,8 @@
 
 - Fixed an issue with the parenthesis check in nested experimental designs.
 
+- Fixed an issue that would prevent data where the same instance appears multiple times (e.g. bootstraps) from being properly evaluated.
+
 # Version 1.1.2 (Gregarious Gopher)
 
 ## Bug fixes
