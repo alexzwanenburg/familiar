@@ -2,13 +2,13 @@
 
 ## Major changes
 
--   Several pre-processing steps, i.e. transformation, normalisation, batch normalisation, imputation and clustering have been re-implemented as objects. This allows for better portability between experiments, improved flexibility and extensibility to newer methods, and better forward compatibility.
+- Several pre-processing steps, i.e. transformation, normalisation, batch normalisation, imputation and clustering have been re-implemented as objects. This allows for better portability between experiments, improved flexibility and extensibility to newer methods, and better forward compatibility.
 
 ## Minor changes
 
--   It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
+- It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
 
--   Updated objects now both show initial and current familiar versions.
+- Updated objects now both show initial and current familiar versions.
 
 ## Bug fixes
 
@@ -20,7 +20,11 @@
 
 ## Bug fixes
 
+- Fixed an issue with LASSO-based imputation when aggregating from LASSO models with different required features. This is a temporary solution, that will be tackled more comprehensively in version 1.2.0.
+
 - Fixed an issue with the parenthesis check in nested experimental designs.
+
+- Fixed an issue that would prevent data where the same instance appears multiple times (e.g. bootstraps) from being properly evaluated.
 
 # Version 1.1.2 (Gregarious Gopher)
 
