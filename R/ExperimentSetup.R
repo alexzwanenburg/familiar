@@ -68,8 +68,8 @@ extract_experimental_setup <- function(experimental_design,
   left_parenthesis <- gregexpr(pattern="(", text=experimental_design, fixed=TRUE)[[1]]
   right_parenthesis <- gregexpr(pattern=")", text=experimental_design, fixed=TRUE)[[1]]
   
-  if(left_parenthesis == -1) left_parenthesis <- integer(0)
-  if(right_parenthesis == -1) right_parenthesis <- integer(0)
+  if(left_parenthesis[1] == -1) left_parenthesis <- integer(0)
+  if(right_parenthesis[1] == -1) right_parenthesis <- integer(0)
   
   # Subsequently generate the corresponding experimental levels
   experiment_levels <- integer(nchar(experimental_design))
