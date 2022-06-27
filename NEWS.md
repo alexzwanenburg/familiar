@@ -2,7 +2,10 @@
 
 ## Bug fixes
 
+- Fixed an issue with LASSO-based imputation when aggregating from LASSO models with different required features. This is a temporary solution, that will be tackled more comprehensively in version 1.2.0.
+
 - Fixed an issue with the parenthesis check in nested experimental designs.
+
 # Version 1.1.2 (Gregarious Gopher)
 
 ## Bug fixes
