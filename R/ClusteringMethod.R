@@ -123,7 +123,7 @@ create_cluster_method_object <- function(cluster_method,
                                   cluster_similarity_threshold=cluster_similarity_threshold,
                                   cluster_similarity_metric=cluster_similarity_metric,
                                   cluster_representation_method=cluster_representation_method)
-  browser()
+  
   return(object)
 }
 
@@ -1066,7 +1066,7 @@ setMethod(".cluster_by_generic", signature(object="clusterMethod"),
           function(object, ...){
             
             # Find element names.
-            element_names <- get_similarity_names(object)
+            element_names <- get_similarity_names(object@similarity_table)
             
             # Check that any element names are present.
             if(is.null(element_names)) return(NULL)
@@ -1436,7 +1436,7 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
                                          data_type=data_type,
                                          cluster_linkage=cluster_linkage,
                                          cluster_cut_method=cluster_cut_method,
-                                         cluster_similarity_threshold=cluster_similarity_metric,
+                                         cluster_similarity_threshold=cluster_similarity_threshold,
                                          cluster_similarity_metric=cluster_similarity_metric,
                                          cluster_representation_method=cluster_representation_method)
   
