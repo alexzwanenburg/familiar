@@ -560,7 +560,12 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   # Add clustering skeletons.
   feature_info_list <- create_cluster_parameter_skeleton(feature_info_list=feature_info_list,
-                                                         cluster_method=settings$prep$cluster_method)
+                                                         cluster_method=settings$prep$cluster_method,
+                                                         cluster_linkage=settings$prep$cluster_linkage,
+                                                         cluster_cut_method=settings$prep$cluster_cut_method,
+                                                         cluster_similarity_threshold=settings$prep$cluster_similarity_threshold,
+                                                         cluster_similarity_metric=settings$prep$cluster_similarity_metric,
+                                                         cluster_representation_method=settings$prep$cluster_representation_method)
   
   # Extract clustering information
   feature_info_list  <- add_cluster_info(cl=cl,
