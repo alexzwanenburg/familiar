@@ -256,7 +256,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodHClust"),
             # Check that linkage method is valid.
             .check_parameter_value_is_valid(x=cluster_linkage_method,
                                             var_name=paste0(object@data_type, "_linkage_method"),
-                                            values=.get_available_linkage_methods())
+                                            values=.get_available_linkage_methods(cluster_method=object@method))
             
             return(object)
           })
@@ -276,7 +276,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodAgnes"),
             # Check that linkage method is valid.
             .check_parameter_value_is_valid(x=cluster_linkage_method,
                                             var_name=paste0(object@data_type, "_linkage_method"),
-                                            values=.get_available_linkage_methods())
+                                            values=.get_available_linkage_methods(cluster_method=object@method))
             
             return(object)
           })

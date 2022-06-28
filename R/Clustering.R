@@ -443,8 +443,13 @@ set_clustered_data <- function(cluster_table,
 
 
 
-.get_available_linkage_methods <- function(){
-  return(c("average", "single", "complete", "weighted", "ward"))
+.get_available_linkage_methods <- function(cluster_method){
+  if(cluster_method %in% c("agnes", "diana", "hclust")){
+    return(c("average", "single", "complete", "weighted", "ward"))
+    
+  } else {
+    return("none")
+  }
 }
 
 
