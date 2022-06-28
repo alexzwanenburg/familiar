@@ -1197,6 +1197,7 @@ test_create_synthetic_series_one_feature_all_na_data <- function(outcome_type,
 }
 
 
+
 test_create_multiple_synthetic_series <- function(outcome_type){
   # The idea here is to create multiple synthetic datasets that together
   # represent extreme variation in data composition.
@@ -1258,4 +1259,99 @@ test_create_multiple_synthetic_series <- function(outcome_type){
               "set_2"=data_2,
               "set_3"=data_3,
               "set_4"=data_4))
+}
+
+
+
+
+test_create_synthetic_correlated_data <- function(...,
+                                                  seed=1844,
+                                                  rstream_object=NULL,
+                                                  cluster_size=c(1, 1, 1, 1),
+                                                  mix_feature_types=TRUE,
+                                                  allow_anti_correlation=TRUE){
+  
+  # Create random stream object so that the same numbers are produced every
+  # time.
+  if(is.null(rstream_object)){
+    r <- .start_random_number_stream(seed=seed)
+    
+  } else {
+    r <- rstream_object
+  }
+  
+  # Create basic data.
+  base_data <- do.call(test_create_synthetic_series_data,
+                       args=c(list("rstream_object"=r),
+                              list(...)))
+  
+  if(length(cluster_size) != get_n_features(base_data)){
+    stop(paste0("The cluster_size argument should match the number of features."))
+  }
+  
+  # Get feature names prior to extending the dataset.
+  original_feature_names <- get_feature_columns(base_data)
+  
+  # Create copy of data.
+  data <- base_data
+  data@data <- data.table::copy(base_data@data)
+  
+  for(ii in seq_along(cluster_size)){
+    
+    # Skip if no clusters are required.
+    if(cluster_size[ii] == 1) next()
+    
+    # Isolate feature data. Force reading this data just in case.
+    x <- base_data@data[[original_feature_names[ii]]]
+
+    # Generate clusters.
+    for(jj in seq_len(cluster_size[ii])){
+      # Create the name of the new feature.
+      new_feature_name <- paste0(original_feature_names[ii], "_", LETTERS[jj])
+      
+      if(jj == 1){
+        # The first feature should just be renamed.
+        data.table::setnames(data@data,
+                             old=original_feature_names[ii],
+                             new=new_feature_name)
+        
+      } else if(jj == 2 & is.factor(x) & mix_feature_types){
+        # Add numeric feature when mixing data types.
+        data@data[, (new_feature_name):=as.numeric(x) * 1.1]
+        
+      } else if(is.factor(x)){
+        # For categorical features, remix the levels.
+        y <- factor(x,
+                    levels=levels(x),
+                    labels=levels(x)[fam_sample(seq_along(levels(x)),
+                                                size=length(levels(x)),
+                                                replace=FALSE,
+                                                rstream_object=r)])
+        # Set feature.
+        data@data[, (new_feature_name):=y]
+        
+      } else {
+        # For numerical features, introduce an offset and scaling. We scale
+        # between 0.5 and 1.5 or -0.5 and -1.5 to avoid multiplying by 0. The negative values are used for strong anti-correlation, which 
+        if(jj %% 2 == 0 | !allow_anti_correlation){
+          r_scale <- fam_runif(n=1L, min=0.5, max=1.5, rstream_object=r)
+          
+        } else {
+          r_scale <- fam_runif(n=1L, min=-1.5, max=-0.5, rstream_object=r)
+        }
+        
+        r_shift <- fam_runif(n=1L, min=-1.0, max=1.0, rstream_object=r)
+        
+        y <- x * r_scale + r_shift
+        
+        data@data[, (new_feature_name):=y]
+      }
+    }
+  }
+  
+  # Order columns nicely.
+  data.table::setcolorder(data@data, c(get_non_feature_columns(data),
+                                       sort(get_feature_columns(data))))
+  
+  return(data)
 }
