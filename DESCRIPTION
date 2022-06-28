@@ -43,6 +43,7 @@ Suggests:
     callr (>= 3.4.3),
     cluster,
     CORElearn,
+    coro,
     cowplot,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
