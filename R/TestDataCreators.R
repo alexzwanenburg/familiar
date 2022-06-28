@@ -1355,3 +1355,88 @@ test_create_synthetic_correlated_data <- function(...,
   
   return(data)
 }
+
+
+
+test_create_synthetic_correlated_one_feature_invariant_data <- function(...,
+                                                                        cluster_size=c(1, 1, 1, 1)){
+  
+  # Set the size of the second cluster to 1, always.
+  cluster_size[2] <- 1
+  
+  # Create test data.
+  data <- do.call(test_create_synthetic_correlated_data,
+                  args=c(list("cluster_size"=cluster_size),
+                         list(...)))
+  
+  # Select the first instance for feature 2.
+  data@data$feature_2 <- data@data$feature_2[1]
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_correlated_one_sample_data <- function(...){
+  
+  # Create test data.
+  data <- do.call(test_create_synthetic_correlated_data,
+                  args=list(...))
+  
+  # Select the first instance
+  data@data <- head(data@data, n=1L)
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_correlated_one_outcome_data <- function(...,
+                                                              outcome_type){
+  
+  # Create test data.
+  data <- do.call(test_create_synthetic_correlated_data,
+                  args=c(list("outcome_type"=outcome_type),
+                         list(...)))
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    data@data[, "outcome":="0"]
+    
+  } else if(outcome_type %in% c("count", "continuous")){
+    data@data[, "outcome":=1]
+    
+  } else if(outcome_type == "survival"){
+    data@data[, ":="("outcome_time"=1.25, "outcome_event"=1)]
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_correlated_bad_outcome_data <- function(...,
+                                                              outcome_type){
+  
+  # Create test data.
+  data <- do.call(test_create_synthetic_correlated_data,
+                  args=c(list("outcome_type"=outcome_type),
+                         list(...)))
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    data@data[, "outcome":="0"]
+    
+  } else if(outcome_type %in% c("count", "continuous")){
+    data@data[, "outcome":=1]
+    
+  } else if(outcome_type == "survival"){
+    data@data[, ":="("outcome_event"=0)]
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  return(data)
+}
