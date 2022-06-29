@@ -3,7 +3,8 @@ testthat::skip_on_cran()
 
 verbose <- FALSE
 
-# Create test parameters.
+# Create test parameters. This is actually a generator, which makes it easier to
+# nest all the different combinations that should be checked.
 generate_test_parameters <- coro::generator(function(similarity_metric, similarity_threshold){
   for(outcome_type in c("survival", "binomial", "multinomial", "continuous", "count")){
     for(n_numeric_features in c(4, 3, 2, 1, 0)){
@@ -31,19 +32,33 @@ generate_test_parameters <- coro::generator(function(similarity_metric, similari
   }
 })
 
+# TODO: test the following:
+# 1. Number of clusters that are being formed.
+# 2. Signature features are assigned their own cluster.
+# 3. Clustering works for special cases with one/two/three features.
+# 4. Clusters should be formed by the same base feature.
+# 5. Sample-clustering should function correctly, and cluster around different
+# batches.
+
+
+
 #### Generic test ##############################################################
 generic_test <- generate_test_parameters(similarity_metric="spearman",
                                          similarity_threshold=0.8)
 
-while(!coro::is_exhausted(generic_test)){
+while(TRUE){
   
   # Generate parameters.
   parameters <- generic_test()
+  if(coro::is_exhausted(parameters)) break()
+  
+  # Set cluster size
+  cluster_size <- c(3, 3, 3, 3)
   
   # Create data,
   data <- familiar:::test_create_synthetic_correlated_data(outcome_type=parameters$outcome_type,
                                                            n_numeric=parameters$n_numeric,
-                                                           cluster_size=c(3, 3, 3, 3))
+                                                           cluster_size=cluster_size)
   
   # Create a list of featureInfo objects.
   feature_info_list <- familiar:::.get_feature_info_data(data=data@data,
@@ -69,7 +84,41 @@ while(!coro::is_exhausted(generic_test)){
   data@preprocessing_level <- "imputation"
   
   # Cluster features.
-  data <- familiar:::cluster_features(data=data,
-                                      feature_info_list=feature_info_list)
+  clustered_data <- familiar:::cluster_features(data=data,
+                                                feature_info_list=feature_info_list)
   
+  
+  # Create clustering table.
+  cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Perform tests
+  testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
+                             "with cluster cut method \"", parameters$cluster_cut_method, "\" and ",
+                             "cluster representation method \"", parameters$cluster_representation_method, "\" for",
+                             "normal synthetic data with a ", parameters$outcome_type, " outcome."),
+                      {
+                        # Tests that the number of created clusters is correct.
+                        if(parameters$cluster_method == "none"){
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data),
+                                                 sum(cluster_size))
+
+                        } else {
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data),
+                                                 length(cluster_size))
+                        }
+                        
+                        # For cluster methods other than none, check that the
+                        # clusters are formed by clusters with the same feature.
+                        if(parameters$cluster_method != "none"){
+                          for(ii in seq_along(cluster_size)){
+                            base_feature_name <- paste0("feature_", ii)
+                            n_matching_features <- sapply(split(cluster_table, by="cluster_name"), function(x, base_feature_name){
+                              sum(grepl(pattern=base_feature_name,
+                                        x=x$feature_name))
+                            }, base_feature_name=base_feature_name)
+                            
+                            testthat::expect_equal(any(n_matching_features == cluster_size[ii]), TRUE)
+                          }
+                        }
+                      })
 }
