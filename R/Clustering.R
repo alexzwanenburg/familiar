@@ -152,16 +152,6 @@ add_cluster_info <- function(cl=NULL,
   # completed.
   if(length(feature_names) == 0) return(feature_info_list)  
   
-  browser()
-  
-  # # Identify all features that are not to be clustered.
-  # none_features <- feature_names[sapply(feature_info_list[feature_names],
-  #                                                         function(x) (is(x@cluster_parameters@method, "clusterMethodNone")))]
-  # 
-  # # Identify features that should still be sorted.
-  # feature_names <- setdiff(feature_names, none_features)
-  # browser()
-  
   # Set unassigned features.
   unassigned_features <- feature_names
   
@@ -217,7 +207,7 @@ add_cluster_info <- function(cl=NULL,
     
     # Create clustering objects. These are used to update the
     # feature_info_lists.
-    clustering_objects <- create_clusters(object=cluster_method_object)
+    clustering_objects <- unname(create_clusters(object=cluster_method_object))
     
     # Update feature info lists.
     updated_feature_info <- fam_lapply(cl=cl,
@@ -228,7 +218,7 @@ add_cluster_info <- function(cl=NULL,
                                        data = data,
                                        progress_bar = FALSE)
     
-    # Flatten lists feature info.
+    # Flatten lists with feature info.
     updated_feature_info <- unlist(updated_feature_info,
                                    recursive=FALSE)
     
@@ -279,7 +269,7 @@ add_cluster_info <- function(cl=NULL,
   # object in cluster_parameters.
   object <- add_feature_info_parameters(object=feature_info@cluster_parameters,
                                         data=representation_object)
-  browser()
+  
   # Attach updated information object.
   feature_info@cluster_parameters <- object
   
@@ -349,14 +339,14 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   if(!is.null(selected_features)){
     feature_info_list <- feature_info_list[selected_features]
   }
-  browser()
+  
   cluster_table <- lapply(feature_info_list, function(x){
     # If cluster parameters are not set, skip.
     if(is.null(x@cluster_parameters)) return(NULL)
     
-    return(data.table::data.table("cluster_name"=x@cluster_name,
-                                  "feature_name"=x@cluster_features,
-                                  "feature_required"=x@cluster_features %in% x@required_features))
+    return(data.table::data.table("cluster_name"=x@cluster_parameters@cluster_name,
+                                  "feature_name"=x@cluster_parameters@cluster_features,
+                                  "feature_required"=x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features))
   })
   
   # Remove duplicate entries.
@@ -415,14 +405,14 @@ set_clustered_data <- function(cluster_table,
   
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_required <- NULL
-  browser()
+  
   # Only use required data.
   cluster_table <- cluster_table[feature_required == TRUE]
   
   # For singular clusters or clusters represented by a single feature, simply
   # return the data in the respective column.
-  if(nrow(cluster_table) == 1) return(data[[cluster_table$feature_name]])
-  
+  if(nrow(cluster_table) == 1) return(data@data[[cluster_table$feature_name]])
+  browser()
   # Add weighted. Instantiate with 0s.
   feature_values <- numeric(nrow(data@data))
   

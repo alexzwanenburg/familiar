@@ -1519,7 +1519,7 @@ setMethod("cluster_features", signature(data="dataObject"),
             # Derive clustering table.
             cluster_table <- .create_clustering_table(feature_info_list=feature_info_list,
                                                       selected_features=feature_columns)
-            browser()
+            
             # Update data.
             clustered_data <- lapply(split(cluster_table, by="cluster_name"),
                                      set_clustered_data,
@@ -1527,7 +1527,8 @@ setMethod("cluster_features", signature(data="dataObject"),
                                      feature_info_list=feature_info_list)
             
             # Attach the clustered data.
-            data@data <- data.table::data.table(clustered_data)
+            data@data <- cbind(data@data[, mget(get_non_feature_columns(data))],
+                               data.table::setDT(clustered_data))
             
             return(data)
           })

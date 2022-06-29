@@ -17,7 +17,7 @@ setMethod("add_feature_info_parameters", signature(object="singularClusteringObj
               ..error_reached_unreachable_code(paste0("add_feature_info_parameters,singularClusteringObject,dataObject: ",
                                                       "the number of features is expected to be 1. Found: ", length(object@cluster_features)))
             }
-            browser()
+            
             # Create representation object for a singular cluster.
             representation_object <- methods::new("clusterRepresentationObject",
                                                   "name" = object@cluster_features,
