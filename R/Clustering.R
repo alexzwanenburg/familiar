@@ -70,6 +70,11 @@ create_cluster_parameter_skeleton <- function(feature_info_list,
   updated_feature_info <- fam_lapply(X=feature_info_list[feature_names],
                                      FUN=.create_cluster_parameter_skeleton,
                                      method=cluster_method,
+                                     cluster_linkage=cluster_linkage,
+                                     cluster_cut_method=cluster_cut_method,
+                                     cluster_similarity_threshold=cluster_similarity_threshold,
+                                     cluster_similarity_metric=cluster_similarity_metric,
+                                     cluster_representation_method=cluster_representation_method,
                                      .override_existing=.override_existing)
   
   # Provide names for the updated feature info objects.
@@ -412,14 +417,14 @@ set_clustered_data <- function(cluster_table,
   # For singular clusters or clusters represented by a single feature, simply
   # return the data in the respective column.
   if(nrow(cluster_table) == 1) return(data@data[[cluster_table$feature_name]])
-  browser()
+  
   # Add weighted. Instantiate with 0s.
   feature_values <- numeric(nrow(data@data))
   
   # Iterate over features.
   for(current_feature in cluster_table$feature_name){
     feature_values <- feature_values + apply_feature_info_parameters(object=feature_info_list[[current_feature]]@cluster_parameters,
-                                                                     data=data@data)
+                                                                     data=data)
   }
   
   return(feature_values)

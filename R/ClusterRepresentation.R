@@ -44,9 +44,9 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
           function(object,
                    data,
                    feature_info_list,
-                   cluster_object,
+                   cluster_method_object,
                    ...){
-            browser()
+            
             if(object@representation_method == "none"){
               # Form singular clusters
               representation_object_list <- .cluster_representation_by_singular_features(object=object)
@@ -54,7 +54,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
             } else if(object@representation_method == "medioid"){
               # Represent clusters by the most central feature.
               representation_object_list <- .cluster_representation_by_medioid(object=object,
-                                                                               cluster_object=cluster_object)
+                                                                               cluster_object=cluster_method_object)
               
             } else if(object@representation_method == "best_predictor"){
               # Represent clusters by the best predictor.
@@ -66,7 +66,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
               representation_object_list <- .cluster_representation_as_mean_feature(object=object,
                                                                                     data=data,
                                                                                     feature_info_list=feature_info_list,
-                                                                                    cluster_object=cluster_object)
+                                                                                    cluster_object=cluster_method_object)
               
             } else if(object@representation_method == "concordance"){
               # TODO implement.
@@ -114,14 +114,14 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
   
   # Suppress NOTES due to non-standard evaluation in data.table
   element_1 <- element_2 <- value <- average_distance <- NULL
-  browser()
+  
   # Get distance table.
-  distance_table <- get_distance_table(object=cluster_object,
+  distance_table <- get_distance_table(object=cluster_object@similarity_table,
                                        include_diagonal=FALSE)
   
   # Determine whether the similarity table is for features (columns)
   # or samples (rows).
-  element_names <- .get_cluster_data_type_element_name(data_type=object@data_type)
+  element_names <- .get_cluster_data_type_element_name(data_type=cluster_object@data_type)
   
   # Change names in similarity table to a generic name.
   data.table::setnames(x=distance_table,
@@ -135,7 +135,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
   distance_table <- distance_table[, list("average_distance"=mean(value)), by="element_1"]
   
   # Find the feature to be used as the representative feature.
-  representative_feature <- distance_table[value == min(average_distance)]$element_1[1]
+  representative_feature <- distance_table[average_distance == min(average_distance)]$element_1[1]
   
   # Iterate over features to form representation objects.
   representation_object_list <- lapply(object@cluster_features, function(current_feature, cluster_features, representative_feature){
@@ -145,7 +145,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
                                           "name" = current_feature,
                                           "weight" = ifelse(current_feature==representative_feature, 1.0, 0.0),
                                           "invert" = FALSE,
-                                          "cluster_name" = paste0(current_feature, "_cluster"),
+                                          "cluster_name" = paste0(representative_feature, "_cluster"),
                                           "cluster_size" = length(cluster_features),
                                           "cluster_features" = cluster_features,
                                           "required_features"= representative_feature)
@@ -167,7 +167,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
   
   # Suppress NOTES due to non-standard evaluation in data.table
   p_value <-  NULL
-  browser()
+  
   # Select features
   data <- select_features(data=data,
                           features=object@cluster_features)
@@ -197,7 +197,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
                                           "name" = current_feature,
                                           "weight" = ifelse(current_feature==representative_feature, 1.0, 0.0),
                                           "invert" = FALSE,
-                                          "cluster_name" = paste0(current_feature, "_cluster"),
+                                          "cluster_name" = paste0(representative_feature, "_cluster"),
                                           "cluster_size" = length(cluster_features),
                                           "cluster_features" = cluster_features,
                                           "required_features"= representative_feature)
@@ -224,7 +224,7 @@ setMethod("add_feature_info_parameters", signature(object="clusteringObject", da
     return(.cluster_representation_by_medioid(object=object,
                                               ...))
   }
-  browser()
+  
   ..cluster_representation_as_mean_feature <- function(current_feature,
                                                        feature_correlation,
                                                        cluster_features){

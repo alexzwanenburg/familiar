@@ -223,7 +223,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodHierarchical")
             # Set similarity metric.
             object@similarity_metric <- cluster_similarity_metric
             
-            if(object@cluster_cut_method == c("fixed_cut")){
+            if(object@cluster_cut_method %in% c("fixed_cut", "dynamic_cut")){
               
               # Check cutting height for fixed cut. Multiple cut heights are
               # possible. Use as_distance to get two-value ranges, but note that
@@ -258,6 +258,9 @@ setMethod("set_object_parameters", signature(object="clusterMethodHClust"),
                                             var_name=paste0(object@data_type, "_linkage_method"),
                                             values=.get_available_linkage_methods(cluster_method=object@method))
             
+            # attach to object.
+            object@linkage_method <- cluster_linkage_method
+            
             return(object)
           })
 
@@ -277,6 +280,9 @@ setMethod("set_object_parameters", signature(object="clusterMethodAgnes"),
             .check_parameter_value_is_valid(x=cluster_linkage_method,
                                             var_name=paste0(object@data_type, "_linkage_method"),
                                             values=.get_available_linkage_methods(cluster_method=object@method))
+            
+            # attach to object.
+            object@linkage_method <- cluster_linkage_method
             
             return(object)
           })
@@ -601,8 +607,8 @@ setMethod("get_similarity_names", signature(object="similarityTable"),
             element_names <- NULL
             if(object@data_type %in% c("cluster", "feature")){
               if(!is.null(object@data)){
-                element_names <- unique(c(object@data$feature_1,
-                                          object@data$feature_2))
+                element_names <- unique(c(object@data$feature_name_1,
+                                          object@data$feature_name_2))
               }
               
             } else if(object@data_type == "sample"){
@@ -811,7 +817,7 @@ setMethod("apply_cluster_method", signature(object="clusterMethodHClust"),
             
             # Convert general linkage names to stats::hclust linkage names.
             linkage_method <- object@linkage_method
-            if(object@linkage == "ward")          {
+            if(object@linkage_method == "ward")          {
               linkage_method <- "ward.D2"
               
             } else if(linkage_method == "weighted") {
@@ -1036,7 +1042,7 @@ setMethod(".cluster_by_generic", signature(object="clusterMethodHierarchical"),
             if(is.null(object@object)) object <- apply_cluster_method(object)
             
             # Find element names.
-            element_names <- get_similarity_names(object)
+            element_names <- get_similarity_names(object@similarity_table)
             
             if(is.null(object@object)){
               # A dendrogram wasn't formed, and we use the element names
@@ -1051,11 +1057,16 @@ setMethod(".cluster_by_generic", signature(object="clusterMethodHierarchical"),
                                               "label_order"=seq_along(element_names)))
               }
               
-            } else {
-              # Use ordering from the dendrogram.
+            } else if(is(object, "clusterMethodHClust")){
               return(data.table::data.table("name"=object@object$labels[object@object$order],
                                             "cluster_id"=seq_along(object@object$labels),
                                             "label_order"=seq_along(object@object$labels)))
+              
+            } else {
+              # Use ordering from the dendrogram.
+              return(data.table::data.table("name"=object@object$order.lab,
+                                            "cluster_id"=seq_along(object@object$order.lab),
+                                            "label_order"=seq_along(object@object$order.lab)))
             }
           })
 
@@ -1100,7 +1111,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodPAM"),
             
             # PAM clustering doesn't like it when you n_clusters is equal to the
             # number of features.
-            if(n_clusters == length(get_similarity_names(object))) return(NULL)
+            if(n_clusters == length(get_similarity_names(object@similarity_table))) return(NULL)
 
             # Create clustering.
             cluster_object <- cluster::pam(x=distance_matrix,
@@ -1130,7 +1141,6 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
             # Skip if the distance matrix is NULL.
             if(is.null(distance_matrix)) return(NULL)
             
-            browser()
             # Attempt to create the dendrogram.
             if(is.null(object@object)){
               object <- apply_cluster_method(object)
@@ -1148,22 +1158,28 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
             
             # PAM clustering doesn't like it when you n_clusters is equal to the
             # number of features.
-            if(n_clusters == length(get_similarity_names(object))) return(NULL)
+            if(n_clusters == length(get_similarity_names(object@similarity_table))) return(NULL)
             
             # Cut the tree for the optimal number of clusters
-            cluster_object <- stats::cutree(tree=object@object,
+            cluster_object <- stats::cutree(tree=stats::as.hclust(object@object),
                                             k=n_clusters)
             
             # Set initial cluster table.
             cluster_table <- data.table::data.table("name"=names(cluster_object),
                                                     "cluster_id"=cluster_object)
-
-            # Get an ordering table.
-            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
-                                                  "label_order"=seq_along(object@object$labels))
+            
+            if(is(object, "clusterMethodHClust")){
+              # Get an ordering table.
+              order_table <- data.table::data.table("name"=object@object$labels[object@object$order],
+                                                    "label_order"=seq_along(object@object$labels))
+              
+            } else {
+              # Get an ordering table.
+              order_table <- data.table::data.table("name"=object@object$order.lab,
+                                                    "label_order"=seq_along(object@object$order.lab))
+            }
             
             # Insert label order into the cluster table.
-            browser()
             cluster_table <- cluster_table[order_table, on=.NATURAL]
             
             return(cluster_table)
@@ -1172,10 +1188,10 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
 
 
 
-.optimise_cluster_silhouette <- function(object, distance_matrix){
-  browser()
+.optimise_cluster_silhouette <- function(object, distance_matrix, tol=0.01){
+  
   # Determine the number of features.
-  n_features <- length(get_similarity_names(object))
+  n_features <- length(get_similarity_names(object@similarity_table))
   
   # Check problematic values.
   if(n_features == 1){
@@ -1194,23 +1210,36 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   }
   
   # If all elements have distance 0, return 1 cluster.
-  if(all(distance_matrix == 0.0)) return(1)
+  if(all(distance_matrix < 2.0 * .Machine$double.eps)) return(1)
   
   # The optimiser doesn't like a singular interval, which occurs for n_features
   # == 3.
   if(n_features == 3) return(2)
   
-  # Determine optimal number of clusters k.
-  k_optimal <- suppressWarnings(stats::optimise(..optimise_cluster_silhouette,
-                                                interval=c(2, n_features-1),
-                                                distance_matrix=distance_matrix,
-                                                object=object,
-                                                maximum=TRUE))
+  # Set k to test.
+  k_test <- seq(2, n_features-1)
+  silhouette_score <- numeric(n_features-2)
+  silhouette_gradient <- numeric(max(c(0, n_features-4)))
   
-  # Set the optimal number of features.
-  k_optimal <- round(k_optimal$maximum, digits=0)
-  max_silhouette <- k_optimal$objective
+  for(k in k_test){
+    # Compute average silhouette.
+    silhouette_score[k-1] <- ..optimise_cluster_silhouette(k=k,
+                                                           distance_matrix=distance_matrix,
+                                                           object=object)
+    
+    # Compute gradient as a symmetric difference coefficient.
+    if(k > 3){
+      silhouette_gradient[k-3] <- 0.5 * (silhouette_score[k-1] - silhouette_score[k-3])
+      
+      # Stop if the gradient is 0 or negative 3 times.
+      if(sum(silhouette_gradient[seq(1, k-3)] <= 0.0) > 2) break()
+    }
+  }
   
+  # Set the optimal number of clusters.
+  k_optimal <- head(k_test[silhouette_score > max(silhouette_score) - tol], n=1L)
+  max_silhouette <- silhouette_score[k_test == k_optimal]
+
   # Determine if the silhoutte indicates reasonable structure (> 0.50), see
   # Kaufman and Rousseeuw: Finding groups in data.
   if(max_silhouette < 0.50) k_optimal <- n_features
@@ -1227,7 +1256,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   
   # Round k to integer value.
   k <- round(k, digits=0)
-  browser()
+  
   if(is(object, "clusterMethodPAM")){
     # Generate partioning around medoids cluster
     cluster_object <- cluster::pam(x=distance_matrix,
@@ -1258,7 +1287,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   } else if(is(object, "clusterMethodHierarchical")){
     
     # Compute silhouette.
-    silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=object@object,
+    silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=stats::as.hclust(object@object),
                                                              k=k),
                                              dist=distance_matrix)
     
@@ -1279,7 +1308,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
     
     # Return average silhouette in the formed non-singular clusters.
     if(!is_empty(silhouette_table)){
-      return(mean(silhouette_table$avg_sil))
+      return(mean(silhouette_table$average_cluster_silhouette))
       
     } else {
       return(0.0)
@@ -1295,7 +1324,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
 #### .cluster_by_fixed_cut (generic hierarchical) ------------------------------
 setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical"),
           function(object, ...){
-            browser()
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             .NATURAL <- NULL
             
@@ -1312,19 +1341,25 @@ setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical")
                                                  similarity_metric=object@similarity_metric)
             
             # Cut the dendrogram at the given height.
-            cluster_object <- stats::cutree(tree=object@object,
+            cluster_object <- stats::cutree(tree=stats::as.hclust(object@object),
                                             h=cut_height)
             
             # Set initial cluster table.
             cluster_table <- data.table::data.table("name"=names(cluster_object),
                                                     "cluster_id"=cluster_object)
             
-            # Get an ordering table.
-            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
-                                                  "label_order"=seq_along(object@object$labels))
+            if(is(object, "clusterMethodHClust")){
+              # Get an ordering table.
+              order_table <- data.table::data.table("name"=object@object$labels[object@object$order],
+                                                    "label_order"=seq_along(object@object$labels))
+              
+            } else {
+              # Get an ordering table.
+              order_table <- data.table::data.table("name"=object@object$order.lab,
+                                                    "label_order"=seq_along(object@object$order.lab))
+            }
             
             # Insert label order into the cluster table.
-            browser()
             cluster_table <- cluster_table[order_table, on=.NATURAL]
             
             return(cluster_table)
@@ -1335,10 +1370,7 @@ setMethod(".cluster_by_fixed_cut", signature(object="clusterMethodHierarchical")
 #### .cluster_by_dynamic_cut (hclust) --------------------------------------------
 setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
           function(object, ...){
-            # Suppress NOTES due to non-standard evaluation in data.table
-            .NATURAL <- NULL
-            
-            browser()
+
             # Attempt to create the dendrogram.
             if(is.null(object@object)){
               object <- apply_cluster_method(object)
@@ -1357,27 +1389,17 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
             # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters
             # from a hierarchical cluster tree: the Dynamic Tree Cut package for
             # R. Bioinformatics 2008 24(5):719-720
-            cluster_object <- dynamicTreeCut::cutreeDynamicTree(dendro=object@object,
-                                                                maxTreeHeight=cut_height,
-                                                                deepSplit=TRUE,
-                                                                minModuleSize=1)
+            cluster_ids <- dynamicTreeCut::cutreeDynamicTree(dendro=object@object,
+                                                             maxTreeHeight=cut_height,
+                                                             deepSplit=TRUE,
+                                                             minModuleSize=1)
             
-            # Set initial cluster table.
-            cluster_table <- data.table::data.table("name"=cluster_object$labels,
-                                                    "cluster_id"=cluster_object)
+            cluster_table <- data.table::data.table("name"=object@object$labels[object@object$order],
+                                                    "cluster_id"=cluster_ids[object@object$order],
+                                                    "label_order"=seq_along(object@object$labels))
             
-            # Get an ordering table.
-            order_table <- data.table::data.table("name"=object@object$labels[cluster_object$order],
-                                                  "label_order"=seq_along(object@object$labels))
-            
-            # Insert label order into the cluster table.
-            browser()
-            cluster_table <- cluster_table[order_table, on=.NATURAL]
             
             return(cluster_table)
-            
-            # Define clusters
-            return()
           })
 
 
