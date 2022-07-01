@@ -12,9 +12,11 @@
 
 ## Bug fixes
 
--   Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.
+- Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.
 
--   The `n_dim` parameter for isolation forests is now correctly set for datasets without any features.
+- The `n_dim` parameter for isolation forests is now correctly set for datasets without any features.
+
+- Pseudo-R<sup>2<sup> similarity metrics now correctly produce a value of 1.0 for exact fits. Previously these could produce infinite log-likelihoods, and return default value of 0.0 (no similarity).
 
 # Version 1.1.3 (Hoarse Horse)
 
