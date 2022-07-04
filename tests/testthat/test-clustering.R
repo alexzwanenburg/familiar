@@ -5,21 +5,72 @@ verbose <- FALSE
 
 # Create test parameters. This is actually a generator, which makes it easier to
 # nest all the different combinations that should be checked.
-generate_test_parameters <- coro::generator(function(similarity_metric, similarity_threshold){
-  for(outcome_type in c("survival", "binomial", "multinomial", "continuous", "count")){
-    for(n_numeric_features in c(4, 3, 2, 1, 0)){
-      for(cluster_method in familiar:::.get_available_cluster_methods()){
-        for(cluster_linkage in familiar:::.get_available_linkage_methods(cluster_method=cluster_method)){
-          for(cluster_cut_method in familiar:::.get_available_cluster_cut_methods(cluster_method=cluster_method)){
-            for(cluster_representation_method in familiar:::.get_available_cluster_representation_methods(cluster_method=cluster_method)){
+generate_test_parameters <- coro::generator(function(similarity_metric,
+                                                     similarity_threshold,
+                                                     n_numeric_features,
+                                                     cluster_method=NULL,
+                                                     cluster_linkage=NULL,
+                                                     cluster_cut_method=NULL,
+                                                     cluster_representation_method=NULL){
+  
+  for(n_numeric_features in n_numeric_features){
+    
+    if(is.null(cluster_method)){
+      local_cluster_method <- familiar:::.get_available_cluster_methods()
+      
+    } else {
+      local_cluster_method <- intersect(cluster_method,
+                                        familiar:::.get_available_cluster_methods())
+    }
+    
+    for(current_cluster_method in local_cluster_method){
+      
+      if(is.null(cluster_linkage)){
+        local_cluster_linkage <- familiar:::.get_available_linkage_methods(cluster_method=current_cluster_method)
+        
+      } else {
+        local_cluster_linkage <- intersect(cluster_linkage,
+                                           familiar:::.get_available_linkage_methods(cluster_method=current_cluster_method))
+      }
+      
+      for(current_cluster_linkage in local_cluster_linkage){
+        
+        if(is.null(cluster_cut_method)){
+          local_cluster_cut_method <- familiar:::.get_available_cluster_cut_methods(cluster_method=current_cluster_method)
+          
+        } else {
+          local_cluster_cut_method <- intersect(cluster_cut_method,
+                                                familiar:::.get_available_cluster_cut_methods(cluster_method=current_cluster_method))
+        }
+        
+        for(current_cluster_cut_method in local_cluster_cut_method){
+          
+          if(is.null(cluster_representation_method)){
+            local_cluster_representation_method <- familiar:::.get_available_cluster_representation_methods(cluster_method=current_cluster_method)
+          } else {
+            local_cluster_representation_method <- intersect(cluster_representation_method,
+                                                             familiar:::.get_available_cluster_representation_methods(cluster_method=current_cluster_method))
+          }
+          
+          for(current_cluster_representation_method in local_cluster_representation_method){
+            
+            # Set outcome type to avoid redundant tests where outcome type does
+            # not matter.
+            if(current_cluster_representation_method %in% c("best_predictor")){
+              available_outcome_type <- c("survival", "binomial", "multinomial", "continuous", "count")
+            } else {
+              available_outcome_type <- c("binomial")
+            }
+            
+            for(outcome_type in available_outcome_type){
               for(current_similarity_metric in similarity_metric){
                 for(current_similarity_threshold in similarity_threshold){
                   coro::yield(list("outcome_type"=outcome_type,
                                    "n_numeric"=n_numeric_features,
-                                   "cluster_method"=cluster_method,
-                                   "cluster_linkage"=cluster_linkage,
-                                   "cluster_cut_method"=cluster_cut_method,
-                                   "cluster_representation_method"=cluster_representation_method,
+                                   "cluster_method"=current_cluster_method,
+                                   "cluster_linkage"=current_cluster_linkage,
+                                   "cluster_cut_method"=current_cluster_cut_method,
+                                   "cluster_representation_method"=current_cluster_representation_method,
                                    "similarity_metric"=current_similarity_metric,
                                    "similarity_threshold"=current_similarity_threshold))
                 }
