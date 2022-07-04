@@ -144,10 +144,12 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   if(similarity < 0.0){
     similarity <- 0.0
     
-  } else if(similarity > 1.0){
+  } else if(similarity > 1.0 - 1E8){
+    # Greater than 1 minus a small tolerance should be set to 1.0 to prevent
+    # numerical issues from creating more clusters than expected.
     similarity <- 1.0
-  }
-
+  }  
+  
   return(similarity)
 }
 
