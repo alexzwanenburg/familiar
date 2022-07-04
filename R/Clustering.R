@@ -174,9 +174,9 @@ add_cluster_info <- function(cl=NULL,
                                                  function(x, y) (identical(x@cluster_parameters@method, y)),
                                                  y=cluster_method_object)]
     
-    # Check that at least 3 features are present. Otherwise no sensible
+    # Check that at least 2 features are present. Otherwise no sensible
     # clusters may be formed.
-    if(length(same_method_features) <= 2){
+    if(length(same_method_features) < 2){
       feature_info_list[same_method_features] <- create_cluster_parameter_skeleton(feature_info_list[same_method_features],
                                                                                    cluster_method="none")
       
