@@ -228,9 +228,9 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
       # Extract data table with contrasts.
       validation_data <- encoded_data$encoded_data
       
-      # Check if the validation data has two or more columns
-      if(ncol(validation_data) == 1) validation_data[, "bogus__variable__":=0.0]
-
+      # Add bogus variable. This has no effect if it wasn't used originally.
+      validation_data[, "bogus__variable__":=0.0]
+      
       # Get the type of response for glmnet predict
       response_type <- ifelse(object@feature_type == "numeric", "response", "class")
       

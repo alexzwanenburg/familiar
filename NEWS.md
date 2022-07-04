@@ -1,3 +1,9 @@
+# Version 1.1.4 (Innovative Iguana)
+
+## Bug fixes
+
+- Fixed an issue with LASSO-based imputation that lead to errors when attempting to impute values using LASSO models that were trained on a single feature.
+
 # Version 1.1.3 (Hoarse Horse)
 
 ## Bug fixes
