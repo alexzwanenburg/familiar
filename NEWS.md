@@ -1,4 +1,4 @@
-# Version 1.2.0 (Innovative Iguana)
+# Version 1.2.0 (Jocund Jackdaw)
 
 ## Major changes
 
@@ -17,6 +17,12 @@
 - The `n_dim` parameter for isolation forests is now correctly set for datasets without any features.
 
 - Pseudo-R<sup>2<sup> similarity metrics now correctly produce a value of 1.0 for exact fits. Previously these could produce infinite log-likelihoods, and return default value of 0.0 (no similarity).
+
+# Version 1.1.4 (Innovative Iguana)
+
+## Bug fixes
+
+- Fixed an issue with LASSO-based imputation that lead to errors when attempting to impute values using LASSO models that were trained on a single feature.
 
 # Version 1.1.3 (Hoarse Horse)
 
