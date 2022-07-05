@@ -173,12 +173,16 @@ add_cluster_info <- function(cl=NULL,
                                                        function(x, y) (identical(x@cluster_parameters@method, y)),
                                                        y=cluster_method_object)]
     
-    # Check that at least 2 features are present. Otherwise no sensible
+    # Perform 2 checks:
+    #
+    # 1, Check that at least 2 features are present. Otherwise no sensible
     # clusters may be formed.
-    if(length(same_method_features) < 2){
+    #
+    # 2, Check that there are at least 5 instances present. We cannot form
+    # clusters when similarity is difficult to assess.
+    if(length(same_method_features) < 2 | get_n_samples(data, id_depth="repetition") < 5L){
       feature_info_list[same_method_features] <- create_cluster_parameter_skeleton(feature_info_list[same_method_features],
                                                                                    cluster_method="none")
-      
     }
     
     # Update the number of features that have not been assigned.
