@@ -38,8 +38,7 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
 
 
 similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_metric){
-
-
+  
   # Check categorical flag for x
   if(length(x_categorical) != 1){
     ..error_variable_has_too_many_values(x=x_categorical, var_name="x_categorical", req_length=1)
@@ -82,10 +81,10 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     # Check for models where the intercept completely suffices, i.e. the scale
     # equals 0. This can happen if one of the variables is invariant.
     if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
-    if(abs(model_obj$coefficients[["x"]]) < 2 *.Machine$double.eps) return(0.0)
+    if(near(model_obj$coefficients[["x"]], 0.0, df=2*length(x))) return(0.0)
     
     # Check for almost exact copies, which do not show any residual deviance.
-    if(model_obj$deviance < .Machine$double.eps) return(1.0)
+    if(near(model_obj$deviance, 0.0)) return(1.0)
     
     null_obj  <- stats::glm(null_formula, data=data, family=stats::gaussian)
     
@@ -99,11 +98,12 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     
     # Check for models where the intercept completely suffices, i.e. the scale
     # equals 0. This can happen if one of the variables is invariant.
-    if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
-    if(abs(model_obj$coefficients[["x"]]) < 2 *.Machine$double.eps) return(0.0)
+    scale_coefficients <- setdiff(names(coef(model_obj)), "(Intercept)")
+    if(all(!is.finite(model_obj$coefficients[scale_coefficients]))) return(0.0)
+    if(all(near(model_obj$coefficients[scale_coefficients], 0.0, df=2*length(x)))) return(0.0)
     
     # Check for almost exact copies, which do not show any residual deviance.
-    if(model_obj$deviance < .Machine$double.eps) return(1.0)
+    if(near(model_obj$deviance, 0.0)) return(1.0)
     
     null_obj  <- stats::glm(null_formula, data=data, family=stats::binomial)
     
@@ -154,11 +154,14 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   if(similarity < 0.0){
     similarity <- 0.0
     
-  } else if(similarity > 1.0 - 1E-8){
-    # Greater than 1 minus a small tolerance should be set to 1.0 to prevent
-    # numerical issues from creating more clusters than expected.
+  } else if(similarity > 1.0){
+    # Greater than 1.0 should be set to 1.0.
     similarity <- 1.0
-  }  
+    
+  } else if(approximately(similarity, 1.0)){
+    # Check if values are very close to 1.0.
+    similarity <- 1.0
+  } 
   
   return(similarity)
 }
