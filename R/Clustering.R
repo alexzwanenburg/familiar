@@ -148,7 +148,6 @@ add_cluster_info <- function(cl=NULL,
   # parameters assigned on purpose, e.g. signature features or externally
   # provided features.
   
-  
   # Eliminate features that are already complete.
   feature_names <- feature_names[!sapply(feature_info_list[feature_names],
                                          function(x) (feature_info_complete(x@cluster_parameters)))]
@@ -167,12 +166,12 @@ add_cluster_info <- function(cl=NULL,
     
     # Get the cluster method object of the first feature that still needs to be
     # sorted.
-    cluster_method_object <- feature_info_list[[feature_names[1L]]]@cluster_parameters@method
+    cluster_method_object <- feature_info_list[[unassigned_features[1L]]]@cluster_parameters@method
     
     # Find other unsorted features that have the same method.
-    same_method_features <- feature_names[sapply(feature_info_list[feature_names],
-                                                 function(x, y) (identical(x@cluster_parameters@method, y)),
-                                                 y=cluster_method_object)]
+    same_method_features <- unassigned_features[sapply(feature_info_list[unassigned_features],
+                                                       function(x, y) (identical(x@cluster_parameters@method, y)),
+                                                       y=cluster_method_object)]
     
     # Check that at least 2 features are present. Otherwise no sensible
     # clusters may be formed.
@@ -196,13 +195,13 @@ add_cluster_info <- function(cl=NULL,
     
     # Get the cluster method object of the first feature that still needs to be
     # sorted.
-    cluster_method_object <- feature_info_list[[feature_names[1L]]]@cluster_parameters@method
+    cluster_method_object <- feature_info_list[[unassigned_features[1L]]]@cluster_parameters@method
     
     # Find other unsorted features that have the same method.
-    same_method_features <- feature_names[sapply(feature_info_list[feature_names],
-                                                 function(x, y) (identical(x@cluster_parameters@method, y)),
-                                                 y=cluster_method_object)] 
-  
+    same_method_features <- unassigned_features[sapply(feature_info_list[unassigned_features],
+                                                       function(x, y) (identical(x@cluster_parameters@method, y)),
+                                                       y=cluster_method_object)] 
+    
     # Compute similarity.
     cluster_method_object <- set_similarity_table(object=cluster_method_object,
                                                   data=filter_features(data=data, available_features=same_method_features),
