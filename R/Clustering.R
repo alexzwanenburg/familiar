@@ -2,7 +2,7 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-#### Parameter objecter --------------------------------------------------------
+#### Cluster parameter object --------------------------------------------------
 setClass("featureInfoParametersCluster",
          contains="featureInfoParameters",
          slots=list("type" = "character",
@@ -205,6 +205,15 @@ add_cluster_info <- function(cl=NULL,
     same_method_features <- unassigned_features[sapply(feature_info_list[unassigned_features],
                                                        function(x, y) (identical(x@cluster_parameters@method, y)),
                                                        y=cluster_method_object)] 
+    
+    # Message that computations are starting.
+    if(cluster_method_object@method != "none"){
+      logger.message(paste0("Computing similarity between ", length(same_method_features), " features ",
+                            "using the ", cluster_method_object@similarity_metric, " metric ",
+                            "for clustering using the ", cluster_method_object@method, " method."),
+                     indent=message_indent,
+                     verbose=verbose)
+    }
     
     # Compute similarity.
     cluster_method_object <- set_similarity_table(object=cluster_method_object,
