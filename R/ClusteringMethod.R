@@ -1384,10 +1384,14 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
               # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters
               # from a hierarchical cluster tree: the Dynamic Tree Cut package for
               # R. Bioinformatics 2008 24(5):719-720
-              cluster_ids <- dynamicTreeCut::cutreeDynamicTree(dendro=object@object,
-                                                               maxTreeHeight=cut_height,
-                                                               deepSplit=TRUE,
-                                                               minModuleSize=1)
+              cluster_ids <- tryCatch(dynamicTreeCut::cutreeDynamicTree(dendro=object@object,
+                                                                        maxTreeHeight=cut_height,
+                                                                        deepSplit=TRUE,
+                                                                        minModuleSize=1),
+                                      error=identity)
+              
+              # Check that dynamic cutting does not produce an error.
+              if(inherits(cluster_ids, "error")) return(.cluster_by_fixed_cut(object, ...))
               
               # Order the cluster identfiers correctly.
               cluster_ids <- cluster_ids[object@object$order]
