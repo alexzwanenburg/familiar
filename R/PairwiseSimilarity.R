@@ -79,6 +79,11 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     # Numerical y variable
     model_obj <- stats::glm(model_formula, data=data, family=stats::gaussian)
     
+    # Check for models where the intercept completely suffices, i.e. the scale
+    # equals 0. This can happen if one of the variables is invariant.
+    if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
+    if(abs(model_obj$coefficients[["x"]]) < 2 *.Machine$double.eps) return(0.0)
+    
     # Check for almost exact copies, which do not show any residual deviance.
     if(model_obj$deviance < .Machine$double.eps) return(1.0)
     
@@ -91,6 +96,11 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   } else if(analysis_info$type == "binomial"){
     # Categorical y variable with two levels
     model_obj <- stats::glm(model_formula, data=data, family=stats::binomial)
+    
+    # Check for models where the intercept completely suffices, i.e. the scale
+    # equals 0. This can happen if one of the variables is invariant.
+    if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
+    if(abs(model_obj$coefficients[["x"]]) < 2 *.Machine$double.eps) return(0.0)
     
     # Check for almost exact copies, which do not show any residual deviance.
     if(model_obj$deviance < .Machine$double.eps) return(1.0)
