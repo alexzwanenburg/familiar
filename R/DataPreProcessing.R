@@ -553,8 +553,8 @@ determine_preprocessing_parameters <- function(cl=NULL,
                           feature_info_list=feature_info_list)
   
   
-  ##### Cluster features #####
-  if(settings$prep$cluster_method != "none") logger.message("Pre-processing: Starting clustering of redundant clusters.",
+  ##### Cluster features -------------------------------------------------------
+  if(settings$prep$cluster_method != "none") logger.message("Pre-processing: Starting clustering of redundant features",
                                                             indent=message_indent,
                                                             verbose=verbose)
   
@@ -571,9 +571,27 @@ determine_preprocessing_parameters <- function(cl=NULL,
   feature_info_list  <- add_cluster_info(cl=cl,
                                          feature_info_list=feature_info_list,
                                          data=data,
-                                         message_indent=message_indent,
+                                         message_indent=message_indent + 1L,
                                          verbose=verbose)
-
+  
+  # Build cluster table.
+  cluster_table <- .create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Determine the number of features prior to clustering.
+  n_features_current <- nrow(cluster_table)
+  
+  # Further summarise the clusters by grouping.
+  cluster_table <- cluster_table[, list("cluster_size"=.N), by="cluster_name"]
+  
+  if(settings$prep$cluster_method != "none"){
+    logger.message(paste0(nrow(cluster_table), " feature clusters were created from ", n_features_current, " features. ",
+                          sum(cluster_table$cluster_size > 1L), " clusters contain more than one feature. The remaining ",
+                          sum(cluster_table$cluster_size == 1L), " clusters are singular"),
+                   indent=message_indent + 1L,
+                   verbose=verbose)
+  }
+  
+  
   # Add required features
   feature_info_list <- add_required_features(feature_info_list=feature_info_list)
   
