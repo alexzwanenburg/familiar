@@ -1236,3 +1236,39 @@ dlapply <- function(X, FUN, ...){
   # Return as list.
   return(as.list(x))
 }
+
+
+
+near <- function(x, y, df=2.0, tol=.Machine$double.eps){
+  # Determines whether floating points values in x are very close to another
+  # value in y.
+  .near <- function(x, tol) (x <= tol)
+  
+  if(length(x) != length(y) & length(y) != 1){
+    stop("x and y should have the same length, or y should be a single value.")
+  }
+  
+  if(!is.numeric(x)){
+    stop("x should be a numeric value.")
+  }
+  
+  if(!is.numeric(y)){
+    stop("y should be a numeric value.")
+  }
+  
+  return(sapply(abs(x-y), .near, tol=df * tol))
+}
+
+
+
+approximately <- function(x, y, tol=sqrt(.Machine$double.eps)){
+  # Determines whether numeric values in x are approximately y. This check is
+  # the same as all.equal but without the all additional and checking that
+  # all.equal does.
+  #
+  # approximately wraps near.
+  return(near(x=x,
+              y=y,
+              df=1.0,
+              tol=tol))
+}
