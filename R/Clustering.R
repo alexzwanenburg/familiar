@@ -350,21 +350,31 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 
 
-.create_clustering_table <- function(feature_info_list, selected_features=NULL){
+.create_clustering_table <- function(feature_info_list, selected_features=NULL, show_weights=FALSE){
   
   # Select only requested features.
   if(!is.null(selected_features)){
     feature_info_list <- feature_info_list[selected_features]
   }
   
-  cluster_table <- lapply(feature_info_list, function(x){
+  cluster_table <- lapply(feature_info_list, function(x, show_weights){
     # If cluster parameters are not set, skip.
     if(is.null(x@cluster_parameters)) return(NULL)
     
-    return(data.table::data.table("cluster_name"=x@cluster_parameters@cluster_name,
-                                  "feature_name"=x@cluster_parameters@cluster_features,
-                                  "feature_required"=x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features))
-  })
+    if(show_weights){
+      return(data.table::data.table("cluster_name"=x@cluster_parameters@cluster_name,
+                                    "feature_name"=x@cluster_parameters@cluster_features,
+                                    "feature_required"=x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features,
+                                    "weight"=x@cluster_parameters@weight))
+      
+    } else {
+      return(data.table::data.table("cluster_name"=x@cluster_parameters@cluster_name,
+                                    "feature_name"=x@cluster_parameters@cluster_features,
+                                    "feature_required"=x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features))
+    }
+    
+  },
+  show_weights=show_weights)
   
   # Remove duplicate entries.
   cluster_table <- unique(data.table::rbindlist(cluster_table, use.names=TRUE))
