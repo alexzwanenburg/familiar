@@ -83,14 +83,6 @@ generate_test_parameters <- coro::generator(function(similarity_metric,
   }
 })
 
-# TODO: test the following:
-# 1. Number of clusters that are being formed.
-# 2. Signature features are assigned their own cluster.
-# 3. Clustering works for special cases with one/two/three features.
-# 4. Clusters should be formed by the same base feature.
-# 5. Sample-clustering should function correctly, and cluster around different
-# batches.
-
 
 
 #### Generic test ##############################################################
@@ -139,16 +131,27 @@ while(TRUE){
                                                    data=data,
                                                    verbose=verbose)
   
-  # Assume that the data is imputed.
+  # Assume that the data are imputed.
   data@preprocessing_level <- "imputation"
   
   # Cluster features.
   clustered_data <- familiar:::cluster_features(data=data,
                                                 feature_info_list=feature_info_list)
   
-  
   # Create clustering table.
   cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Create single-sample data.
+  one_sample_data <- familiar:::test_create_synthetic_correlated_one_sample_data(outcome_type=parameters$outcome_type,
+                                                                                 n_numeric=parameters$n_numeric,
+                                                                                 cluster_size=cluster_size)
+  
+  # Assume that data are imputed.
+  one_sample_data@preprocessing_level <- "imputation"
+  
+  # Cluster features.
+  clustered_one_sample_data <- familiar:::cluster_features(data=one_sample_data,
+                                                           feature_info_list=feature_info_list)
   
   # Perform tests
   testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
@@ -275,6 +278,11 @@ while(TRUE){
                           # clustered_data data sets are the same.
                           testthat::expect_equal(clustered_data@data[[current_cluster_name]],
                                                  data@data[[representative_feature]])
+                          
+                          # Test that the cluster data for the one-sample
+                          # dataset and the clustered data are the same.
+                          testthat::expect_equal(clustered_one_sample_data@data[[current_cluster_name]],
+                                                 one_sample_data@data[[representative_feature]])
                         }
                       })
 }
@@ -328,7 +336,6 @@ while(TRUE){
   # Cluster features.
   clustered_data <- familiar:::cluster_features(data=data,
                                                 feature_info_list=feature_info_list)
-  
   
   # Create clustering table.
   cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
@@ -405,7 +412,6 @@ while(TRUE){
   # Cluster features.
   clustered_data <- familiar:::cluster_features(data=data,
                                                 feature_info_list=feature_info_list)
-  
   
   # Create clustering table.
   cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
@@ -492,7 +498,6 @@ while(TRUE){
   clustered_data <- familiar:::cluster_features(data=data,
                                                 feature_info_list=feature_info_list)
   
-  
   # Create clustering table.
   cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
   
@@ -512,6 +517,356 @@ while(TRUE){
                           # Test that exactly one cluster of two features is
                           # formed.
                           testthat::expect_equal(familiar:::get_n_features(clustered_data), 1L)
+                        }
+                      })
+}
+
+
+
+#### Dataset with signature features -------------------------------------------
+
+generic_test <- generate_test_parameters(similarity_metric="mcfadden_r2",
+                                         similarity_threshold=0.99,
+                                         n_numeric_features=c(4, 0))
+
+while(TRUE){
+  
+  # Generate parameters.
+  parameters <- generic_test()
+  if(coro::is_exhausted(parameters)) break()
+  
+  # Set cluster size. 
+  cluster_size <- c(2, 2, 2, 2)
+  
+  # Create data,
+  data <- familiar:::test_create_synthetic_correlated_data(outcome_type=parameters$outcome_type,
+                                                           n_numeric=parameters$n_numeric,
+                                                           cluster_size=cluster_size)
+  
+  # Create a list of featureInfo objects.
+  feature_info_list <- familiar:::.get_feature_info_data(data=data@data,
+                                                         file_paths=NULL,
+                                                         project_id=character(),
+                                                         outcome_type=parameters$outcome_type)[[1]]
+  
+  # Set signature features
+  feature_info_list <- familiar:::add_signature_info(feature_info_list=feature_info_list,
+                                                     signature=c("feature_1_A", "feature_1_B"))
+  
+  # Create cluster skeletons
+  feature_info_list <- familiar:::create_cluster_parameter_skeleton(feature_info_list,
+                                                                    cluster_method=parameters$cluster_method,
+                                                                    cluster_linkage=parameters$cluster_linkage,
+                                                                    cluster_cut_method=parameters$cluster_cut_method,
+                                                                    cluster_similarity_threshold=parameters$similarity_threshold,
+                                                                    cluster_similarity_metric=parameters$similarity_metric,
+                                                                    cluster_representation_method=parameters$cluster_representation_method)
+  
+  # Update feature info with cluster parameters.
+  feature_info_list <- familiar:::add_cluster_info(feature_info_list=feature_info_list,
+                                                   data=data,
+                                                   verbose=verbose)
+  
+  # Assume that the data is imputed.
+  data@preprocessing_level <- "imputation"
+  
+  # Cluster features.
+  clustered_data <- familiar:::cluster_features(data=data,
+                                                feature_info_list=feature_info_list)
+  
+  # Create clustering table.
+  cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Perform tests
+  testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
+                             "with cluster cut method \"", parameters$cluster_cut_method, "\" and ",
+                             "cluster representation method \"", parameters$cluster_representation_method, "\" for ",
+                             "normal synthetic data with two signature features and a ", parameters$outcome_type, " outcome."),
+                      {
+                        
+                        if(parameters$cluster_method %in% c("none") | parameters$cluster_cut_method == "none" | parameters$cluster_representation_method == "none"){
+                          # Test that exactly eight clusters of single features
+                          # are formed when clustering is disabled.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), 8L)
+                          
+                        } else {
+                          # Test that exactly fives clusters are formed.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), 5L)
+                          
+                          # Test that feature_1_A and feature_1_B appear in
+                          # separate, singular clusters.
+                          for(x in split(cluster_table, by="cluster_name")){
+                            if("feature_1_A" %in% x$feature_name){
+                              testthat::expect_equal(nrow(x), 1L)
+                              
+                              # Check that the signature feature values remain
+                              # unaltered.
+                              testthat::expect_equal(data@data[["feature_1_A"]],
+                                                     clustered_data@data[["feature_1_A"]])
+                              
+                            } else if("feature_1_B" %in% x$feature_name){
+                              testthat::expect_equal(nrow(x), 1L)
+                              
+                              # Check that the signature feature values remain
+                              # unaltered.
+                              testthat::expect_equal(data@data[["feature_1_B"]],
+                                                     clustered_data@data[["feature_1_B"]])
+                              
+                            } else {
+                              # Assert that clusters are formed by two features
+                              # with the same base name.
+                              base_feature_name <- substr(x$feature_name[1], 1, 9)
+                              
+                              testthat::expect_equal(nrow(x), 2L)
+                              testthat::expect_equal(sum(grepl(pattern=base_feature_name,
+                                                               x=x$feature_name)), 2L)
+                            }
+                          }
+                        }
+                      })
+}
+
+
+
+#### Dataset with one invariant feature ----------------------------------------
+
+generic_test <- generate_test_parameters(similarity_metric="mcfadden_r2",
+                                         similarity_threshold=0.99,
+                                         n_numeric_features=c(4, 0))
+
+while(TRUE){
+  
+  # Generate parameters.
+  parameters <- generic_test()
+  if(coro::is_exhausted(parameters)) break()
+  
+  # Set cluster size. Note that the second feature is made invariant.
+  cluster_size <- c(2, 1, 2, 2)
+  
+  # Create data,
+  data <- familiar:::test_create_synthetic_correlated_one_feature_invariant_data(outcome_type=parameters$outcome_type,
+                                                                                 n_numeric=parameters$n_numeric,
+                                                                                 cluster_size=cluster_size)
+  
+  # Create a list of featureInfo objects.
+  feature_info_list <- familiar:::.get_feature_info_data(data=data@data,
+                                                         file_paths=NULL,
+                                                         project_id=character(),
+                                                         outcome_type=parameters$outcome_type)[[1]]
+  
+  # Create cluster skeletons
+  feature_info_list <- familiar:::create_cluster_parameter_skeleton(feature_info_list,
+                                                                    cluster_method=parameters$cluster_method,
+                                                                    cluster_linkage=parameters$cluster_linkage,
+                                                                    cluster_cut_method=parameters$cluster_cut_method,
+                                                                    cluster_similarity_threshold=parameters$similarity_threshold,
+                                                                    cluster_similarity_metric=parameters$similarity_metric,
+                                                                    cluster_representation_method=parameters$cluster_representation_method)
+  
+  # Update feature info with cluster parameters.
+  feature_info_list <- familiar:::add_cluster_info(feature_info_list=feature_info_list,
+                                                   data=data,
+                                                   verbose=verbose)
+  
+  # Assume that the data is imputed.
+  data@preprocessing_level <- "imputation"
+  
+  # Cluster features.
+  clustered_data <- familiar:::cluster_features(data=data,
+                                                feature_info_list=feature_info_list)
+  
+  # Create clustering table.
+  cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Perform tests
+  testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
+                             "with cluster cut method \"", parameters$cluster_cut_method, "\" and ",
+                             "cluster representation method \"", parameters$cluster_representation_method, "\" for ",
+                             "a synthetic dataset with an invariant feature and a ", parameters$outcome_type, " outcome."),
+                      {
+                        # The expectation is that clustering functions normally.
+                        
+                        if(parameters$cluster_method %in% c("none") | parameters$cluster_cut_method == "none" | parameters$cluster_representation_method == "none"){
+                          # Test that exactly eight clusters of single features
+                          # are formed when clustering is disabled.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), sum(cluster_size))
+                          
+                        } else {
+                          # Test that the correct number of clusters is formed.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), length(cluster_size))
+                          
+                          for(x in split(cluster_table, by="cluster_name")){
+                            if("feature_2" %in% x$feature_name){
+                              # Test that feature_2 appears in a separate,
+                              # singular cluster.
+                              
+                              testthat::expect_equal(nrow(x), 1L)
+                              
+                              # Check that the signature feature values remain
+                              # unaltered.
+                              testthat::expect_equal(data@data[["feature_2"]],
+                                                     clustered_data@data[["feature_2"]])
+                              
+                            } else {
+                              # Assert that clusters are formed by two features
+                              # with the same base name.
+                              base_feature_name <- substr(x$feature_name[1], 1, 9)
+                              
+                              testthat::expect_equal(nrow(x), 2L)
+                              testthat::expect_equal(sum(grepl(pattern=base_feature_name,
+                                                               x=x$feature_name)), 2L)
+                            }
+                          }
+                        }
+                      })
+}
+
+
+
+
+#### One-sample dataset --------------------------------------------------------
+
+generic_test <- generate_test_parameters(similarity_metric="mcfadden_r2",
+                                         similarity_threshold=0.99,
+                                         n_numeric_features=c(4, 0))
+
+while(TRUE){
+  
+  # Generate parameters.
+  parameters <- generic_test()
+  if(coro::is_exhausted(parameters)) break()
+  
+  # Set cluster size. 
+  cluster_size <- c(2, 2, 2, 2)
+  
+  # Create data,
+  data <- familiar:::test_create_synthetic_correlated_one_sample_data(outcome_type=parameters$outcome_type,
+                                                                      n_numeric=parameters$n_numeric,
+                                                                      cluster_size=cluster_size)
+
+  # Create a list of featureInfo objects.
+  feature_info_list <- familiar:::.get_feature_info_data(data=data@data,
+                                                         file_paths=NULL,
+                                                         project_id=character(),
+                                                         outcome_type=parameters$outcome_type)[[1]]
+  
+  # Create cluster skeletons
+  feature_info_list <- familiar:::create_cluster_parameter_skeleton(feature_info_list,
+                                                                    cluster_method=parameters$cluster_method,
+                                                                    cluster_linkage=parameters$cluster_linkage,
+                                                                    cluster_cut_method=parameters$cluster_cut_method,
+                                                                    cluster_similarity_threshold=parameters$similarity_threshold,
+                                                                    cluster_similarity_metric=parameters$similarity_metric,
+                                                                    cluster_representation_method=parameters$cluster_representation_method)
+  
+  # Update feature info with cluster parameters.
+  feature_info_list <- familiar:::add_cluster_info(feature_info_list=feature_info_list,
+                                                   data=data,
+                                                   verbose=verbose)
+  
+  # Assume that the data is imputed.
+  data@preprocessing_level <- "imputation"
+  
+  # Cluster features.
+  clustered_data <- familiar:::cluster_features(data=data,
+                                                feature_info_list=feature_info_list)
+  
+  # Create clustering table.
+  cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Perform tests
+  testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
+                             "with cluster cut method \"", parameters$cluster_cut_method, "\" and ",
+                             "cluster representation method \"", parameters$cluster_representation_method, "\" for ",
+                             "a single-sample synthetic dataset with a ", parameters$outcome_type, " outcome."),
+                      {
+                        # The expectation is that clustering is skipped because
+                        # one cannot really determine similarity if there is
+                        # only a single value present.
+                        
+                        # Assert that the correct number of clusters is formed.
+                        testthat::expect_equal(familiar:::get_n_features(clustered_data), sum(cluster_size))
+                        testthat::expect_equal(data.table::uniqueN(cluster_table$cluster_name), sum(cluster_size))
+                      })
+}
+
+
+#### Invariant outcome dataset -------------------------------------------------
+
+generic_test <- generate_test_parameters(similarity_metric="mcfadden_r2",
+                                         similarity_threshold=0.99,
+                                         n_numeric_features=c(4, 0))
+
+while(TRUE){
+  
+  # Generate parameters.
+  parameters <- generic_test()
+  if(coro::is_exhausted(parameters)) break()
+  
+  # Set cluster size.
+  cluster_size <- c(2, 2, 2, 2)
+  
+  # Create data,
+  data <- familiar:::test_create_synthetic_correlated_one_outcome_data(outcome_type=parameters$outcome_type,
+                                                                       n_numeric=parameters$n_numeric,
+                                                                       cluster_size=cluster_size)
+  
+  # Create a list of featureInfo objects.
+  feature_info_list <- familiar:::.get_feature_info_data(data=data@data,
+                                                         file_paths=NULL,
+                                                         project_id=character(),
+                                                         outcome_type=parameters$outcome_type)[[1]]
+  
+  # Create cluster skeletons
+  feature_info_list <- familiar:::create_cluster_parameter_skeleton(feature_info_list,
+                                                                    cluster_method=parameters$cluster_method,
+                                                                    cluster_linkage=parameters$cluster_linkage,
+                                                                    cluster_cut_method=parameters$cluster_cut_method,
+                                                                    cluster_similarity_threshold=parameters$similarity_threshold,
+                                                                    cluster_similarity_metric=parameters$similarity_metric,
+                                                                    cluster_representation_method=parameters$cluster_representation_method)
+  
+  # Update feature info with cluster parameters.
+  feature_info_list <- familiar:::add_cluster_info(feature_info_list=feature_info_list,
+                                                   data=data,
+                                                   verbose=verbose)
+  
+  # Assume that the data is imputed.
+  data@preprocessing_level <- "imputation"
+  
+  # Cluster features.
+  clustered_data <- familiar:::cluster_features(data=data,
+                                                feature_info_list=feature_info_list)
+  
+  # Create clustering table.
+  cluster_table <- familiar:::.create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Perform tests
+  testthat::test_that(paste0("Clustering works correctly for the ", parameters$cluster_method, " clustering method, ",
+                             "with cluster cut method \"", parameters$cluster_cut_method, "\" and ",
+                             "cluster representation method \"", parameters$cluster_representation_method, "\" for ",
+                             "a synthetic dataset with an invariant ", parameters$outcome_type, " outcome."),
+                      {
+                        # The expectation is that clustering functions normally.
+                        
+                        if(parameters$cluster_method %in% c("none") | parameters$cluster_cut_method == "none" | parameters$cluster_representation_method == "none"){
+                          # Test that exactly eight clusters of single features
+                          # are formed when clustering is disabled.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), sum(cluster_size))
+                          
+                        } else {
+                          # Test that the correct number of clusters is formed.
+                          testthat::expect_equal(familiar:::get_n_features(clustered_data), length(cluster_size))
+                          
+                          for(x in split(cluster_table, by="cluster_name")){
+                            # Assert that clusters are formed by two features
+                            # with the same base name.
+                            base_feature_name <- substr(x$feature_name[1], 1, 9)
+                            
+                            testthat::expect_equal(nrow(x), 2L)
+                            testthat::expect_equal(sum(grepl(pattern=base_feature_name,
+                                                             x=x$feature_name)), 2L)
+                          }
                         }
                       })
 }
