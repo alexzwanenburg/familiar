@@ -309,8 +309,7 @@ add_required_features <- function(feature_info_list){
     
     # Required features for imputation
     if(is(object@imputation_parameters, "featureInfoParametersImputation")){
-        browser()
-        required_features <- c(required_features, object@imputation_parameters@required_features)
+      required_features <- c(required_features, object@imputation_parameters@required_features)
     }
     
     # Required features for clustering
