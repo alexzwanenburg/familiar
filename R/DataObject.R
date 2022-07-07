@@ -1607,6 +1607,136 @@ setMethod("select_features", signature(data="dataObject"),
           })
 
 
+#### get_required_features (dataObject) ----------------------------------------
+setMethod("get_required_features", signature(object="dataObject"),
+          function(object,
+                   feature_info_list,
+                   features=NULL,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            # Find features available in the dataset. Required features are
+            # always defined in the context of the original data, prior to
+            # clustering. Hence, determine depending on the preprocessing level
+            # achieved.
+            if(.as_preprocessing_level(object@preprocessing_level) < "clustering"){
+              # Use features as they appear in the dataset.
+              if(is.null(features)) features <- get_feature_columns(object)
+              
+            } else {
+              
+              if(is.null(features)){
+                # Use features as they appear in the dataset, prior to
+                # clustering.
+                features <- features_before_clustering(features=get_feature_columns(object),
+                                                       feature_info_list=feature_info_list)
+                
+              } else {
+                # Identify features as they appear in the dataset, prior to
+                # clustering.
+                features <- features_before_clustering(features=features,
+                                                       feature_info_list=feature_info_list)
+              }
+            }
+            
+            # Determine available features from feature info list.
+            available_features <- get_available_features(feature_info_list=feature_info_list,
+                                                         exclude_signature=exclude_signature,
+                                                         exclude_novelty=exclude_novelty)
+            
+            # Determine the intersect of the available features and features.
+            features <- intersect(available_features, features)
+            
+            # Find the corresponding required features.
+            features <- unique(unlist(sapply(feature_info_list[features], function(x) x@required_features)))
+            
+            return(features)
+          })
+
+
+#### get_required_features (ANY) -----------------------------------------------
+setMethod("get_required_features", signature(object="NULL"),
+          function(object=NULL,
+                   feature_info_list,
+                   features,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            # Find features available in the dataset. Assume that data are
+            # clustered.
+            
+            # Determine available features from feature info list.
+            available_features <- get_available_features(feature_info_list=feature_info_list,
+                                                         exclude_signature=exclude_signature,
+                                                         exclude_novelty=exclude_novelty)
+            
+            if(is.null(features)){
+              # If features is explicitly NULL, copy available features.
+              features <- available_features
+              
+            } else {
+              # Identify features as they appear in the dataset, prior to
+              # clustering.
+              features <- features_before_clustering(features=features,
+                                                     feature_info_list=feature_info_list)
+            }
+            
+            # Determine the intersect of the available features and features.
+            features <- intersect(available_features, features)
+            
+            # Find the corresponding required features.
+            features <- unique(unlist(sapply(feature_info_list[features], function(x) x@required_features)))
+            
+            return(features)
+          })
+
+
+
+#### get_model_features (dataObject) -------------------------------------------
+setMethod("get_model_features", signature(object="dataObject"),
+          function(object,
+                   feature_info_list,
+                   features=NULL,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            # Find features available in the dataset. Required features are
+            # always defined prior to clustering. Hence, depending on 
+            if(.as_preprocessing_level(object@preprocessing_level) < "clustering"){
+              # Use features as they appear in the dataset.
+              if(is.null(features)) features <- get_feature_columns(object)
+              
+            } else {
+              
+              if(is.null(features)){
+                # Use features as they appear in the dataset, prior to
+                # clustering.
+                features <- features_before_clustering(features=get_feature_columns(object),
+                                                       feature_info_list=feature_info_list)
+                
+              } else {
+                # Identify features as they appear in the dataset, prior to
+                # clustering.
+                features <- features_before_clustering(features=features,
+                                                       feature_info_list=feature_info_list)
+              }
+            }
+            
+            # Determine available features from feature info list.
+            available_features <- get_available_features(feature_info_list=feature_info_list,
+                                                         exclude_signature=exclude_signature,
+                                                         exclude_novelty=exclude_novelty)
+            
+            # Determine the intersect of the available features and features.
+            features <- intersect(available_features, features)
+            
+            return(features)
+          })
+
+
 
 create_data_column_info <- function(settings){
   

@@ -90,6 +90,9 @@ setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("ex
 
 setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_object_parameters"))
 
+setGeneric("get_required_features", function(object, ...) standardGeneric("get_required_features"))
+
+setGeneric("get_model_features", function(object, ...) standardGeneric("get_model_features"))
 
 ##### Clustering methods -------------------------------------------------------
 setGeneric("set_similarity_table", function(object, data, ...) standardGeneric("set_similarity_table"))
