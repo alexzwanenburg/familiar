@@ -56,6 +56,18 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
   }
   
   return(vimp_table)
+.get_available_rank_aggregation_methods <- function(){
+  return(c("none",
+           "mean",
+           "median",
+           "best",
+           "worst",
+           "stability",
+           "exponential",
+           "borda",
+           "enhanced_borda",
+           "truncated_borda",
+           "enhanced_truncated_borda"))
 }
 
 

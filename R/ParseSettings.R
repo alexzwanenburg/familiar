@@ -2070,7 +2070,10 @@
                                      optional=TRUE,
                                      default="borda")
   
-  rank.check_aggregation_method(method=settings$aggregation)
+  .check_parameter_value_is_valid(x=settings$aggregation,
+                                  var_name="vimp_aggregation_method",
+                                  values=.get_available_rank_aggregation_methods())
+  
   
   ##### vimp_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
@@ -3674,7 +3677,9 @@
                                      optional=TRUE,
                                      default=vimp_aggregation_method)
   
-  rank.check_aggregation_method(method=settings$aggregation)
+  .check_parameter_value_is_valid(x=settings$aggregation,
+                                  var_name="eval_aggregation_method",
+                                  values=.get_available_rank_aggregation_methods())
   
   ##### eval_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
