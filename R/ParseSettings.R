@@ -419,7 +419,7 @@
                                               "prep_cluster_method"=settings$prep$cluster_method,
                                               "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
                                               "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
-                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
+                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_similarity_threshold,
                                               "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
                                          dots))
   
@@ -1835,25 +1835,25 @@
   #features to be considered part of one cluster. Should be expressed in terms
   #of the similarity metric, e.g. 0.8 for spearman would consider all features
   #that have a pairwise correlation of 0.8 and over to belong to a cluster.
-  settings$cluster_sim_thresh <- .parse_arg(x_config=config$cluster_similarity_threshold,
-                                            x_var=cluster_similarity_threshold,
-                                            var_name="cluster_similarity_threshold",
-                                            type="numeric",
-                                            optional=TRUE,
-                                            default=NULL)
+  settings$cluster_similarity_threshold <- .parse_arg(x_config=config$cluster_similarity_threshold,
+                                                      x_var=cluster_similarity_threshold,
+                                                      var_name="cluster_similarity_threshold",
+                                                      type="numeric",
+                                                      optional=TRUE,
+                                                      default=NULL)
   
-  if(is.null(settings$cluster_sim_thresh)){
+  if(is.null(settings$cluster_similarity_threshold)){
     if(settings$cluster_cut_method %in% c("fixed_cut")){
       # Fixed cut requires stringent defaults, otherwise non-sense clusters will
       # be produced.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
-        settings$cluster_sim_thresh <- 0.30
+        settings$cluster_similarity_threshold <- 0.30
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")){
-        settings$cluster_sim_thresh <- 0.75
+        settings$cluster_similarity_threshold <- 0.75
         
       } else {
-        settings$cluster_sim_thresh <- 0.90
+        settings$cluster_similarity_threshold <- 0.90
       }
       
     } else {
@@ -1861,33 +1861,33 @@
       # potentially be found. The threshold is set low so that other cut methods
       # can be explored.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
-        settings$cluster_sim_thresh <- 0.05
+        settings$cluster_similarity_threshold <- 0.05
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
-        settings$cluster_sim_thresh <- 0.40
+        settings$cluster_similarity_threshold <- 0.40
         
       } else {
-        settings$cluster_sim_thresh <- 0.50
+        settings$cluster_similarity_threshold <- 0.50
       }
     }
   }
   
   ##### cluster_representation_method ##########################################
   # Method to select the feature that represents the cluster
-  settings$cluster_repr_method <- .parse_arg(x_config=config$cluster_representation_method,
-                                             x_var=cluster_representation_method,
-                                             var_name="cluster_representation_method",
-                                             type="character",
-                                             optional=TRUE,
-                                             default="best_predictor")
+  settings$cluster_representation_method <- .parse_arg(x_config=config$cluster_representation_method,
+                                                       x_var=cluster_representation_method,
+                                                       var_name="cluster_representation_method",
+                                                       type="character",
+                                                       optional=TRUE,
+                                                       default="best_predictor")
   
   # Partioning around medioids only allows the use of medioids for
   # representation.
-  if(settings$cluster_method == "pam") settings$cluster_repr_method <- "medioid"
+  if(settings$cluster_method == "pam") settings$cluster_representation_method <- "medioid"
   
   # If mean is used, this requires the data to have some kind of standardisation
   # with centering at 0.
-  if(settings$cluster_repr_method %in% c("mean")){
+  if(settings$cluster_representation_method %in% c("mean")){
     if(!settings$normalisation_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "quantile")){
       warning(paste0("When computing the meta-feature for a cluster using the mean value of co-clustered features, ",
                      "each feature is expected to be centered at 0.0 and to have a standard scale. ",
@@ -1903,9 +1903,9 @@
   .check_cluster_parameters(cluster_method=settings$cluster_method,
                             cluster_cut_method=settings$cluster_cut_method,
                             cluster_linkage=settings$cluster_linkage,
-                            cluster_similarity_threshold=settings$cluster_sim_thresh,
+                            cluster_similarity_threshold=settings$cluster_similarity_threshold,
                             cluster_similarity_metric=settings$cluster_similarity_metric,
-                            cluster_representation_method=settings$cluster_repr_method,
+                            cluster_representation_method=settings$cluster_representation_method,
                             data_type="cluster",
                             message_type="backend_error")
   
@@ -2059,6 +2059,7 @@
                                            parameter_list=settings$param,
                                            outcome_type=outcome_type,
                                            fs_method=settings$fs_methods)
+  
   
   ##### vimp_aggregation_method ################################################
   # Variable importance aggregation methods
@@ -3560,13 +3561,6 @@
                                                 optional=TRUE,
                                                 default=prep_cluster_method)
   
-  # Already checked in .check_cluster_parameters.
-  # if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
-  #    & !settings$feature_cluster_method %in% c("none", "hclust")){
-  #   require_package(x="cluster",
-  #                   purpose="to use feature similarity",
-  #                   message_type="backend_error")
-  # }
   
   ##### feature_linkage_method #################################################
   # Feature linkage method
@@ -3633,14 +3627,6 @@
                                                type="character",
                                                optional=TRUE,
                                                default=prep_cluster_method)
-  
-  # Already checked in .check_cluster_parameters
-  # if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
-  #    !settings$sample_cluster_method %in% c("none", "hclust")){
-  #   require_package(x="cluster",
-  #                   purpose="to use sample similarity",
-  #                   message_type="backend_error")
-  # }
   
   ##### sample_linkage_method ##################################################
   # Sample cluster linkage method
