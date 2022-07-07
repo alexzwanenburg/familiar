@@ -389,7 +389,7 @@ features_before_clustering <- function(features, cluster_table=NULL, feature_inf
   
   # Suppress NOTES due to non-standard evaluation in data.table
   cluster_name <- NULL
-  browser()
+  
   # Create a cluster table if it is not provided
   if(is.null(cluster_table) & is.null(feature_info_list)){
     ..error_reached_unreachable_code("feature_before_clustering: if no cluster_table is provided, feature_info_list cannot be empty.")
