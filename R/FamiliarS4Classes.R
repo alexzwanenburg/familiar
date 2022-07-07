@@ -837,6 +837,51 @@ setClass("featureInfoParameters",
 )
 
 
+
+#### vimpTable -----------------------------------------------------------------
+
+
+setClass("vimpTable",
+         slots = list(
+           # Variable importance table.
+           vimp_table = "ANY",
+           # Variable importance method that generated the current variable
+           # importance table.
+           vimp_method = "character",
+           # Run table for the current model
+           run_table = "ANY",
+           # Set how scores from encoded features should be aggregated.
+           score_aggregation = "character",
+           # Table that can be used to merge encoded features back into
+           # singleton features, if necessary.
+           encoding_table = "ANY",
+           # Table that can be used to decluster the current table.
+           cluster_table = "ANY",
+           # Whether scores should be inverted for ranking.
+           invert = "logical",
+           # Project identifier.
+           project_id = "ANY",
+           # Version of familiar used to create the object.
+           familiar_version = "ANY",
+           # State of the object.
+           state="character"
+         ),
+         prototype = list(
+           vimp_table = NULL,
+           vimp_method = NA_character_,
+           run_table = NULL,
+           score_aggregation = NA_character_,
+           encoding_table = NULL,
+           cluster_table = NULL,
+           invert = FALSE,
+           project_id = NULL,
+           familiar_version = NULL,
+           state="initial"
+         )
+)
+
+
+
 #### outcomeInfo ---------------------------------------------------------------
 
 #' Outcome information object.

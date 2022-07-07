@@ -316,3 +316,23 @@ setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric("
 setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
 
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
+
+
+#### vimpTable -----------------------------------------------------------------
+setGeneric("get_vimp_table", function(x, ...) standardGeneric("get_vimp_table"))
+
+setGeneric("decode_vimp_table", function(x, ...) standardGeneric("decode_vimp_table"))
+
+setGeneric("decluster_vimp_table", function(x, ...) standardGeneric("decluster_vimp_table"))
+
+setGeneric("rank_vimp_table", function(x, ...) standardGeneric("rank_vimp_table"))
+
+setGeneric("preprocess_vimp_table", function(x, ...) standardGeneric("preprocess_vimp_table"))
+
+setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove_signature_features"))
+
+setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
+
+setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))
+
+setGeneric("aggregate_vimp_table", function(x, ...) standardGeneric("aggregate_vimp_table"))

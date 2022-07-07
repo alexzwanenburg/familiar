@@ -2,7 +2,7 @@
 #' @include FamiliarS4Classes.R
 
 
-#####is_empty---------------------------------------------------------------------------
+#####is_empty-------------------------------------------------------------------
 setMethod("is_empty", signature(x="NULL"), function(x) return(TRUE))
 
 setMethod("is_empty", signature(x="data.table"), function(x){
@@ -57,6 +57,8 @@ setMethod("is_empty", signature(x="list"), function(x){
     return(FALSE)
   }
 })
+
+setMethod("is_empty", signature(x="vimpTable"), function(x) return(is_empty(x@vimp_table)))
 
 setMethod("is_empty", signature(x="vector"), function(x) length(x) == 0)
 

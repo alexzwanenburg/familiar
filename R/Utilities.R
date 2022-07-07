@@ -1167,6 +1167,7 @@ is_subclass <- function(class_1, class_2){
 }
 
 
+
 .flatten_nested_list <- function(x, flatten=FALSE){
   
   # Identify names of elements.
