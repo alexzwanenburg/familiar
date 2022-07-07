@@ -2,6 +2,31 @@
 #' @include FamiliarS4Classes.R
 
 
+
+#### show (vimpTable) ----------------------------------------------------------
+setMethod("show", signature(object="vimpTable"),
+          function(object){
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
+            # Create an initial descriptor.
+            if(is_empty(object)){
+              cat(paste0("An empty variable importance table for the ", object@vimp_method,
+                         " variable importance method ",
+                         "(", .familiar_version_string(object), ")."))
+              
+            } else {
+              cat(paste0("A variable importance table for the ", object@vimp_method,
+                         " variable importance method ",
+                         "(", .familiar_version_string(object), "):\n\n"))
+              
+              show(object@vimp_table)
+            }
+          })
+
+
+
 #### get_vimp_table (vimpTable) ------------------------------------------------
 setMethod("get_vimp_table", signature(x="vimpTable"),
           function(x, state="ranked"){
@@ -255,7 +280,7 @@ setMethod("remove_signature_features", signature(x="vimpTable"),
             } 
             
             # If there are no signature features, we don't need to remove them.
-            if(is.null(features)) return(x)
+            if(is_empty(features)) return(x)
             
             # Check if any of the signature features are encoded.
             if(!is.null(x@encoding_table)){
