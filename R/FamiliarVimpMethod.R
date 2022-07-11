@@ -80,14 +80,35 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
                                                                                                   run_table=object@run_table))
             
             # Determine variable importance.
-            vimp_table <- ..vimp(object=object,
-                                 data=data)
-
-            # Order output columns.
-            data.table::setcolorder(vimp_table,
-                                    neworder=colnames(get_placeholder_vimp_table()))
-
-            return(vimp_table)  
+            vimp_object <- ..vimp(object=object,
+                                  data=data)
+            
+            # Find signature features.
+            signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
+            
+            # Remove signature features.
+            vimp_object <- remove_signature_features(vimp_object,
+                                                     features=signature_features)
+            
+            # Set up a table with clustering information.
+            cluster_table <- .create_clustering_table(object@feature_info)
+            
+            # Remove invariant features from the cluster_table
+            if(length(invariant_features) > 0) cluster_table <- cluster_table[!cluster_name %in% invariant_features]
+            
+            # Remove features in the signature.
+            if(length(signature_features) > 0) cluster_table <- cluster_table[!cluster_name %in% signature_features]
+            
+            # Update variable importance table object.
+            vimp_object@vimp_method <- object@vimp_method
+            vimp_object@run_table <- object@run_table
+            vimp_object@cluster_table <- cluster_table
+            vimp_object@project_id <- object@project_id
+            
+            # Set package version.
+            vimp_object <- add_package_version(vimp_object)
+            
+            return(vimp_object)  
           })
 
 
@@ -134,12 +155,33 @@ setMethod(".vimp", signature(object="familiarModel"),
                                                                                                   run_table=object@run_table))
             
             # Determine variable importance.
-            vimp_table <- ..vimp(object=object,
-                                 data=data)
+            vimp_object <- ..vimp(object=object,
+                                  data=data)
             
-            # Order output columns.
-            data.table::setcolorder(vimp_table,
-                                    neworder=colnames(get_placeholder_vimp_table()))
+            # Find signature features.
+            signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
+            
+            # Remove signature features.
+            vimp_object <- remove_signature_features(vimp_object,
+                                                     features=signature_features)
+            
+            # Set up a table with clustering information.
+            cluster_table <- .create_clustering_table(object@feature_info)
+            
+            # Remove invariant features from the cluster_table
+            if(length(invariant_features) > 0) cluster_table <- cluster_table[!cluster_name %in% invariant_features]
+            
+            # Remove features in the signature.
+            if(length(signature_features) > 0) cluster_table <- cluster_table[!cluster_name %in% signature_features]
+            
+            # Update variable importance table object.
+            vimp_object@vimp_method <- object@learner
+            vimp_object@run_table <- object@run_table
+            vimp_object@cluster_table <- cluster_table
+            vimp_object@project_id <- object@project_id
+            
+            # Set package version.
+            vimp_object <- add_package_version(vimp_object)
 
-            return(vimp_table)  
+            return(vimp_object)  
           })
