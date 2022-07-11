@@ -131,39 +131,44 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Compute variable importance.
   vimp_table <- .vimp(object=vimp_object, data=data)
   
-  # Post-processing on the variable importance data table
-  if(nrow(vimp_table) == 0){
-    # If the variable importance data table is empty, return an empty table
-    vimp_table$data_id   <- numeric(0)
-    vimp_table$run_id    <- numeric(0)
-    vimp_table$fs_method <- character(0)
-    
-  } else {
-    # Obtain the list of identifiers.
-    id_list <- .get_iteration_identifiers(run=run)
-    
-    # Add identifiers to variable importance data table
-    vimp_table$data_id   <- id_list$data
-    vimp_table$run_id    <- id_list$run
-    vimp_table$fs_method <- fs_method
+  if(is_multivariate){
+    vimp_table <- remove_signature_features(vimp_table,
+                                            features=names(feature_info_list)[sapply(feature_info_list, is_in_signature)])
   }
-  
-  # Remove signature features from the table, and re-rank.
-  if(is_multivariate & nrow(vimp_table) > 0){
-    
-    # Identify signature features, if any.
-    signature_features <- names(feature_info_list)[sapply(feature_info_list, is_in_signature)]
-    
-    if(length(signature_features) > 0){
-      # Remove signature features.
-      vimp_table <- vimp_table[!name %in% signature_features]
-      
-      if(nrow(vimp_table) > 0){
-        # Re-rank features after removing signature features.
-        vimp_table[, "rank":=data.table::frank(rank, ties.method="min")]
-      }
-    }
-  }
+  # 
+  # # Post-processing on the variable importance data table
+  # if(nrow(vimp_table) == 0){
+  #   # If the variable importance data table is empty, return an empty table
+  #   vimp_table$data_id   <- numeric(0)
+  #   vimp_table$run_id    <- numeric(0)
+  #   vimp_table$fs_method <- character(0)
+  #   
+  # } else {
+  #   # Obtain the list of identifiers.
+  #   id_list <- .get_iteration_identifiers(run=run)
+  #   
+  #   # Add identifiers to variable importance data table
+  #   vimp_table$data_id   <- id_list$data
+  #   vimp_table$run_id    <- id_list$run
+  #   vimp_table$fs_method <- fs_method
+  # }
+  # 
+  # # Remove signature features from the table, and re-rank.
+  # if(is_multivariate & nrow(vimp_table) > 0){
+  #   
+  #   # Identify signature features, if any.
+  #   signature_features <- names(feature_info_list)[sapply(feature_info_list, is_in_signature)]
+  #   
+  #   if(length(signature_features) > 0){
+  #     # Remove signature features.
+  #     vimp_table <- vimp_table[!name %in% signature_features]
+  #     
+  #     if(nrow(vimp_table) > 0){
+  #       # Re-rank features after removing signature features.
+  #       vimp_table[, "rank":=data.table::frank(rank, ties.method="min")]
+  #     }
+  #   }
+  # }
 
   # Generate the translation table for the selected set of features.
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
