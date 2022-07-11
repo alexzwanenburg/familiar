@@ -384,23 +384,34 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 
 
-features_before_clustering <- function(features, cluster_table=NULL, feature_info_list=NULL){
+features_before_clustering <- function(features,
+                                       cluster_table=NULL,
+                                       feature_info_list=NULL,
+                                       representative_only=FALSE){
   # Convert input features to original features
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cluster_name <- NULL
+  cluster_name <- feature_required <- NULL
   
   # Create a cluster table if it is not provided
   if(is.null(cluster_table) & is.null(feature_info_list)){
-    ..error_reached_unreachable_code("feature_before_clustering: if no cluster_table is provided, feature_info_list cannot be empty.")
+    ..error_reached_unreachable_code("features_before_clustering: if no cluster_table is provided, feature_info_list cannot be empty.")
     
   } else if(is.null(cluster_table)){
     cluster_table <- .create_clustering_table(feature_info_list=feature_info_list,
                                               selected_features=features)
   }
   
-  # Find and return original features.
-  return(unique(cluster_table[cluster_name %in% features]$feature_name))
+  # Find original features.
+  if(representative_only){
+    original_features <- unique(cluster_table[cluster_name %in% features & feature_required == TRUE]$feature_name)
+    
+  } else {
+    original_features <- unique(cluster_table[cluster_name %in% features]$feature_name)
+  }
+  
+  # Return original features.
+  return(original_features)
 }
 
 
