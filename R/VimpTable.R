@@ -668,6 +668,7 @@ setMethod("aggregate_vimp_table", signature(x="NULL"),
   state_levels <- c("initial",
                     "decoded",
                     "declustered",
+                    "reclustered",
                     "ranked",
                     "aggregated")
   
