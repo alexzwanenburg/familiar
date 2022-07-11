@@ -679,3 +679,12 @@ setMethod("aggregate_vimp_table", signature(x="NULL"),
                 levels=state_levels,
                 ordered=TRUE))
 }
+
+
+#### add_package_version (vimpTable) -------------------------------------------
+setMethod("add_package_version", signature(object="vimpTable"),
+          function(object){
+            
+            # Set version of familiar
+            return(.add_package_version(object=object))
+          })
