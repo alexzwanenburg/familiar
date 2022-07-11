@@ -583,9 +583,6 @@ setMethod("..predict_survival_probability", signature(object="familiarRanger", d
 setMethod("..vimp", signature(object="familiarRanger"),
           function(object, data=NULL, ...){
             
-            # Suppress NOTES due to non-standard evaluation in data.table
-            score <- NULL
-            
             # Attempt to train the model if it has not been trained yet.
             if(!model_is_trained(object)) object <- .train(object=object,
                                                            data=data,
@@ -606,12 +603,13 @@ setMethod("..vimp", signature(object="familiarRanger"),
               vimp_score <- object@model$variable.importance
             }
             
-            # Create the variable importance table
-            vimp_table <- data.table::data.table("score"=vimp_score, "name"=names(vimp_score))
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=vimp_score, "name"=names(vimp_score)),
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            return(vimp_table)
+            return(vimp_object)
           })
 
 
