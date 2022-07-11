@@ -41,7 +41,7 @@ setMethod("get_vimp_table", signature(x="vimpTable"),
           })
 
 #### get_vimp_table (NULL) -----------------------------------------------------
-setMethod("get_vimp_table", signature(x="vimpTable"),
+setMethod("get_vimp_table", signature(x="NULL"),
           function(x, state="ranked"){
             return(NULL)
           })
@@ -159,10 +159,9 @@ setMethod("decluster_vimp_table", signature(x="vimpTable"),
             # Skip if there is no cluster table to work with.
             if(is_empty(x@cluster_table)) return(x)
             
-            browser()
             # Merge the cluster table into the variable importance table..
-            vimp_table <- merge(x=object@vimp_table,
-                                y=object@cluster_table,
+            vimp_table <- merge(x=x@vimp_table,
+                                y=x@cluster_table,
                                 by.x="name",
                                 by.y="cluster_name",
                                 all.x=FALSE,
@@ -170,7 +169,7 @@ setMethod("decluster_vimp_table", signature(x="vimpTable"),
             
             # Adapt table by removing the original name column and renaming the
             # feature name column.
-            # TODO
+            vimp_table[, ":="("name"=NULL, "feature_required"=NULL)]
             data.table::setnames(vimp_table, old="feature_name", new="name")
             
             # Remove weights, unless explicitly stated.
@@ -303,8 +302,8 @@ setMethod("rank_vimp_table", signature(x="NULL"),
 setMethod("preprocess_vimp_table", signature(x="vimpTable"),
           function(x, stop_at="ranked", ...){
             # Convert the state attained and the requested state to ordinals.
-            state_attained <- .as_preprocessing_level(x@state)
-            stop_at <- .as_preprocessing_level(stop_at)
+            state_attained <- .as_vimp_table_state(x@state)
+            stop_at <- .as_vimp_table_state(stop_at)
             
             if(state_attained < "decoded" & stop_at >= "decoded"){
               # Transform the features.
@@ -325,7 +324,7 @@ setMethod("preprocess_vimp_table", signature(x="vimpTable"),
           })
 
 #### preprocess_vimp_table (NULL) ----------------------------------------------
-setMethod("preprocess_vimp_table", signature(x="vimpTable"),
+setMethod("preprocess_vimp_table", signature(x="NULL"),
           function(x, ...){
             return(x)
           })
@@ -386,6 +385,10 @@ setMethod("remove_signature_features", signature(x="NULL"),
 #### update_vimp_table_to_reference (list) -------------------------------------
 setMethod("update_vimp_table_to_reference", signature(x="list"),
           function(x, reference_cluster_table=NULL, ...){
+            
+            # If the list is empty, return NULL instead.
+            if(is_empty(x)) return(NULL)
+            
             # Dispatch to method for single variable importance tables.
             return(lapply(x,
                           update_vimp_table_to_reference,
@@ -401,6 +404,11 @@ setMethod("update_vimp_table_to_reference", signature(x="vimpTable"),
             
             # Ensure that the vimp table is declustered.
             x <- preprocess_vimp_table(x, "declustered", ...)
+            
+            # Update the cluster table.
+            x@cluster_table <- reference_cluster_table
+            
+            if(is_empty(x)) return(x)
             
             # Merge variable importance table with reference cluster table.
             vimp_table <- merge(x=x@vimp_table[, mget(c("name", "score"))],
@@ -419,12 +427,6 @@ setMethod("update_vimp_table_to_reference", signature(x="vimpTable"),
             
             # Update the vimp_table attribute.
             x@vimp_table <- vimp_table
-            
-            # Check if ranks should be formed, and form ranks if it does.
-            if(.as_vimp_table_state(x@state) >= "ranked"){
-              x@state <- "declustered"
-              x <- rank_vimp_table(x, ...)
-            }
             
             return(x)
           })
