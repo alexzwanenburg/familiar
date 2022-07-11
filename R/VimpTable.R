@@ -190,6 +190,72 @@ setMethod("decluster_vimp_table", signature(x="NULL"),
 
 
 
+#### recluster_vimp_table (list) -----------------------------------------------
+setMethod("recluster_vimp_table", signature(x="list"),
+          function(x, ...){
+            # If the list is empty, return NULL instead.
+            if(is_empty(x)) return(NULL)
+            
+            # Dispatch to method for single variable importance tables.
+            return(lapply(x,
+                          recluster_vimp_table))
+          })
+
+#### recluster_vimp_table (vimpTable) ------------------------------------------
+setMethod("recluster_vimp_table", signature(x="vimpTable"),
+          function(x, ...){
+            # Suppress NOTES due to non-standard evaluation in data.table
+            score <- NULL
+            
+            # Check if the table has already been reclustered.
+            if(.as_vimp_table_state(x@state) >= "reclustered") return(x)
+            
+            # Pre-process the variable importance table. Generally, this should
+            # not be necessary. The idea is that one calls
+            # update_vimp_table_to_reference prior to calling
+            # recluster_vimp_table. This makes it possible to form clusters
+            # according in the local context -- even if the same clusters did
+            # not appear when computing variable importance.
+            x <- preprocess_vimp_table(x, stop_at="declustered")
+            
+            # Update state.
+            x@state <- "reclustered"
+            
+            # Skip if the vimp table is empty.
+            if(is_empty(x)) return(x)
+            
+            # Skip if there is no cluster table to work with.
+            if(is_empty(x@cluster_table)) return(x)
+            
+            # Merge variable importance table with reference cluster table.
+            vimp_table <- merge(x=x@vimp_table[, mget(c("name", "score"))],
+                                y=x@cluster_table,
+                                by.x="name",
+                                by.y="feature_name",
+                                all.x=FALSE,
+                                all.y=TRUE)
+            
+            # Compute mean score for all features in the same cluster.
+            vimp_table <- vimp_table[, list("score"=mean(score, na.rm=TRUE)), by="cluster_name"]
+            
+            # Keep only relevant columns, and rename "cluster_name" to "name".
+            vimp_table[, mget(c("score", "cluster_name"))]
+            data.table::setnames(vimp_table, old="cluster_name", new="name")
+            
+            # Update the vimp_table attribute.
+            x@vimp_table <- vimp_table
+            
+            return(x)
+          })
+
+#### recluster_vimp_table (NULL) -----------------------------------------------
+setMethod("recluster_vimp_table", signature(x="NULL"),
+          function(x, ...){
+            return(x)
+          })
+
+
+
 #### rank_vimp_table (vimpTable) -----------------------------------------------
 setMethod("rank_vimp_table", signature(x="vimpTable"),
           function(x, ...){
