@@ -33,19 +33,24 @@ setMethod("get_default_hyperparameters", signature(object="familiarVimpMethod"),
 
 #####..vimp######
 setMethod("..vimp", signature(object="familiarVimpMethod"),
-          function(object, ...) return(get_placeholder_vimp_table()))
+          function(object, ...) return(get_placeholder_vimp_table(vimp_method=object@vimp_method,
+                                                                  run_table=object@run_table)))
 
 
 
-#####.vimp (vimp method)#####
+####.vimp (familiarVimpMethod)--------------------------------------------------
 setMethod(".vimp", signature(object="familiarVimpMethod"),
           function(object, data, is_pre_processed=FALSE, ...) {
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            cluster_name <- NULL
             
             # Check if the class of object is a subclass of familiarVimpMethod
             if(!is_subclass(class(object)[1], "familiarVimpMethod")) object <- promote_vimp_method(object)
             
             # Return empty table if data is absent.
-            if(is_empty(data)) return(get_placeholder_vimp_table())
+            if(is_empty(data)) return(get_placeholder_vimp_table(vimp_method=object@vimp_method,
+                                                                 run_table=object@run_table))
             
             # Prepare input data
             data <- process_input_data(object=object,
@@ -59,7 +64,8 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
             
             # Check again if data is absent because data may not have been
             # loaded in the check above.
-            if(is_empty(data)) return(get_placeholder_vimp_table())
+            if(is_empty(data)) return(get_placeholder_vimp_table(vimp_method=object@vimp_method,
+                                                                 run_table=object@run_table))
             
             # Identify invariant features and remove them.
             invariant_features <- get_feature_columns(x=data)[sapply(get_feature_columns(x=data), function(feature, data) is_singular_data(data[, get(feature)]), data=data@data)]
@@ -70,7 +76,8 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
             }
             
             # Check that the data is suitable for predictions.
-            if(has_bad_training_data(object=object, data=data)) return(get_placeholder_vimp_table())
+            if(has_bad_training_data(object=object, data=data)) return(get_placeholder_vimp_table(vimp_method=object@vimp_method,
+                                                                                                  run_table=object@run_table))
             
             # Determine variable importance.
             vimp_table <- ..vimp(object=object,
@@ -85,15 +92,19 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
 
 
 
-#####.vimp (model)#####
+####.vimp (familiarModel) ------------------------------------------------------
 setMethod(".vimp", signature(object="familiarModel"),
           function(object, data, is_pre_processed=FALSE, ...) {
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            cluster_name <- NULL
             
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
             # Return empty table if data is absent.
-            if(is_empty(data)) return(get_placeholder_vimp_table())
+            if(is_empty(data)) return(get_placeholder_vimp_table(vimp_method=object@learner,
+                                                                 run_table=object@run_table))
             
             # Prepare input data
             data <- process_input_data(object=object,
@@ -107,7 +118,8 @@ setMethod(".vimp", signature(object="familiarModel"),
             
             # Check again if data is absent because data may not have been
             # loaded in the check above.
-            if(is_empty(data)) return(get_placeholder_vimp_table())
+            if(is_empty(data)) return(get_placeholder_vimp_table(vimp_method=object@learner,
+                                                                 run_table=object@run_table))
             
             # Identify invariant features and remove them.
             invariant_features <- get_feature_columns(x=data)[sapply(get_feature_columns(x=data), function(feature, data) is_singular_data(data[, get(feature)]), data=data@data)]
@@ -118,7 +130,8 @@ setMethod(".vimp", signature(object="familiarModel"),
             }
             
             # Check that the data is suitable for predictions.
-            if(has_bad_training_data(object=object, data=data)) return(get_placeholder_vimp_table())
+            if(has_bad_training_data(object=object, data=data)) return(get_placeholder_vimp_table(vimp_method=object@learner,
+                                                                                                  run_table=object@run_table))
             
             # Determine variable importance.
             vimp_table <- ..vimp(object=object,

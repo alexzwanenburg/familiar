@@ -577,7 +577,19 @@ get_estimate <- function(x, na.rm=TRUE){
 
 
 
-get_placeholder_vimp_table <- function(){
+get_placeholder_vimp_table <- function(vimp_method,
+                                       run_table=NULL){
+  
+  # Set vimp method.
+  vimp_object <- methods::new("vimpTable",
+                              vimp_method=vimp_method)
+  
+  # Set run table.
+  vimp_object@run_table <- run_table
+  
+  # Set package version.
+  vimp_object <- set_package_version(vimp_object)
+  
   return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
 }
 
@@ -1103,25 +1115,6 @@ encapsulate_path <- function(path){
 #' @keywords internal
 is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
-
-# .append_new <- function(l, new){
-# 
-#   # Find the names of list elements in l and new
-#   existing_names <- names(l)
-#   new_names <- names(new)
-#   
-#   # Find which elements should be migrated.
-#   migrate_elements <- setdiff(new_names, existing_names)
-#   if(length(migrate_elements) == 0){ return(l) }
-#   
-#   # Drop any duplicate elements.
-#   duplicate_elements <- intersect(new_names, existing_names)
-#   for(duplicate_element in duplicate_elements){
-#     new[[duplicate_element]] <- NULL
-#   }
-#   
-#   return(append(l, new))
-# }
 
 
 is_subclass <- function(class_1, class_2){
