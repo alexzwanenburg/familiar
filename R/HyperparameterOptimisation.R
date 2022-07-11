@@ -1028,16 +1028,17 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
   feature_info_list <- .get_feature_info_list(run=run)
   
   if(is.null(learner)){
+    browser()
     
-    # Find required features.
-    required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
-                                                                                exclude_signature=TRUE),
-                                                feature_info_list=feature_info_list)
-    
-    # Limit to required features. In principle, this removes signature features
-    # which are not assessed through variable importance.
-    feature_info_list <- feature_info_list[required_features]
-    
+    # 
+    # required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+    #                                                                             exclude_signature=TRUE),
+    #                                             feature_info_list=feature_info_list)
+    # 
+    # # Limit to required features. In principle, this removes signature features
+    # # which are not assessed through variable importance.
+    # feature_info_list <- feature_info_list[required_features]
+    # 
     # Create the variable importance met hod object or familiar model object to
     # compute variable importance with.
     object <- promote_vimp_method(object=methods::new("familiarVimpMethod",
@@ -1045,20 +1046,37 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                       hyperparameters=settings$fs$param[[vimp_method]],
                                                       vimp_method=vimp_method,
                                                       outcome_info=.get_outcome_info(),
-                                                      feature_info=feature_info_list,
-                                                      required_features=required_features,
+                                                      # feature_info=feature_info_list,
+                                                      # required_features=required_features,
                                                       run_table=run$run_table,
                                                       project_id=project_id))
     
-  } else {
-    # Find required features. This will be updated once a signature size has been set.
-    required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
-                                                                                exclude_signature=FALSE),
-                                                feature_info_list=feature_info_list)
+    # Set multivariate methods.
+    if(is(object, "familiarModel")) is_multivariate <- TRUE
+    if(is(object, "familiarVimpMethod")) is_multivariate <- object@multivariate
+    
+    # Find required features.
+    required_features <- get_required_features(x=feature_info_list,
+                                               exclude_signature=!is_multivariate)
     
     # Limit to required features. In principle, this removes signature features
     # which are not assessed through variable importance.
     feature_info_list <- feature_info_list[required_features]
+    
+    # Update the object.
+    object@required_features <- required_features
+    object@feature_info <- feature_info_list
+    
+  } else {
+    browser()
+    # # Find required features. This will be updated once a signature size has been set.
+    # required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+    #                                                                             exclude_signature=FALSE),
+    #                                             feature_info_list=feature_info_list)
+    # 
+    # # Limit to required features. In principle, this removes signature features
+    # # which are not assessed through variable importance.
+    # feature_info_list <- feature_info_list[required_features]
     
     # Create familiar model object. The following need to be updated:
     object <- promote_learner(object=methods::new("familiarModel",
@@ -1067,11 +1085,23 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                   learner = learner,
                                                   fs_method = vimp_method,
                                                   run_table = run$run_table,
-                                                  required_features =  required_features,
-                                                  feature_info = feature_info_list,
+                                                  # required_features =  required_features,
+                                                  # feature_info = feature_info_list,
                                                   outcome_info = .get_outcome_info(),
                                                   settings = settings$eval,
                                                   project_id = project_id))
+    
+    # Find required features.
+    required_features <- get_required_features(x=feature_info_list,
+                                               exclude_signature=FALSE)
+    
+    # Limit to required features. In principle, this removes signature features
+    # which are not assessed through variable importance.
+    feature_info_list <- feature_info_list[required_features]
+    
+    # Update the object.
+    object@required_features <- required_features
+    object@feature_info <- feature_info_list
   }
   
   return(object)

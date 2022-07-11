@@ -116,9 +116,13 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   
   # Find required features. Exclude the signature features at this point, as
   # these will have been dropped from the variable importance table.
-  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
-                                                                              exclude_signature=!is_multivariate),
-                                              feature_info_list=feature_info_list)
+  browser()
+  required_features <- get_required_features(x=data,
+                                             feature_info_list=feature_info_list,
+                                             exclude_signature=!is_multivariate)
+  # required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+  #                                                                             exclude_signature=!is_multivariate),
+  #                                             feature_info_list=feature_info_list)
   
   # Limit to required features.
   vimp_object@required_features <- required_features

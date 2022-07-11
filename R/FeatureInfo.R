@@ -801,29 +801,29 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
 }
 
 
-find_required_features <- function(features, feature_info_list){
+# find_required_features <- function(features, feature_info_list){
+# 
+#   if(length(features) == 0) return(features)
+#   
+#   # Make sure that the input features are original features
+#   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
+#   
+#   # Iterate over features to find all required features
+#   required_features <- unlist(lapply(features, function(ii, feature_info_list) {
+#     return(feature_info_list[[ii]]@required_features)
+#   }, feature_info_list=feature_info_list))
+#   
+#   return(unique(required_features))
+# }
 
-  if(length(features) == 0) return(features)
-  
-  # Make sure that the input features are original features
-  features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
-  
-  # Iterate over features to find all required features
-  required_features <- unlist(lapply(features, function(ii, feature_info_list) {
-    return(feature_info_list[[ii]]@required_features)
-  }, feature_info_list=feature_info_list))
-  
-  return(unique(required_features))
-}
 
-
-find_model_features <- function(features, feature_info_list){
-  
-  # Important features are original features
-  features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
-  
-  return(features)
-}
+# find_model_features <- function(features, feature_info_list){
+#   
+#   # Important features are original features
+#   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
+#   
+#   return(features)
+# }
 
 
 find_novelty_features <- function(model_features=NULL, feature_info_list){

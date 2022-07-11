@@ -90,9 +90,9 @@ setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("ex
 
 setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_object_parameters"))
 
-setGeneric("get_required_features", function(object, ...) standardGeneric("get_required_features"))
+setGeneric("get_required_features", function(x, ...) standardGeneric("get_required_features"))
 
-setGeneric("get_model_features", function(object, ...) standardGeneric("get_model_features"))
+setGeneric("get_model_features", function(x, ...) standardGeneric("get_model_features"))
 
 ##### Clustering methods -------------------------------------------------------
 setGeneric("set_similarity_table", function(object, data, ...) standardGeneric("set_similarity_table"))
@@ -222,7 +222,7 @@ setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_c
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
 
-setGeneric("decode_categorical_variables_vimp", function(object, ...) standardGeneric("decode_categorical_variables_vimp"))
+# setGeneric("decode_categorical_variables_vimp", function(object, ...) standardGeneric("decode_categorical_variables_vimp"))
 
 setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
 
@@ -327,6 +327,8 @@ setGeneric("get_vimp_table", function(x, ...) standardGeneric("get_vimp_table"))
 setGeneric("decode_vimp_table", function(x, ...) standardGeneric("decode_vimp_table"))
 
 setGeneric("decluster_vimp_table", function(x, ...) standardGeneric("decluster_vimp_table"))
+
+setGeneric("recluster_vimp_table", function(x, ...) standardGeneric("recluster_vimp_table"))
 
 setGeneric("rank_vimp_table", function(x, ...) standardGeneric("rank_vimp_table"))
 

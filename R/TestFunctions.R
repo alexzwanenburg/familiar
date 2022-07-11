@@ -5069,9 +5069,8 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
                                            parallel=FALSE)
   
   # Find required features.
-  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list),
-                                              feature_info_list=feature_info_list)
-  
+  required_features <- get_required_features(x=data,
+                                             feature_info_list=feature_info_list)
   
   if(is_vimp){
     # Create the variable importance met hod object or familiar model object

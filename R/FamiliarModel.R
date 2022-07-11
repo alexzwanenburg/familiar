@@ -800,7 +800,8 @@ setMethod("..set_vimp_parameters", signature(object="familiarModel"),
 
 #####..vimp######
 setMethod("..vimp", signature(object="familiarModel"),
-          function(object, ...) return(get_placeholder_vimp_table()))
+          function(object, ...) return(get_placeholder_vimp_table(vimp_method=object@learner,
+                                                                  run_table=object@run_table)))
 
 #####trim_model (familiarModel)-------------------------------------------------
 setMethod("trim_model", signature(object="familiarModel"),
@@ -873,8 +874,11 @@ setMethod("set_signature", signature(object="familiarModel"),
             
             # Find important features, i.e. those that constitute the signature
             # either individually or as part of a cluster.
-            model_features <- find_model_features(features=signature_features,
-                                                  feature_info_list=object@feature_info)
+            model_features <- get_model_features(x=signature_features,
+                                                 is_clustered=TRUE,
+                                                 feature_info_list=object@feature_info)
+            # model_features <- find_model_features(features=signature_features,
+            #                                       feature_info_list=object@feature_info)
             
             # Find novelty features.
             novelty_features <- find_novelty_features(model_features=model_features,
@@ -885,13 +889,15 @@ setMethod("set_signature", signature(object="familiarModel"),
               required_features <- union(model_features, novelty_features)
               
             } else {
+              browser()
               # Find features that are required for processing the data.
-              required_features <- find_required_features(features=signature_features,
-                                                          feature_info_list=object@feature_info)
+              required_features <- get_required_features(x=union(model_features, novelty_features),
+                                                         is_clustered=FALSE,
+                                                         feature_info_list=object@feature_info)
             }
             
             # Select only necessary feature info objects.
-            available_feature_info <- names(object@feature_info) %in% unique(c(required_features, model_features, novelty_features))
+            available_feature_info <- names(object@feature_info) %in% required_features
             object@feature_info <- object@feature_info[available_feature_info]
             
             # Set feature-related attribute slots
