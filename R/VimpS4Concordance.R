@@ -73,27 +73,27 @@ setMethod("..vimp", signature(object="familiarConcordanceVimp"),
               feature_columns <- get_feature_columns(x=encoded_data$encoded_data)
               
               # Compute concordance indices
-              c_index <- sapply(feature_columns, function(feature, data){
-                return(..compute_concordance_index(x=data[[feature]],
-                                                   time=data$outcome_time,
-                                                   event=data$outcome_event))
-
-              }, data=encoded_data$encoded_data@data)
+              c_index <- sapply(encoded_data$encoded_data@data[, mget(feature_columns)],
+                                ..compute_concordance_index,
+                                time=encoded_data$encoded_data@data$outcome_time,
+                                event=encoded_data$encoded_data@data$outcome_event)
+              browser()
+              # c_index <- sapply(feature_columns, function(feature, data){
+              #   return(..compute_concordance_index(x=data[[feature]],
+              #                                      time=data$outcome_time,
+              #                                      event=data$outcome_event))
+              # 
+              # },
+              # data=encoded_data$encoded_data@data)
               
-              # Create the variable importance table.
-              vimp_table <- data.table::data.table("score"=abs(c_index - 0.5),
-                                                   "name"=feature_columns)
+              # Create variable importance object.
+              vimp_object <- methods::new("vimpTable",
+                                          vimp_table=data.table::data.table("score"=abs(c_index - 0.5), "name"=feature_columns),
+                                          encoding_table=encoded_data$reference_table,
+                                          score_aggregation="max",
+                                          invert=TRUE)
               
-              # Decode any categorical variables.
-              vimp_table <- decode_categorical_variables_vimp(object=encoded_data$reference_table,
-                                                              vimp_table=vimp_table,
-                                                              method="max")
-              
-              # Add ranks and set multivariate flag.
-              vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-              vimp_table[, "multi_var":=FALSE]
-              
-              return(vimp_table)
+              return(vimp_object)
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)

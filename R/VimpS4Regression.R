@@ -207,15 +207,13 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
               # In case of univariate regression, return at this point.
               if(is(object, "familiarUnivariateRegressionVimp")){
                 
-                # Create variable importance table.
-                vimp_table <- data.table::data.table("name"=objective_score$name,
-                                                     "score"=objective_score$score)
+                # Create variable importance object.
+                vimp_object <- methods::new("vimpTable",
+                                            vimp_table=data.table::data.table("score"=objective_score$score, "name"=objective_score$name),
+                                            score_aggregation="max",
+                                            invert=TRUE)
                 
-                # Add ranks.
-                vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-                vimp_table[, "multi_var":=FALSE]
-                
-                return(vimp_table)
+                return(vimp_object)
               }
               
               # Proceed with forward selection and multivariate regression.
@@ -314,13 +312,13 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             # Create variable importance table from the score table.
             vimp_table <- score_table[selected == TRUE, c("name", "score", "select_step")]
             
-            # Update names in the variable importance table.
-            data.table::setnames(vimp_table, "select_step", "rank")
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=vimp_table$score, "name"=vimp_table$name),
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Add multivariate flag
-            vimp_table[, "multi_var":=TRUE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 
