@@ -51,7 +51,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("RReliefF exponentially decreasing ranks method correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage", "avg_rooms")), TRUE)
 })
@@ -72,7 +72,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("RReliefF exponentially decreasing ranks method correctly ranks continuous data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("avginc", "calwpct")), TRUE)
 })
@@ -93,7 +93,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("RReliefF exponentially decreasing ranks method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
 })
@@ -110,7 +110,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The Gini method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")), TRUE)
 })
@@ -127,7 +127,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The gain ratio method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
 })
@@ -144,7 +144,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The MDL method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")), TRUE)
 })
@@ -164,7 +164,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("RReliefF exponentially decreasing ranks method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -181,7 +181,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The Gini method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -198,7 +198,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The gain ratio method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -215,7 +215,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The MDL method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })

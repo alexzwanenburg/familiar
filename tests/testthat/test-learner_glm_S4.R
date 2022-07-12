@@ -43,7 +43,7 @@ testthat::test_that("Generalised linear model trained correctly", {
 testthat::test_that("Generalised linear model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 13)
@@ -63,10 +63,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  suppressWarnings(testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE))
+  suppressWarnings(testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE))
   
   # Valid predictions.
-  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data),
+                                                                           outcome_type=wide_data@outcome_type),
+                                          TRUE))
   
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)
@@ -111,7 +113,7 @@ testthat::test_that("Generalised linear model trained correctly", {
 testthat::test_that("Generalised linear model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 10)
@@ -131,10 +133,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  suppressWarnings(testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE))
+  suppressWarnings(testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE))
   
   # Valid predictions.
-  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data),
+                                                                           outcome_type=wide_data@outcome_type),
+                                          TRUE))
   
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)
@@ -179,7 +183,7 @@ testthat::test_that("Generalised linear model trained correctly", {
 testthat::test_that("Generalised linear model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 8)
@@ -199,10 +203,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  suppressWarnings(testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE))
+  suppressWarnings(testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE))
   
   # Valid predictions.
-  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data),
+                                                                           outcome_type=wide_data@outcome_type),
+                                          TRUE))
   
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)
@@ -247,7 +253,7 @@ testthat::test_that("Generalised linear model trained correctly", {
 testthat::test_that("Generalised linear model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 4)
@@ -267,7 +273,7 @@ testthat::test_that("Generalised linear model can not train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
   
   # Variable importance table is empty.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions cannot be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
@@ -324,7 +330,7 @@ testthat::test_that("Generalised linear model trained correctly", {
 testthat::test_that("Generalised linear model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 3)
@@ -344,7 +350,7 @@ testthat::test_that("Generalised linear model cannot train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
   
   # Variable importance table is empty.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions are not possible.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)

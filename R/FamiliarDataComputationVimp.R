@@ -112,23 +112,17 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
   if(!model_is_trained(object)) return(NULL)
   
   # Extract variable importance from the models
-  vimp_table <- ..vimp(object=object, data=data)
+  vimp_table <- get_vimp_table(object=object, data=data, as_object=TRUE)
   
   # Check that the variable importance table is not empty.
   if(is_empty(vimp_table)) return(NULL)
   
-  # Decluster the features.
-  vimp_table <- rank.decluster_vimp_table(vimp_table=vimp_table,
-                                          feature_info_list=object@feature_info)
-  
-  vimp_table[, ":="("data_id"=tail(object@run_table, n=1)$data_id,
-                    "run_id"=tail(object@run_table, n=1)$run_id)]
-  
   # Add data.
   data_element@data <- vimp_table
   
-  # Add value and grouping columns.
-  data_element@value_column <- c("rank", "score")
+  # 
+  # # Add value and grouping columns.
+  # data_element@value_column <- c("rank", "score")
 
   return(data_element)
 }
@@ -190,28 +184,39 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
                            indent=message_indent,
                            verbose=verbose)
             
+            vimp_table_list <- some_function_to_read_from_file()
+            
             # Define the run table -> at the pooling level
             run <- .get_run_list(iteration_list=project_list$iter_list,
                                  data_id=object@run_table$ensemble_data_id,
                                  run_id=object@run_table$ensemble_run_id)
             
-            # Obtain variable importance table
-            vimp_table <- rank.get_vimp_table(run=run,
-                                              fs_method=object@fs_method,
-                                              proj_list=project_list,
-                                              file_paths=file_paths,
-                                              decluster=TRUE)
+            browser()
+            # Collect the correct vimp tables from the full list.
+            # TODO: check if run is a run_table.
+            vimp_table_list <- collect_vimp_table(x=vimp_table_list,
+                                                  run_table=run)
+            
+            # Update using reference cluster table to ensure that the data are
+            # correct locally.
+            vimp_table_list <- update_vimp_table_to_reference(x=vimp_table_list,
+                                                              reference_cluster_table=.create_clustering_table(feature_info_list=object@feature_info))
             
             # Check if the variable importance table has been set.
-            if(is.null(vimp_table)) return(NULL)
+            if(is_empty(vimp_table_list)) return(NULL)
+            if(all(vimp_table_list, is_empty)) return(NULL)
             
-            # Generate a prototype data element
-            data_element <- methods::new("familiarDataElementVimpData",
-                                         data=vimp_table,
-                                         rank_threshold=rank_threshold,
-                                         rank_aggregation_method=aggregation_method)
+            # Create list of data elements.
+            data_element_list <- lapply(vimp_table_list, function(x, rank_threshold, aggregation_method){
+              return(methods::new("familiarDataElementVimpData",
+                                  data=x,
+                                  rank_threshold=rank_threshold,
+                                  rank_aggregation_method=aggregation_method))
+            },
+            rank_threshold=rank_threshold,
+            aggregation_method=aggregation_method)
             
-            return(list(data_element))
+            return(data_element_list)
           })
 
 
@@ -230,42 +235,14 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
             x <- x[!sapply(x, is_empty)]
             if(is_empty(x)) return(NULL)
             
-            # Collect all data.
-            data <- data.table::rbindlist(lapply(x, function(x) (x@data)),
-                                          use.names=TRUE,
-                                          fill=TRUE)
-            
-            # Find translation table.
-            translation_table <- rank.consensus_clustering(vimp_table=data)
-            
-            # Determine aggregate ranks.
-            data <- rank.aggregate_feature_ranks(vimp_table=data,
-                                                 aggregation_method=x[[1]]@rank_aggregation_method,
-                                                 rank_threshold=x[[1]]@rank_threshold)
-            
-            # Merge the translation table into the data.
-            data <- merge(x=data,
-                          y=translation_table,
-                          by.x="name",
-                          by.y="feature_name")
-            
-            # Update column names.
-            data.table::setnames(data,
-                                 old=c("name", "aggr_rank", "aggr_score"),
-                                 new=c("feature", "rank", "score"))
-            
-            # Remove cluster_name
-            data[, "cluster_name":=NULL]
-            
-            # Order by rank.
-            data <- data[order(rank)]
-            
-            # Add cluster size.
-            data[, "cluster_size":=.N, by="cluster_id"]
+            # Collect all the stored variable importance table objects.
+            vimp_object <- aggregate_vimp_table(x=lapply(x, function(x) x@data),
+                                                aggregation_method=x[[1]]@rank_aggregation_method,
+                                                rank_threshold=x[[1]]@rank_threshold)
             
             # Copy data element.
             y <- x[[1]]
-            y@data <- data
+            y@data <- vimp_object
             
             return(y)
           })

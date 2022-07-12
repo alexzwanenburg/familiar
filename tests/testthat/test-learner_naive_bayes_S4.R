@@ -51,7 +51,7 @@ testthat::test_that("Naive Bayes model trained correctly", {
 testthat::test_that("Naive Bayes model has no variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table is empty.
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
@@ -64,7 +64,7 @@ testthat::test_that("Naive Bayes model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -114,7 +114,7 @@ testthat::test_that("Naive Bayes model trained correctly", {
 testthat::test_that("Naive Bayes model has no variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table is empty.
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
@@ -127,7 +127,7 @@ testthat::test_that("Naive Bayes model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is empty.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions cannot be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)

@@ -165,7 +165,7 @@ testthat::test_that("Extreme gradient boosting dart tree model trained correctly
 testthat::test_that("Extreme gradient boosting dart tree model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has less than 10 rows.
   testthat::expect_equal(nrow(vimp_table) <= get_n_features(good_data), TRUE)
@@ -185,7 +185,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -254,7 +254,7 @@ testthat::test_that("Extreme gradient boosting dart tree model trained correctly
 testthat::test_that("Extreme gradient boosting dart tree model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 10)
@@ -274,7 +274,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -342,7 +342,7 @@ testthat::test_that("Extreme gradient boosting dart tree model trained correctly
 testthat::test_that("Extreme gradient boosting dart tree model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 6)
@@ -362,7 +362,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -431,7 +431,7 @@ testthat::test_that("Extreme gradient boosting dart tree model trained correctly
 testthat::test_that("Extreme gradient boosting dart tree model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 4)
@@ -451,7 +451,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -529,7 +529,7 @@ testthat::test_that("Extreme gradient boosting dart tree model trained correctly
 testthat::test_that("Extreme gradient boosting dart tree model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has three or two rows.
   testthat::expect_equal(nrow(vimp_table) %in% c(2, 3), TRUE)
@@ -549,7 +549,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train and pre
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions are present.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)

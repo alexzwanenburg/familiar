@@ -67,7 +67,7 @@ testthat::test_that("Gradient boosting regression model trained correctly", {
 testthat::test_that("Gradient boosting regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 13)
@@ -87,7 +87,7 @@ testthat::test_that("Gradient boosting regression model can train on wide data",
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -140,7 +140,7 @@ testthat::test_that("Gradient boosting regression model trained correctly", {
 testthat::test_that("Gradient boosting regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 10)
@@ -160,7 +160,7 @@ testthat::test_that("Gradient boosting regression model can train on wide data",
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -212,7 +212,7 @@ testthat::test_that("Gradient boosting regression model trained correctly", {
 testthat::test_that("Gradient boosting regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 8)
@@ -232,7 +232,7 @@ testthat::test_that("Gradient boosting regression model can train on wide data",
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -294,7 +294,7 @@ testthat::test_that("Gradient boosting regression model trained correctly", {
 testthat::test_that("Gradient boosting regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 3)
@@ -314,7 +314,7 @@ testthat::test_that("Gradient boosting regression model can train and predict on
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions are present.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)

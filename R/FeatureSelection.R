@@ -129,13 +129,15 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   vimp_object@feature_info <- feature_info_list[required_features]
   
   # Compute variable importance.
-  vimp_table <- .vimp(object=vimp_object, data=data)
+  vimp_object <- .vimp(object=vimp_object, data=data)
   
-  if(is_multivariate){
-    vimp_table <- remove_signature_features(vimp_table,
-                                            features=names(feature_info_list)[sapply(feature_info_list, is_in_signature)])
-  }
+  return(vimp_object)
   # 
+  # if(is_multivariate){
+  #   vimp_table <- remove_signature_features(vimp_table,
+  #                                           features=names(feature_info_list)[sapply(feature_info_list, is_in_signature)])
+  # }
+  # # 
   # # Post-processing on the variable importance data table
   # if(nrow(vimp_table) == 0){
   #   # If the variable importance data table is empty, return an empty table
@@ -169,15 +171,15 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   #     }
   #   }
   # }
-
-  # Generate the translation table for the selected set of features.
-  translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
-                                                            feature_info_list=feature_info_list[required_features])
-  
-  return(list("run_table"=run$run_table,
-              "fs_method"=fs_method,
-              "vimp"=vimp_table,
-              "translation_table"=translation_table))
+# 
+#   # Generate the translation table for the selected set of features.
+#   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
+#                                                             feature_info_list=feature_info_list[required_features])
+#   
+#   return(list("run_table"=run$run_table,
+#               "fs_method"=fs_method,
+#               "vimp"=vimp_table,
+#               "translation_table"=translation_table))
 }
 
 

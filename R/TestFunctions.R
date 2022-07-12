@@ -356,15 +356,16 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Test that the model has variable importance.
       test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(.vimp(model, data=full_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(model,
+                                                            data=full_data)))
         
         # Extract the variable importance table for the trimmed model.
-        vimp_table_trim <- suppressWarnings(.vimp(trimmed_model,
-                                                  data=full_data))
+        vimp_table_trim <- suppressWarnings(get_vimp_table(.vimp(trimmed_model,
+                                                                 data=full_data)))
         
         # Extract the variable importance table for the reloaded model.
-        vimp_table_reloaded <- suppressWarnings(.vimp(reloaded_model,
-                                                      data=full_data))
+        vimp_table_reloaded <- suppressWarnings(get_vimp_table(.vimp(reloaded_model,
+                                                                     data=full_data)))
         
         if(has_vimp){
           # Get the number of features
@@ -388,7 +389,7 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(nrow(vimp_table_reloaded), 0)
         }
       })
-
+      
       
       
       #####Bootstrapped dataset#################################################
@@ -1013,7 +1014,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Train models -------------------------------------------------------
       cl_train <- .test_start_cluster(n_cores=2L)
-
+      
       # Train the models.
       model_list <- parallel::parLapply(cl=cl_train,
                                         list("1"=full_data, "2"=full_data),
@@ -1038,7 +1039,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Variable importance ------------------------------------------------
       cl_vimp <- .test_start_cluster(n_cores=2L)
-
+      
       # Extract variable importance data.
       vimp_table_list <- parallel::parLapply(cl=cl_vimp,
                                              model_list,
@@ -1047,7 +1048,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       # Test that the model has variable importance.
       testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
-       
+        
         if(has_vimp){
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1073,7 +1074,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Predictions --------------------------------------------------------
       cl_predict <- .test_start_cluster(n_cores=2L)
-
+      
       # Extract predictions.
       prediction_list <- parallel::parLapply(cl=cl_predict,
                                              model_list,
@@ -1082,7 +1083,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
-
+        
         # Test that the predictions were successfully made.
         testthat::expect_equal(any_predictions_valid(prediction_list[[1]], outcome_type), TRUE)
         testthat::expect_equal(any_predictions_valid(prediction_list[[2]], outcome_type), TRUE)
@@ -1520,7 +1521,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_data)))
         
         # Get the number of features
         n_features <- get_n_features(full_data)
@@ -1536,7 +1538,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset with one invariant feature."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_invariant_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_one_invariant_data)))
         
         # Get the number of features
         n_features <- get_n_features(full_one_invariant_data)
@@ -1552,7 +1555,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            empty_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1561,7 +1565,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, bad_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            bad_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1570,7 +1575,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_sample_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_one_sample_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1590,7 +1596,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_data)))
         
         # Expect that the vimp table is not empty.
         testthat::expect_equal(nrow(vimp_table), 1)
@@ -1603,7 +1610,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset with an invariant feature."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_invariant_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_invariant_data)))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1612,7 +1620,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_one_sample_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_one_sample_data)))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1634,7 +1643,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset without censoring."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, no_censoring_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              no_censoring_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1663,7 +1673,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with one censored instance."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, one_censored_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              one_censored_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1692,7 +1703,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with few censored instances."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, few_censored_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              few_censored_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1720,7 +1732,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
                       " for a fully prospective dataset."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, fully_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            fully_prospective_data)))
                         
                         # Expect that the vimp table is empty.
                         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1732,7 +1745,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
                       " for an almost fully prospective dataset, where outcome is known for just a single sample."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, mostly_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            mostly_prospective_data)))
                         
                         # Expect that the vimp table is empty.
                         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1744,7 +1758,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method,
                       " for a partially prospective dataset, where outcome is known for most samples."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, partially_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            partially_prospective_data)))
                         
                         # Get the number of features
                         n_features <- get_n_features(full_data)
@@ -1827,22 +1842,25 @@ test_all_vimp_methods_parallel <- function(vimp_methods,
                                              .vimp,
                                              data=full_data)
       
+      # Extract the actual tables.
+      vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
+      
       # Test that the model has variable importance.
       testthat::test_that(paste0("Variable importance method produces variable importance for ",
                                  outcome_type, " and ", vimp_method, " for the complete dataset."), {
-        
-        # Get the number of features
-        n_features <- get_n_features(full_data)
-        
-        # Expect that the vimp table has two rows.
-        testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
-        testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
-        
-        # Expect that the names in the vimp table correspond to those of the
-        # features.
-        testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
-        testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
-      })
+                                   
+                                   # Get the number of features
+                                   n_features <- get_n_features(full_data)
+                                   
+                                   # Expect that the vimp table has two rows.
+                                   testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
+                                   testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
+                                   
+                                   # Expect that the names in the vimp table correspond to those of the
+                                   # features.
+                                   testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
+                                   testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
+                                 })
       
       # Terminate cluster.
       cl_vimp <- .terminate_cluster(cl_vimp)
@@ -4910,12 +4928,12 @@ integrated_test <- function(...,
       
       if(!is.null(.warning_bad)){
         testthat::expect_warning(output <- suppress_fun(summon_familiar(data=bad_data,
-                                                                         learner="lasso",
-                                                                         hyperparameter=list("lasso"=hyperparameters),
-                                                                         feature_max_fraction_missing=0.95,
-                                                                         time_max=1832,
-                                                                         verbose=debug,
-                                                                         ...)),
+                                                                        learner="lasso",
+                                                                        hyperparameter=list("lasso"=hyperparameters),
+                                                                        feature_max_fraction_missing=0.95,
+                                                                        time_max=1832,
+                                                                        verbose=debug,
+                                                                        ...)),
                                  .warning_bad)
         
       } else {

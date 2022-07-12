@@ -363,7 +363,7 @@
   if(is.list(object)) object <- object[[sample(x=seq_along(object), size=1L)]]
   
   # Compute variable importance.
-  vimp_table <- .vimp(object=object, data=data)
+  vimp_table <- get_vimp_table(.vimp(object=object, data=data))
   
   # Rename columns.
   data.table::setnames(vimp_table,

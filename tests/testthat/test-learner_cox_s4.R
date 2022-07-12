@@ -49,7 +49,7 @@ testthat::test_that("Cox model trained correctly", {
 testthat::test_that("Cox model has variable importance", {
 
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 3)
@@ -69,13 +69,17 @@ testthat::test_that("Cox model does not train for wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
   
   # No variable importance table.
-  testthat::expect_equal(nrow(familiar:::..vimp(wide_model)), 0)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # No valid predictions.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data),
+                                                          outcome_type=wide_data@outcome_type),
+                         FALSE)
   
   # No valid survival probability predictions.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), FALSE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000),
+                                                          outcome_type=wide_data@outcome_type),
+                         FALSE)
   
   # Test that specific warnings and errors appear.
   testthat::expect_equal(length(wide_model@messages$warning), 1L)
