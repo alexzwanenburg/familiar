@@ -29,7 +29,7 @@ setMethod("show", signature(object="vimpTable"),
 
 #### get_vimp_table (vimpTable) ------------------------------------------------
 setMethod("get_vimp_table", signature(x="vimpTable"),
-          function(x, state="ranked"){
+          function(x, state="ranked", ...){
             # Check that x is not empty.
             if(is_empty(x)) return(NULL)
             
@@ -42,9 +42,44 @@ setMethod("get_vimp_table", signature(x="vimpTable"),
 
 #### get_vimp_table (NULL) -----------------------------------------------------
 setMethod("get_vimp_table", signature(x="NULL"),
-          function(x, state="ranked"){
+          function(x, state="ranked", ...){
             return(NULL)
           })
+
+#### get_vimp_table (familiarModel) --------------------------------------------
+setMethod("get_vimp_table", signature(x="familiarModel"),
+          function(x, state="ranked", data=NULL, as_object=FALSE, ...){
+            # This method is used to obtain post-hoc variable importance tables
+            # from a trained model.
+            
+            # Determine variable importance using internal routines of the
+            # familiarModel object.
+            vimp_object <- ..vimp(object=x,
+                                  data=data)
+            
+            # Set up a table with clustering information.
+            cluster_table <- .create_clustering_table(x@feature_info)
+            
+            # Update variable importance table object.
+            vimp_object@vimp_method <- x@learner
+            vimp_object@run_table <- x@run_table
+            vimp_object@cluster_table <- cluster_table
+            vimp_object@project_id <- x@project_id
+            
+            # Set package version.
+            vimp_object <- add_package_version(vimp_object)
+            
+            # Determine what should be returned.
+            if(as_object){
+              # The as_object flag allows for returning the actual data.
+              return(vimp_object)
+              
+            } else {
+              return(get_vimp_table(x=vimp_object,
+                                    state=state)) 
+            }
+          })
+
 
 
 
