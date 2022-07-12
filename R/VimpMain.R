@@ -321,6 +321,8 @@ setMethod("prepare_vimp_object", signature(data="data.table"),
 #### prepare_vimp_object (dataObject) ------------------------------------------
 setMethod("prepare_vimp_object", signature(data="dataObject"),
           function(data, vimp_method, vimp_method_parameter_list=list(), ...){
+            # This method is used within unit tests, but not by the main
+            # familiar workflow.
             
             #####Prepare settings###############################################
             
@@ -338,6 +340,8 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
             dots$fs_method <- NULL
             dots$fs_method_parameter <- NULL
             dots$learner <- NULL
+            
+            if(!is.null(dots$signature)) settings$data$signature <- dots$signature
             
             # Create setting_hyperparam so that it can be parsed correctly.
             if(!vimp_method %in% names(vimp_method_parameter_list) & length(vimp_method_parameter_list) > 0){
@@ -360,8 +364,6 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
             # Push settings to the backend.
             .assign_settings_to_global(settings=settings)
             
-
-            
             #####Prepare featureInfo objects####################################
             
             # Create a list of featureInfo objects.
@@ -372,6 +374,10 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
             
             # Extract the generic data.
             feature_info_list <- feature_info_list[["generic"]]
+            
+            # Add signature info.
+            feature_info_list <- add_signature_info(feature_info_list=feature_info_list,
+                                                    signature=settings$data$signature)
             
             # Perform some pre-processing (i.e. remove singular features)
             feature_info_list <- .determine_preprocessing_parameters(cl=NULL,
