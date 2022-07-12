@@ -384,9 +384,9 @@ setMethod("remove_signature_features", signature(x="vimpTable"),
             
             # Check if any of the signature features are encoded.
             if(!is.null(x@encoding_table)){
-              browser()
+              
               # Find features that were encoded in the variable importance table.
-              encoded_features <- encoded_features[features %in% x@encoding_table$original_name]
+              encoded_features <- features[features %in% x@encoding_table$original_name]
               
               # Find features that did not require encoding.
               non_encoded_features <- setdiff(features, encoded_features)
@@ -401,10 +401,7 @@ setMethod("remove_signature_features", signature(x="vimpTable"),
             
             # Keep only features in the variable importance table that are not
             # signature features.
-            vimp_table <- x@vimp_table[!name %in% features]
-            
-            # Update the variable importance table.
-            x@vimp_table <- vimp_table
+            x@vimp_table <- x@vimp_table[!name %in% features]
             
             return(x)
           })
@@ -437,11 +434,17 @@ setMethod("update_vimp_table_to_reference", signature(x="vimpTable"),
             # Suppress NOTES due to non-standard evaluation in data.table
             score <- NULL
             
+            # Force declustering.
+            if(.as_vimp_table_state(x@state) == "reclustered") x@state <- "decoded"
+            
             # Ensure that the vimp table is declustered.
             x <- preprocess_vimp_table(x, "declustered", ...)
             
             # Update the cluster table.
             x@cluster_table <- reference_cluster_table
+            
+            # Set the state to declustered, since ranking is removed..
+            x@state <- "declustered"
             
             if(is_empty(x)) return(x)
             
@@ -456,12 +459,13 @@ setMethod("update_vimp_table_to_reference", signature(x="vimpTable"),
             # Compute mean score for all features in the same cluster.
             vimp_table[, "score":=mean(score, na.rm=TRUE), by="cluster_name"]
             
-            # Keep only relevant columns, and rename "feature_name" to "name".
-            vimp_table[, mget(c("score", "feature_name"))]
-            data.table::setnames(vimp_table, old="feature_name", new="name")
+            # Select only those entries with a finite score (i.e. those where
+            # the merge produces matches).
+            vimp_table <- vimp_table[is.finite(score)]
             
+            # Keep only relevant columns, and rename "feature_name" to "name".
             # Update the vimp_table attribute.
-            x@vimp_table <- vimp_table
+            x@vimp_table <- vimp_table[, mget(c("score", "name"))]
             
             return(x)
           })
