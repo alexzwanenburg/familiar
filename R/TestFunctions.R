@@ -384,9 +384,9 @@ test_all_learners_train_predict_vimp <- function(learners,
           
         } else {
           # Expect that the vimp table has no rows.
-          testthat::expect_equal(nrow(vimp_table), 0)
-          testthat::expect_equal(nrow(vimp_table_trim), 0)
-          testthat::expect_equal(nrow(vimp_table_reloaded), 0)
+          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_trim), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_reloaded), TRUE)
         }
       })
       
@@ -1040,11 +1040,14 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       ##### Variable importance ------------------------------------------------
       cl_vimp <- .test_start_cluster(n_cores=2L)
       
-      # Extract variable importance data.
+      # Extract variable importance objects.
       vimp_table_list <- parallel::parLapply(cl=cl_vimp,
                                              model_list,
                                              .vimp,
                                              data=full_data)
+      
+      # Extract the variable importance tables themselves.
+      vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
       
       # Test that the model has variable importance.
       testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
@@ -1064,8 +1067,8 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
           
         } else {
           # Expect that the vimp table has no rows.
-          testthat::expect_equal(nrow(vimp_table_list[[1]]), 0)
-          testthat::expect_equal(nrow(vimp_table_list[[2]]), 0)
+          testthat::expect_equal(is_empty(vimp_table_list[[1]]), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_list[[2]]), TRUE)
         }
       })
       

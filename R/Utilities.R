@@ -588,9 +588,9 @@ get_placeholder_vimp_table <- function(vimp_method,
   vimp_object@run_table <- run_table
   
   # Set package version.
-  vimp_object <- set_package_version(vimp_object)
+  vimp_object <- add_package_version(vimp_object)
   
-  return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
+  return(vimp_object)
 }
 
 
