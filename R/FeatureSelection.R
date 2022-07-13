@@ -10,7 +10,7 @@ run_feature_selection <- function(cl,
                                                   process_step="fs")
   
   # Get feature selection methods that still need to be checked.
-  run_fs_methods <- .find_missing_feature_selection_data(proj_list=project_list,
+  run_fs_methods <- .find_missing_feature_selection_data(project_list=project_list,
                                                          settings=settings,
                                                          file_paths=file_paths)
 
@@ -50,12 +50,10 @@ run_feature_selection <- function(cl,
                                progress_bar=verbose,
                                MoreArgs=list("fs_method"=curr_fs_method,
                                              "hpo_list"=hpo_list,
-                                             "proj_list"=project_list,
-                                             "settings"=settings,
-                                             "file_paths"=file_paths))
+                                             "settings"=settings))
     
     # Save to file
-    saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=project_list,
+    saveRDS(vimp_list, file=.get_feature_selection_data_filename(project_list=project_list,
                                                                  fs_method=curr_fs_method,
                                                                  file_paths=file_paths))
 
@@ -68,7 +66,7 @@ run_feature_selection <- function(cl,
 
 
 
-compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
+compute_variable_importance <- function(run, fs_method, hpo_list, settings){
   # Function for calculating variable importance
   
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -132,6 +130,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   vimp_object <- .vimp(object=vimp_object, data=data)
   
   return(vimp_object)
+}
   # 
   # if(is_multivariate){
   #   vimp_table <- remove_signature_features(vimp_table,
@@ -180,33 +179,40 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
 #               "fs_method"=fs_method,
 #               "vimp"=vimp_table,
 #               "translation_table"=translation_table))
-}
 
 
 
-.find_missing_feature_selection_data <- function(proj_list, settings, file_paths){
+.find_missing_feature_selection_data <- function(project_list, settings, file_paths){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   fs_method <- fs_file <- NULL
 
   # All feature selection methods
-  dt_fs <- data.table::data.table("fs_method"=settings$fs$fs_methods)
+  file_table <- data.table::data.table("fs_method"=settings$fs$fs_methods)
 
   # Add expected feature selection file names
-  dt_fs[,"fs_file":=.get_feature_selection_data_filename(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths)]
+  file_table[, "fs_file":=.get_feature_selection_data_filename(project_list=project_list, 
+                                                               fs_method=fs_method,
+                                                               file_paths=file_paths)]
 
   # List files in directory
-  file_list <- normalizePath(list.files(path=file_paths$fs_dir, pattern=paste0(proj_list$project_id, "_fs_"), full.names=TRUE, recursive=TRUE), mustWork=FALSE)
+  file_list <- normalizePath(list.files(path=file_paths$fs_dir,
+                                        pattern=paste0(project_list$project_id, "_fs_"),
+                                        full.names=TRUE,
+                                        recursive=TRUE),
+                             mustWork=FALSE)
 
   # Remove files which have already been selected
-  dt_fs <- dt_fs[!fs_file %in% file_list, ]
+  file_table <- file_table[!fs_file %in% file_list, ]
 
-  return(dt_fs$fs_method)
-
+  return(file_table$fs_method)
 }
 
 
 
-.get_feature_selection_data_filename <- function(fs_method, proj_list, file_paths){
-  return(normalizePath(file.path(file_paths$fs_dir, paste0(proj_list$project_id, "_fs_", fs_method, ".RDS")), mustWork=FALSE))
+.get_feature_selection_data_filename <- function(fs_method, project_list, file_paths){
+  
+  return(normalizePath(file.path(file_paths$fs_dir,
+                                 paste0(project_list$project_id, "_fs_", fs_method, ".RDS")),
+                       mustWork=FALSE))
 }
