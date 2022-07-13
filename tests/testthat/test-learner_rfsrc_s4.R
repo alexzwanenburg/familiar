@@ -437,8 +437,9 @@ testthat::test_that("Random forest SRC model has variable importance", {
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
-  # Expect that nodes has rank 1 and rx has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "nodes")
+  # Expect that nodes and rx are the best features. The ordering is sometimes
+  # non-deterministic.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("nodes", "rx"), TRUE)
   testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("rx", "adhere"), TRUE)
 })
 

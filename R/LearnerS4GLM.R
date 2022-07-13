@@ -446,23 +446,21 @@ setMethod("..vimp", signature(object="familiarGLM"),
             if(length(coefficient_z_values) == 0) return(callNextMethod())
           
             # Assign to variable importance table.
-            vimp_table <- data.table::data.table("score"=coefficient_z_values,
+            vimp_table <- data.table::data.table("score"=abs(coefficient_z_values),
                                                  "name"=names(coefficient_z_values))
             
             # Merge by name (vglm coefficients can occur multiple times for the
             # same feature).
             vimp_table <- vimp_table[, list("score"=max(score)), by="name"]
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=object,
-                                                            vimp_table=vimp_table,
-                                                            method="max")
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=vimp_table,
+                                        encoding_table=object@encoding_reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Add ranks and set multi_var
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 

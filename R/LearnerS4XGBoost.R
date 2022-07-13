@@ -772,16 +772,14 @@ setMethod("..vimp", signature(object="familiarXGBoost"),
                                                       paste0(class(object), collapse=", ")))
             }
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=object,
-                                                            vimp_table=vimp_table,
-                                                            method="max")
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=vimp_table,
+                                        encoding_table=object@encoding_reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Add rank and the multi_var variable.
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 

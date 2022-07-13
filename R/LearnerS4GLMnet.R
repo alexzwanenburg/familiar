@@ -625,22 +625,20 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             vimp_table <- data.table::data.table("score"=vimp_score,
                                                  "name"=names(vimp_score))
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=object,
-                                                            vimp_table=vimp_table,
-                                                            method="max")
-            
             # Throw out elements with 0.0 coefficients
             vimp_table <- vimp_table[score != 0.0]
             
             # Check if any features remain.
             if(is_empty(vimp_table)) return(callNextMethod())
             
-            # Add ranks and set multi_var
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=vimp_table,
+                                        encoding_table=object@encoding_reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            return(vimp_table)
+            return(vimp_object)
           })
 
 
