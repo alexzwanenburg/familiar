@@ -200,7 +200,7 @@ setMethod("decluster_vimp_table", signature(x="vimpTable"),
                                 by.x="name",
                                 by.y="cluster_name",
                                 all.x=FALSE,
-                                all.y=TRUE)
+                                all.y=FALSE)
             
             # Adapt table by removing the original name column and renaming the
             # feature name column.
