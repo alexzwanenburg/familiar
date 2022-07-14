@@ -92,6 +92,9 @@ build_model <- function(run, hpo_list){
                        aggregate_on_load = FALSE,
                        outcome_info = create_outcome_info(settings=settings))
   
+  # Load feature_info_list
+  feature_info_list <- .get_feature_info_list(run=run)
+  
   #### Initialisation ----------------------------------------------------------
   
   # Get hyper-parameters
@@ -102,16 +105,16 @@ build_model <- function(run, hpo_list){
   # Read variable importance file and retrieve the variable importance table objects.
   vimp_table_list <- .retrieve_feature_selection_data(fs_method=run$fs_method,
                                                       project_list=project_list,
-                                                      file_paths=file_paths)
+                                                      file_paths=file_paths)[[run$fs_method]]
   
   # Collect all relevant variable importance
   vimp_table_list <- collect_vimp_table(x=vimp_table_list,
-                                        run_table=run)
+                                        run_table=run$run_table)
   
   # Update using reference cluster table to ensure that the data are
   # correct locally.
   vimp_table_list <- update_vimp_table_to_reference(x=vimp_table_list,
-                                                    reference_cluster_table=.create_clustering_table(feature_info_list=object@feature_info))
+                                                    reference_cluster_table=.create_clustering_table(feature_info_list=feature_info_list))
   
   # Recluster the data according to the clustering table corresponding to the
   # model.
@@ -133,9 +136,6 @@ build_model <- function(run, hpo_list){
 
 
   ############### Data preparation ################################################################
-
-  # Load feature_info_list
-  feature_info_list <- .get_feature_info_list(run=run)
   
   # Create familiar model
   fam_model <- methods::new("familiarModel",
