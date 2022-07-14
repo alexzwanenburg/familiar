@@ -6,6 +6,8 @@
 #### show (vimpTable) ----------------------------------------------------------
 setMethod("show", signature(object="vimpTable"),
           function(object){
+            # Suppress NOTES due to non-standard evaluation in data.table
+            score <- NULL
             
             # Make sure the collection object is updated.
             object <- update_object(object=object)
@@ -21,7 +23,12 @@ setMethod("show", signature(object="vimpTable"),
                          " variable importance method ",
                          "(", .familiar_version_string(object), "):\n\n"))
               
-              show(object@vimp_table)
+              if(object@invert){
+                show(object@vimp_table[order(-score)])
+                
+              } else {
+                show(object@vimp_table[order(score)]) 
+              }
             }
           })
 
