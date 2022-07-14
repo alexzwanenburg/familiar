@@ -172,28 +172,38 @@ compute_variable_importance <- function(run, fs_method, hpo_list, settings){
 
 .retrieve_feature_selection_data <- function(fs_method, project_list, file_paths){
   
+  # Iterate over the variable importance methods to select the correct files.
   vimp_table_list <- lapply(fs_method, function(x, project_list, file_paths){
     
-    # Attempt to read the object.
-    vimp_table_object <- tryCatch(readRDS(.get_feature_selection_data_filename(fs_method=x,
-                                                                               project_list=project_list,
-                                                                               file_paths=file_paths)),
-                                  error=identity)
+    # Attempt to read the object. This should produce a list of variable
+    # importance tables.
+    vimp_table_sub_list <- tryCatch(readRDS(.get_feature_selection_data_filename(fs_method=x,
+                                                                                 project_list=project_list,
+                                                                                 file_paths=file_paths)),
+                                    error=identity)
     
     # Check if there were issues reading the file.
-    if(inherits(vimp_table_object, "error")) return(NULL)
+    if(inherits(vimp_table_sub_list, "error")) return(NULL)
     
-    # Upgrade the object for backward compatibility.
-    if(!is(vimp_table_object, "vimpTable")) vimp_table_object <- as_vimp_table_object(vimp_table_object,
-                                                                                      project_id=project_list$project_id)
+    # Iterate over contents of the variable importance table list to update
+    # these to the latest definitions.
+    vimp_table_sub_list <- lapply(vimp_table_sub_list, function(x, project_id){
+      # Upgrade the object for backward compatibility.
+      if(!is(x, "vimpTable")) x <- as_vimp_table_object(x, project_id=project_id)
+      
+      # Update variable importance table objects to the most recent definition.
+      return(update_object(x))
+    },
+    project_id=project_list$project_id)
     
-    # Update variable importance table objects to the most recent definition.
-    vimp_table_object <- update_object(vimp_table_object)
-    
-    return(vimp_table_object)
+    # Return list of vimpTable objects.
+    return(vimp_table_sub_list)
   },
   project_list=project_list,
   file_paths=file_paths)
 
+  # Update names
+  names(vimp_table_list) <- fs_method
+  
   return(vimp_table_list)
 }
