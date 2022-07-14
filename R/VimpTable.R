@@ -93,8 +93,8 @@ setMethod("get_vimp_table", signature(x="familiarModel"),
 #### decode_vimp_table (vimpTable) ---------------------------------------------
 setMethod("decode_vimp_table", signature(x="vimpTable"),
           function(x, ...){
-            
             # Use encoding table to parse variable importance table.
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             name <- original_name <- score <- NULL
             
@@ -317,6 +317,9 @@ setMethod("rank_vimp_table", signature(x="vimpTable"),
             
             # Make copy to avoid updating by reference.
             vimp_table <- data.table::copy(x@vimp_table)
+            
+            # Remove NA values.
+            vimp_table <- vimp_table[is.finite(score)]
             
             # Compute dense ranks, with NA ranked as NA.
             if(x@invert){
@@ -600,91 +603,97 @@ setMethod("aggregate_vimp_table", signature(x="list"),
               return(vimp_table)
             },
             x=x,
-            ii=seq_along(x))
+            ii=seq_along(x),
+            SIMPLIFY=FALSE)
             
             # Combine all variable importance tables into a single table.
             vimp_table <- data.table::rbindlist(vimp_table, use.names=TRUE)
             
-            # Make a local copy of vimp_table
-            vimp_table <- data.table::copy(vimp_table)
+            # Create an aggregated variable importance table.
+            aggregated_vimp_object <- methods::new("vimpTable", x[[1]])
+            
+            # Attach the aggregated variable importance table.
+            aggregated_vimp_object@vimp_table <- vimp_table
             
             if(aggregation_method == "none"){
-              rank_table <- rank.none(vimp_table=vimp_table)
+              aggregated_vimp_object <- .compute_rank_mean_score(x=aggregated_vimp_object)
               
             } else if(aggregation_method %in% c("mean", "median", "best", "worst")){
               # Perform aggregation using simple ensemble methods
               
               if(aggregation_method == "mean"){
-                rank_table <- rank.mean(vimp_table=vimp_table)
+                aggregated_vimp_object <- .compute_rank_mean_rank(x=aggregated_vimp_object)
                 
               } else if(aggregation_method == "median"){
-                rank_table <- rank.median(vimp_table=vimp_table)
+                aggregated_vimp_object <- .compute_rank_median_rank(x=aggregated_vimp_object)
                 
               } else if(aggregation_method == "best"){
-                rank_table <- rank.best_rank(vimp_table=vimp_table)
+                aggregated_vimp_object <- .compute_rank_best_rank(x=aggregated_vimp_object)
                 
               } else if(aggregation_method == "worst"){
-                rank_table <- rank.worst_rank(vimp_table=vimp_table)
+                aggregated_vimp_object <- .compute_rank_worst_rank(x=aggregated_vimp_object)
               }
               
             } else if(aggregation_method %in% c("stability", "exponential")){
               # Perform aggregation using occurence-based methods.
               if(is.null(rank_threshold)) {
-                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=vimp_table)
+                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=aggregated_vimp_object)
               }
               
               if(aggregation_method == "stability"){
-                rank_table <- rank.stability(vimp_table=vimp_table,
-                                             rank_threshold=rank_threshold)
+                aggregated_vimp_object <- .compute_rank_stability(x=aggregated_vimp_object,
+                                                                  rank_threshold=rank_threshold)
                 
               } else if(aggregation_method == "exponential"){
-                rank_table <- rank.exponential(vimp_table=vimp_table,
-                                               rank_threshold=rank_threshold)
+                aggregated_vimp_object <- .compute_rank_exponential(x=aggregated_vimp_object,
+                                                                    rank_threshold=rank_threshold)
               } 
               
             } else if(aggregation_method %in% c("borda", "enhanced_borda", "truncated_borda", "enhanced_truncated_borda")){
               # Perform aggregation using Borda-count based methods
               if(is.null(rank_threshold)) {
-                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=vimp_table)
+                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=aggregated_vimp_object)
               }
               
               if(aggregation_method == "borda") {
-                rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
-                                                     rank_threshold=rank_threshold,
-                                                     truncated=FALSE,
-                                                     enhanced=FALSE)
+                aggregated_vimp_object <- .compute_rank_borda(x=aggregated_vimp_object,
+                                                              rank_threshold=rank_threshold,
+                                                              truncated=FALSE,
+                                                              enhanced=FALSE)
                 
               } else if(aggregation_method == "enhanced_borda") {
-                rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
-                                                     rank_threshold=rank_threshold,
-                                                     truncated=FALSE,
-                                                     enhanced=TRUE)
+                aggregated_vimp_object <- .compute_rank_borda(x=aggregated_vimp_object,
+                                                              rank_threshold=rank_threshold,
+                                                              truncated=FALSE,
+                                                              enhanced=TRUE)
                 
               } else if(aggregation_method == "truncated_borda") {
-                rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
-                                                     rank_threshold=rank_threshold,
-                                                     truncated=TRUE,
-                                                     enhanced=FALSE)
+                aggregated_vimp_object <- .compute_rank_borda(x=aggregated_vimp_object,
+                                                              rank_threshold=rank_threshold,
+                                                              truncated=TRUE,
+                                                              enhanced=FALSE)
                 
               } else if(aggregation_method == "enhanced_truncated_borda") {
-                rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
-                                                     rank_threshold=rank_threshold,
-                                                     truncated=TRUE,
-                                                     enhanced=TRUE)
-                
-              } else {
-                ..error_reached_unreachable_code(paste0("aggregate_vimp_table,list: encountered an unknown aggregation method:", aggregation_method))
+                aggregated_vimp_object <- .compute_rank_borda(x=aggregated_vimp_object,
+                                                              rank_threshold=rank_threshold,
+                                                              truncated=TRUE,
+                                                              enhanced=TRUE)
               }
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("aggregate_vimp_table,list: encountered an unknown aggregation method:", aggregation_method))
             }
             
-            # Create an aggregated variable importance table.
-            x <- methods::new("vimpTable", x[[1]])
+            # Force ranking of the aggregated variable importance object.
+            aggregated_vimp_object@state <- "declustered"
             
-            # Update the vimp_table attribute and update the state attribute.
-            x@vimp_table <- rank_table
-            x@state <- "aggregated"
+            # Rank aggregated scores.
+            aggregated_vimp_object <- rank_vimp_table(aggregated_vimp_object)
             
-            return(x)
+            # Update state again to reflect the current state.
+            aggregated_vimp_object@state <- "aggregated"
+            
+            return(aggregated_vimp_object)
           })
 
 #### aggregate_vimp_table (vimpTable) ------------------------------------------
