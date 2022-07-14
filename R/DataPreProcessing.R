@@ -31,10 +31,12 @@ run_preprocessing <- function(cl,
   
   # Check if a feature info list was already created. This will typically
   # generate a generic feature info list when called from summon_familiar.
-  if(is.null(feature_info_list)) feature_info_list <- .get_feature_info_data(data=data,
-                                                                             file_paths=file_paths,
-                                                                             project_id=project_info$project_id,
-                                                                             outcome_type=settings$data$outcome_type)
+  if(is.null(feature_info_list)){
+    feature_info_list <- .get_feature_info_data(data=.get_data_from_backend(),
+                                                file_paths=file_paths,
+                                                project_id=project_info$project_id,
+                                                outcome_type=settings$data$outcome_type)
+  } 
   
   # TODO: Check if the generic contains all the required data -- particularly
   # for externally provided feature information.
