@@ -314,9 +314,9 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             
             # Create variable importance object.
             vimp_object <- methods::new("vimpTable",
-                                        vimp_table=data.table::data.table("score"=vimp_table$score, "name"=vimp_table$name),
+                                        vimp_table=data.table::data.table("score"=vimp_table$select_step, "name"=vimp_table$name),
                                         score_aggregation="max",
-                                        invert=TRUE)
+                                        invert=FALSE)
             
             return(vimp_object)
           })

@@ -227,10 +227,10 @@ setMethod("..vimp", signature(object="familiarMultivariateMutualInfoVimp"),
             
             # Create variable importance object.
             vimp_object <- methods::new("vimpTable",
-                                        vimp_table=data.table::data.table("score"=vimp_table$objective_score,
+                                        vimp_table=data.table::data.table("score"=vimp_table$selection_step,
                                                                           "name"=vimp_table$name),
                                         score_aggregation="max",
-                                        invert=TRUE)
+                                        invert=FALSE)
             
             return(vimp_object)
           })
