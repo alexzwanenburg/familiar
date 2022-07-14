@@ -1589,7 +1589,7 @@ setMethod("get_required_features", signature(x="dataObject"),
             # Create features from columns in the dataset, if unset.
             if(!is_external && x@delay_loading){
               # Get features from the feature info list.
-              features <- get_available_features(feature_info_list=x,
+              features <- get_available_features(feature_info_list=feature_info_list,
                                                  exclude_signature=exclude_signature,
                                                  exclude_novelty=exclude_novelty)
               
