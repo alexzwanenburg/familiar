@@ -238,6 +238,19 @@ setMethod("update_object", signature(object="familiarCollection"),
 
 
 
+##### update_object (vimpTable) ------------------------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="vimpTable"),
+          function(object, ...){
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+            
+            return(object)
+          })
+
+
+
 ##### update_object (familiarNoveltyDetector) ----------------------------------
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="familiarNoveltyDetector"),
@@ -254,6 +267,8 @@ setMethod("update_object", signature(object="familiarNoveltyDetector"),
             
             # Update package version.
             object <- add_package_version(object=object)
+            
+            return(object)
           })
 
 
