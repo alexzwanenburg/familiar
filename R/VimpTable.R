@@ -773,3 +773,32 @@ as_vimp_table_object <- function(x,
   
   return(vimp_table)
 }
+
+
+
+prepare_vimp_table_object <- function(vimp_method,
+                                      vimp_table=NULL,
+                                      run_table=NULL,
+                                      score_aggregation="max",
+                                      encoding_table=NULL,
+                                      cluster_table=NULL,
+                                      invert,
+                                      state){
+  # This function helps prepare a vimpTable object for unit testing. It is not
+  # used as part of the main workflow.
+  
+  proto_vimp_table <- methods::new("vimpTable",
+                                   vimp_table = vimp_table,
+                                   vimp_method = vimp_method,
+                                   run_table = run_table,
+                                   score_aggregation = score_aggregation,
+                                   encoding_table = encoding_table,
+                                   cluster_table = cluster_table,
+                                   invert = invert,
+                                   state=state)
+  
+  # Add package version.
+  proto_vimp_table <- add_package_version(proto_vimp_table)
+  
+  return(proto_vimp_table)
+}
