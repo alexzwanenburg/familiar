@@ -701,6 +701,16 @@ setMethod("aggregate_vimp_table", signature(x="NULL"),
 
 
 
+#### add_package_version (vimpTable) -------------------------------------------
+setMethod("add_package_version", signature(object="vimpTable"),
+          function(object){
+            
+            # Set version of familiar
+            return(.add_package_version(object=object))
+          })
+
+
+
 .as_vimp_table_state <- function(x){
   
   if(is(x, "vimpTable")) x <- x@state
@@ -723,10 +733,36 @@ setMethod("aggregate_vimp_table", signature(x="NULL"),
 }
 
 
-#### add_package_version (vimpTable) -------------------------------------------
-setMethod("add_package_version", signature(object="vimpTable"),
-          function(object){
-            
-            # Set version of familiar
-            return(.add_package_version(object=object))
-          })
+
+as_vimp_table_object <- function(x,
+                                 project_id){
+  
+  vimp_table <- x$vimp
+  if(!is_empty(vimp_table)){
+    # Determine if an increasing score leads to an increasing rank.
+    invert <- cor(vimp_table$score,
+                  vimp_table$rank,
+                  method="spearman") < 0.0
+    
+    # Select only expected columns.
+    vimp_table <- vimp_table[, mget(c("score", "name"))]
+    
+  } else {
+    invert <- FALSE
+  }
+  
+  # Create variable importance object.
+  vimp_table <- methods::new("vimpTable",
+                             vimp_table = vimp_table,
+                             vimp_method = x$fs_method,
+                             run_table = x$run_table,
+                             score_aggregation = "max",
+                             encoding_table = NULL,
+                             cluster_table = "declustered",
+                             invert = invert,
+                             project_id = project_id,
+                             familiar_version = "1.2.0",
+                             state="initial")
+  
+  return(vimp_table)
+}
