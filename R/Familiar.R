@@ -301,16 +301,18 @@ summon_familiar <- function(formula=NULL,
   ##### Variable importance ----------------------------------------------------
   
   # Start feature selection
-  run_feature_selection(cl=cl,
-                        project_list=project_info,
-                        settings=settings,
-                        file_paths=file_paths,
-                        verbose=verbose)
+  vimp_table_list <- run_feature_selection(cl=cl,
+                                           project_list=project_info,
+                                           settings=settings,
+                                           file_paths=file_paths,
+                                           verbose=verbose)
   
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("vimp")){
+    return(vimp_table_list)
     
-    
+  } else {
+    rm(vimp_table_list)
   }
   
   

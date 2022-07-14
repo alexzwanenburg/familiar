@@ -62,6 +62,11 @@ run_feature_selection <- function(cl,
                    indent=message_indent,
                    verbose=verbose)
   }
+  
+  # Return generated variable importance tables.
+  return(.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
+                                          project_list=project_list,
+                                          file_paths=file_paths))
 }
 
 
@@ -215,4 +220,33 @@ compute_variable_importance <- function(run, fs_method, hpo_list, settings){
   return(normalizePath(file.path(file_paths$fs_dir,
                                  paste0(project_list$project_id, "_fs_", fs_method, ".RDS")),
                        mustWork=FALSE))
+}
+
+
+.retrieve_feature_selection_data <- function(fs_method, project_list, file_paths){
+  
+  vimp_table_list <- lapply(fs_method, function(x, project_list, file_paths){
+    
+    # Attempt to read the object.
+    vimp_table_object <- tryCatch(readRDS(.get_feature_selection_data_filename(fs_method=x,
+                                                                               project_list=project_list,
+                                                                               file_paths=file_paths)),
+                                  error=identity)
+    
+    # Check if there were issues reading the file.
+    if(inherits(vimp_table_object, "error")) return(NULL)
+    
+    # Upgrade the object for backward compatibility.
+    if(!is(vimp_table_object, "vimpTable")) vimp_table_object <- as_vimp_table_object(vimp_table_object,
+                                                                                      project_id=project_list$project_id)
+    
+    # Update variable importance table objects to the most recent definition.
+    vimp_table_object <- update_object(vimp_table_object)
+    
+    return(vimp_table_object)
+  },
+  project_list=project_list,
+  file_paths=file_paths)
+
+  return(vimp_table_list)
 }

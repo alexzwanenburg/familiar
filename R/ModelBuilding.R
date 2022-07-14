@@ -92,19 +92,44 @@ build_model <- function(run, hpo_list){
                        aggregate_on_load = FALSE,
                        outcome_info = create_outcome_info(settings=settings))
   
-  ############### Initialisation ##################################################################
+  #### Initialisation ----------------------------------------------------------
   
   # Get hyper-parameters
   hyperparameter_object <- .find_hyperparameters_for_run(run=run,
                                                          hpo_list=hpo_list)
   
   
+  # Read variable importance file and retrieve the variable importance table objects.
+  vimp_table_list <- .retrieve_feature_selection_data(fs_method=run$fs_method,
+                                                      project_list=project_list,
+                                                      file_paths=file_paths)
+  
+  # Collect all relevant variable importance
+  vimp_table_list <- collect_vimp_table(x=vimp_table_list,
+                                        run_table=run)
+  
+  # Update using reference cluster table to ensure that the data are
+  # correct locally.
+  vimp_table_list <- update_vimp_table_to_reference(x=vimp_table_list,
+                                                    reference_cluster_table=.create_clustering_table(feature_info_list=object@feature_info))
+  
+  # Recluster the data according to the clustering table corresponding to the
+  # model.
+  vimp_table_list <- recluster_vimp_table(vimp_table_list)
+  
   # Get feature ranks
-  rank_table <- rank.get_feature_ranks(run=run,
-                                       fs_method=run$fs_method,
-                                       settings=settings,
-                                       proj_list=project_list,
-                                       file_paths=file_paths)
+  vimp_table <- aggregate_vimp_table(vimp_table_list,
+                                     aggregation_method=settings$fs$aggregation,
+                                     rank_threshold=settings$fs$aggr_rank_threshold)
+  
+  # Extract rank table.
+  rank_table <- get_vimp_table(vimp_table)
+  
+  # rank_table <- rank.get_feature_ranks(run=run,
+  #                                      fs_method=run$fs_method,
+  #                                      settings=settings,
+  #                                      proj_list=project_list,
+  #                                      file_paths=file_paths)
 
 
   ############### Data preparation ################################################################

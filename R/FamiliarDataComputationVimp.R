@@ -184,7 +184,10 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
                            indent=message_indent,
                            verbose=verbose)
             
-            vimp_table_list <- some_function_to_read_from_file()
+            # Retrieve variable importance table objects.
+            vimp_table_list <- .retrieve_feature_selection_data(fs_method=object@vimp_method,
+                                                                project_list=project_list,
+                                                                file_paths=file_paths)
             
             # Define the run table -> at the pooling level
             run <- .get_run_list(iteration_list=project_list$iter_list,
