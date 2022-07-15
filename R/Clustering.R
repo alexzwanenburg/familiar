@@ -422,6 +422,9 @@ features_after_clustering <- function(features, cluster_table=NULL, feature_info
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_name <- NULL
   
+  # Check if features are set.
+  if(is_empty(features)) return(NULL)
+  
   # Create a cluster table if it is not provided
   if(is.null(cluster_table) & is.null(feature_info_list)){
     ..error_reached_unreachable_code("features_after_clustering: if no cluster_table is provided, feature_info_list may be empty.")
