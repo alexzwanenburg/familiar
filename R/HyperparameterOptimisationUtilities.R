@@ -365,11 +365,6 @@
   # Compute variable importance.
   vimp_table <- get_vimp_table(.vimp(object=object, data=data))
   
-  # Rename columns.
-  data.table::setnames(vimp_table,
-                       old=c("score", "rank"),
-                       new=c("aggr_score", "aggr_rank"))
-  
   return(vimp_table)
 }
 
