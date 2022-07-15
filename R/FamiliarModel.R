@@ -929,7 +929,7 @@ setMethod("get_signature", signature(object="list"),
           function(object, vimp_method, parameter_list, rank_table, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            name <- aggr_rank <- NULL
+            name <- rank <- NULL
             
             # Get signature size
             if(is_empty(parameter_list$sign_size)){
@@ -989,7 +989,7 @@ setMethod("get_signature", signature(object="list"),
                 
                 # Keep only feature ranks of feature corresponding to available
                 # features, and order by rank.
-                rank_table <- rank_table[name %in% features,][order(aggr_rank)]
+                rank_table <- rank_table[name %in% features,][order(rank)]
                 
                 # Add good features (low rank) to the selection
                 selected_features <- c(signature_features,
