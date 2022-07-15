@@ -694,15 +694,21 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
 
 #####preprocess_data (vimp method)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .preprocess_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
+            
+            # Pre-process the data.
+            data <-  .preprocess_data(data=data,
+                                      object=object,
+                                      stop_at=stop_at,
+                                      keep_novelty=keep_novelty)
+            
+            return(data)
+          })
 
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
             
             # Pre-process the data.
             data <- .preprocess_data(data=data,
@@ -715,7 +721,8 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"
             data <- postprocess_data(data=data,
                                      object=object,
                                      stop_at=stop_at,
-                                     keep_novelty=keep_novelty)
+                                     keep_novelty=keep_novelty,
+                                     ...)
             
             return(data)
           })
@@ -741,7 +748,8 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarNovelt
             # set.
             data <- postprocess_data(data=data,
                                      object=object,
-                                     stop_at=stop_at)
+                                     stop_at=stop_at,
+                                     ...)
             
             return(data)
           })
@@ -749,10 +757,16 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarNovelt
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE).preprocess_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            return(data)
+          }) 
 
 
 .preprocess_data <- function(data, object, stop_at, keep_novelty=FALSE){
@@ -839,7 +853,12 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
 
 ##### postprocess_data (model)--------------------------------------------
 setMethod("postprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+          function(data,
+                   object,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   force_check=FALSE,
+                   ...){
             
             # Convert the preprocessing_level attained and the requested
             # stopping level to ordinals.
@@ -853,7 +872,7 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarModel
             if(keep_novelty) features <- union(features, object@novelty_features)
             
             # Return data if there are no features.
-            if(length(features) == 0) return(data)
+            if(length(features) == 0 && !force_check) return(data)
             
             # Determine the features after clustering.
             features <- features_after_clustering(features=features,
@@ -868,7 +887,11 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarModel
 
 ##### postprocess_data (novelty detector)---------------------------------
 setMethod("postprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
-          function(data, object, stop_at="clustering"){
+          function(data,
+                   object,
+                   stop_at="clustering",
+                   force_check=FALSE,
+                   ...){
             
             # Convert the preprocessing_level attained and the requested
             # stopping level to ordinals.
@@ -881,7 +904,7 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarNovel
             features <- object@model_features
             
             # Return data if there are no features.
-            if(length(features) == 0) return(data)
+            if(length(features) == 0 && !force_check) return(data)
             
             # Determine the features after clustering.
             features <- features_after_clustering(features=features,
@@ -898,11 +921,22 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarNovel
 
 #####process_input_data (vimp method)#####
 setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   ...){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty,
+                                        ...)
+            
+            return(data)
+          })
 
 #####process_input_data (novelty detector)#####
 setMethod("process_input_data", signature(object="familiarNoveltyDetector", data="ANY"),
@@ -917,28 +951,50 @@ setMethod("process_input_data", signature(object="familiarNoveltyDetector", data
                                         data=data,
                                         is_pre_processed=is_pre_processed,
                                         stop_at=stop_at,
-                                        keep_novelty=FALSE)
+                                        keep_novelty=FALSE,
+                                        ...)
             
             return(data)
           })
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   ...){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty,
+                                        ...)
+            
+            return(data)
+          })
 
 #####process_input_data (ensemble)#####
 setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty)
 
-.process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE){
+            return(data)
+          })
+
+
+.process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE, ...){
   # Check whether data is a dataObject, and create one otherwise
   if(!is(data, "dataObject")){
     data <- as_data_object(data=data,
@@ -960,7 +1016,8 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
   data <- preprocess_data(data=data,
                           object=object,
                           stop_at=stop_at,
-                          keep_novelty=keep_novelty)
+                          keep_novelty=keep_novelty,
+                          ...)
   
   # Return data
   return(data)
