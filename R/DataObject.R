@@ -918,6 +918,8 @@ setMethod("process_input_data", signature(object="familiarNoveltyDetector", data
                                         is_pre_processed=is_pre_processed,
                                         stop_at=stop_at,
                                         keep_novelty=FALSE)
+            
+            return(data)
           })
 
 #####process_input_data (model)#####
@@ -1681,6 +1683,9 @@ setMethod("get_required_features", signature(x="NULL"),
   
   # Suppress NOTES due to non-standard evaluation in data.table
   cluster_name <- feature_name <- feature_required <- NULL
+  
+  # If the features are empty
+  if(is_empty(features) && is_external) return(NULL)
   
   # Generate a cluster table
   cluster_table <- .create_clustering_table(feature_info_list=feature_info_list)
