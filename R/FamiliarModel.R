@@ -107,7 +107,7 @@ setMethod(".train", signature(object="familiarModel", data="NULL"),
           })
 
 
-#####.train_novelty_detector#####
+####.train_novelty_detector ----------------------------------------------------
 setMethod(".train_novelty_detector", signature(object="familiarModel", data="dataObject"),
           function(object,
                    data,
@@ -121,12 +121,6 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
-            # Process data, if required.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed = is_pre_processed,
-                                       stop_at="clustering")
-            
             # Create detector object.
             fam_detector <- methods::new("familiarNoveltyDetector",
                                          learner=detector,
@@ -138,6 +132,13 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             
             # Promote to the correct type of detector.
             fam_detector <- promote_detector(object=fam_detector)
+            
+            # Process data, if required.
+            data <- process_input_data(object=fam_detector,
+                                       data=data,
+                                       is_pre_processed = is_pre_processed,
+                                       stop_at="clustering",
+                                       force_check=TRUE)
             
             # Optimise hyperparameters if they were not previously set.
             if(!has_optimised_hyperparameters(object=fam_detector)){
@@ -877,8 +878,6 @@ setMethod("set_signature", signature(object="familiarModel"),
             model_features <- get_model_features(x=signature_features,
                                                  is_clustered=TRUE,
                                                  feature_info_list=object@feature_info)
-            # model_features <- find_model_features(features=signature_features,
-            #                                       feature_info_list=object@feature_info)
             
             # Find novelty features.
             novelty_features <- find_novelty_features(model_features=model_features,
@@ -889,7 +888,6 @@ setMethod("set_signature", signature(object="familiarModel"),
               required_features <- union(model_features, novelty_features)
               
             } else {
-              browser()
               # Find features that are required for processing the data.
               required_features <- get_required_features(x=union(model_features, novelty_features),
                                                          is_clustered=FALSE,
