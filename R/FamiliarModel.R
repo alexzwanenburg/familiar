@@ -590,7 +590,7 @@ setMethod("get_object_name", signature(object="familiarModel"),
 
 
 
-#####model_is_trained (familiarModel)#####
+#### model_is_trained (familiarModel) ------------------------------------------
 setMethod("model_is_trained", signature(object="familiarModel"),
           function(object){
             # Check if a model was trained
@@ -605,7 +605,7 @@ setMethod("model_is_trained", signature(object="familiarModel"),
             }
           })
 
-#####model_is_trained (character)#####
+#### model_is_trained (character) ----------------------------------------------
 setMethod("model_is_trained", signature(object="character"),
           function(object){
             # Load object.
@@ -614,6 +614,12 @@ setMethod("model_is_trained", signature(object="character"),
             return(do.call(model_is_trained, args=c(list("object"=object))))
           })
 
+
+#### model_is_trained (NULL) ---------------------------------------------------
+setMethod("model_is_trained", signature(object="NULL"),
+          function(object){
+            return(FALSE)
+          })
 
 
 #####add_package_version (familiarModel)#####
