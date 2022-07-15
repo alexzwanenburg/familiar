@@ -128,14 +128,7 @@ build_model <- function(run, hpo_list){
   # Extract rank table.
   rank_table <- get_vimp_table(vimp_table)
   
-  # rank_table <- rank.get_feature_ranks(run=run,
-  #                                      fs_method=run$fs_method,
-  #                                      settings=settings,
-  #                                      proj_list=project_list,
-  #                                      file_paths=file_paths)
-
-
-  ############### Data preparation ################################################################
+  #### Data preparation --------------------------------------------------------
   
   # Create familiar model
   fam_model <- methods::new("familiarModel",
