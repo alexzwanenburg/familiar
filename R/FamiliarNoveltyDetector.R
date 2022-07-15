@@ -20,7 +20,8 @@ setMethod(".train", signature(object="familiarNoveltyDetector", data="dataObject
             data <- process_input_data(object=object,
                                        data=data,
                                        is_pre_processed = is_pre_processed,
-                                       stop_at="clustering")
+                                       stop_at="clustering",
+                                       force_check=TRUE)
             
             # Set the training flag
             can_train <- TRUE
