@@ -740,11 +740,12 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
   # Extract and store imputation objects.
   container_object@model <- lapply(feature_info_list,
                                    function(x){
+                                     
                                      # Filter out "none" class imputation
                                      # objects.
-                                     if(is(x, "featureInfoParametersImputationNone")) return(NULL)
+                                     if(is(x@imputation_parameters, "featureInfoParametersImputationNone")) return(NULL)
                                      
-                                     return(x)
+                                     return(x@imputation_parameters)
                                    })
   
   if(is_empty(container_object@model)){
