@@ -163,7 +163,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
             
             # Check aggregation method
-            rank.check_aggregation_method(method=aggregation_method)
+            .check_parameter_value_is_valid(x=settings$aggregation,
+                                            var_name="aggregation_method",
+                                            values=.get_available_rank_aggregation_methods())
             
             # Obtain rank thresholds from stored settings, if required
             if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
@@ -369,7 +371,9 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              rank.check_aggregation_method(method=aggregation_method)
+              .check_parameter_value_is_valid(x=settings$aggregation,
+                                              var_name="aggregation_method",
+                                              values=.get_available_rank_aggregation_methods())
               
               # Set aggregation method.
               x <- lapply(x, function(x, aggregation_method){
@@ -550,8 +554,9 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              rank.check_aggregation_method(method=aggregation_method)
-              
+              .check_parameter_value_is_valid(x=settings$aggregation,
+                                              var_name="aggregation_method",
+                                              values=.get_available_rank_aggregation_methods())
               # Set aggregation method.
               x <- lapply(x, function(x, aggregation_method){
                 x@rank_aggregation_method <- aggregation_method
@@ -562,7 +567,9 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(rank_threshold)){
               # Check if the threshold is valid.
-              .check_number_in_valid_range(x=rank_threshold, var_name="rank_threshold", range=c(1, Inf))
+              .check_number_in_valid_range(x=rank_threshold,
+                                           var_name="rank_threshold",
+                                           range=c(1, Inf))
               
               # Set threshold.
               x <- lapply(x, function(x, rank_threshold){
