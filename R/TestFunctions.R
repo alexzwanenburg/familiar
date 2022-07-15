@@ -4856,6 +4856,8 @@ test_export_specific <- function(export_function,
 
 
 integrated_test <- function(...,
+                            learner=NULL,
+                            hyperparameters=NULL,
                             outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                             warning_good=NULL,
                             warning_bad=NULL,
@@ -4870,6 +4872,9 @@ integrated_test <- function(...,
     suppress_fun <- suppressMessages
   }
   
+  # Set flag for missing learner.
+  learner_unset <- is.null(learner)
+  
   for(outcome_type in outcome_type_available){
     
     .warning_good <- warning_good
@@ -4883,18 +4888,27 @@ integrated_test <- function(...,
       # Create datasets
       full_data <- test.create_good_data_set(outcome_type)
       
-      # Parse hyperparameter list
-      hyperparameters <- list("sign_size"=get_n_features(full_data),
-                              "family"=switch(outcome_type,
-                                              "continuous"="gaussian",
-                                              "count"="poisson",
-                                              "binomial"="binomial",
-                                              "multinomial"="multinomial",
-                                              "survival"="cox"))
+      if(learner_unset){
+        # Set learner
+        learner <- "lasso"
+        
+        # Parse hyperparameter list
+        hyperparameters <- list("sign_size"=get_n_features(full_data),
+                                "family"=switch(outcome_type,
+                                                "continuous"="gaussian",
+                                                "count"="poisson",
+                                                "binomial"="binomial",
+                                                "multinomial"="multinomial",
+                                                "survival"="cox"))
+        
+        # Parse as list.
+        hyperparameters <- list("lasso"=hyperparameters)
+      }
+      
       if(!is.null(.warning_good)){
         testthat::expect_warning(output <- suppress_fun(summon_familiar(data=full_data,
-                                                                        learner="lasso",
-                                                                        hyperparameter=list("lasso"=hyperparameters),
+                                                                        learner=learner,
+                                                                        hyperparameter=hyperparameters,
                                                                         time_max=1832,
                                                                         verbose=debug,
                                                                         ...)),
@@ -4902,8 +4916,8 @@ integrated_test <- function(...,
         
       } else {
         output <- suppress_fun(summon_familiar(data=full_data,
-                                               learner="lasso",
-                                               hyperparameter=list("lasso"=hyperparameters),
+                                               learner=learner,
+                                               hyperparameter=hyperparameters,
                                                time_max=1832,
                                                verbose=debug,
                                                ...))
@@ -4920,19 +4934,27 @@ integrated_test <- function(...,
       bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
                                            add_na_data=TRUE)
       
-      # Parse hyperparameter list
-      hyperparameters <- list("sign_size"=get_n_features(bad_data),
-                              "family"=switch(outcome_type,
-                                              "continuous"="gaussian",
-                                              "count"="poisson",
-                                              "binomial"="binomial",
-                                              "multinomial"="multinomial",
-                                              "survival"="cox"))
+      if(learner_unset){
+        # Set learner
+        learner <- "lasso"
+        
+        # Parse hyperparameter list
+        hyperparameters <- list("sign_size"=get_n_features(bad_data),
+                                "family"=switch(outcome_type,
+                                                "continuous"="gaussian",
+                                                "count"="poisson",
+                                                "binomial"="binomial",
+                                                "multinomial"="multinomial",
+                                                "survival"="cox"))
+        
+        # Parse as list.
+        hyperparameters <- list("lasso"=hyperparameters)
+      }
       
       if(!is.null(.warning_bad)){
         testthat::expect_warning(output <- suppress_fun(summon_familiar(data=bad_data,
-                                                                        learner="lasso",
-                                                                        hyperparameter=list("lasso"=hyperparameters),
+                                                                        learner=learner,
+                                                                        hyperparameter=hyperparameters,
                                                                         feature_max_fraction_missing=0.95,
                                                                         time_max=1832,
                                                                         verbose=debug,
@@ -4943,8 +4965,8 @@ integrated_test <- function(...,
         # Note that we set a very high feature_max_fraction_missing to deal with
         # NA rows in the dataset. Also time is explicitly set to prevent an error.
         output <- suppress_fun(summon_familiar(data=bad_data,
-                                               learner="lasso",
-                                               hyperparameter=list("lasso"=hyperparameters),
+                                               learner=learner,
+                                               hyperparameter=hyperparameters,
                                                feature_max_fraction_missing=0.95,
                                                time_max=1832,
                                                verbose=debug,
