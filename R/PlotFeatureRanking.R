@@ -361,8 +361,6 @@ plot_model_signature_variable_importance <- function(...){
     return(NULL)
   }
   
-  ##### Check input arguments ##################################################
-  
   # ggtheme
   if(!is(ggtheme, "theme")) {
     ggtheme <- plotting.get_theme(use_theme=ggtheme)
@@ -558,24 +556,28 @@ plot_model_signature_variable_importance <- function(...){
   
   # Create a local copy of x prior to making changes based on plot_data
   x <- data.table::copy(x)
-  x$feature <- droplevels(x$feature)
+  x$name <- droplevels(x$name)
   
   # Order by ascending rank.
   x <- x[order(rank)]
   
   # Update the ordering of features so that the features are ordered by
   # increasing score or occurrence
-  x$feature <- factor(x$feature, levels=unique(x$feature))
+  x$name <- factor(x$name, levels=unique(x$name))
   
   # Generate a guide table
-  guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
+  guide_list <- plotting.create_guide_table(x=x,
+                                            color_by=color_by,
+                                            discrete_palette=discrete_palette)
 
   # Extract data
   x <- guide_list$data
   
   # Check if cluster information should be shown:
   if(show_cluster){
-    x <- plotting.add_cluster_name(x=x, color_by=color_by, facet_by=facet_by)
+    x <- plotting.add_cluster_name(x=x,
+                                   color_by=color_by,
+                                   facet_by=facet_by)
   }
   
   # Perform last checks prior to plotting
@@ -583,7 +585,7 @@ plot_model_signature_variable_importance <- function(...){
                             y_breaks=y_breaks)
 
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature"),
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"),
                                                     y=!!sym("score")))
   p <- p + ggtheme
   
@@ -709,8 +711,8 @@ plot_model_signature_variable_importance <- function(...){
                                              facet_wrap_cols=facet_wrap_cols)
   
   # Determine the number of features within each facet.
-  n_features <- data.table::uniqueN(x=x$feature)
-  longest_name <- max(sapply(levels(x$feature), nchar))
+  n_features <- data.table::uniqueN(x=x$name)
+  longest_name <- max(sapply(levels(x$name), nchar))
   
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.07mm)
   # spacing. Then add some room for other plot elements.
