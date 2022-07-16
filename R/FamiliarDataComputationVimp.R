@@ -67,7 +67,9 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             } 
             
             # Check aggregation method
-            rank.check_aggregation_method(method=aggregation_method)
+            .check_parameter_value_is_valid(x=aggregation_method,
+                                            var_name="aggregation_method",
+                                            values=.get_available_rank_aggregation_methods())
             
             # Obtain rank thresholds from stored settings, if required
             if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
@@ -163,7 +165,7 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
             
             # Check aggregation method
-            .check_parameter_value_is_valid(x=settings$aggregation,
+            .check_parameter_value_is_valid(x=aggregation_method,
                                             var_name="aggregation_method",
                                             values=.get_available_rank_aggregation_methods())
             
@@ -371,7 +373,7 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              .check_parameter_value_is_valid(x=settings$aggregation,
+              .check_parameter_value_is_valid(x=aggregation_method,
                                               var_name="aggregation_method",
                                               values=.get_available_rank_aggregation_methods())
               
@@ -554,9 +556,10 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              .check_parameter_value_is_valid(x=settings$aggregation,
+              .check_parameter_value_is_valid(x=aggregation_method,
                                               var_name="aggregation_method",
                                               values=.get_available_rank_aggregation_methods())
+              
               # Set aggregation method.
               x <- lapply(x, function(x, aggregation_method){
                 x@rank_aggregation_method <- aggregation_method
