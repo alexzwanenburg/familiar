@@ -1451,7 +1451,7 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             feature_columns <- get_feature_columns(x=data)
             
             # Update feature_info_list by adding info for missing batches
-            feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list,
+            feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list[feature_columns],
                                                                     data=data)
             
             # Apply batch-normalisation
