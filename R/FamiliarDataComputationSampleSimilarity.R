@@ -188,7 +188,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   cluster_method_object <- .create_sample_similarity_cluster_method_object(x=x)
   
   if(is.null(cluster_method_object)) return(x)
-  browser()
+  
   # Create the cluster object.
   object <- apply_cluster_method(object=cluster_method_object)
   
@@ -241,7 +241,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   
   # Attach the similarity table to the cluster_method_object.
   cluster_method_object@similarity_table <- methods::new("similarityTable",
-                                                         data=x@data[, mget(c("sample_name_1", "sample_name_2", "value"))],
+                                                         data=x@data[, mget(c("sample_1", "sample_2", "value"))],
                                                          similarity_metric=x@similarity_metric,
                                                          data_type=cluster_method_object@data_type)
   return(cluster_method_object)

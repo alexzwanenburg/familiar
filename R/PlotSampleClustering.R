@@ -1068,9 +1068,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
     
     # Add cluster objects to feature and sample similarity data.
-    feature_similarity_split <- ..append_feature_similarity_dendrogram(feature_similarity_split)
-    sample_similarity_split <- ..append_feature_similarity_dendrogram(sample_similarity_split)
-
+    feature_similarity_split <- .append_feature_similarity_dendrogram(feature_similarity_split)
+    sample_similarity_split <- .append_sample_similarity_dendrogram(sample_similarity_split)
+    
     # Complete the expression data
     plot_data <- .complete_expression_table(x=expression_data_split,
                                             feature_similarity=feature_similarity_split,
@@ -1538,10 +1538,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    browser()
     sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
-    # sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-    #                                             cluster_method=sample_similarity@cluster_method)
   }
   
   # Correctly order the samples
@@ -1825,11 +1822,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    browser()
     feature_order <- .compute_feature_similarity_cluster_table(x=feature_similarity)
-    
-    # feature_order <- cluster.extract_label_order(cluster_object=feature_similarity@dendrogram,
-    #                                              cluster_method=feature_similarity@cluster_method)
   }
   
   # Determine sample order.
@@ -1845,10 +1838,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    browser()
     sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
-    # sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-    #                                             cluster_method=sample_similarity@cluster_method)
   }
   
   # Keep only features and samples that are in feature order and sample order.
