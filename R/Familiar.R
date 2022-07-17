@@ -326,7 +326,7 @@ summon_familiar <- function(formula=NULL,
   
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("training")){
-    
+    return(.import_all_familiar_objects(file_paths=file_paths)$familiarModel)
   }
   
   
@@ -480,19 +480,22 @@ train_familiar <- function(formula=NULL,
   dots$experiment_dir <- NULL
   
   # Summon a familiar.
-  familiar_models <- do.call(summon_familiar, args=(c(list("formula"=formula,
-                                                           "data"=data,
-                                                           "cl"=cl,
-                                                           "experimental_design"=experimental_design,
-                                                           "learner"=learner,
-                                                           "hyperparameter"=hyperparameter,
-                                                           "experiment_dir"=NULL,
-                                                           "project_dir"=NULL,
-                                                           "skip_evaluation_elements"="all",
-                                                           "verbose"=verbose),
-                                                      dots)))
+  familiar_models <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "learner"=learner,
+                                          "hyperparameter"=hyperparameter,
+                                          "experiment_dir"=NULL,
+                                          "project_dir"=NULL,
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="training"),
+                                     dots)))
+  
   # Extract familiar models.
-  return(familiar_models$familiarModel)
+  return(familiar_models)
 }
 
 
