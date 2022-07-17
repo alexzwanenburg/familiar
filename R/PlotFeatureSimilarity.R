@@ -24,10 +24,10 @@ NULL
 #'  dendrograms are not on opposite sides of the heatmap: `top` and `bottom`,
 #'  and `left` and `right` cannot be used together.
 #'
-#'  A dendrogram can only be drawn from cluster methods that produce dendograms,
-#'  such as `hclust`. A dendogram can for example not be constructed using the
-#'  partioning around medioids method (`pam`).
-#'  
+#'  A dendrogram can only be drawn from cluster methods that produce
+#'  dendrograms, such as `hclust`. A dendrogram can for example not be
+#'  constructed using the partitioning around medioids method (`pam`).
+#'
 #'  By default, a dendrogram is drawn to the top and right of the panel.
 #'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
 #'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
