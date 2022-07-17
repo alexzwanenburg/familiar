@@ -545,6 +545,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     
     # Add in the similarity threshold.
     cluster_table[, "similarity_threshold":=cluster_similarity_threshold]
+    cluster_table[, "cluster_size":=.N, by="cluster_id"]
 
   } else if(cluster_method %in% c("agnes", "diana", "hclust") & cluster_cut_method == "fixed_cut"){
     # Solution for methods where multiple cuts are possible.
@@ -581,8 +582,9 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
       cluster_table <- create_clusters(object=cluster_method_object,
                                        as_cluster_object=FALSE)
       
-      # Add in the similarity threshold.
+      # Add in the similarity threshold and cluster size.
       cluster_table[, "similarity_threshold":=cluster_similarity_threshold]
+      cluster_table[, "cluster_size":=.N, by="cluster_id"]
       
       return(cluster_table)
     },
@@ -618,6 +620,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 
     # Add the similarity threshold.
     cluster_table[, "similarity_threshold":=-Inf]
+    cluster_table[, "cluster_size":=.N, by="cluster_id"]
     
     # Remove features that are not available.
     cluster_table <- cluster_table[name %in% available_features]
@@ -631,12 +634,13 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   cluster_table <- cluster_table[, list("similarity_threshold"=max(similarity_threshold),
                                         "n_thresholds_same_cluster"=.N,
                                         "cluster_id"=min(cluster_id)),
-                                 by=c("name")]
+                                 by=c("name", "cluster_size")]
   
   # Split the cluster table into clusters.
   cluster_list <- split(cluster_table, by=c("similarity_threshold",
                                            "n_thresholds_same_cluster",
-                                           "cluster_id"))
+                                           "cluster_id",
+                                           "cluster_size"))
   
   return(list("similarity_threshold"=similarity_thresholds_used,
               "feature_clusters"=cluster_list))
