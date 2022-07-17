@@ -1068,8 +1068,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
     
     # Add cluster objects to feature and sample similarity data.
-    feature_similarity_split <- ..compute_feature_similarity_dendrogram(feature_similarity_split)
-    sample_similarity_split <- ..compute_sample_similarity_dendrogram(sample_similarity_split)
+    feature_similarity_split <- ..append_feature_similarity_dendrogram(feature_similarity_split)
+    sample_similarity_split <- ..append_feature_similarity_dendrogram(sample_similarity_split)
 
     # Complete the expression data
     plot_data <- .complete_expression_table(x=expression_data_split,

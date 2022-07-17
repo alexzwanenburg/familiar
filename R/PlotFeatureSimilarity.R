@@ -504,9 +504,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     }
     
     # Add in clustering information and a dendrogram.
-    x_split <- ..compute_feature_similarity_dendrogram(x_split)
-    x_split <- ..compute_feature_similarity_clustering(x_split)
-
+    x_split <- .append_feature_similarity_dendrogram(x_split)
+    x_split <- .append_feature_similarity_clustering(x_split)
+    
     # Find the cluster object
     dendrogram <- x_split@dendrogram
     
