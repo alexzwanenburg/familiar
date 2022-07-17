@@ -266,7 +266,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             if(is.list(x)){
               if(is_empty(x)) return(NULL)
               
-              if(length(x) > 1) ..error_reached_unreachable_code("plot_decision_curve: list of data elements contains unmerged elements.")
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_univariate_importance: list of data elements contains unmerged elements.")
               
               # Get x directly.
               x <- x[[1]]
