@@ -586,9 +586,16 @@ determine_preprocessing_parameters <- function(cl=NULL,
   cluster_table <- cluster_table[, list("cluster_size"=.N), by="cluster_name"]
   
   if(settings$prep$cluster_method != "none"){
-    logger.message(paste0(nrow(cluster_table), " feature clusters were created from ", n_features_current, " features. ",
-                          sum(cluster_table$cluster_size > 1L), " clusters contain more than one feature. The remaining ",
-                          sum(cluster_table$cluster_size == 1L), " clusters are singular"),
+    logger.message(paste0(nrow(cluster_table),
+                          ifelse(nrow(cluster_table) == 1, " feature cluster was", " feature clusteres were"),
+                          " created from ", n_features_current,
+                          ifelse(n_features_current == 1, " feature. ", " features. "),
+                          sum(cluster_table$cluster_size > 1L),
+                          ifelse(sum(cluster_table$cluster_size > 1L) == 1, " cluster contains", " clusters contain"),
+                          " more than one feature. The remaining ",
+                          sum(cluster_table$cluster_size == 1L),
+                          ifelse(sum(cluster_table$cluster_size == 1L) == 1, " cluster is", " clusters are"),
+                          " singular."),
                    indent=message_indent + 1L,
                    verbose=verbose)
   }
