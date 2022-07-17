@@ -275,15 +275,23 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
-            # Get feature similarity data.
-            feature_similarity <- export_feature_similarity(object=object,
-                                                            feature_cluster_method=feature_cluster_method,
-                                                            feature_linkage_method=feature_linkage_method,
-                                                            feature_cluster_cut_method=feature_cluster_cut_method,
-                                                            feature_similarity_threshold=feature_similarity_threshold,
-                                                            export_dendrogram=FALSE,
-                                                            export_ordered_data=FALSE,
-                                                            export_clustering=TRUE)[[1]]
+            # Check show_cluster
+            .check_parameter_value_is_valid(show_cluster, var_name="show_cluster", values=c(FALSE, TRUE))
+            
+            if(show_cluster){
+              # Get feature similarity data.
+              feature_similarity <- export_feature_similarity(object=object,
+                                                              feature_cluster_method=feature_cluster_method,
+                                                              feature_linkage_method=feature_linkage_method,
+                                                              feature_cluster_cut_method=feature_cluster_cut_method,
+                                                              feature_similarity_threshold=feature_similarity_threshold,
+                                                              export_dendrogram=FALSE,
+                                                              export_ordered_data=FALSE,
+                                                              export_clustering=TRUE)[[1]]
+              
+            } else {
+              feature_similarity <- NULL
+            }
             
             ##### Update data ##################################################
             
@@ -347,9 +355,6 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
               
               x_label <- bquote(-log[10]*"("*.(label_name)*")")
             }
-            
-            # Check show_cluster
-            .check_parameter_value_is_valid(show_cluster, var_name="show_cluster", values=c(FALSE, TRUE))
             
             # Clusters cannot be generated in case no cluster information is
             # present.

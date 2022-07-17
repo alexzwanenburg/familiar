@@ -394,7 +394,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             object <- load_models(object=object, drop_untrained=TRUE)
             
             # Extract feature distance tables,
-            if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
+            if(any(c("fs_vimp", "model_vimp", "feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
               # Not for the fs_vimp and model_vimp data elements. This is
               # because these derive cluster information from consensus
               # clustering.

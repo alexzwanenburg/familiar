@@ -413,7 +413,7 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
     # Only determine cluster_name for those clusters that have cluster_size > 1.
     # Also, the most important features should receive a higher replacement
     # cluster_id.
-    y_short <- y[cluster_size > 1, c("feature", "cluster_id"), with=FALSE]
+    y_short <- y[cluster_size > 1, mget(c("feature", "cluster_id"))]
     
     if(!is_empty(y_short)){
       # Remove unused levels for the name column. The levels of name are
