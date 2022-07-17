@@ -770,6 +770,11 @@ setMethod("get_distance_matrix", signature(object="similarityTable"),
                                                  stats::as.formula(paste(element_names[1], "~", element_names[2])),
                                                  value.var="value")
             
+            # Ensure that the diagonal is formed by the pairwise distance of the
+            # same feature, i.e. 0.0.
+            data.table::setcolorder(distance_table,
+                                    neworder=c(element_names[1], as.character(distance_table[[element_names[1]]])))
+            
             # Add rownames into the distance table -- I know. Blasphemy.
             # Otherwise as.dist doesn't function.
             rownames(distance_table) <- distance_table[[element_names[1]]]
