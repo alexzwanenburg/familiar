@@ -353,6 +353,18 @@ summon_familiar <- function(formula=NULL,
 }
 
 
+vimp_familiar <- function(formula=NULL,
+                          data=NULL,
+                          cl=NULL,
+                          experimental_design="fs+mb",
+                          fs_method=NULL,
+                          fs_method_parameter=NULL,
+                          verbose=TRUE,
+                          ...){
+  
+}
+
+
 
 #' Create models using end-to-end machine learning
 #'
