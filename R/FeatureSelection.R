@@ -63,10 +63,7 @@ run_feature_selection <- function(cl,
                    verbose=verbose)
   }
   
-  # Return generated variable importance tables.
-  return(.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
-                                          project_list=project_list,
-                                          file_paths=file_paths))
+  invisible(TRUE)
 }
 
 

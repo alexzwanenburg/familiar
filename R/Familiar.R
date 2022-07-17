@@ -309,10 +309,9 @@ summon_familiar <- function(formula=NULL,
   
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("vimp")){
-    return(vimp_table_list)
-    
-  } else {
-    rm(vimp_table_list)
+    return(.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
+                                            project_list=project_list,
+                                            file_paths=file_paths))
   }
   
   
