@@ -1264,7 +1264,6 @@
 #'
 #' @param data Data set as loaded using the `.load_data` function.
 #' @inheritParams .parse_experiment_settings
-#' @inheritParams 
 #'
 #' @return NULL
 #' @md
