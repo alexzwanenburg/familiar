@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.Rprofile
 doc
 Meta
 tests/testthat/Rplots.pdf
