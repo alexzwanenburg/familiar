@@ -9,7 +9,7 @@ setMethod("show", signature(object="vimpTable"),
             # Suppress NOTES due to non-standard evaluation in data.table
             score <- NULL
             
-            # Make sure the collection object is updated.
+            # Make sure the object is updated.
             object <- update_object(object=object)
             
             # Create an initial descriptor.
@@ -101,6 +101,15 @@ setMethod("get_vimp_table", signature(x="character"),
             
             # Attempt to read file.
             x <- readRDS(x)
+            
+            # Prior to version 1.2.0, files would contain a list of data.
+            if(is.list(x)){
+              x <- as_vimp_table_object(x,
+                                        project_id="")
+            }
+            
+            # Make sure the object is updated.
+            x <- update_object(object=x)
             
             # Dispatch to object-specific routines.
             return(get_vimp_table(x=x, state=state, ...))
@@ -691,7 +700,20 @@ setMethod("aggregate_vimp_table", signature(x="list"),
             # are loaded.
             x <- lapply(x,
                         function(x){
-                          if(is.character(x)) return(readRDS(x))
+                          if(is.character(x)){
+                            # Attempt to read from file.
+                            x <- readRDS(x)
+                            
+                            # Prior to version 1.2.0, files would contain a list
+                            # of data.
+                            if(is.list(x)){
+                              x <- as_vimp_table_object(x,
+                                                        project_id="")
+                            }
+                            
+                            # Update object definitions.
+                            x <- update_object(object=x)
+                          }
                           
                           return(x)
                         })
