@@ -840,6 +840,69 @@ setClass("featureInfoParameters",
 
 #### vimpTable -----------------------------------------------------------------
 
+#' Variable importance table
+#'
+#' A vimpTable object contains information concerning variable importance of one
+#' or more features. These objects are created during feature selection.
+#'
+#' @slot vimp_table Table containing features with corresponding scores.
+#' @slot vimp_method Method used to compute variable importance scores for each
+#'   feature.
+#' @slot run_table Run table for the data used to compute variable importances
+#'   from. Used internally.
+#' @slot score_aggregation Method used to aggregate the score of contrasts for
+#'   each categorical feature, if any,
+#' @slot encoding_table Table used to relate categorical features to their
+#'   contrasts, if any. Not used for all variable importance methods.
+#' @slot cluster_table Table used to relate original features with features
+#'   after clustering. Variable importance is determined after feature
+#'   processing, which includes clustering.
+#' @slot invert Determines whether increasing score corresponds to increasing
+#'   (`FALSE`) or decreasing rank (`TRUE`). Used internally to determine how
+#'   ranks should be formed.
+#' @slot project_id Identifier of the project that generated the vimpTable
+#'   object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   table.
+#' @slot state State of the variable importance table. The object can have the
+#'   following states:
+#'
+#'   * `initial`: initial state, directly after the variable importance table is
+#'   filled.
+#'
+#'   * `decoded`: depending on the variable importance method, the initial
+#'   variable importance table may contain the scores of individual contrasts
+#'   for categorical variables. When decoded, data in the `encoding_table`
+#'   attribute has been used to aggregate scores from all contrasts into a
+#'   single score for each feature.
+#'
+#'   * `declustered`: variable importance is determined from fully processed
+#'   features, which includes clustering. This means that a single feature in
+#'   the variable importance table may represent multiple original features.
+#'   When a variable importance table has been declustered, all clusters have
+#'   been turned into their constituent features.
+#'
+#'   * `reclustered`: When the table is reclustered, features are replaced by
+#'   their respective clusters. This is actually used when updating the cluster
+#'   table to ensure it fits to a local context. This prevents issues when
+#'   attempting to aggregate or apply variable importance tables in data with
+#'   different feature preprocessing, and as a result, different clusters.
+#'
+#'   * `ranked`: The scores have been used to create ranks, with lower ranks
+#'   indicating better features.
+#'
+#'   * `aggregated`: Score and ranks from multiple variable importance tables
+#'   were aggregated.
+#'
+#' @details vimpTable objects exists in various states. These states are
+#'   generally incremental, i.e. one cannot turn a declustered table into the
+#'   initial version. Some methods such as aggregation internally do some state
+#'   reshuffling.
+#'
+#'   This object replaces the ad-hoc lists with information that were used in
+#'   versions prior to familiar 1.2.0.
+#' @seealso get_vimp_table
+#' @export
 
 setClass("vimpTable",
          slots = list(
