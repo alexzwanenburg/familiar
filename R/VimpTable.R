@@ -651,12 +651,50 @@ setMethod("collect_vimp_table", signature(x="NULL"),
 
 
 
+#'@title Aggregate variable importance from multiple variable importance
+#'  objects.
+#'
+#'@description This methods aggregates variable importance from one or more
+#'  `vimpTable` objects.
+#'
+#'@param x Variable importance (`vimpTable`) object, a list thereof, or one or
+#'  more paths to these objects.
+#'@param aggregation_method Method used to aggregate variable importance. The
+#'  available methods are described in the *feature selection methods* vignette.
+#'@param rank_threshold Rank threshold used within several aggregation methods.
+#'  See the *feature selection methods* vignette for more details.
+#'@param ... unused parameters.
+#'
+#'@return A `vimpTable` object with aggregated variable importance data.
+#'@exportMethod aggregate_vimp_table
+#'
+#'@md
+#'@rdname aggregate_vimp_table-methods
+setGeneric("aggregate_vimp_table",
+           function(x,
+                    aggregation_method,
+                    rank_threshold=NULL,
+                    ...) standardGeneric("aggregate_vimp_table"))
+
+
+
 #### aggregate_vimp_table (list) -----------------------------------------------
+
+#'@rdname aggregate_vimp_table-methods
 setMethod("aggregate_vimp_table", signature(x="list"),
           function(x, aggregation_method, rank_threshold=NULL, ...){
             
             # Check that the list itself is not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check that any character elements are interpreted as paths, and
+            # are loaded.
+            x <- lapply(x,
+                        function(x){
+                          if(is.character(x)) return(readRDS(x))
+                          
+                          return(x)
+                        })
             
             # Check that the list contents are not empty.
             empty_elements <- sapply(x, is_empty)
@@ -773,7 +811,23 @@ setMethod("aggregate_vimp_table", signature(x="list"),
             return(aggregated_vimp_object)
           })
 
+#### aggregate_vimp_table (character) ------------------------------------------
+
+#'@rdname aggregate_vimp_table-methods
+setMethod("aggregate_vimp_table", signature(x="character"),
+          function(x, aggregation_method, rank_threshold=NULL, ...){
+            
+            # Force x to a list, and pass to main method.
+            return(aggregate_vimp_table(x=as.list(x),
+                                        aggregation_method=aggregation_method,
+                                        rank_threshold=rank_threshold,
+                                        ...))
+          })
+
+
 #### aggregate_vimp_table (vimpTable) ------------------------------------------
+
+#'@rdname aggregate_vimp_table-methods
 setMethod("aggregate_vimp_table", signature(x="vimpTable"),
           function(x, aggregation_method, rank_threshold=NULL, ...){
             # Check if the variable importance table object already has been
@@ -787,6 +841,8 @@ setMethod("aggregate_vimp_table", signature(x="vimpTable"),
           })
 
 #### aggregate_vimp_table (NULL) -----------------------------------------------
+
+#'@rdname aggregate_vimp_table-methods
 setMethod("aggregate_vimp_table", signature(x="NULL"),
           function(x, aggregation_method, rank_threshold=NULL,...){
             return(NULL)

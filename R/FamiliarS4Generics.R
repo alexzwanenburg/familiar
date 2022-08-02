@@ -336,5 +336,3 @@ setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove
 setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
 
 setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))
-
-setGeneric("aggregate_vimp_table", function(x, ...) standardGeneric("aggregate_vimp_table"))
