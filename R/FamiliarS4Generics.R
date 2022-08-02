@@ -320,7 +320,6 @@ setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
 
 #### vimpTable -----------------------------------------------------------------
-setGeneric("get_vimp_table", function(x, ...) standardGeneric("get_vimp_table"))
 
 setGeneric("decode_vimp_table", function(x, ...) standardGeneric("decode_vimp_table"))
 

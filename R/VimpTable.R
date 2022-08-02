@@ -34,7 +34,82 @@ setMethod("show", signature(object="vimpTable"),
 
 
 
+#'@title Extract variable importance table.
+#'
+#'@description This method retrieves and parses variable importance tables from
+#'  their respective `vimpTable` objects.
+#'
+#'@param x Variable importance (`vimpTable`) object, a list thereof, or one or
+#'  more paths to these objects. This method extracts the variable importance
+#'  table from such objects.
+#'@param state State of the returned variable importance table. This affects
+#'  what contents are shown, and in which format. The variable importance table
+#'  can be returned with the following states:
+#'
+#'  * `initial`: initial state, directly after the variable importance table is
+#'  filled. The returned variable importance table shows the raw, un-processed
+#'  data.
+#'
+#'  * `decoded`: depending on the variable importance method, the initial
+#'  variable importance table may contain the scores of individual contrasts for
+#'  categorical variables. When decoded, scores from all contrasts are
+#'  aggregated to a single score for each feature.
+#'
+#'  * `declustered`: variable importance is determined from fully processed
+#'  features, which includes clustering. This means that a single feature in the
+#'  variable importance table may represent multiple original features. When a
+#'  variable importance table has been declustered, all clusters have been
+#'  turned into their constituent features.
+#'
+#'  * `ranked` (default): The scores have been used to create ranks, with lower
+#'  ranks indicating better features.
+#'
+#'  Internally, the variable importance table will go through each state, i.e.
+#'  an variable importance table in the initial state will be decoded,
+#'  declustered and then ranked prior to returning the variable importance
+#'  table.
+#'
+#'@return A `data.table` with variable importance scores and, with
+#'  `state="ranked"`, the respective ranks.
+#'@exportMethod get_vimp_table
+#'
+#'@md
+#'@rdname get_vimp_table-methods
+setGeneric("get_vimp_table", function(x,
+                                      state="ranked",
+                                      ...) standardGeneric("get_vimp_table"))
+
+#### get_vimp_table (list) -----------------------------------------------------
+
+#'@rdname get_vimp_table-methods
+setMethod("get_vimp_table", signature(x="list"),
+          function(x, state="ranked", ...){
+            
+            # Dispatch to methods for underlying objects.
+            return(lapply(x, get_vimp_table, state=state, ...))
+          })
+
+
+#### get_vimp_table (character) ------------------------------------------------
+
+#'@rdname get_vimp_table-methods
+setMethod("get_vimp_table", signature(x="character"),
+          function(x, state="ranked", ...){
+            
+            # Dispatch to list, if x contains more than one element.
+            if(length(x) > 1) return(get_vimp_table(as.list(x), state=state, ...))
+            
+            # Attempt to read file.
+            x <- readRDS(x)
+            
+            # Dispatch to object-specific routines.
+            return(get_vimp_table(x=x, state=state, ...))
+          })
+
+
 #### get_vimp_table (vimpTable) ------------------------------------------------
+
+#'@rdname get_vimp_table-methods
 setMethod("get_vimp_table", signature(x="vimpTable"),
           function(x, state="ranked", ...){
             # Check that x is not empty.
@@ -48,6 +123,8 @@ setMethod("get_vimp_table", signature(x="vimpTable"),
           })
 
 #### get_vimp_table (NULL) -----------------------------------------------------
+
+#'@rdname get_vimp_table-methods
 setMethod("get_vimp_table", signature(x="NULL"),
           function(x, state="ranked", ...){
             return(NULL)
