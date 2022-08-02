@@ -4,6 +4,8 @@
 
 - Several pre-processing steps, i.e. transformation, normalisation, batch normalisation, imputation and clustering have been re-implemented as objects. This allows for better portability between experiments, improved flexibility and extensibility to newer methods, and better forward compatibility.
 
+- Variable importance / feature selection is now implemented in an object-oriented fashion. Variable importance data written to the file system are now `vimpTable` objects, instead of data collected in a loose list. The `aggregate_vimp_table` and `get_vimp_table` methods can be used to aggregate multiple variable importance tables and retrieve the variable importance table as a `data.table` respectively.
+
 ## Minor changes
 
 - It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
@@ -12,11 +14,11 @@
 
 ## Bug fixes
 
-- Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.
+- Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those directly loaded by the user.
 
 - The `n_dim` parameter for isolation forests is now correctly set for datasets without any features.
 
-- Pseudo-R<sup>2<sup> similarity metrics now correctly produce a value of 1.0 for exact fits. Previously these could produce infinite log-likelihoods, and return default value of 0.0 (no similarity).
+- Pseudo-R<sup>2</sup> similarity metrics now correctly produce a value of 1.0 for exact fits. Previously these could produce infinite log-likelihoods, and return default value of 0.0 (no similarity).
 
 # Version 1.1.4 (Innovative Iguana)
 
