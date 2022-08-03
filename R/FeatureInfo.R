@@ -1166,7 +1166,7 @@ setMethod("show", signature(object="featureInfo"),
             cluster_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(!is(object@cluster_parameters, "featureInfoParametersCluster")){
+            if(is(object@cluster_parameters, "featureInfoParametersCluster")){
               if(object@cluster_parameters@cluster_size > 1){
                 
                 # Find the feature(s) required to form the cluster.
