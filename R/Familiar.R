@@ -106,7 +106,12 @@ summon_familiar <- function(formula=NULL,
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L), add=TRUE)
   
-
+  # Check .stop_after
+  .check_parameter_value_is_valid(x=.stop_after,
+                                  var_name=".stop_after",
+                                  values = c("setup", "preprocessing", "vimp", "training"))
+  
+  
   ##### Load configuration file ------------------------------------------------
   config <- .load_configuration_file(config=config,
                                      config_id=config_id)
