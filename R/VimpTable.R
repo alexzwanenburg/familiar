@@ -911,9 +911,9 @@ as_vimp_table_object <- function(x,
   vimp_table <- x$vimp
   if(!is_empty(vimp_table)){
     # Determine if an increasing score leads to an increasing rank.
-    invert <- cor(vimp_table$score,
-                  vimp_table$rank,
-                  method="spearman") < 0.0
+    invert <- stats::cor(vimp_table$score,
+                         vimp_table$rank,
+                         method="spearman") < 0.0
     
     # Select only expected columns.
     vimp_table <- vimp_table[, mget(c("score", "name"))]
