@@ -68,6 +68,10 @@ setMethod("show", signature(object="vimpTable"),
 #'  an variable importance table in the initial state will be decoded,
 #'  declustered and then ranked prior to returning the variable importance
 #'  table.
+#'@param data Internally used argument for use with `familiarModel` objects.
+#'@param as_object Internally used argument for use with `familiarModel`
+#'  objects.
+#'@param ... Unused arguments.
 #'
 #'@return A `data.table` with variable importance scores and, with
 #'  `state="ranked"`, the respective ranks.
@@ -139,7 +143,29 @@ setMethod("get_vimp_table", signature(x="NULL"),
             return(NULL)
           })
 
+
+#### get_vimp_table (experimentData) -------------------------------------------
+
+#'@rdname get_vimp_table-methods
+setMethod("get_vimp_table", signature(x="experimentData"),
+          function(x, state="ranked", ...){
+            # Check if the attribute has been set.
+            if(is.null(x@vimp_table_list)){
+              warning("No variable importance tables are present.")
+              
+              return(NULL)
+            }
+            
+            # Iterate over data for the different variable importance methods.
+            return(lapply(x@vimp_table_list,
+                          get_vimp_table,
+                          state=state,
+                          ...))
+          })
+
 #### get_vimp_table (familiarModel) --------------------------------------------
+
+#'@rdname get_vimp_table-methods
 setMethod("get_vimp_table", signature(x="familiarModel"),
           function(x, state="ranked", data=NULL, as_object=FALSE, ...){
             # This method is used to obtain post-hoc variable importance tables
@@ -870,6 +896,26 @@ setMethod("aggregate_vimp_table", signature(x="NULL"),
             return(NULL)
           })
 
+
+#### aggregate_vimp_table (experimentData) -------------------------------------
+
+#'@rdname aggregate_vimp_table-methods
+setMethod("aggregate_vimp_table", signature(x="experimentData"),
+          function(x, aggregation_method, rank_threshold=NULL,...){
+            # Check if the attribute has been set.
+            if(is.null(x@vimp_table_list)){
+              warning("No variable importance tables are present.")
+              
+              return(NULL)
+            }
+            
+            # Iterate over data for the different variable importance methods.
+            return(lapply(x@vimp_table_list,
+                          aggregate_vimp_table,
+                          aggregation_method=aggregation_method,
+                          rank_threshold=rank_threshold,
+                          ...))
+          })
 
 
 #### add_package_version (vimpTable) -------------------------------------------

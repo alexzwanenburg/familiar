@@ -49,7 +49,9 @@
 #'   In case paths are provided, the data should be stored as `csv`, `rds` or
 #'   `RData` files. See documentation for the `data_files` argument for more
 #'   information.
-#'
+#'   
+#' @param experiment_data Experimental data may provided in the form of 
+#' 
 #' @param cl Cluster created using the `parallel` package. This cluster is then
 #'   used to speed up computation through parallelisation. When a cluster is not
 #'   provided, parallelisation is performed by setting up a cluster on the local
@@ -89,6 +91,7 @@
 #' @md
 summon_familiar <- function(formula=NULL,
                             data=NULL,
+                            experiment_data=NULL,
                             cl=NULL,
                             config=NULL,
                             config_id=1,
@@ -177,6 +180,19 @@ summon_familiar <- function(formula=NULL,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
 
   
+  #### Load experiment data ----------------------------------------------------
+  if(!is.null(experiment_data)){
+    # Write experiment data to the file system
+    load_experiment_data(experiment_data,
+                         file_paths=file_paths)
+    
+    # Force the use of existing experiment data.
+    settings$data$exp_design <- .get_iteration_file_name(project_id=experiment_data@project_id,
+                                                         file_paths=file_paths)
+  }
+  
+  rm(experiment_data)
+  
   ##### Experimental setup and settings ----------------------------------------
   
   # Derive experimental design
@@ -199,7 +215,7 @@ summon_familiar <- function(formula=NULL,
   outcome_info <- create_outcome_info(settings=settings)
   
   # Define iterations etc.
-  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
+  project_info <- .get_iteration_data(file_paths=file_paths,
                                       data=data,
                                       experiment_setup=experiment_setup,
                                       settings=settings,
@@ -270,6 +286,12 @@ summon_familiar <- function(formula=NULL,
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add=TRUE)
   
+  if(.stop_after %in% c("setup")){
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list))
+  }
+  
   ##### Pre-processing ---------------------------------------------------------
   feature_info <- NULL
   
@@ -283,10 +305,12 @@ summon_familiar <- function(formula=NULL,
   
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("preprocessing")){
-    return(feature_info_list)
-    
-  } else {
-    rm(feature_info_list)
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list,
+                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
+                                                                             run_id=waiver())))
+  
   }
   
   
@@ -294,17 +318,22 @@ summon_familiar <- function(formula=NULL,
   ##### Variable importance ----------------------------------------------------
   
   # Start feature selection
-  vimp_table_list <- run_feature_selection(cl=cl,
-                                           project_list=project_info,
-                                           settings=settings,
-                                           file_paths=file_paths,
-                                           verbose=verbose)
+  run_feature_selection(cl=cl,
+                        project_list=project_info,
+                        settings=settings,
+                        file_paths=file_paths,
+                        verbose=verbose)
   
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("vimp")){
-    return(.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
-                                            project_list=project_list,
-                                            file_paths=file_paths))
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list,
+                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
+                                                                             run_id=waiver()),
+                                  vimp_table_list=.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
+                                                                                   project_list=project_info,
+                                                                                   file_paths=file_paths)))
   }
   
   

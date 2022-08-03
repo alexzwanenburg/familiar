@@ -18,7 +18,7 @@
 #' 
 #' @md
 #' @keywords internal
-.get_iteration_data <- function(file_dir,
+.get_iteration_data <- function(file_paths,
                                 data,
                                 experiment_setup,
                                 settings,
@@ -26,9 +26,11 @@
                                 verbose=TRUE){
   # Get project iterations and project id
 
-  if(.experimental_design_is_file(file_dir=file_dir, experimental_design=settings$data$exp_design)){
+  if(.experimental_design_is_file(file_dir=file_paths$iterations_dir,
+                                  experimental_design=settings$data$exp_design)){
+    
     # Load list from user-provided file.
-    iteration_list <- .load_iterations(file_dir=file_dir,
+    iteration_list <- .load_iterations(file_dir=file_paths$iterations_dir,
                                        iteration_file=settings$data$exp_design)
     
     # Extract iterations, project id and experiment setup from the file.
@@ -39,7 +41,7 @@
   } else {
   
     # Check whether iter_list already exists as a file
-    iteration_list <- .load_iterations(file_dir=file_dir)
+    iteration_list <- .load_iterations(file_dir=file_paths$iterations_dir)
     
     if(iteration_list$iteration_file_exists){
       
@@ -53,7 +55,7 @@
                                                verbose=verbose)
       
       # Save to file and without generating new project id
-      project_id <- .save_iterations(file_dir=file_dir,
+      project_id <- .save_iterations(file_paths=file_paths,
                                      iteration_list=new_iteration_list,
                                      project_id=iteration_list$project_id,
                                      experiment_setup=experiment_setup,
@@ -69,7 +71,7 @@
                                                verbose=verbose)
       
       # Save to file and generate project id
-      project_id <- .save_iterations(file_dir=file_dir,
+      project_id <- .save_iterations(file_paths=file_paths,
                                      iteration_list=new_iteration_list,
                                      experiment_setup=experiment_setup,
                                      message_indent=message_indent,
@@ -507,7 +509,7 @@
 
 
 
-.save_iterations <- function(file_dir,
+.save_iterations <- function(file_paths,
                              iteration_list,
                              project_id=NULL,
                              experiment_setup,
@@ -527,14 +529,15 @@
   }
   
   # Set file name
-  file_name   <- paste0(project_id, "_iterations.RDS")
+  file_name <- .get_iteration_file_name(file_paths=file_paths,
+                                        project_id=project_id)
   
   # Attach both iteration list and experiment setup.
   save_iteration_list <- list("iteration_list"=iteration_list,
                               "experiment_setup"=experiment_setup)
   
   # Save both files to the folder
-  saveRDS(save_iteration_list, file=normalizePath(file.path(file_dir, file_name), mustWork=FALSE))
+  saveRDS(save_iteration_list, file=file_name)
   
   return(project_id)
 }

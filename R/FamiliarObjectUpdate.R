@@ -418,6 +418,36 @@ setMethod("update_object", signature(object="featureInfo"),
           })
 
 
+#### update_object (experimentData) --------------------------------------------
+
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="experimentData"),
+          function(object, ...){
+            
+            # Update feature info objects.
+            if(!is.null(object@feature_info)){
+              for(feature_info_set in names(object@feature_info)){
+                object@feature_info[[feature_info_set]] <- lapply(object@feature_info[[feature_info_set]],
+                                                                  update_object)
+              }
+            }
+            
+            # Update vimp tables.
+            if(!is.null(object@vimp_table_list)){
+              for(vimp_method in names(object@vimp_table_list)){
+                object@vimp_table_list[[vimp_method]] <- lapply(object@vimp_table_list[[vimp_method]],
+                                                                update_object)
+              }
+            }
+            
+            if(!methods::validObject(object)) stop("Could not update the experimentData object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+            
+            return(object)
+          })
+
 
 ##### update_object (ANY) ------------------------------------------------------
 #'@rdname update_object-methods

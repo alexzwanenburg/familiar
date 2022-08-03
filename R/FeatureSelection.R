@@ -53,7 +53,7 @@ run_feature_selection <- function(cl,
                                              "settings"=settings))
     
     # Save to file
-    saveRDS(vimp_list, file=.get_feature_selection_data_filename(project_list=project_list,
+    saveRDS(vimp_list, file=.get_feature_selection_data_filename(project_id = project_list$project_id,
                                                                  fs_method=curr_fs_method,
                                                                  file_paths=file_paths))
 
@@ -70,10 +70,7 @@ run_feature_selection <- function(cl,
 
 compute_variable_importance <- function(run, fs_method, hpo_list, settings){
   # Function for calculating variable importance
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  name <- NULL
-  
+
   #### Data preparation --------------------------------------------------------
   
   # Data will be loaded at run time in .vimp.
@@ -140,7 +137,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, settings){
   file_table <- data.table::data.table("fs_method"=settings$fs$fs_methods)
 
   # Add expected feature selection file names
-  file_table[, "fs_file":=.get_feature_selection_data_filename(project_list=project_list, 
+  file_table[, "fs_file":=.get_feature_selection_data_filename(project_id=project_list$project_id, 
                                                                fs_method=fs_method,
                                                                file_paths=file_paths)]
 
@@ -159,10 +156,10 @@ compute_variable_importance <- function(run, fs_method, hpo_list, settings){
 
 
 
-.get_feature_selection_data_filename <- function(fs_method, project_list, file_paths){
+.get_feature_selection_data_filename <- function(fs_method, project_id, file_paths){
   
   return(normalizePath(file.path(file_paths$fs_dir,
-                                 paste0(project_list$project_id, "_fs_", fs_method, ".RDS")),
+                                 paste0(project_id, "_fs_", fs_method, ".RDS")),
                        mustWork=FALSE))
 }
 
@@ -175,7 +172,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, settings){
     # Attempt to read the object. This should produce a list of variable
     # importance tables.
     vimp_table_sub_list <- tryCatch(readRDS(.get_feature_selection_data_filename(fs_method=x,
-                                                                                 project_list=project_list,
+                                                                                 project_id=project_list$project_id,
                                                                                  file_paths=file_paths)),
                                     error=identity)
     

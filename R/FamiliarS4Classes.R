@@ -1458,3 +1458,30 @@ setClass("familiarDataElement",
            grouping_column = NULL,
            is_aggregated = FALSE)
 )
+
+
+#### experimentData ------------------------------------------------------------
+
+setClass("experimentData",
+         slots = list(
+           # Experimental design.
+           experiment_setup = "ANY",
+           # List of iteration data.
+           iteration_list = "ANY",
+           # List of feature information objects.
+           feature_info = "ANY",
+           # List of variable importance tables.
+           vimp_table_list = "ANY",
+           # Project identifier for consistency tracking
+           project_id = "ANY",
+           # Package version for backward compatibility
+           familiar_version = "ANY"
+         ),
+         prototype = list(
+           experiment_setup = NULL,
+           iteration_list = NULL,
+           feature_info = NULL,
+           vimp_table_list = NULL,
+           project_id = NULL,
+           familiar_version = NULL
+         ))
