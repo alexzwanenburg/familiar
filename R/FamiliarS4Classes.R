@@ -901,7 +901,7 @@ setClass("featureInfoParameters",
 #'
 #'   This object replaces the ad-hoc lists with information that were used in
 #'   versions prior to familiar 1.2.0.
-#' @seealso get_vimp_table
+#' @seealso \code{\link{get_vimp_table}}, \code{\link{aggregate_vimp_table}}
 #' @export
 
 setClass("vimpTable",
