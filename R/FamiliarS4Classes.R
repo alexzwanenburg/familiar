@@ -1462,6 +1462,35 @@ setClass("familiarDataElement",
 
 #### experimentData ------------------------------------------------------------
 
+#' Experiment data
+#'
+#' An experimentData object contains information concerning the experiment.
+#' These objects can be used to instantiate multiple experiments using the same
+#' iterations, feature information and variable importance.
+#'
+#' @slot experiment_setup Contains regarding the experimental setup that is used
+#'   to generate the iteration list.
+#' @slot iteration_list List of iteration data that determines which instances
+#'   are assigned to training, validation and test sets.
+#' @slot feature_info Feature information objects. Only available if the
+#'   experimentData object was generated using the `precompute_feature_info` or
+#'   `precompute_vimp` functions.
+#' @slot vimp_table_list List of variable importance table objects. Only
+#'   available if the experimentData object was created using the
+#'   `precompute_vimp` function.
+#' @slot project_id Identifier of the project that generated the experimentData
+#'   object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   experimentData.
+#'
+#' @details experimentData objects are primarily used to improve
+#'   reproducibility, since these allow for training models on a shared
+#'   foundation.
+#'
+#' @seealso \code{\link{precompute_data_assignment}}
+#'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
+#' @export
+
 setClass("experimentData",
          slots = list(
            # Experimental design.
