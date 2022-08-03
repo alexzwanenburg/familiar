@@ -118,7 +118,7 @@ run_preprocessing <- function(cl,
   # Attach the feature info file to the backend.
   .assign_feature_info_to_backend(feature_info_list=feature_info_list)
   
-  return(feature_info_list)
+  return(invisible(TRUE))
 }
 
 
