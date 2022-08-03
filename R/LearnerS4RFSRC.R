@@ -793,7 +793,7 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               ..error_reached_unreachable_code(paste0("..vimp,familiarRFSRC: unknown vimp method was specified: ", vimp_method))
             }
             
-            return(vimp_table)
+            return(NULL)
           })
 
 
