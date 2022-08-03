@@ -295,7 +295,7 @@ testthat::test_that("Regularised regression model can not train on wide data", {
     
   } else {
     # Variable importance table is empty.
-    testthat::expect_equal(familiar:::is_empty(wide_model)), TRUE)
+    testthat::expect_equal(familiar:::is_empty(wide_model), TRUE)
     
     # Valid predictions cannot be made.
     testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
