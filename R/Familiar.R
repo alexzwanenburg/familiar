@@ -375,13 +375,74 @@ summon_familiar <- function(formula=NULL,
 }
 
 
-vimp_familiar <- function(formula=NULL,
-                          data=NULL,
-                          cl=NULL,
-                          experimental_design="fs+mb",
-                          fs_method=NULL,
-                          fs_method_parameter=NULL,
-                          verbose=TRUE,
+
+precompute_data_assignment <- function(formula=NULL,
+                                       data=NULL,
+                                       cl=NULL,
+                                       experimental_design="fs+mb",
+                                       verbose=TRUE,
+                                       ...){
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_evaluation_elements, fs_method and learner if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$fs_method <- NULL
+  dots$learner <- NULL
+  
+  # Summon a familiar and compute everything up to variable importance data.
+  experiment_data <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "fs_method"="none",
+                                          "learner"="glm",
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="setup"),
+                                     dots)))
+  
+  # Extract familiar models.
+  return(experiment_data)
+}
+
+
+
+precompute_feature_info <- function(formula=NULL,
+                                    data=NULL,
+                                    cl=NULL,
+                                    experimental_design="fs+mb",
+                                    verbose=TRUE,
+                                    ...){
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_evaluation_elements, fs_method and learner if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$fs_method <- NULL
+  dots$learner <- NULL
+  
+  # Summon a familiar and compute everything up to variable importance data.
+  experiment_data <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "fs_method"="none",
+                                          "learner"="glm",
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="preprocessing"),
+                                     dots)))
+  
+  # Extract familiar models.
+  return(experiment_data)
+}
+
+
 #' Pre-compute variable importance
 #'
 #' @description Creates data assignment, extracts feature information and
