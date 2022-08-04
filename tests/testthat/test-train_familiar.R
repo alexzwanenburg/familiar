@@ -126,3 +126,39 @@ testthat::test_that("Cox proportional hazards model can be trained using train_f
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
   testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
+
+
+
+##### Use experiment data ------------------------------------------------------
+# Create data.table.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+                                             to_data_object=FALSE)
+
+# Create data assignment.
+experiment_data <- familiar::precompute_data_assignment(data=data,
+                                                        experimental_design="bt(fs+mb,5)",
+                                                        outcome_type="binomial",
+                                                        outcome_column="cell_malignancy",
+                                                        sample_id_column="id",
+                                                        class_levels=c("benign", "malignant"),
+                                                        verbose=FALSE)
+
+# Check that train_familiar functions correctly.
+model <- familiar::train_familiar(data=data,
+                                  experiment_data=experiment_data,
+                                  fs_method="mrmr",
+                                  learner="glm_logistic",
+                                  outcome_type="binomial",
+                                  outcome_column="cell_malignancy",
+                                  sample_id_column="id",
+                                  class_levels=c("benign", "malignant"),
+                                  verbose=FALSE)
+
+testthat::test_that("Logistic model can be trained using train_familiar", {
+  
+  # Assert that 5 models are trained.
+  testthat::expect_equal(length(model), 5L)
+  
+  # Assert that the project ids match.
+  testthat::expect_equal(model[[1]]@project_id, experiment_data@project_id)
+})
