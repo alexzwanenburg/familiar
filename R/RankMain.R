@@ -14,6 +14,8 @@
 
 rank.optimise_occurrence_threshold <- function(vimp_table){
 
+  if(is(vimp_table, "vimpTable")) vimp_table <- vimp_table@vimp_table
+  
   # Determine number of features, runs and the maximum rank
   n_features <- data.table::uniqueN(vimp_table, by="name")
   n_runs     <- data.table::uniqueN(vimp_table, by="run_id")
