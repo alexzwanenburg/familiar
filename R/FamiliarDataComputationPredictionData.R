@@ -267,7 +267,6 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
               
               # Check that a point estimation is present.
               if(!any(estimation_type %in% c("point"))){
-                browser()
                 # Add point estimate, if not already present.
                 x <- c(x, list(.add_point_estimate_from_elements(x)))
                 

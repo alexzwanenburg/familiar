@@ -635,9 +635,6 @@
   categorical_columns <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
   categorical_columns <- feature_columns[categorical_columns]
   
-  # # Add columns that both appear in the reference list and in data.
-  # categorical_columns <- union(categorical_columns, intersect(feature_columns, names(reference)))
-  # 
   # Do not update data if there are no columns for categorical data
   if(length(categorical_columns) == 0) return(data)
   
@@ -657,33 +654,6 @@
       class_levels <- levels(data[[ii]])
       is_ordered      <- is.ordered(data[[ii]])
     }
-    # 
-    # # Identify levels in the reference
-    # reference_levels <- reference[[ii]]$levels
-    #  
-    # # Compare with reference
-    # if(!is.null(reference_levels)){
-    #   browser()
-    #   # Identify if there are any missing levels
-    #   missing_levels <- setdiff(class_levels, reference_levels)
-    #   
-    #   # Generate an error if new class levels appear. However, we only generate this error at the end to
-    #   # limit user frustration.
-    #   if(length(missing_levels) > 0){
-    #     warning_list <- append(warning_list, paste0("Missing class levels in feature", ii, ". Unmatched levels: ",
-    #                                                 paste0(missing_levels, collapse=", "), ". Expected: ",
-    #                                                 paste0(reference_levels, collapse=", "), "."))
-    #     
-    #     # Skip conversion for the current data to prevent errors.
-    #     next()
-    #   
-    #   } else {
-    #     # Use the reference levels for generating the factor, and let this data determine
-    #     # ordering.
-    #     class_levels <- reference_levels
-    #     is_ordered   <- reference[[ii]]$ordered
-    #   }
-    # }
     
     # Create a categorical variable for the current column.
     data.table::set(data, j=ii, value=factor(data[[ii]], levels=class_levels, ordered=is_ordered))

@@ -77,14 +77,6 @@ setMethod("..vimp", signature(object="familiarConcordanceVimp"),
                                 ..compute_concordance_index,
                                 time=encoded_data$encoded_data@data$outcome_time,
                                 event=encoded_data$encoded_data@data$outcome_event)
-              browser()
-              # c_index <- sapply(feature_columns, function(feature, data){
-              #   return(..compute_concordance_index(x=data[[feature]],
-              #                                      time=data$outcome_time,
-              #                                      event=data$outcome_event))
-              # 
-              # },
-              # data=encoded_data$encoded_data@data)
               
               # Create variable importance object.
               vimp_object <- methods::new("vimpTable",
