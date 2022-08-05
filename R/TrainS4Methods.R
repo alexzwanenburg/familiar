@@ -316,7 +316,7 @@ setMethod("test_train_novelty_detector", signature(data="dataObject"),
             # Find important features, i.e. those that constitute the signature
             # either individually or as part of a cluster.
             model_features <- get_model_features(x=data,
-                                                 feature_info_list=object@feature_info)
+                                                 feature_info_list=feature_info_list)
             
             #####Prepare hyperparameters########################################
             
