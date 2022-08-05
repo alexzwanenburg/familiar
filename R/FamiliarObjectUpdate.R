@@ -473,6 +473,22 @@ setMethod("update_object", signature(object="experimentData"),
           })
 
 
+
+#### update_object (list) ------------------------------------------------------
+
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="list"),
+          function(object, ...){
+            
+            # Pass to underlying methods.
+            object <- lapply(object,
+                             update_object,
+                             ...)
+            
+            return(object)
+          })
+
+
 ##### update_object (ANY) ------------------------------------------------------
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="ANY"),
