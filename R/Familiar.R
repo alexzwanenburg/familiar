@@ -112,7 +112,7 @@ summon_familiar <- function(formula=NULL,
   # Check .stop_after
   .check_parameter_value_is_valid(x=.stop_after,
                                   var_name=".stop_after",
-                                  values = c("setup", "preprocessing", "vimp", "training"))
+                                  values = c("setup", "preprocessing", "vimp", "training", "evaluation"))
   
   
   ##### Load configuration file ------------------------------------------------
