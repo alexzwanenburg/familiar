@@ -22,6 +22,11 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
   testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
+  
+  # Assert that between 1 and 9 features are present, aside from the intercept.
+  testthat::expect_gte(length(model@model_features), 1L)
+  testthat::expect_lte(length(model@model_features), 9L)
+  testthat::expect_equal(length(model@model_features) <= model@hyperparameters$sign_size, TRUE)
 })
 
 
@@ -161,4 +166,84 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   
   # Assert that the project ids match.
   testthat::expect_equal(model[[1]]@project_id, experiment_data@project_id)
+})
+
+
+
+#### Check "none" variable importance method -----------------------------------
+
+# Create data.table.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+                                             to_data_object=FALSE)
+
+# Check that train_familiar functions correctly.
+model <- familiar::train_familiar(data=data,
+                                  cluster_method="none",
+                                  fs_method="none",
+                                  learner="glm_logistic",
+                                  outcome_type="binomial",
+                                  outcome_column="cell_malignancy",
+                                  sample_id_column="id",
+                                  class_levels=c("benign", "malignant"),
+                                  verbose=FALSE)
+
+testthat::test_that("Assert that all features are used for \"none\" variable importance method.", {
+  
+  # Assert that all features are included in the model.
+  testthat::expect_equal(length(model@model_features), 9L)
+})
+
+
+
+#### Check "signature_only" variable importance method -----------------------------------
+
+# Create data.table.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+                                             to_data_object=FALSE)
+
+# Check that train_familiar functions correctly.
+model <- familiar::train_familiar(data=data,
+                                  signature=c("cell_size_uniformity", "clump_thickness"),
+                                  fs_method="signature_only",
+                                  learner="glm_logistic",
+                                  outcome_type="binomial",
+                                  outcome_column="cell_malignancy",
+                                  sample_id_column="id",
+                                  class_levels=c("benign", "malignant"),
+                                  verbose=FALSE)
+
+testthat::test_that("Assert that all features are used for \"signature_only\" variable importance method.", {
+  
+  # Assert that only signature features are included in the model.
+  testthat::expect_equal(length(model@model_features), 2L)
+  testthat::expect_setequal(c("cell_size_uniformity", "clump_thickness"),
+                            model@model_features)
+})
+
+
+
+#### Check interaction between signature and other features---------------------
+
+# Create data.table.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+                                             to_data_object=FALSE)
+
+# Check that train_familiar functions correctly.
+model <- familiar::train_familiar(data=data,
+                                  signature=c("marginal_adhesion", "bland_chromatin"),
+                                  fs_method="mrmr",
+                                  learner="glm_logistic",
+                                  outcome_type="binomial",
+                                  outcome_column="cell_malignancy",
+                                  sample_id_column="id",
+                                  class_levels=c("benign", "malignant"),
+                                  verbose=FALSE)
+
+testthat::test_that("Assert that signature features are used in the model.", {
+  
+  # Assert that only signature features are included in the model.
+  testthat::expect_gte(length(model@model_features), 2L)
+  testthat::expect_lte(length(model@model_features), 9L)
+  testthat::expect_equal(all(c("marginal_adhesion", "bland_chromatin") %in% model@model_features), TRUE)
+  testthat::expect_equal(length(model@model_features), model@hyperparameters$sign_size)
 })
