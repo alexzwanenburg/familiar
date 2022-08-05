@@ -430,7 +430,7 @@ setMethod("..vimp", signature(object="familiarGLM"),
             require_package(object, "vimp")
             
             # Compute z-values
-            coefficient_z_values <- .compute_z_statistic(object)
+            coefficient_z_values <- .compute_z_statistic(object, fix_all_missing=TRUE)
             
             if(is(object@model, "vglm")){
               

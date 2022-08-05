@@ -944,7 +944,7 @@ is_valid_data <- function(x){
 }
 
 
-.compute_z_statistic <- function(model){
+.compute_z_statistic <- function(model, fix_all_missing=FALSE){
   
   mu <- cov_matrix <- NULL
   
@@ -993,6 +993,8 @@ is_valid_data <- function(x){
   
   # Compute z-score
   z  <- mu / stdevs
+  
+  if(fix_all_missing & all(!is.finite(z))) z <- mu
   
   # Return z-score, as p-values can become very small.
   return(abs(z))
