@@ -491,9 +491,9 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                           
                           # Collect features.
                           for(feature in familiar:::get_feature_columns(data_copy)){
-                            feature_info_list[[feature]]@imputation_parameters <- familiar:::..collect_and_aggregate_imputation_info(feature_info_list=list(feature_info_list_1[[feature]]@imputation_parameters,
-                                                                                                                                                            feature_info_list_2[[feature]]@imputation_parameters,
-                                                                                                                                                            feature_info_list_3[[feature]]@imputation_parameters),
+                            feature_info_list[[feature]]@imputation_parameters <- familiar:::..collect_and_aggregate_imputation_info(feature_info_list=list(feature_info_list_1[[feature]],
+                                                                                                                                                            feature_info_list_2[[feature]],
+                                                                                                                                                            feature_info_list_3[[feature]]),
                                                                                                                                      feature_type=feature_info_list[[feature]]@feature_type,
                                                                                                                                      feature_name=feature_info_list[[feature]]@name)$parameters
                           }
