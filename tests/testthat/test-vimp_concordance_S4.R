@@ -90,7 +90,7 @@ testthat::test_that(paste0("The concordance method correctly ranks multinomial o
   
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
+  testthat::expect_equal(all(c("Petal_Length", "Petal_Width") %in% vimp_table[rank <= 2]$name), TRUE)
 })
 
 
