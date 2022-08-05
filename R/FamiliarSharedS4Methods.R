@@ -5,6 +5,12 @@
   if(is.null(object@familiar_version)){
     # Set package version.
     object@familiar_version <- utils::packageVersion("familiar")
+  
+  } else if(tail(object@familiar_version, n=1) < utils::packageVersion("familiar") &
+            head(object@familiar_version, n=1) == "0.0.0"){
+    
+    # Replace version.
+    object@familiar_version <- utils::packageVersion("familiar")
     
   } else if(tail(object@familiar_version, n=1) < utils::packageVersion("familiar")){
     # Check if package version differs from the currently installed version.
