@@ -837,7 +837,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
         
         # Obtain the normalisation methods for each feature in the current
         # dataset.
-        normalisation_method <- sapply(data@feature_info, function(feature) (feature@normalisation_parameters$norm_method))
+        normalisation_method <- sapply(data@feature_info, function(feature) (feature@normalisation_parameters@method))
                                        
         return(unname(normalisation_method))
       })
