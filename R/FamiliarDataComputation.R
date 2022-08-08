@@ -394,10 +394,10 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             object <- load_models(object=object, drop_untrained=TRUE)
             
             # Extract feature distance tables,
-            if(any(c("fs_vimp", "model_vimp", "feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
-              # Not for the fs_vimp and model_vimp data elements. This is
-              # because these derive cluster information from consensus
-              # clustering.
+            if(any(c("model_vimp", "feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
+              # Not for the fs_vimp data elements. This is because the subset of
+              # features in the ensemble is generally smaller than that assessed
+              # within feature selection..
 
               # Compute a table containg the pairwise distance between features.
               feature_similarity <- extract_feature_similarity(object=object,

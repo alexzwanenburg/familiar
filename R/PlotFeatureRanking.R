@@ -15,6 +15,9 @@ NULL
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If
 #'  `NULL` no figures are saved, but are returned instead.
+#'@param show_cluster (*optional*) Show which features were clustered together.
+#'  Currently not available in combination with variable importance obtained
+#'  during feature selection.
 #'@param discrete_palette (*optional*) Palette to use for coloring bar plots, in
 #'  case a non-singular variable was provided to the `color_by` argument.
 #'@param gradient_palette (*optional*) Palette to use for filling the bars in
@@ -420,7 +423,7 @@ plot_model_signature_variable_importance <- function(...){
   
   # Clusters cannot be generated in case no cluster information is
   # present.
-  if(is_empty(feature_similarity)){
+  if(is_empty(feature_similarity) || type == "feature_selection"){
     show_cluster <- FALSE
   }
   
@@ -513,21 +516,22 @@ plot_model_signature_variable_importance <- function(...){
     if(show_cluster){
       
       # Remove redundant data.
-      if(type == "feature_selection"){
-        
-        # Merge to introduce
-        x_temporay <- merge(x=x_sub,
-                            y=feature_similarity@data,
-                            by.x=c("feature", available_splitting, "ensemble_model_name"),
-                            by.y=c("feature", available_splitting, "ensemble_model_name"),
-                            allow.cartesian=TRUE)
-
-        # Feature selection-based ranking do not aggregate along data-set and
-        # learners.
-        x_temporary <- x_temporary[learner %in% c(unique(x_temporary$learner)[1])]
-        x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
-        
-      } else if(type == "model"){
+      # if(type == "feature_selection"){
+      #   
+      #   # Merge to introduce
+      #   x_temporary <- merge(x=x_sub,
+      #                        y=feature_similarity@data,
+      #                        by.x=c("feature", available_splitting),
+      #                        by.y=c("feature", available_splitting),
+      #                        allow.cartesian=TRUE)
+      #   
+      #   # Feature selection-based ranking do not aggregate along data-set and
+      #   # learners.
+      #   x_temporary <- x_temporary[learner %in% c(unique(x_temporary$learner)[1])]
+      #   x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
+      #   
+      # } else if(type == "model"){
+      if(type == "model"){
         x_temporary <- merge(x=x_sub,
                              y=feature_similarity@data,
                              by.x=c("feature", available_splitting, "ensemble_model_name"),
@@ -811,8 +815,8 @@ plot_model_signature_variable_importance <- function(...){
                                              facet_wrap_cols=facet_wrap_cols)
   
   # Determine the number of features within each facet.
-  n_features <- data.table::uniqueN(x=x$name)
-  longest_name <- max(sapply(levels(x$name), nchar))
+  n_features <- data.table::uniqueN(x=x$feature)
+  longest_name <- max(sapply(levels(x$feature), nchar))
   
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.07mm)
   # spacing. Then add some room for other plot elements.
