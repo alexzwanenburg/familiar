@@ -14,3 +14,4 @@
 ^vignettes/compile\.R$
 ^vignettes/original$
 ^tests/testthat/Rplots\.pdf$
+^tests/old_experiments$
