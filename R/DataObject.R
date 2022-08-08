@@ -1521,6 +1521,9 @@ setMethod("impute_features", signature(data="dataObject"),
 setMethod("cluster_features", signature(data="dataObject"),
           function(data, feature_info_list){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            feature_required <- feature_name <- NULL
+            
             if(.as_preprocessing_level(data) >= "clustering"){
               ..error_reached_unreachable_code("cluster_features,dataObject: attempting to cluster data that already have been clustered.")
             }
@@ -1546,12 +1549,14 @@ setMethod("cluster_features", signature(data="dataObject"),
             cluster_table <- .create_clustering_table(feature_info_list=feature_info_list,
                                                       selected_features=feature_columns)
             
-            # Update data.
-            clustered_data <- lapply(split(cluster_table, by="cluster_name"),
+            # Update data using the clustering table. Note that only features
+            # that are both required and present are processed.
+            clustered_data <- lapply(split(cluster_table[feature_required == TRUE & feature_name %in% feature_columns],
+                                           by="cluster_name"),
                                      set_clustered_data,
                                      data=data,
                                      feature_info_list=feature_info_list)
-            
+
             # Attach the clustered data.
             data@data <- cbind(data@data[, mget(get_non_feature_columns(data))],
                                data.table::setDT(clustered_data))
