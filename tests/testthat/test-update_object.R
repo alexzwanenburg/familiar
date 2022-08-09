@@ -53,6 +53,12 @@ for(archive_file in archive_files){
   
   #### Test 1: Running the experiment again ------------------------------------
   
+  message(paste0("-------------------------------------------------------------\n",
+                 outcome_type, " (", familiar_version, "): ",
+                 "test direct export\n",
+                 "-------------------------------------------------------------\n"))
+  
+  
   # Remove the results directory.
   unlink(file.path(archive_directory, "results"),
          recursive=TRUE)
@@ -70,6 +76,11 @@ for(archive_file in archive_files){
   
   #### Test 2: Running the experiment again, starting with familiar data objects -------
   
+  message(paste0("-------------------------------------------------------------\n",
+                 outcome_type, " (", familiar_version, "): ",
+                 "test export after collecting familiarData objects\n",
+                 "-------------------------------------------------------------\n"))
+  
   # Remove the results directory.
   unlink(file.path(archive_directory, "results"),
          recursive=TRUE)
@@ -83,11 +94,17 @@ for(archive_file in archive_files){
           args=c(list("data"=data,
                       "experiment_dir"=archive_directory,
                       "experiment_data"=list.files(path=archive_directory,
+                                                   full.names=TRUE,
                                                    pattern="iterations.RDS"),
                       "parallel"=FALSE),
                  config_parameters))
   
   #### Test 3: Running the experiment again, starting with ensembles -----------
+  
+  message(paste0("-------------------------------------------------------------\n",
+                 outcome_type, " (", familiar_version, "): ",
+                 "test export after creating familiarData objects\n",
+                 "-------------------------------------------------------------\n"))
   
   # Remove the results directory.
   unlink(file.path(archive_directory, "results"),
@@ -106,9 +123,13 @@ for(archive_file in archive_files){
           args=c(list("data"=data,
                       "experiment_dir"=archive_directory,
                       "experiment_data"=list.files(path=archive_directory,
+                                                   full.names=TRUE,
                                                    pattern="iterations.RDS"),
                       "estimation_type"="point",
-                      "parallel"=FALSE,
-                      ),
+                      "parallel"=FALSE),
                  config_parameters))
+  
+  # Remove temporary directory.
+  unlink(file.path(archive_directory),
+         recursive=TRUE)
 }

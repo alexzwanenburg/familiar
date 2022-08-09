@@ -186,6 +186,12 @@ setMethod("update_object", signature(object="familiarData"),
               attr(object, "is_anonymised") <- NULL
             }
             
+            if(tail(object@familiar_version, n=1L) < "1.2.0"){
+              
+              # Update variable importance lists.
+              browser()
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarData object to the most recent definition.")
             
             # Update package version.
