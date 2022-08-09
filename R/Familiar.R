@@ -182,9 +182,10 @@ summon_familiar <- function(formula=NULL,
   
   #### Load experiment data ----------------------------------------------------
   if(!is.null(experiment_data)){
+    
     # Write experiment data to the file system
-    load_experiment_data(experiment_data,
-                         file_paths=file_paths)
+    experiment_data <- load_experiment_data(experiment_data,
+                                            file_paths=file_paths)
     
     # Force the use of existing experiment data.
     settings$data$exp_design <- .get_iteration_file_name(project_id=experiment_data@project_id,

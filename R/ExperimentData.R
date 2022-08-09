@@ -7,15 +7,24 @@ load_experiment_data <- function(x, file_paths){
   # This function restores the content of the experimentData object to file
   # system - basically allowing for a reproducible hot start.
   
-  # Attemp to load from file.
-  if(is.character(x)) x <- readRDS(x)
+  # Attempt to load from file.
+  project_id <- NULL
+  if(is.character(x)){
+    project_id <- gsub(x=basename(x),
+                       pattern="[[:alpha:]]|[.]RDS$|[_]",
+                       replacement="")
+    
+    # Read from file system.
+    x <- readRDS(x)
+  } 
   
   # Users may have added a configuration
   if(is.list(x)){
     if(all(c("iteration_list", "experiment_setup") %in% names(x))){
       x <- methods::new("experimentData",
                         iteration_list=x$iteration_list,
-                        experiment_setup=x$experiment_setup)
+                        experiment_setup=x$experiment_setup,
+                        project_id=project_id)
     }
   }
   
@@ -79,6 +88,8 @@ load_experiment_data <- function(x, file_paths){
               file=file_name)
     }
   }
+  
+  return(x)
 }
 
 
