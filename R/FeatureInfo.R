@@ -1264,11 +1264,11 @@ setMethod("feature_info_complete", signature(object="featureInfo"),
             
             if(level=="batch_normalisation") return(TRUE)
             
-            if(is.null(object@imputation_parameters)) return(FALSE)
+            if(!feature_info_complete(object@imputation_parameters)) return(FALSE)
             
             if(level=="imputation") return(TRUE)
             
-            if(is.null(object@cluster_parameters)) return(FALSE)
+            if(!feature_info_complete(object@cluster_parameters)) return(FALSE)
             
             if(level=="clustering") return(TRUE)
           })
