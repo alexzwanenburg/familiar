@@ -234,6 +234,55 @@ setMethod("update_object", signature(object="familiarCollection"),
               attr(object, "is_anonymised") <- NULL
             }
             
+            if(tail(object@familiar_version, n=1L) < "1.2.0"){
+              # Update fs_vimp slot by iterating over its contents.
+              object@fs_vimp <- 
+                lapply(object@fs_vimp,
+                       function(x, project_id){
+                         
+                         # Check if the current element is empty.
+                         if(is_empty(x)) return(x)
+                         
+                         # Iterate over variable importance.
+                         x@data <-
+                           lapply(split(x@data, by=c("data_id", "run_id")),
+                                  function(x, fs_method, project_id){
+                                    as_vimp_table_object(x=list("vimp"=x,
+                                                                "fs_method"=fs_method),
+                                                         project_id=project_id)
+                                  },
+                                  fs_method=x@identifiers$fs_method,
+                                  project_id=project_id)
+                         
+                         return(x)
+                       },
+                       project_id=object@project_id)
+              
+              #  Update model_vimp slot by iterating over its contents.
+              object@model_vimp <- 
+                lapply(object@model_vimp,
+                       function(x, project_id){
+                         
+                         # Check if the current element is empty.
+                         if(is_empty(x)) return(x)
+                         
+                         # Iterate over variable importance.
+                         x@data <-
+                           lapply(split(x@data, by=c("data_id", "run_id")),
+                                  function(x, fs_method, project_id){
+                                    as_vimp_table_object(x=list("vimp"=x,
+                                                                "fs_method"=fs_method),
+                                                         project_id=project_id)
+                                  },
+                                  fs_method=x@identifiers$learner,
+                                  project_id=project_id)
+                         
+                         return(x)
+                       },
+                       project_id=object@project_id)
+              
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarCollection object to the most recent definition.")
             
             # Update package version.
