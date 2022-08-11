@@ -339,31 +339,63 @@ setMethod("update_object", signature(object="featureInfo"),
             }
             
             if(tail(object@familiar_version, n=1L) < "1.2.0"){
-              # Upgrade transformation parameters to a proper S4 object.
-              if(!is.null(object@transformation_parameters)){
-                object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
+              # Check if the object is generic/unset or was filled.
+              is_unset <- is.null(object@transformation_parameters) &&
+                is.null(object@normalisation_parameters) &&
+                is.null(object@batch_normalisation_parameters) &&
+                is.null(object@imputation_parameters) &&
+                is.null(object@cluster_parameters)
+              
+              # Only set attributes if a proper
+              if(!is_unset){
+                
+                #### Transformation --------------------------------------------
+                
+                # Upgrade transformation parameters to a proper S4 object.
+                if(!is.null(object@transformation_parameters)){
+                  object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
+                                                                                                 feature_type=object@feature_type,
+                                                                                                 available=is_available(object),
+                                                                                                 method=object@transformation_parameters$transform_method,
+                                                                                                 lambda=object@transformation_parameters$transform_lambda)
+                  
+                } else {
+                  object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
+                                                                                                 feature_type=object@feature_type,
+                                                                                                 available=is_available(object),
+                                                                                                 method="none")
+                }
+                
+                #### Normalisation ---------------------------------------------
+                
+                # Upgrade normalisation parameters to a proper S4 object.
+                if(!is.null(object@normalisation_parameters)){
+                  object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
                                                                                                feature_type=object@feature_type,
                                                                                                available=is_available(object),
-                                                                                               method=object@transformation_parameters$transform_method,
-                                                                                               lambda=object@transformation_parameters$transform_lambda)
-              }
-
-              # Upgrade normalisation parameters to a proper S4 object.
-              if(!is.null(object@normalisation_parameters)){
-                object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
-                                                                                             feature_type=object@feature_type,
-                                                                                             available=is_available(object),
-                                                                                             method=object@normalisation_parameters$norm_method,
-                                                                                             shift=object@normalisation_parameters$norm_shift,
-                                                                                             scale=object@normalisation_parameters$norm_scale)
-              }
-              
-              # Upgrade batch normalisation parameters to a proper S4 object.
-              if(!is.null(object@batch_normalisation_parameters)){
-                # Determine the method used for batch normalisation.
-                batch_normalisation_method <- unique(sapply(object@batch_normalisation_parameters, function(x) (x$norm_method)))
-                batch_normalisation_method <- setdiff(batch_normalisation_method, c("none", "unknown"))
-                if(is_empty(batch_normalisation_method)) batch_normalisation_method <- "none"
+                                                                                               method=object@normalisation_parameters$norm_method,
+                                                                                               shift=object@normalisation_parameters$norm_shift,
+                                                                                               scale=object@normalisation_parameters$norm_scale)
+                  
+                } else {
+                  object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                                               feature_type=object@feature_type,
+                                                                                               available=is_available(object),
+                                                                                               method="none")
+                }
+                
+                #### Batch normalisation ---------------------------------------
+                
+                # Upgrade batch normalisation parameters to a proper S4 object.
+                if(!is.null(object@batch_normalisation_parameters)){
+                  # Determine the method used for batch normalisation.
+                  batch_normalisation_method <- unique(sapply(object@batch_normalisation_parameters, function(x) (x$norm_method)))
+                  batch_normalisation_method <- setdiff(batch_normalisation_method, c("none", "unknown"))
+                  if(is_empty(batch_normalisation_method)) batch_normalisation_method <- "none"
+                  
+                } else {
+                  batch_normalisation_method <- "none"
+                }
                 
                 # Add container.
                 batch_normalisation_parameters <- ..create_batch_normalisation_parameter_skeleton(feature_name=object@name,
@@ -390,19 +422,29 @@ setMethod("update_object", signature(object="featureInfo"),
                 
                 # Update batch normalisations parameters in the object.
                 object@batch_normalisation_parameters <- batch_normalisation_parameters
-              }
-              
-              # Update imputation parameters to a proper S4 object.
-              if(!is.null(object@imputation_parameters)){
+                
+                # Mark complete
+                object@batch_normalisation_parameters@complete <- TRUE
+                
+                #### Imputation ------------------------------------------------
+                
+                # Update imputation parameters to a proper S4 object.
+                imputation_method <- ifelse(is.null(object@imputation_parameters),
+                                            "none",
+                                            "simple")
                 
                 # Create an S4 skeleton.
                 imputation_object <- ..create_imputation_parameter_skeleton(feature_name=object@name,
                                                                             feature_type=object@feature_type,
                                                                             available=is_available(object),
-                                                                            method="simple")
+                                                                            method=imputation_method)
                 
                 # Attach to imputation object.
-                imputation_object@model <- object@imputation_parameters$common_value
+                if(!is.null(object@imputation_parameters)){
+                  imputation_object@model <- object@imputation_parameters$common_value
+                }
+                
+                # Set required features.
                 imputation_object@required_features <- object@name
                 
                 # Mark complete
@@ -410,81 +452,80 @@ setMethod("update_object", signature(object="featureInfo"),
                 
                 # Attach to object.
                 object@imputation_parameters <- imputation_object
-              }
-              
-              # Update cluster parameters to a proper S4 object.
-              if(is.null(object@cluster_parameters) & is.null(object@normalisation_parameters) & is.null(object@transformation_parameters)){
-                # This is for generic skeletons which lack any parameters.
                 
-              } else if(!is.null(object@cluster_parameters)){
-                # Set parameters -- we can't really infer cluster linkage or the
-                # similarity metric from available information, and set
-                # placeholders that will allow the cluster parameter object to
-                # be formed.
+                #### Clustering ------------------------------------------------
                 
-                # Create temporary feature info object to avoid an incorrect
-                # check.
-                temp_feature_object <- object
-                temp_feature_object@cluster_parameters <- NULL
-                
-                cluster_parameter_options <- list("feature_info"=temp_feature_object,
-                                                  "method"="hclust",
-                                                  "cluster_cut_method"="fixed_cut",
-                                                  "cluster_representation_method"=object@cluster_parameters$method,
-                                                  "cluster_linkage"="average",
-                                                  "cluster_similarity_metric"="mcfadden_r2",
-                                                  "cluster_similarity_threshold"=0.3)
-                
-                # Form parameter object.
-                cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
-                                                    args=cluster_parameter_options)
-                
-                # Extract cluster parameters.
-                cluster_parameter_object <- cluster_parameter_object@cluster_parameters
-                
-                # Set parameters.                                       
-                cluster_parameter_object@weight <- object@cluster_parameters$weight
-                cluster_parameter_object@invert <- object@cluster_parameters$invert
-                cluster_parameter_object@cluster_name <- object@cluster_parameters$cluster_name
-                cluster_parameter_object@cluster_size <- object@cluster_parameters$cluster_size
-                cluster_parameter_object@required_features <- object@cluster_parameters$required_features
-                
-                # Previously, features that form the cluster were not stored as
-                # information. To prevent issues with functions that generate a
-                # cluster table, set the required features instead.
-                cluster_parameter_object@cluster_features <- object@cluster_parameters$required_features
-                
-                # Mark complete.
-                cluster_parameter_object@complete <- TRUE
-                
-                # Replace in the feature info object.
-                object@cluster_parameters <- cluster_parameter_object
-                
-              } else {
-                # Assume singular cluster.
-                cluster_parameter_options <- list("feature_info"=object,
-                                                  "method"="none")
-                
-                # Form parameter object.
-                cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
-                                                    args=cluster_parameter_options)
-                
-                # Extract cluster parameters.
-                cluster_parameter_object <- cluster_parameter_object@cluster_parameters
-                
-                # Set parameters.                                       
-                cluster_parameter_object@weight <- 1.0
-                cluster_parameter_object@invert <- FALSE
-                cluster_parameter_object@cluster_name <- object@name
-                cluster_parameter_object@cluster_size <- 1L
-                cluster_parameter_object@required_features <- object@name
-                cluster_parameter_object@cluster_features <- object@name
-                
-                # Mark complete.
-                cluster_parameter_object@complete <- TRUE
-                
-                # Replace in the feature info object.
-                object@cluster_parameters <- cluster_parameter_object
+                if(!is.null(object@cluster_parameters)){
+                  # Set parameters -- we can't really infer cluster linkage or
+                  # the similarity metric from available information, and set
+                  # placeholders that will allow the cluster parameter object to
+                  # be formed.
+                  
+                  # Create temporary feature info object to avoid an incorrect
+                  # check.
+                  temp_feature_object <- object
+                  temp_feature_object@cluster_parameters <- NULL
+                  
+                  cluster_parameter_options <- list("feature_info"=temp_feature_object,
+                                                    "method"="hclust",
+                                                    "cluster_cut_method"="fixed_cut",
+                                                    "cluster_representation_method"=object@cluster_parameters$method,
+                                                    "cluster_linkage"="average",
+                                                    "cluster_similarity_metric"="mcfadden_r2",
+                                                    "cluster_similarity_threshold"=0.3)
+                  
+                  # Form parameter object.
+                  cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
+                                                      args=cluster_parameter_options)
+                  
+                  # Extract cluster parameters.
+                  cluster_parameter_object <- cluster_parameter_object@cluster_parameters
+                  
+                  # Set parameters.                                       
+                  cluster_parameter_object@weight <- object@cluster_parameters$weight
+                  cluster_parameter_object@invert <- object@cluster_parameters$invert
+                  cluster_parameter_object@cluster_name <- object@cluster_parameters$cluster_name
+                  cluster_parameter_object@cluster_size <- object@cluster_parameters$cluster_size
+                  cluster_parameter_object@required_features <- object@cluster_parameters$required_features
+                  
+                  # Previously, features that form the cluster were not stored as
+                  # information. To prevent issues with functions that generate a
+                  # cluster table, set the required features instead.
+                  cluster_parameter_object@cluster_features <- unique(c(object@cluster_parameters$required_features,
+                                                                        object@name))
+                  
+                  # Mark complete.
+                  cluster_parameter_object@complete <- TRUE
+                  
+                  # Replace in the feature info object.
+                  object@cluster_parameters <- cluster_parameter_object
+                  
+                } else {
+                  # Assume singular cluster.
+                  cluster_parameter_options <- list("feature_info"=object,
+                                                    "method"="none")
+                  
+                  # Form parameter object.
+                  cluster_parameter_object <- do.call(.create_cluster_parameter_skeleton,
+                                                      args=cluster_parameter_options)
+                  
+                  # Extract cluster parameters.
+                  cluster_parameter_object <- cluster_parameter_object@cluster_parameters
+                  
+                  # Set parameters.                                       
+                  cluster_parameter_object@weight <- 1.0
+                  cluster_parameter_object@invert <- FALSE
+                  cluster_parameter_object@cluster_name <- object@name
+                  cluster_parameter_object@cluster_size <- 1L
+                  cluster_parameter_object@required_features <- object@name
+                  cluster_parameter_object@cluster_features <- object@name
+                  
+                  # Mark complete.
+                  cluster_parameter_object@complete <- TRUE
+                  
+                  # Replace in the feature info object.
+                  object@cluster_parameters <- cluster_parameter_object
+                }
               }
             }
             
