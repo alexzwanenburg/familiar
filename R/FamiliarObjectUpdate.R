@@ -141,12 +141,10 @@ setMethod("update_object", signature(object="familiarEnsemble"),
               attr(object, "is_anonymised") <- NULL
             }
             
-            if(tail(object@familiar_version, n=1L) < "1.2.0"){
-              # Update attached feature info objects.
-              feature_names <- names(object@feature_info)
-              object@feature_info <- lapply(object@feature_info, update_object)
-              names(object@feature_info) <- feature_names
-            }
+            # Update attached feature info objects.
+            feature_names <- names(object@feature_info)
+            object@feature_info <- lapply(object@feature_info, update_object)
+            names(object@feature_info) <- feature_names
             
             if(!methods::validObject(object)) stop("Could not update the familiarEnsemble object to the most recent definition.")
             
