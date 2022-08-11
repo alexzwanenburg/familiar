@@ -189,7 +189,62 @@ setMethod("update_object", signature(object="familiarData"),
             if(tail(object@familiar_version, n=1L) < "1.2.0"){
               
               # Update variable importance lists.
-              browser()
+              # Update fs_vimp slot by iterating over its contents.
+              object@fs_vimp <- 
+                lapply(object@fs_vimp,
+                       function(x, project_id, fs_method){
+                         
+                         # Check if the current element is empty.
+                         if(is_empty(x)) return(x)
+                         
+                         # Iterate over variable importance.
+                         x@data <-
+                           lapply(split(x@data, by=c("data_id", "run_id")),
+                                  function(x, fs_method, project_id){
+                                    as_vimp_table_object(x=list("vimp"=x,
+                                                                "fs_method"=fs_method),
+                                                         project_id=project_id)
+                                  },
+                                  fs_method=fs_method,
+                                  project_id=project_id)
+                         
+                         return(x)
+                       },
+                       fs_method = object@fs_method,
+                       project_id = object@project_id)
+              
+              # Update model_vimp slot by iterating over its contents.
+              object@model_vimp <- 
+                lapply(object@model_vimp,
+                       function(x, project_id, learner){
+                         
+                         # Check if the current element is empty.
+                         if(is_empty(x)) return(x)
+                         
+                         # Iterate over variable importance.
+                         x@data <-
+                           lapply(split(x@data, by=c("data_id", "run_id")),
+                                  function(x, learner, project_id){
+                                    as_vimp_table_object(x=list("vimp"=x,
+                                                                "fs_method"=learner),
+                                                         project_id=project_id)
+                                  },
+                                  learner=learner,
+                                  project_id=project_id)
+                         
+                         return(x)
+                       },
+                       learner = object@learner,
+                       project_id = object@project_id)
+              
+              # Update feature_expressions slot by iterating over its contents.
+              object@feature_expressions <-
+                lapply(object@feature_expressions,
+                       function(x){
+                         x@feature_info <- update_object(x@feature_info)
+                         
+                         return(x)
+                       })
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarData object to the most recent definition.")
@@ -258,7 +313,7 @@ setMethod("update_object", signature(object="familiarCollection"),
                        },
                        project_id=object@project_id)
               
-              #  Update model_vimp slot by iterating over its contents.
+              # Update model_vimp slot by iterating over its contents.
               object@model_vimp <- 
                 lapply(object@model_vimp,
                        function(x, project_id){
@@ -281,6 +336,14 @@ setMethod("update_object", signature(object="familiarCollection"),
                        },
                        project_id=object@project_id)
               
+              # Update feature_expressions slot by iterating over its contents.
+              object@feature_expressions <-
+                lapply(object@feature_expressions,
+                       function(x){
+                         x@feature_info <- update_object(x@feature_info)
+                         
+                         return(x)
+                       })
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarCollection object to the most recent definition.")
