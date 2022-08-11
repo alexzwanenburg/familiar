@@ -210,7 +210,10 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             rank_threshold=rank_threshold,
             aggregation_method=aggregation_method)
             
-            return(data_element_list)
+            # Merge data elements
+            data_element <- merge_data_elements(data_element_list)
+            
+            return(data_element)
           })
 
 

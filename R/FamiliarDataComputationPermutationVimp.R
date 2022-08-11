@@ -279,7 +279,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                        verbose=FALSE,
                                        message_indent,
                                        ...){
-
+  
   # Compute prediction data.
   prediction_data <- .predict(object=object,
                               data=data,
