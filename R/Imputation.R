@@ -131,6 +131,7 @@ create_imputation_parameter_skeleton <- function(feature_info_list,
   } else if(method %in% .get_available_lasso_imputation_methods()){
     object <- methods::new("featureInfoParametersImputationLasso",
                            "method"=method)
+    
   } else if(method == "container"){
     object <- methods::new("featureInfoParametersImputationContainer")
       

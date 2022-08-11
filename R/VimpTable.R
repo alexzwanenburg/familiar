@@ -975,11 +975,11 @@ as_vimp_table_object <- function(x,
                              run_table = x$run_table,
                              score_aggregation = "max",
                              encoding_table = NULL,
-                             cluster_table = "declustered",
+                             cluster_table = NULL,
                              invert = invert,
                              project_id = project_id,
                              familiar_version = "1.2.0",
-                             state="initial")
+                             state="declustered")
   
   return(vimp_table)
 }
