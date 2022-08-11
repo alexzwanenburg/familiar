@@ -621,9 +621,9 @@ combine_feature_info_list <- function(preferred=NULL,
   name <- present <- list_name <- complete <- NULL
   
   # Get all features.
-  feature_names <- c(names(preferred),
-                     names(custom),
-                     names(generic))
+  feature_names <- unique(c(names(preferred),
+                            names(custom),
+                            names(generic)))
   
   # Identify which features appear where.
   data <- mapply(FUN=function(x, x_name, feature_names){
