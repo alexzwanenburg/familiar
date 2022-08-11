@@ -545,7 +545,9 @@ setMethod("update_object", signature(object="featureInfo"),
                   # Set parameters.                                       
                   cluster_parameter_object@weight <- object@cluster_parameters$weight
                   cluster_parameter_object@invert <- object@cluster_parameters$invert
-                  cluster_parameter_object@cluster_name <- object@cluster_parameters$cluster_name
+                  cluster_parameter_object@cluster_name <- ifelse(object@cluster_parameters$cluster_size > 1,
+                                                                  object@cluster_parameters$cluster_name,
+                                                                  object@name)
                   cluster_parameter_object@cluster_size <- object@cluster_parameters$cluster_size
                   cluster_parameter_object@required_features <- object@cluster_parameters$required_features
                   
