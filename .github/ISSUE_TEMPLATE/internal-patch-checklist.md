@@ -10,6 +10,8 @@ assignees: ''
 **Prior to merge with master**
 - [ ] code check: run devtools::check(args=c("--no-examples", "--no-tests"), vignettes=FALSE)
 - [ ] test check: run devtools::test(): set options("testthat.progress.max_fails"=Inf) and options("Ncpus"=10)
+- [ ] create archives for testing backward compatibility against future versions: run tests/old_experiments/archiveExperiments.R
+- [ ] test backward compatibility against archived experiments: manually run tests/testthat/test-update_object.R
 - [ ] increment minor package version
 - [ ] create release name
 - [ ] update NEWS.md
