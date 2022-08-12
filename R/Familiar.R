@@ -141,8 +141,17 @@ summon_familiar <- function(formula=NULL,
   if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
   
   ##### Load data --------------------------------------------------------------
+  dots <- list(...)
+  
+  # Add placeholder for experimental_design in case experiment_data is set.
+  if(is.null(dots$experimental_design) & !is.null(experiment_data)){
+    dots$experimental_design <- "fs+mb"
+  }
+  
   # Parse experiment and data settings
-  settings <- .parse_initial_settings(config=config, ...)
+  settings <- do.call(.parse_initial_settings,
+                      args=c(list("config"=config),
+                             dots))
   
   if(is(data, "dataObject")){
     # Reconstitute settings from the data.
