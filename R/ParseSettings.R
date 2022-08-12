@@ -3778,9 +3778,19 @@
         # Use maximum evaluation time
         settings$time_max <- max(settings$eval_times)
         
+      } else if(!is.null(development_batch_id)){
+        # 98th percentile of all outcome times in the training cohorts.
+        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time,
+                                             probs=0.98,
+                                             na.rm=TRUE,
+                                             names=FALSE)
+        
       } else {
         # 98th percentile of all outcome times.
-        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
+        settings$time_max <- stats::quantile(data[outcome_event==1]$outcome_time,
+                                             probs=0.98,
+                                             na.rm=TRUE,
+                                             names=FALSE)
       }
     }
     

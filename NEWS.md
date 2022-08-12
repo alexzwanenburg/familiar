@@ -22,6 +22,8 @@
 
 - Pseudo-R<sup>2</sup> similarity metrics now correctly produce a value of 1.0 for exact fits. Previously these could produce infinite log-likelihoods, and return default value of 0.0 (no similarity).
 
+- A default value of the `time_max` parameter can now be determined even if training cohorts are not explicitly set.
+
 # Version 1.1.4 (Innovative Iguana)
 
 ## Bug fixes
