@@ -199,7 +199,6 @@ Collate:
     'StringUtilities.R'
     'TestDataCreators.R'
     'TestFunctions.R'
-    'TestUpdateObject.R'
     'TrainS4Methods.R'
     'Transformation.R'
     'TrimUtilities.R'
