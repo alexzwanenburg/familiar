@@ -306,4 +306,51 @@ Other designs, such as `experiment_design="bs(fs+mb,400)+ev"` allow for building
 
 As a final remark: Though it is possible to encapsulate the external validation (`ev`) workflow component in a subsampler, this is completely unnecessary. Unlike the feature selection (`fs`) and modelling (`mb`) components, `ev` is passive, and only indicates whether external validation should be performed.
 
+## Warm start
+
+Calling `summon_familiar` as described above, provides a cold start of the
+process. For some purposes, such as to ensure that the same data splits are
+used, a (partial) warm start may be required across different experiments. Three
+functions allow for generating data for a warm start:
+
+-   `precompute_data_assignment`: Generates data assignment.
+
+-   `precompute_feature_info`: Generates data assignment and corresponding
+feature information.
+
+-   `precompute_vimp`: Generates data assignment, corresponding feature
+information and variable importance.
+
+All of functions above create an `experimentData` object, which contains
+data that can be used to warm-start other familiar experiments that use the same
+data. This object can then be supplied as the `experiment_data` argument for
+`summon_familiar`.
+
+
+```{r eval=FALSE, include=TRUE}
+# This creates both data assignment (5 bootstraps) and the corresponding feature
+# information.
+experiment_data = familiar::precompute_feature_info(
+  data=iris,
+  experiment_dir=file.path(tempdir(), "familiar_1"),
+  outcome_type="multinomial",
+  outcome_column="Species",
+  experimental_design="bs(fs+mb,5)",
+  cluster_method="none",
+  parallel=FALSE
+)
+
+# Now we can warm-start a new experiment using the precomputed data.
+familiar::summon_familiar(
+  data=iris,
+  experiment_data = experiment_data,
+  experiment_dir=file.path(tempdir(), "familiar_2"),
+  outcome_type="multinomial",
+  outcome_column="Species",
+  fs_method="mrmr",
+  learner="glm",
+  parallel=FALSE
+)
+```
+
 # References
