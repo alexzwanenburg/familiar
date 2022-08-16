@@ -35,7 +35,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Multivariate regression correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in%  c("per_capita_crime", "lower_status_percentage",
                                                                 "residence_before_1940_proportion", "avg_rooms", "pupil_teacher_ratio")), TRUE)
@@ -57,7 +57,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Multivariate regression correctly ranks continuous data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
@@ -78,7 +78,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Multivariate regression correctly ranks binomial data.."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")), TRUE)
 })
@@ -99,7 +99,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Multivariate regression correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width", "Sepal_Length")), TRUE)
 })
@@ -120,7 +120,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Multivariate regression correctly ranks survival outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })

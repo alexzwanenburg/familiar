@@ -350,6 +350,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             .NATURAL <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get feature expression data
             feature_expression <- export_feature_expressions(object=object,
                                                              evaluation_time=evaluation_times)
@@ -834,7 +837,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
         
         # Obtain the normalisation methods for each feature in the current
         # dataset.
-        normalisation_method <- sapply(data@feature_info, function(feature) (feature@normalisation_parameters$norm_method))
+        normalisation_method <- sapply(data@feature_info, function(feature) (feature@normalisation_parameters@method))
                                        
         return(unname(normalisation_method))
       })
@@ -1065,9 +1068,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
     
     # Add cluster objects to feature and sample similarity data.
-    feature_similarity_split <- ..compute_feature_similarity_dendrogram(feature_similarity_split)
-    sample_similarity_split <- ..compute_sample_similarity_dendrogram(sample_similarity_split)
-
+    feature_similarity_split <- .append_feature_similarity_dendrogram(feature_similarity_split)
+    sample_similarity_split <- .append_sample_similarity_dendrogram(sample_similarity_split)
+    
     # Complete the expression data
     plot_data <- .complete_expression_table(x=expression_data_split,
                                             feature_similarity=feature_similarity_split,
@@ -1535,8 +1538,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-                                                cluster_method=sample_similarity@cluster_method)
+    sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
   }
   
   # Correctly order the samples
@@ -1736,7 +1738,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Normalise features within the current dataset.
     for(curr_feat in names(x@feature_info)){
       x@data[, (curr_feat):=.normalise(get(curr_feat),
-                                       norm_method="standardisation_winsor")]
+                                       normalisation_method="standardisation_winsor")]
     }
   }
   
@@ -1820,8 +1822,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    feature_order <- cluster.extract_label_order(cluster_object=feature_similarity@dendrogram,
-                                                 cluster_method=feature_similarity@cluster_method)
+    feature_order <- .compute_feature_similarity_cluster_table(x=feature_similarity)
   }
   
   # Determine sample order.
@@ -1837,8 +1838,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
   } else {
     # Default option.
-    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
-                                                cluster_method=sample_similarity@cluster_method)
+    sample_order <- .compute_sample_similarity_cluster_table(x=sample_similarity)
   }
   
   # Keep only features and samples that are in feature order and sample order.

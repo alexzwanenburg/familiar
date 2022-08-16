@@ -776,6 +776,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
 | `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | between `0.01` and `0.001` |
 | `smbo_time_limit` | Time limit (in minutes) for the optimisation process. | `NULL` |
+| `smbo_initial_bootstraps` | Number of bootstraps assessed initially. | `1` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |

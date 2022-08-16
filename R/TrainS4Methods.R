@@ -113,17 +113,15 @@ setMethod("test_train", signature(data="dataObject"),
             data <- filter_features(data=data,
                                     available_features=get_available_features(feature_info_list=feature_info_list))
             
-            # Get the features names.
-            selected_features <- get_feature_columns(data)
             
             # Find features that are required for processing the data
-            required_features <- find_required_features(features=selected_features,
-                                                        feature_info_list=feature_info_list)
+            required_features <- get_required_features(x=data,
+                                                       feature_info_list=feature_info_list)
             
             # Find important features, i.e. those that constitute the signature
             # either individually or as part of a cluster.
-            model_features <- find_model_features(features=selected_features,
-                                                  feature_info_list=feature_info_list)
+            model_features <- get_model_features(x=data,
+                                                 feature_info_list=feature_info_list)
             
             #####Prepare hyperparameters########################################
             
@@ -311,17 +309,14 @@ setMethod("test_train_novelty_detector", signature(data="dataObject"),
             data <- filter_features(data=data,
                                     available_features=get_available_features(feature_info_list=feature_info_list))
             
-            # Get the features names.
-            selected_features <- get_feature_columns(data)
-            
-            # Find features that are required for processing the data
-            required_features <- find_required_features(features=selected_features,
-                                                        feature_info_list=feature_info_list)
+            # Find features that are required for processing the data.
+            required_features <- get_required_features(x=data,
+                                                       feature_info_list=feature_info_list)
             
             # Find important features, i.e. those that constitute the signature
             # either individually or as part of a cluster.
-            model_features <- find_model_features(features=selected_features,
-                                                  feature_info_list=feature_info_list)
+            model_features <- get_model_features(x=data,
+                                                 feature_info_list=feature_info_list)
             
             #####Prepare hyperparameters########################################
             

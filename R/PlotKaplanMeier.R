@@ -253,6 +253,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             risk_group <- .NATURAL <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get input data
             x <- export_risk_stratification_data(object=object,
                                                  export_strata=FALSE)

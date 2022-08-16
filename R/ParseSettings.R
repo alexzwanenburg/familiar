@@ -419,7 +419,7 @@
                                               "prep_cluster_method"=settings$prep$cluster_method,
                                               "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
                                               "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
-                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
+                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_similarity_threshold,
                                               "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
                                          dots))
   
@@ -1700,7 +1700,7 @@
   
   .check_parameter_value_is_valid(x=settings$imputation_method,
                                   var_name="imputation_method",
-                                  values=c("simple", "lasso"))
+                                  values=.get_available_imputation_methods())
   
   if(settings$imputation_method == "lasso"){
     # If glmnet is not installed, use simple imputation.
@@ -1835,25 +1835,25 @@
   #features to be considered part of one cluster. Should be expressed in terms
   #of the similarity metric, e.g. 0.8 for spearman would consider all features
   #that have a pairwise correlation of 0.8 and over to belong to a cluster.
-  settings$cluster_sim_thresh <- .parse_arg(x_config=config$cluster_similarity_threshold,
-                                            x_var=cluster_similarity_threshold,
-                                            var_name="cluster_similarity_threshold",
-                                            type="numeric",
-                                            optional=TRUE,
-                                            default=NULL)
+  settings$cluster_similarity_threshold <- .parse_arg(x_config=config$cluster_similarity_threshold,
+                                                      x_var=cluster_similarity_threshold,
+                                                      var_name="cluster_similarity_threshold",
+                                                      type="numeric",
+                                                      optional=TRUE,
+                                                      default=NULL)
   
-  if(is.null(settings$cluster_sim_thresh)){
+  if(is.null(settings$cluster_similarity_threshold)){
     if(settings$cluster_cut_method %in% c("fixed_cut")){
       # Fixed cut requires stringent defaults, otherwise non-sense clusters will
       # be produced.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
-        settings$cluster_sim_thresh <- 0.30
+        settings$cluster_similarity_threshold <- 0.30
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")){
-        settings$cluster_sim_thresh <- 0.75
+        settings$cluster_similarity_threshold <- 0.75
         
       } else {
-        settings$cluster_sim_thresh <- 0.90
+        settings$cluster_similarity_threshold <- 0.90
       }
       
     } else {
@@ -1861,33 +1861,33 @@
       # potentially be found. The threshold is set low so that other cut methods
       # can be explored.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
-        settings$cluster_sim_thresh <- 0.05
+        settings$cluster_similarity_threshold <- 0.05
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
-        settings$cluster_sim_thresh <- 0.40
+        settings$cluster_similarity_threshold <- 0.40
         
       } else {
-        settings$cluster_sim_thresh <- 0.50
+        settings$cluster_similarity_threshold <- 0.50
       }
     }
   }
   
   ##### cluster_representation_method ##########################################
   # Method to select the feature that represents the cluster
-  settings$cluster_repr_method <- .parse_arg(x_config=config$cluster_representation_method,
-                                             x_var=cluster_representation_method,
-                                             var_name="cluster_representation_method",
-                                             type="character",
-                                             optional=TRUE,
-                                             default="best_predictor")
+  settings$cluster_representation_method <- .parse_arg(x_config=config$cluster_representation_method,
+                                                       x_var=cluster_representation_method,
+                                                       var_name="cluster_representation_method",
+                                                       type="character",
+                                                       optional=TRUE,
+                                                       default="best_predictor")
   
   # Partioning around medioids only allows the use of medioids for
   # representation.
-  if(settings$cluster_method == "pam") settings$cluster_repr_method <- "medioid"
+  if(settings$cluster_method == "pam") settings$cluster_representation_method <- "medioid"
   
   # If mean is used, this requires the data to have some kind of standardisation
   # with centering at 0.
-  if(settings$cluster_repr_method %in% c("mean")){
+  if(settings$cluster_representation_method %in% c("mean")){
     if(!settings$normalisation_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "quantile")){
       warning(paste0("When computing the meta-feature for a cluster using the mean value of co-clustered features, ",
                      "each feature is expected to be centered at 0.0 and to have a standard scale. ",
@@ -1903,11 +1903,11 @@
   .check_cluster_parameters(cluster_method=settings$cluster_method,
                             cluster_cut_method=settings$cluster_cut_method,
                             cluster_linkage=settings$cluster_linkage,
-                            cluster_similarity_threshold=settings$cluster_sim_thresh,
+                            cluster_similarity_threshold=settings$cluster_similarity_threshold,
                             cluster_similarity_metric=settings$cluster_similarity_metric,
-                            cluster_representation_method=settings$cluster_repr_method,
-                            var_type="cluster",
-                            test_required_packages=FALSE)
+                            cluster_representation_method=settings$cluster_representation_method,
+                            data_type="cluster",
+                            message_type="backend_error")
   
   ##### parallel_preprocessing #################################################
   # Parallel processing
@@ -2060,6 +2060,7 @@
                                            outcome_type=outcome_type,
                                            fs_method=settings$fs_methods)
   
+  
   ##### vimp_aggregation_method ################################################
   # Variable importance aggregation methods
   settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method,
@@ -2069,7 +2070,10 @@
                                      optional=TRUE,
                                      default="borda")
   
-  rank.check_aggregation_method(method=settings$aggregation)
+  .check_parameter_value_is_valid(x=settings$aggregation,
+                                  var_name="vimp_aggregation_method",
+                                  values=.get_available_rank_aggregation_methods())
+  
   
   ##### vimp_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
@@ -2303,9 +2307,16 @@
 #'   The default is `NULL`, indicating that there is no time limit for the
 #'   optimisation process. The time limit cannot be less than 1 minute.
 #'
+#' @param smbo_initial_bootstraps (*optional*) The number of bootstraps taken
+#'   from the set of `optimisation_bootstraps` as the bootstraps assessed
+#'   initially.
+#'
+#'   The default value is `1`. The value cannot be larger than
+#'   `optimisation_bootstraps`.
+#'
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
-#'   the set of `optimisation_bootstraps` bootstraps as data for the initial
-#'   SMBO step and the steps in each intensify iteration.
+#'   the set of `optimisation_bootstraps` bootstraps as the bootstraps assessed
+#'   during the steps of each intensify iteration.
 #'
 #'   The default value is `3`. The value cannot be larger than
 #'   `optimisation_bootstraps`.
@@ -2505,6 +2516,7 @@
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
                                                         smbo_time_limit=waiver(),
+                                                        smbo_initial_bootstraps=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
                                                         smbo_stochastic_reject_p_value=waiver(),
@@ -2552,18 +2564,6 @@
                                             optional=TRUE,
                                             default=TRUE)
   
-  ##### optimisation_bootstraps ################################################
-  # Maximum number of bootstraps for hyperparameter evaluation
-  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
-                                            x_var=optimisation_bootstraps,
-                                            var_name="optimisation_bootstraps",
-                                            type="integer",
-                                            optional=TRUE,
-                                            default=20)
-  
-  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
-                               var_name="optimisation_bootstraps",
-                               range=c(10, Inf))
   
   ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
@@ -2578,15 +2578,46 @@
                                var_name="max_smbo_iterations",
                                range=c(1, Inf))
   
+  
+  ##### optimisation_bootstraps ################################################
+  # Maximum number of bootstraps for hyperparameter evaluation
+  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
+                                            x_var=optimisation_bootstraps,
+                                            var_name="optimisation_bootstraps",
+                                            type="integer",
+                                            optional=TRUE,
+                                            default=20)
+  
+  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
+                               var_name="optimisation_bootstraps",
+                               range=c(10, Inf))
+  
+
+  
+  ##### smbo_initial_bootstraps ################################################
+  # Number of bootstraps evaluated initially
+  settings$hpo_initial_bootstraps <- .parse_arg(x_config=config$smbo_initial_bootstraps,
+                                                x_var=smbo_initial_bootstraps,
+                                                var_name="smbo_initial_bootstraps",
+                                                type="integer",
+                                                optional=TRUE,
+                                                default=1L)
+  
+  .check_number_in_valid_range(x=settings$hpo_initial_bootstraps,
+                               var_name="smbo_initial_bootstraps",
+                               range=c(1, settings$hpo_max_bootstraps))
+  
+  
+  
   ##### smbo_step_bootstraps ###################################################
-  # Maximum number of bootstrap evaluated initially and during each intensify
+  # Maximum number of bootstrap evaluated each intensify
   # step of each SMBO iteration.
   settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps,
                                         x_var=smbo_step_bootstraps,
                                         var_name="smbo_step_bootstraps",
                                         type="integer",
                                         optional=TRUE,
-                                        default=3)
+                                        default=3L)
   
   .check_number_in_valid_range(x=settings$hpo_bootstraps,
                                var_name="smbo_step_bootstraps",
@@ -3533,12 +3564,6 @@
                                                 optional=TRUE,
                                                 default=prep_cluster_method)
   
-  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
-     & !settings$feature_cluster_method %in% c("none", "hclust")){
-    require_package(x="cluster",
-                    purpose="to use feature similarity",
-                    message_type="backend_error")
-  }
   
   ##### feature_linkage_method #################################################
   # Feature linkage method
@@ -3586,13 +3611,16 @@
                                                       optional=TRUE,
                                                       default=prep_cluster_similarity_threshold)
   
-  .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
-                            cluster_linkage=settings$feature_linkage_method,
-                            cluster_cut_method=settings$feature_cluster_cut_method,
-                            cluster_similarity_threshold=settings$feature_similarity_threshold,
-                            cluster_similarity_metric=settings$feature_similarity_metric,
-                            var_type="feature",
-                            test_required_packages=FALSE)
+  # Check the proposed cluster parameters.
+  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)){
+    .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
+                              cluster_linkage=settings$feature_linkage_method,
+                              cluster_cut_method=settings$feature_cluster_cut_method,
+                              cluster_similarity_threshold=settings$feature_similarity_threshold,
+                              cluster_similarity_metric=settings$feature_similarity_metric,
+                              data_type="feature",
+                              message_type="backend_error")
+  }
   
   ##### sample_cluster_method ##################################################
   # Sample cluster method
@@ -3602,13 +3630,6 @@
                                                type="character",
                                                optional=TRUE,
                                                default=prep_cluster_method)
-  
-  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
-     !settings$sample_cluster_method %in% c("none", "hclust")){
-    require_package(x="cluster",
-                    purpose="to use sample similarity",
-                    message_type="backend_error")
-  }
   
   ##### sample_linkage_method ##################################################
   # Sample cluster linkage method
@@ -3638,11 +3659,14 @@
     }
   }
   
-  .check_cluster_parameters(cluster_method=settings$sample_cluster_method,
-                            cluster_linkage=settings$sample_linkage_method,
-                            cluster_similarity_metric=settings$sample_similarity_metric,
-                            var_type="sample",
-                            test_required_packages=FALSE)
+  # Check the proposed cluster parameters.
+  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements)){
+    .check_cluster_parameters(cluster_method=settings$sample_cluster_method,
+                              cluster_linkage=settings$sample_linkage_method,
+                              cluster_similarity_metric=settings$sample_similarity_metric,
+                              data_type="sample",
+                              message_type="backend_error")
+  }
   
   ##### eval_aggregation_method ################################################
   # Variable importance aggregation methods
@@ -3653,7 +3677,9 @@
                                      optional=TRUE,
                                      default=vimp_aggregation_method)
   
-  rank.check_aggregation_method(method=settings$aggregation)
+  .check_parameter_value_is_valid(x=settings$aggregation,
+                                  var_name="eval_aggregation_method",
+                                  values=.get_available_rank_aggregation_methods())
   
   ##### eval_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
@@ -3752,9 +3778,19 @@
         # Use maximum evaluation time
         settings$time_max <- max(settings$eval_times)
         
+      } else if(!is.null(development_batch_id)){
+        # 98th percentile of all outcome times in the training cohorts.
+        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time,
+                                             probs=0.98,
+                                             na.rm=TRUE,
+                                             names=FALSE)
+        
       } else {
         # 98th percentile of all outcome times.
-        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
+        settings$time_max <- stats::quantile(data[outcome_event==1]$outcome_time,
+                                             probs=0.98,
+                                             na.rm=TRUE,
+                                             names=FALSE)
       }
     }
     

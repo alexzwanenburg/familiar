@@ -1356,6 +1356,9 @@ setMethod("export_calibration_data", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Obtain calibration data.
             calibration_data <- .export(x=object,
                                         data_slot="calibration_data",

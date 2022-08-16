@@ -577,8 +577,20 @@ get_estimate <- function(x, na.rm=TRUE){
 
 
 
-get_placeholder_vimp_table <- function(){
-  return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
+get_placeholder_vimp_table <- function(vimp_method,
+                                       run_table=NULL){
+  
+  # Set vimp method.
+  vimp_object <- methods::new("vimpTable",
+                              vimp_method=vimp_method)
+  
+  # Set run table.
+  vimp_object@run_table <- run_table
+  
+  # Set package version.
+  vimp_object <- add_package_version(vimp_object)
+  
+  return(vimp_object)
 }
 
 
@@ -932,7 +944,7 @@ is_valid_data <- function(x){
 }
 
 
-.compute_z_statistic <- function(model){
+.compute_z_statistic <- function(model, fix_all_missing=FALSE){
   
   mu <- cov_matrix <- NULL
   
@@ -981,6 +993,8 @@ is_valid_data <- function(x){
   
   # Compute z-score
   z  <- mu / stdevs
+  
+  if(fix_all_missing & all(!is.finite(z))) z <- mu
   
   # Return z-score, as p-values can become very small.
   return(abs(z))
@@ -1104,25 +1118,6 @@ encapsulate_path <- function(path){
 is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
 
-# .append_new <- function(l, new){
-# 
-#   # Find the names of list elements in l and new
-#   existing_names <- names(l)
-#   new_names <- names(new)
-#   
-#   # Find which elements should be migrated.
-#   migrate_elements <- setdiff(new_names, existing_names)
-#   if(length(migrate_elements) == 0){ return(l) }
-#   
-#   # Drop any duplicate elements.
-#   duplicate_elements <- intersect(new_names, existing_names)
-#   for(duplicate_element in duplicate_elements){
-#     new[[duplicate_element]] <- NULL
-#   }
-#   
-#   return(append(l, new))
-# }
-
 
 is_subclass <- function(class_1, class_2){
   # Find out if class_1 is a subclass of class_2
@@ -1165,6 +1160,7 @@ is_subclass <- function(class_1, class_2){
                 levels=preprocessing_levels,
                 ordered=TRUE))
 }
+
 
 
 .flatten_nested_list <- function(x, flatten=FALSE){
@@ -1235,4 +1231,40 @@ dlapply <- function(X, FUN, ...){
   
   # Return as list.
   return(as.list(x))
+}
+
+
+
+near <- function(x, y, df=2.0, tol=.Machine$double.eps){
+  # Determines whether floating points values in x are very close to another
+  # value in y.
+  .near <- function(x, tol) (x <= tol)
+  
+  if(length(x) != length(y) & length(y) != 1){
+    stop("x and y should have the same length, or y should be a single value.")
+  }
+  
+  if(!is.numeric(x)){
+    stop("x should be a numeric value.")
+  }
+  
+  if(!is.numeric(y)){
+    stop("y should be a numeric value.")
+  }
+  
+  return(sapply(abs(x-y), .near, tol=df * tol))
+}
+
+
+
+approximately <- function(x, y, tol=sqrt(.Machine$double.eps)){
+  # Determines whether numeric values in x are approximately y. This check is
+  # the same as all.equal but without the all additional and checking that
+  # all.equal does.
+  #
+  # approximately wraps near.
+  return(near(x=x,
+              y=y,
+              df=1.0,
+              tol=tol))
 }

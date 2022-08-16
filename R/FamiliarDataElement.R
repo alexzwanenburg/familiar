@@ -344,7 +344,7 @@ setMethod("merge_data_elements", signature(x="familiarDataElement"),
                 
                 # Set data attribute.
                 prototype_data_element@data <- data_attribute
-                
+              
               } else if(all(sapply(x_list[current_group_data_element_ids], function(x) (is_empty(x@data))))) {
                 # All data attributes are unset. We don't need to do anything.
                 

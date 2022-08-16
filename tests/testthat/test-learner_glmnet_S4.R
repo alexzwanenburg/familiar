@@ -59,7 +59,7 @@ testthat::test_that("Regularised regression model trained correctly", {
 testthat::test_that("Regularised regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has entries up to the number of features.
   testthat::expect_equal(nrow(vimp_table) <= familiar:::get_n_features(good_data), TRUE)
@@ -79,7 +79,7 @@ testthat::test_that("Regularised regression model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -127,7 +127,7 @@ testthat::test_that("Regularised regression model trained correctly", {
 testthat::test_that("Regularised regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 8)
@@ -147,7 +147,7 @@ testthat::test_that("Regularised regression model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -194,7 +194,7 @@ testthat::test_that("Regularised regression model trained correctly", {
 testthat::test_that("Regularised regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 8)
@@ -214,7 +214,7 @@ testthat::test_that("Regularised regression model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -262,7 +262,7 @@ testthat::test_that("Regularised regression model trained correctly", {
 testthat::test_that("Regularised regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 4)
@@ -282,7 +282,7 @@ testthat::test_that("Regularised regression model can not train on wide data", {
   if(familiar:::model_is_trained(wide_model)){
     
     # Variable importance table is empty.
-    testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+    testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
     
     # Valid predictions cannot be made.
     testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -295,7 +295,7 @@ testthat::test_that("Regularised regression model can not train on wide data", {
     
   } else {
     # Variable importance table is empty.
-    testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+    testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
     
     # Valid predictions cannot be made.
     testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
@@ -357,7 +357,7 @@ testthat::test_that("Regularised regression model trained correctly", {
 testthat::test_that("Regularised regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 2)
@@ -378,13 +378,17 @@ testthat::test_that("Regularised regression model can train on wide data", {
   
   # Variable importance table may or may not be present. Therefore, disable this
   # test.
-  # testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  # testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # Valid predictions are present.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data),
+                                                          outcome_type=wide_data@outcome_type),
+                         TRUE)
   
   # Valid survival probability predictions can be made.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000),
+                                                          outcome_type=wide_data@outcome_type),
+                         TRUE)
   
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)

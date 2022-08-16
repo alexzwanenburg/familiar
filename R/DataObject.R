@@ -694,15 +694,21 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
 
 #####preprocess_data (vimp method)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .preprocess_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
+            
+            # Pre-process the data.
+            data <-  .preprocess_data(data=data,
+                                      object=object,
+                                      stop_at=stop_at,
+                                      keep_novelty=keep_novelty)
+            
+            return(data)
+          })
 
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
             
             # Pre-process the data.
             data <- .preprocess_data(data=data,
@@ -715,7 +721,8 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"
             data <- postprocess_data(data=data,
                                      object=object,
                                      stop_at=stop_at,
-                                     keep_novelty=keep_novelty)
+                                     keep_novelty=keep_novelty,
+                                     ...)
             
             return(data)
           })
@@ -741,7 +748,8 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarNovelt
             # set.
             data <- postprocess_data(data=data,
                                      object=object,
-                                     stop_at=stop_at)
+                                     stop_at=stop_at,
+                                     ...)
             
             return(data)
           })
@@ -749,10 +757,16 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarNovelt
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE).preprocess_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            return(data)
+          }) 
 
 
 .preprocess_data <- function(data, object, stop_at, keep_novelty=FALSE){
@@ -832,39 +846,6 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     data <- cluster_features(data=data,
                              feature_info_list=object@feature_info)
   }
-  # 
-  # if(is(object, "familiarModel") & stop_at >= "clustering"){
-  #   
-  #   # Select features.
-  #   features <- object@model_features
-  #   if(keep_novelty) features <- union(features, object@novelty_features)
-  #   
-  #   # Return data if there are no features.
-  #   if(length(features) == 0) return(data)
-  #   
-  #   # Determine the features after clustering.
-  #   features <- features_after_clustering(features=features,
-  #                                         feature_info_list=object@feature_info)
-  #   
-  #   # Create a slice of the data for the feature set.
-  #   data <- select_features(data=data,
-  #                           features=features)
-  #   
-  # } else if(is(object, "familiarNoveltyDetector") & stop_at >= "clustering"){
-  #   # Select features.
-  #   features <- object@model_features
-  #   
-  #   # Return data if there are no features.
-  #   if(length(features) == 0) return(data)
-  #   
-  #   # Determine the features after clustering.
-  #   features <- features_after_clustering(features=features,
-  #                                         feature_info_list=object@feature_info)
-  #   
-  #   # Create a slice of the data for the feature set.
-  #   data <- select_features(data=data,
-  #                           features=features)
-  # }
   
   return(data)
 }
@@ -872,7 +853,12 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
 
 ##### postprocess_data (model)--------------------------------------------
 setMethod("postprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+          function(data,
+                   object,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   force_check=FALSE,
+                   ...){
             
             # Convert the preprocessing_level attained and the requested
             # stopping level to ordinals.
@@ -886,7 +872,7 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarModel
             if(keep_novelty) features <- union(features, object@novelty_features)
             
             # Return data if there are no features.
-            if(length(features) == 0) return(data)
+            if(length(features) == 0 && !force_check) return(data)
             
             # Determine the features after clustering.
             features <- features_after_clustering(features=features,
@@ -901,7 +887,11 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarModel
 
 ##### postprocess_data (novelty detector)---------------------------------
 setMethod("postprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
-          function(data, object, stop_at="clustering"){
+          function(data,
+                   object,
+                   stop_at="clustering",
+                   force_check=FALSE,
+                   ...){
             
             # Convert the preprocessing_level attained and the requested
             # stopping level to ordinals.
@@ -914,7 +904,7 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarNovel
             features <- object@model_features
             
             # Return data if there are no features.
-            if(length(features) == 0) return(data)
+            if(length(features) == 0 && !force_check) return(data)
             
             # Determine the features after clustering.
             features <- features_after_clustering(features=features,
@@ -931,11 +921,22 @@ setMethod("postprocess_data", signature(data="dataObject", object="familiarNovel
 
 #####process_input_data (vimp method)#####
 setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   ...){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty,
+                                        ...)
+            
+            return(data)
+          })
 
 #####process_input_data (novelty detector)#####
 setMethod("process_input_data", signature(object="familiarNoveltyDetector", data="ANY"),
@@ -950,26 +951,50 @@ setMethod("process_input_data", signature(object="familiarNoveltyDetector", data
                                         data=data,
                                         is_pre_processed=is_pre_processed,
                                         stop_at=stop_at,
-                                        keep_novelty=FALSE)
+                                        keep_novelty=FALSE,
+                                        ...)
+            
+            return(data)
           })
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE,
+                   ...){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty,
+                                        ...)
+            
+            return(data)
+          })
 
 #####process_input_data (ensemble)#####
 setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
-                                                                                                                       data=data,
-                                                                                                                       is_pre_processed=is_pre_processed,
-                                                                                                                       stop_at=stop_at,
-                                                                                                                       keep_novelty=keep_novelty))
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   stop_at="clustering",
+                   keep_novelty=FALSE){
+            
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty)
 
-.process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE){
+            return(data)
+          })
+
+
+.process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE, ...){
   # Check whether data is a dataObject, and create one otherwise
   if(!is(data, "dataObject")){
     data <- as_data_object(data=data,
@@ -991,7 +1016,8 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
   data <- preprocess_data(data=data,
                           object=object,
                           stop_at=stop_at,
-                          keep_novelty=keep_novelty)
+                          keep_novelty=keep_novelty,
+                          ...)
   
   # Return data
   return(data)
@@ -1199,6 +1225,9 @@ setMethod("filter_features", signature(data="dataObject"),
               stop("This point should never be reachable. Check for inconsistencies if it does.")
             }
             
+            # Make a copy to prevent updating by reference.
+            data@data <- data.table::copy(data@data)
+            
             # Remove features from data if there is 1 or more feature to remove
             if(length(remove_features) > 0){
               data@data[, (remove_features):=NULL]
@@ -1306,25 +1335,27 @@ setMethod("transform_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
             # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            if(is_empty(data)) return(data)
             
             # Apply transformations
             transformed_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- transformation.apply_transform(x=data[[ii]],
-                                                  trans_param=feature_info_list[[ii]]@transformation_parameters,
-                                                  invert=invert)
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@transformation_parameters,
+                                                 data=data[[ii]],
+                                                 invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
             # Update name of data in columns
             names(transformed_list) <- features
             
             # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=transformed_list)
+            data <- update_with_replacement(data=data,
+                                            replacement_list=transformed_list)
             
             return(data)
           })
@@ -1368,26 +1399,28 @@ setMethod("normalise_features", signature(data="dataObject"),
 setMethod("normalise_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            # Check if data is empty.
+            if(is_empty(data)) return(data)
             
-            # Apply normalisation
+            # Apply normalisation.
             normalised_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- normalise.apply_normalisation(x=data[[ii]],
-                                                 norm_param=feature_info_list[[ii]]@normalisation_parameters,
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@normalisation_parameters,
+                                                 data=data[[ii]],
                                                  invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
-            # Update name of data in columns
+            # Update name of data in columns.
             names(normalised_list) <- features
             
-            # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=normalised_list)
+            # Update with replacement in the data object.
+            data <- update_with_replacement(data=data,
+                                            replacement_list=normalised_list)
             
             return(data)
           })
@@ -1418,15 +1451,16 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             feature_columns <- get_feature_columns(x=data)
             
             # Update feature_info_list by adding info for missing batches
-            feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list,
-                                                                    data_obj=data)
+            feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list[feature_columns],
+                                                                    data=data)
             
             # Apply batch-normalisation
             batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list, invert){
               
-              x <- batch_normalise.apply_normalisation(x=data@data[, mget(c(ii, get_id_columns()))],
-                                                       feature_info=feature_info_list[[ii]],
-                                                       invert=invert)
+              # Dispatch to apply-method.
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@batch_normalisation_parameters,
+                                                 data=data@data[, mget(c(ii, get_id_columns("batch")))],
+                                                 invert=invert)
               
               return(x)
             },
@@ -1468,27 +1502,16 @@ setMethod("impute_features", signature(data="dataObject"),
             # Check if data has features
             if(!has_feature_data(x=data)) return(data)
             
-            # Find the columns containing features
-            feature_columns <- get_feature_columns(x=data)
+            # Apply univariate results to the dataset.
+            imputed_data <- .impute_features(data=data,
+                                             feature_info_list=feature_info_list,
+                                             initial_imputation=TRUE)
             
-            # Determine which columns have missing entries
-            censored_features <- feature_columns[sapply(feature_columns, function(ii, data_obj) (!all(is_valid_data(data_obj@data[[ii]]))), data_obj=data)]
-            
-            # Skip if there are no censored features
-            if(length(censored_features) == 0) return(data)
-            
-            # Fill out all censored entries by simple imputation
-            uncensored_data <- impute.impute_simple(cl=cl,
-                                                    data_obj=data,
-                                                    feature_info_list=feature_info_list,
-                                                    censored_features=censored_features)
-            
-            # Fill out all censored entries by lasso-based imputation
-            data <- impute.impute_lasso(cl=cl,
-                                        data_obj=data,
-                                        uncensored_data_obj=uncensored_data,
-                                        feature_info_list=feature_info_list,
-                                        censored_features=censored_features)
+            # Apply multivariate model to the dataset.
+            data <- .impute_features(data=imputed_data,
+                                     feature_info_list=feature_info_list,
+                                     initial_imputation=FALSE,
+                                     mask_data=data)
             
             return(data)
           })
@@ -1497,6 +1520,9 @@ setMethod("impute_features", signature(data="dataObject"),
 #####cluster_features#####
 setMethod("cluster_features", signature(data="dataObject"),
           function(data, feature_info_list){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            feature_required <- feature_name <- NULL
             
             if(.as_preprocessing_level(data) >= "clustering"){
               ..error_reached_unreachable_code("cluster_features,dataObject: attempting to cluster data that already have been clustered.")
@@ -1519,20 +1545,21 @@ setMethod("cluster_features", signature(data="dataObject"),
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
             
-            # Identify features that form non-singular clusters
-            clustering_features <- find_clustering_features(features=feature_columns, feature_info_list=feature_info_list)
+            # Derive clustering table.
+            cluster_table <- .create_clustering_table(feature_info_list=feature_info_list,
+                                                      selected_features=feature_columns)
             
-            # Skip if all clusters are singular
-            if(length(clustering_features) == 0) return(data)
-            
-            # Reconstitute a cluster table
-            cluster_table <- get_cluster_table(feature_info_list=feature_info_list, selected_features=clustering_features)
+            # Update data using the clustering table. Note that only features
+            # that are both required and present are processed.
+            clustered_data <- lapply(split(cluster_table[feature_required == TRUE & feature_name %in% feature_columns],
+                                           by="cluster_name"),
+                                     set_clustered_data,
+                                     data=data,
+                                     feature_info_list=feature_info_list)
 
-            # Cluster data
-            clustered_data <- data.table::setDT(unlist(unname(lapply(split(cluster_table, by="cluster_name"), cluster.compute_cluster, data_obj=data)), recursive=FALSE))
-            
-            # Combine with non-clustered input data
-            data@data <- cbind(data@data[, !clustering_features, with=FALSE], clustered_data)
+            # Attach the clustered data.
+            data@data <- cbind(data@data[, mget(get_non_feature_columns(data))],
+                               data.table::setDT(clustered_data))
             
             return(data)
           })
@@ -1608,6 +1635,243 @@ setMethod("select_features", signature(data="dataObject"),
             }
             
             return(data)
+          })
+
+
+#### get_required_features (dataObject) ----------------------------------------
+setMethod("get_required_features", signature(x="dataObject"),
+          function(x,
+                   feature_info_list,
+                   features=NULL,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            # Check if features are provided externally.
+            is_external <- !is.null(features)
+            
+            # Create features from columns in the dataset, if unset.
+            if(!is_external && x@delay_loading){
+              # Get features from the feature info list.
+              features <- get_available_features(feature_info_list=feature_info_list,
+                                                 exclude_signature=exclude_signature,
+                                                 exclude_novelty=exclude_novelty)
+              
+            } else if(!is_external){
+              # Get features directly.
+              features <- get_feature_columns(x)
+            }
+            
+            # Pass to underlying function.
+            return(.get_required_features(features=features,
+                                          feature_info_list,
+                                          is_clustered=.as_preprocessing_level(x@preprocessing_level) == "clustering",
+                                          is_external=is_external,
+                                          exclude_signature=exclude_signature,
+                                          exclude_novelty=exclude_novelty))
+          })
+
+#### get_required_features (character) -----------------------------------------
+setMethod("get_required_features", signature(x="character"),
+          function(x,
+                   feature_info_list,
+                   is_clustered,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            # Method intended for directly providing features.
+            
+            if(length(x) == 0) return(NULL)
+            
+            return(.get_required_features(features=x,
+                                          feature_info_list=feature_info_list,
+                                          is_clustered=is_clustered,
+                                          is_external=TRUE,
+                                          exclude_signature=exclude_signature,
+                                          exclude_novelty=exclude_novelty))
+          })
+
+#### get_required_features (list) ----------------------------------------------
+setMethod("get_required_features", signature(x="list"),
+          function(x,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            # Method intended for directly providing a list of featureInfo
+            # objects.
+            
+            if(is_empty(x)) return(NULL)
+            
+            # Sanity check. x should be a list of 
+            if(!all(sapply(x, is, "featureInfo"))){
+              ..error_reached_unreachable_code("get_required_features,list: expected a list of featureInfo objects.")
+            }
+            
+            # Get features from the featureInfo objects.
+            features <- get_available_features(feature_info_list=x,
+                                               exclude_signature=exclude_signature,
+                                               exclude_novelty=exclude_novelty)
+            
+            return(.get_required_features(features=features,
+                                          feature_info_list=x,
+                                          is_clustered=FALSE,
+                                          is_external=FALSE,
+                                          exclude_signature=exclude_signature,
+                                          exclude_novelty=exclude_novelty))
+          })
+
+#### get_required_features (NULL) ----------------------------------------------
+setMethod("get_required_features", signature(x="NULL"),
+          function(x,
+                   ...){
+            return(NULL)            
+          })
+
+
+
+.get_required_features <- function(features,
+                                   feature_info_list,
+                                   is_clustered,
+                                   is_external,
+                                   exclude_signature=FALSE,
+                                   exclude_novelty=FALSE,
+                                   exclude_imputation=FALSE,
+                                   ...){
+  # What are required features? Required features are features that are:
+  #
+  # 1. Directly used for clustering (representative features).
+  #
+  # 2. Used for imputation of features mentioned in 1).
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  cluster_name <- feature_name <- feature_required <- NULL
+  
+  # If the features are empty
+  if(is_empty(features) && is_external) return(NULL)
+  
+  # Generate a cluster table
+  cluster_table <- .create_clustering_table(feature_info_list=feature_info_list)
+  
+  # Identify which features are required to form clusters.
+  if(is_clustered){
+    # Data are clustered.
+    required_features <- cluster_table[cluster_name %in% features & feature_required==TRUE]$feature_name
+    
+    # Sanity check. All externally provided features should be present
+    # in the cluster table.
+    if(is_external){
+      if(!all(features %in% cluster_table$cluster_name)){
+        ..error_reached_unreachable_code(paste0(".get_required_features: some features do not appear in the ",
+                                                " cluster table. Potentially, an incomplete feature_info_list was passed."))
+      }
+    }
+    
+  } else {
+    # Data are not yet clustered.
+    required_features <- cluster_table[feature_name %in% features & feature_required==TRUE]$feature_name
+    
+    # Sanity check. All externally provided features should be present
+    # in the cluster table.
+    if(is_external){
+      if(!all(features %in% cluster_table$feature_name)){
+        ..error_reached_unreachable_code(paste0(".get_required_features: some features do not appear in the ",
+                                                " cluster table. Potentially, an incomplete feature_info_list was passed."))
+      }
+    }
+  }
+  
+  # Determine available features from feature info list.
+  available_features <- get_available_features(feature_info_list=feature_info_list,
+                                               exclude_signature=exclude_signature,
+                                               exclude_novelty=exclude_novelty)
+  
+  # Sanity check. All features that we provide externally should be
+  # present in the available features.
+  if(is_external){
+    if(length(required_features) == 0){
+      ..error_reached_unreachable_code("get_required_features,dataObject: there are no required features, whereas at least one is expected.")
+    }
+    
+    if(!all(required_features %in% available_features)){
+      ..error_reached_unreachable_code("get_required_features,dataObject: there are required features for clustering that are not available.")
+    }
+  }
+  
+  # Determine the intersect of the available features and features.
+  required_features <- intersect(available_features, required_features)
+  
+  # Return NULL if no features are required.
+  if(length(required_features) == 0) return(NULL)
+  
+  if(!exclude_imputation){
+    # Now, additionally select which features are required for imputation.
+    required_features <- unique(unlist(lapply(feature_info_list[required_features], function(x) x@required_features)))
+  }
+  
+  return(required_features)
+}
+
+#### get_model_features (dataObject) -------------------------------------------
+setMethod("get_model_features", signature(x="dataObject"),
+          function(x,
+                   feature_info_list,
+                   features=NULL,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            # Check if features are provided externally.
+            is_external <- !is.null(features)
+            
+            # Create features from columns in the dataset, if unset.
+            if(!is_external && x@delay_loading){
+              # Get features from the feature info list.
+              features <- get_available_features(feature_info_list=x,
+                                                 exclude_signature=exclude_signature,
+                                                 exclude_novelty=exclude_novelty)
+              
+            } else if(!is_external){
+              # Get features directly.
+              features <- get_feature_columns(x)
+            }
+            
+            # Pass to underlying function.
+            return(.get_required_features(features=features,
+                                          feature_info_list,
+                                          is_clustered=.as_preprocessing_level(x@preprocessing_level) == "clustering",
+                                          is_external=is_external,
+                                          exclude_signature=exclude_signature,
+                                          exclude_novelty=exclude_novelty,
+                                          exclude_imputation=TRUE,
+                                          ...))
+          })
+
+
+
+#### get_model_features (character) --------------------------------------------
+setMethod("get_model_features", signature(x="character"),
+          function(x,
+                   feature_info_list,
+                   is_clustered,
+                   exclude_signature=FALSE,
+                   exclude_novelty=FALSE,
+                   ...){
+            
+            return(.get_required_features(features=x,
+                                          feature_info_list=feature_info_list,
+                                          is_clustered=is_clustered,
+                                          is_external=TRUE,
+                                          exclude_signature=exclude_signature,
+                                          exclude_novelty=exclude_novelty,
+                                          exclude_imputation=TRUE,
+                                          ...))
+          })
+
+#### get_model_features (NULL) ----------------------------------------------
+setMethod("get_model_features", signature(x="NULL"),
+          function(x,
+                   ...){
+            return(NULL)            
           })
 
 

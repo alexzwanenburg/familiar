@@ -622,11 +622,14 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 vimp_score_names <- names(vimp_score)
               }
               
-              # Create the variable importance data table
-              vimp_table <- data.table::data.table("score"=vimp_score, "name"=vimp_score_names)
-              vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-              vimp_table[, "multi_var":=TRUE]
-
+              # Create variable importance object.
+              vimp_object <- methods::new("vimpTable",
+                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                                          score_aggregation="max",
+                                          invert=TRUE)
+              
+              return(vimp_object)
+              
             } else if(vimp_method == "minimum_depth"){
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
@@ -654,10 +657,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 vimp_score_names  <- names(vimp_score)
               }
               
-              # Create the variable importance data table
-              vimp_table <- data.table::data.table("score"=vimp_score, "name"=vimp_score_names)
-              vimp_table[, "rank":=data.table::frank(score, ties.method="min")]
-              vimp_table[, "multi_var":=TRUE]
+              # Create variable importance object.
+              vimp_object <- methods::new("vimpTable",
+                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                                          score_aggregation="max",
+                                          invert=FALSE)
+              
+              return(vimp_object)
               
             } else if(vimp_method == "variable_hunting"){
               
@@ -690,10 +696,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 vimp_score_names <- names(vimp_score)
               }
               
-              # Create the variable importance data table
-              vimp_table <- data.table::data.table("score"=vimp_score, "name"=vimp_score_names)
-              vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-              vimp_table[, "multi_var":=TRUE]
+              # Create variable importance object.
+              vimp_object <- methods::new("vimpTable",
+                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                                          score_aggregation="max",
+                                          invert=TRUE)
+              
+              return(vimp_object)
               
             } else if(vimp_method == "holdout"){
               
@@ -706,10 +715,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               if(get_n_features(data) <= 1){
                 warning("Variable importance using randomForestRFSRC::holdout.vimp requires more than 1 feature.")
                 
-                return(data.table::data.table("score"=0.0,
-                                              "name"=get_feature_columns(x=data),
-                                              "rank"=1L,
-                                              "multi_var"=TRUE))
+                # Create variable importance object.
+                vimp_object <- methods::new("vimpTable",
+                                            vimp_table=data.table::data.table("score"=0.0, "name"=get_feature_columns(x=data)),
+                                            score_aggregation="max",
+                                            invert=TRUE)
+                
+                return(vimp_object)
               }
               
               # Find feature columns in the data.
@@ -769,16 +781,19 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 vimp_score_names  <- names(vimp_score)
               }
               
-              # Create the variable importance data table
-              vimp_table <- data.table::data.table("score"=vimp_score, "name"=names(vimp_score))
-              vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-              vimp_table[, "multi_var":=TRUE]
+              # Create variable importance object.
+              vimp_object <- methods::new("vimpTable",
+                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                                          score_aggregation="max",
+                                          invert=TRUE)
+              
+              return(vimp_object)
               
             } else {
               ..error_reached_unreachable_code(paste0("..vimp,familiarRFSRC: unknown vimp method was specified: ", vimp_method))
             }
             
-            return(vimp_table)
+            return(NULL)
           })
 
 

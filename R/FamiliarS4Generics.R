@@ -88,6 +88,35 @@ setGeneric("has_calibration_info", function(object) standardGeneric("has_calibra
 
 setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("extract_settings_from_data"))
 
+setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_object_parameters"))
+
+setGeneric("get_required_features", function(x, ...) standardGeneric("get_required_features"))
+
+setGeneric("get_model_features", function(x, ...) standardGeneric("get_model_features"))
+
+##### Clustering methods -------------------------------------------------------
+setGeneric("set_similarity_table", function(object, data, ...) standardGeneric("set_similarity_table"))
+
+setGeneric(".set_similarity_table", function(object, data, ...) standardGeneric(".set_similarity_table"))
+
+setGeneric("get_similarity_names", function(object, ...) standardGeneric("get_similarity_names"))
+
+setGeneric("get_distance_table", function(object, ...) standardGeneric("get_distance_table"))
+
+setGeneric("get_distance_matrix", function(object, ...) standardGeneric("get_distance_matrix"))
+
+setGeneric("apply_cluster_method", function(object, ...) standardGeneric("apply_cluster_method"))
+
+setGeneric("create_clusters", function(object, ...) standardGeneric("create_clusters"))
+
+setGeneric(".cluster_by_silhouette", function(object, ...) standardGeneric(".cluster_by_silhouette"))
+
+setGeneric(".cluster_by_fixed_cut", function(object, ...) standardGeneric(".cluster_by_fixed_cut"))
+
+setGeneric(".cluster_by_dynamic_cut", function(object, ...) standardGeneric(".cluster_by_dynamic_cut"))
+
+setGeneric(".cluster_by_generic", function(object, ...) standardGeneric(".cluster_by_generic"))
+
 
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))
@@ -157,6 +186,12 @@ setGeneric("is_in_novelty", function(object, ...) standardGeneric("is_in_novelty
 
 setGeneric("update_removed_status", function(object, ...) standardGeneric("update_removed_status"))
 
+setGeneric("feature_info_complete", function(object, ...) standardGeneric("feature_info_complete"))
+
+setGeneric("add_feature_info_parameters", function(object, data, ...) standardGeneric("add_feature_info_parameters"))
+
+setGeneric("apply_feature_info_parameters", function(object, data, ...) standardGeneric("apply_feature_info_parameters"))
+
 
 ##### plotting methods #####
 setGeneric("plot_all", function(object, ...) standardGeneric("plot_all"))
@@ -186,8 +221,6 @@ setGeneric("get_unique_row_names", function(x, ...) standardGeneric("get_unique_
 setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
-
-setGeneric("decode_categorical_variables_vimp", function(object, ...) standardGeneric("decode_categorical_variables_vimp"))
 
 setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
 
@@ -284,3 +317,22 @@ setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric("
 setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
 
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
+
+
+#### vimpTable -----------------------------------------------------------------
+
+setGeneric("decode_vimp_table", function(x, ...) standardGeneric("decode_vimp_table"))
+
+setGeneric("decluster_vimp_table", function(x, ...) standardGeneric("decluster_vimp_table"))
+
+setGeneric("recluster_vimp_table", function(x, ...) standardGeneric("recluster_vimp_table"))
+
+setGeneric("rank_vimp_table", function(x, ...) standardGeneric("rank_vimp_table"))
+
+setGeneric("preprocess_vimp_table", function(x, ...) standardGeneric("preprocess_vimp_table"))
+
+setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove_signature_features"))
+
+setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
+
+setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))

@@ -102,7 +102,7 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -164,7 +164,7 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -225,7 +225,7 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -296,7 +296,7 @@ testthat::test_that("Gradient boosting tree model can train and predict on wide 
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
   
   # Valid predictions are present.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)

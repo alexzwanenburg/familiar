@@ -100,13 +100,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                       cluster_cut_method=feature_cluster_cut_method,
                                       cluster_similarity_threshold=feature_similarity_threshold,
                                       cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
-            
-            # Check correlation method
-            .check_parameter_value_is_valid(x=feature_similarity_metric, var_name="feature_similarity_metric",
-                                            values=.get_available_similarity_metrics(data_type="feature"))
-            
-            
+                                      data_type="feature")
             
             # Obtain confidence level from the settings file stored with the
             # familiarEnsemble object.
@@ -219,7 +213,8 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                 data_element=bootstrap_data$data_element,
                                 bootstrap=bootstrap_data$bootstrap,
                                 bootstrap_seed = bootstrap_data$seed,
-                                MoreArgs=list("data"=data),
+                                MoreArgs=list("data"=data,
+                                              "feature_info_list"=object@feature_info),
                                 progress_bar=progress_bar,
                                 chopchop=TRUE)
     
@@ -231,6 +226,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                 bootstrap=bootstrap_data$bootstrap,
                                 bootstrap_seed = bootstrap_data$seed,
                                 MoreArgs=list("data"=data,
+                                              "feature_info_list"=object@feature_info,
                                               "cl"=cl,
                                               "verbose"=verbose,
                                               "message_indent"=message_indent),
@@ -251,6 +247,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 ..extract_feature_similarity <- function(cl=NULL,
                                          data_element,
                                          data,
+                                         feature_info_list,
                                          bootstrap,
                                          bootstrap_seed,
                                          message_indent=0L,
@@ -268,74 +265,62 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
   feature_columns <- get_feature_columns(x=data)
   
   # Compute the similarity table
-  data_element@data <- cluster.get_featurewise_similarity_table(cl=cl,
-                                                                data_obj=data,
-                                                                feature_columns=feature_columns,
-                                                                similarity_metric=data_element@similarity_metric,
-                                                                message_indent=message_indent + 1L,
-                                                                verbose=verbose)
+  data_element@data <- set_similarity_table(data=data,
+                                            feature_info_list=feature_info_list[feature_columns],
+                                            similarity_metric=data_element@similarity_metric,
+                                            data_type="feature",
+                                            cl=cl,
+                                            message_indent=message_indent + 1L,
+                                            verbose=verbose)
   
   return(data_element)
 }            
 
 
 
-..compute_feature_similarity_dendrogram <- function(x){
+.append_feature_similarity_dendrogram <- function(x){
   
   if(is_empty(x)) return(x)
   
-  # Generate a distance matrix from the similarity table
-  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
-                                                 similarity_metric=x@similarity_metric)
+  # Create a cluster method object using data stored in x.
+  cluster_method_object <- .create_feature_similarity_cluster_method_object(x=x)
   
-  # Obtain cluster object.
-  h <- cluster.get_cluster_object(distance_matrix=distance_matrix,
-                                  cluster_method=x@cluster_method,
-                                  cluster_linkage=x@linkage_method)
+  if(is.null(cluster_method_object)) return(x)
+  
+  # Create the cluster object.
+  object <- apply_cluster_method(object=cluster_method_object)
   
   # Attach to data element.
-  x@dendrogram <- h
+  x@dendrogram <- object@object
   
   return(x)
 }
 
 
 
-..compute_feature_similarity_clusters <- function(x){
+.append_feature_similarity_clusters <- function(x){
+  
   if(is_empty(x)) return(x)
   
-  # Compute the distance matrix
-  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data,
-                                                 similarity_metric=x@similarity_metric)
+  # Generate the clustering table.
+  cluster_table <- .compute_feature_similarity_cluster_table(x=x)
   
-  if(length(x@similarity_threshold) > 1){
-    # Remove 1.0 because that does not yield clustering info.
-    available_thresholds <- setdiff(x@similarity_threshold, 1.0)
-    
-    # Select the maximum threshold.
-    x@similarity_threshold <- max(available_thresholds)
-  }
-  
-  # Find cluster information
-  cluster_info <- cluster.get_cluster_table(distance_matrix=distance_matrix,
-                                            require_representation=FALSE,
-                                            cluster_method=x@cluster_method,
-                                            cluster_linkage=x@linkage_method,
-                                            cluster_cut_method=x@cluster_cut_method,
-                                            cluster_similarity_threshold=x@similarity_threshold,
-                                            cluster_similarity_metric=x@similarity_metric)
+  # Check for empty cluster tables.
+  if(is_empty(cluster_table)) return(x)
   
   # Keep only name and cluster_id columns
-  cluster_info <- cluster_info[, c("name", "cluster_id"), with=FALSE]
+  cluster_table <- cluster_table[, mget(c("name", "cluster_id"))]
   
   # Compute cluster size
-  cluster_info[, "cluster_size":=.N, by="cluster_id"]
+  cluster_table[, "cluster_size":=.N, by="cluster_id"]
   
   # Rename name column to 
-  data.table::setnames(cluster_info, old="name", new="feature")
+  data.table::setnames(cluster_table,
+                       old="name",
+                       new="feature")
   
   # Set cluster info as data.
-  x@data <- cluster_info
+  x@data <- cluster_table
   
   # Reset value and grouping columns.
   x@value_column <- c("cluster_id", "cluster_size")
@@ -346,25 +331,30 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 
 
 
-..compute_feature_similarity_clustering <- function(x){
+.append_feature_similarity_clustering <- function(x){
   
   if(is_empty(x)) return(x)
   
-  # Get data.table with feature ordering
-  feature_order_table <- cluster.extract_label_order(cluster_object=x@dendrogram,
-                                                     cluster_method=x@cluster_method)
+  # Generate the clustering table.
+  cluster_table <- .compute_feature_similarity_cluster_table(x=x)
+  
+  # Check for empty cluster tables.
+  if(is_empty(cluster_table)) return(x)
+  
+  # Keep only name and label_order columns,
+  cluster_table <- cluster_table[, mget(c("name", "label_order"))]
   
   # Merge ordering into feature_similarity_table. The table is first
   # merged on feature_name_1 and then on feature_name_2.
   mutual_correlation_table <- data.table::copy(x@data)
   mutual_correlation_table <- merge(x=mutual_correlation_table,
-                                    y=feature_order_table,
+                                    y=cluster_table,
                                     by.x="feature_name_1",
                                     by.y="name",
                                     all.x=TRUE,
                                     all.y=FALSE)
   mutual_correlation_table <- merge(x=mutual_correlation_table,
-                                    y=feature_order_table,
+                                    y=cluster_table,
                                     by.x="feature_name_2",
                                     by.y="name",
                                     all.x=TRUE,
@@ -382,6 +372,55 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
   x@grouping_column <- c(x@grouping_column, "label_order_1", "label_order_2")
   
   return(x)
+}
+
+
+
+.compute_feature_similarity_cluster_table <- function(x){
+  # Computes the feature similarity cluster table from the similarity table in
+  # x.
+  
+  # Create a cluster method object using data stored in x.
+  cluster_method_object <- .create_feature_similarity_cluster_method_object(x=x)
+  
+  if(is.null(x)) return(NULL)
+  
+  # Compute the cluster table.
+  cluster_table <- create_clusters(object=cluster_method_object,
+                                   as_cluster_object=FALSE)
+  
+  return(cluster_table)
+}
+
+
+
+.create_feature_similarity_cluster_method_object <- function(x){
+  
+  if(is_empty(x)) return(NULL)
+  
+  if(length(x@similarity_threshold) > 1){
+    # Remove 1.0 because that does not yield clustering info.
+    available_thresholds <- setdiff(x@similarity_threshold, 1.0)
+    
+    # Select the maximum threshold.
+    x@similarity_threshold <- max(available_thresholds)
+  }
+  
+  # Create cluster method object.
+  cluster_method_object <- create_cluster_method_object(cluster_method=x@cluster_method,
+                                                        data_type = "feature",
+                                                        cluster_linkage=x@linkage_method,
+                                                        cluster_cut_method=x@cluster_cut_method,
+                                                        cluster_similarity_threshold=x@similarity_threshold,
+                                                        cluster_similarity_metric=x@similarity_metric,
+                                                        cluster_representation_method="none")
+  
+  # Attach the similarity table to the cluster_method_object.
+  cluster_method_object@similarity_table <- methods::new("similarityTable",
+                                                         data=x@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
+                                                         similarity_metric=x@similarity_metric,
+                                                         data_type=cluster_method_object@data_type)
+  return(cluster_method_object)
 }
 
 
@@ -450,6 +489,9 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Extract data.
             x <- object@feature_similarity
             
@@ -498,29 +540,34 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
               feature_similarity_threshold=feature_similarity_threshold)
             }
             
-            # Check whether the input parameters are valid.
+            # Check whether the input parameters are valid and create a cluster
+            # object.
             .check_cluster_parameters(cluster_method=x[[1]]@cluster_method,
+                                      data_type = "feature",
                                       cluster_linkage=x[[1]]@linkage_method,
                                       cluster_cut_method=x[[1]]@cluster_cut_method,
                                       cluster_similarity_threshold=x[[1]]@similarity_threshold,
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
-                                      var_type="feature")
+                                      cluster_representation_method="none")
             
             if(aggregate_results | export_dendrogram | export_ordered_data | export_clustering){
               x <- .compute_data_element_estimates(x)
               
               if(export_dendrogram | export_ordered_data | export_clustering){
                 # Add dendrogram and other cluster objects.
-                x <- lapply(x, ..compute_feature_similarity_dendrogram)
+                x <- lapply(x,
+                            .append_feature_similarity_dendrogram)
               }
               
               if(export_clustering){
-                x <- lapply(x, ..compute_feature_similarity_clusters)
+                x <- lapply(x,
+                            .append_feature_similarity_clusters)
               }
               
               if(export_ordered_data){
                 # Add clustering information.
-                x <- lapply(x, ..compute_feature_similarity_clustering)
+                x <- lapply(x,
+                            .append_feature_similarity_clustering)
               }
             }
             

@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.Rprofile
 doc
 Meta
 tests/testthat/Rplots.pdf
@@ -9,3 +10,4 @@ inst/doc
 /Meta/
 /man/
 *.Rd
+tests/old_experiments/_experiment

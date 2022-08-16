@@ -7,17 +7,9 @@ run_model_development <- function(cl,
   # Model building
 
   # Check which data object is required for performing model building
-  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  mb_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="mb")
   
-  # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl,
-                       data_id=mb_data_id,
-                       file_paths=file_paths,
-                       project_id=project_list$project_id,
-                       message_indent=message_indent,
-                       verbose=verbose)
-
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
                             data_id=mb_data_id)
@@ -100,25 +92,43 @@ build_model <- function(run, hpo_list){
                        aggregate_on_load = FALSE,
                        outcome_info = create_outcome_info(settings=settings))
   
-  ############### Initialisation ##################################################################
+  # Load feature_info_list
+  feature_info_list <- .get_feature_info_list(run=run)
+  
+  #### Initialisation ----------------------------------------------------------
   
   # Get hyper-parameters
   hyperparameter_object <- .find_hyperparameters_for_run(run=run,
                                                          hpo_list=hpo_list)
   
   
+  # Read variable importance file and retrieve the variable importance table objects.
+  vimp_table_list <- .retrieve_feature_selection_data(fs_method=run$fs_method,
+                                                      project_list=project_list,
+                                                      file_paths=file_paths)[[run$fs_method]]
+  
+  # Collect all relevant variable importance
+  vimp_table_list <- collect_vimp_table(x=vimp_table_list,
+                                        run_table=run$run_table)
+  
+  # Update using reference cluster table to ensure that the data are
+  # correct locally.
+  vimp_table_list <- update_vimp_table_to_reference(x=vimp_table_list,
+                                                    reference_cluster_table=.create_clustering_table(feature_info_list=feature_info_list))
+  
+  # Recluster the data according to the clustering table corresponding to the
+  # model.
+  vimp_table_list <- recluster_vimp_table(vimp_table_list)
+  
   # Get feature ranks
-  rank_table <- rank.get_feature_ranks(run=run,
-                                       fs_method=run$fs_method,
-                                       settings=settings,
-                                       proj_list=project_list,
-                                       file_paths=file_paths)
-
-
-  ############### Data preparation ################################################################
-
-  # Load feature_info_list
-  feature_info_list <- get_feature_info_list(run=run)
+  vimp_table <- aggregate_vimp_table(vimp_table_list,
+                                     aggregation_method=settings$fs$aggregation,
+                                     rank_threshold=settings$fs$aggr_rank_threshold)
+  
+  # Extract rank table.
+  rank_table <- get_vimp_table(vimp_table)
+  
+  #### Data preparation --------------------------------------------------------
   
   # Create familiar model
   fam_model <- methods::new("familiarModel",

@@ -620,6 +620,9 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             if(!is.null(time_range)){
               # Check that time_range is valid.
               .check_argument_length(time_range, var_name="time_range", min=2, max=2)

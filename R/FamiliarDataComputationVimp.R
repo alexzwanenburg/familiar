@@ -67,7 +67,9 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             } 
             
             # Check aggregation method
-            rank.check_aggregation_method(method=aggregation_method)
+            .check_parameter_value_is_valid(x=aggregation_method,
+                                            var_name="aggregation_method",
+                                            values=.get_available_rank_aggregation_methods())
             
             # Obtain rank thresholds from stored settings, if required
             if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
@@ -105,30 +107,18 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
-  # Add model name.
-  data_element <- add_model_name(proto_data_element, object=object)
-  
   # Check that the model has been trained.
   if(!model_is_trained(object)) return(NULL)
   
   # Extract variable importance from the models
-  vimp_table <- ..vimp(object=object, data=data)
+  vimp_table <- get_vimp_table(x=object, data=data, as_object=TRUE)
   
   # Check that the variable importance table is not empty.
   if(is_empty(vimp_table)) return(NULL)
   
-  # Decluster the features.
-  vimp_table <- rank.decluster_vimp_table(vimp_table=vimp_table,
-                                          feature_info_list=object@feature_info)
-  
-  vimp_table[, ":="("data_id"=tail(object@run_table, n=1)$data_id,
-                    "run_id"=tail(object@run_table, n=1)$run_id)]
-  
   # Add data.
+  data_element <- proto_data_element
   data_element@data <- vimp_table
-  
-  # Add value and grouping columns.
-  data_element@value_column <- c("rank", "score")
 
   return(data_element)
 }
@@ -169,7 +159,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
             
             # Check aggregation method
-            rank.check_aggregation_method(method=aggregation_method)
+            .check_parameter_value_is_valid(x=aggregation_method,
+                                            var_name="aggregation_method",
+                                            values=.get_available_rank_aggregation_methods())
             
             # Obtain rank thresholds from stored settings, if required
             if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
@@ -190,37 +182,82 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
                            indent=message_indent,
                            verbose=verbose)
             
+            # Retrieve variable importance table objects.
+            vimp_table_list <- .retrieve_feature_selection_data(fs_method=object@fs_method,
+                                                                project_list=project_list,
+                                                                file_paths=file_paths)[[object@fs_method]]
+            
             # Define the run table -> at the pooling level
             run <- .get_run_list(iteration_list=project_list$iter_list,
                                  data_id=object@run_table$ensemble_data_id,
                                  run_id=object@run_table$ensemble_run_id)
             
-            # Obtain variable importance table
-            vimp_table <- rank.get_vimp_table(run=run,
-                                              fs_method=object@fs_method,
-                                              proj_list=project_list,
-                                              file_paths=file_paths,
-                                              decluster=TRUE)
+            # Collect the correct vimp tables from the full list.
+            vimp_table_list <- collect_vimp_table(x=vimp_table_list,
+                                                  run_table=run$run_table)
             
             # Check if the variable importance table has been set.
-            if(is.null(vimp_table)) return(NULL)
+            if(is_empty(vimp_table_list)) return(NULL)
+            if(all(sapply(vimp_table_list, is_empty))) return(NULL)
             
-            # Generate a prototype data element
-            data_element <- methods::new("familiarDataElementVimpData",
-                                         data=vimp_table,
-                                         rank_threshold=rank_threshold,
-                                         rank_aggregation_method=aggregation_method)
+            # Create list of data elements.
+            data_element_list <- lapply(vimp_table_list, function(x, rank_threshold, aggregation_method){
+              return(methods::new("familiarDataElementVimpData",
+                                  data=x,
+                                  rank_threshold=rank_threshold,
+                                  rank_aggregation_method=aggregation_method))
+            },
+            rank_threshold=rank_threshold,
+            aggregation_method=aggregation_method)
             
-            return(list(data_element))
+            # Merge data elements
+            data_element <- merge_data_elements(data_element_list)
+            
+            return(data_element)
+          })
+
+
+#####merge_data_elements (familiarDataElementVimpData)--------------------------
+setMethod("merge_data_elements", signature(x="familiarDataElementVimpData"),
+          function(x, x_list, ...){
+            
+            # Identify items that can be joined.
+            id_table <- identify_element_sets(x=x_list, ...)
+            
+            # Identify the element identifiers that should be grouped.
+            grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
+            
+            # List of data elements.
+            data_elements <- list()
+            
+            for(current_group_data_element_ids in grouped_data_element_ids){
+              # Copy the first data element in the group and use it as a
+              # prototype.
+              prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
+              
+              if(any(sapply(x_list[current_group_data_element_ids], function(x) (is(x@data, "vimpTable"))))) {
+                
+                # Data attribute contains a variable importance table object.
+                data_attribute <- lapply(x_list[current_group_data_element_ids], function(x) (x@data))
+                
+                # Set data attribute.
+                prototype_data_element@data <- data_attribute
+                
+              } else if(length(current_group_data_element_ids) != 1){
+                ..error_reached_unreachable_code("merge_data_elements,familiarDataElementVimpData: exactly one element is expected")
+              }
+              
+              # Add merged data element to the list.
+              data_elements <- c(data_elements, list(prototype_data_element))
+            }
+            
+            return(data_elements)
           })
 
 
 ##### ..compute_data_elements_estimates (familiarDataElementHyperparameters)------
 setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVimpData"),
           function(x, x_list=NULL, ...){
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            rank <- NULL
             
             # It might be that x was only used to direct to this method.
             if(!is.null(x_list)) x <- x_list
@@ -230,46 +267,79 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
             x <- x[!sapply(x, is_empty)]
             if(is_empty(x)) return(NULL)
             
-            # Collect all data.
-            data <- data.table::rbindlist(lapply(x, function(x) (x@data)),
-                                          use.names=TRUE,
-                                          fill=TRUE)
+            # Collect all the stored variable importance table objects.
+            vimp_table_list <- unlist(lapply(x, function(x) x@data))
             
-            # Find translation table.
-            translation_table <- rank.consensus_clustering(vimp_table=data)
-            
-            # Determine aggregate ranks.
-            data <- rank.aggregate_feature_ranks(vimp_table=data,
-                                                 aggregation_method=x[[1]]@rank_aggregation_method,
-                                                 rank_threshold=x[[1]]@rank_threshold)
-            
-            # Merge the translation table into the data.
-            data <- merge(x=data,
-                          y=translation_table,
-                          by.x="name",
-                          by.y="feature_name")
-            
-            # Update column names.
-            data.table::setnames(data,
-                                 old=c("name", "aggr_rank", "aggr_score"),
-                                 new=c("feature", "rank", "score"))
-            
-            # Remove cluster_name
-            data[, "cluster_name":=NULL]
-            
-            # Order by rank.
-            data <- data[order(rank)]
-            
-            # Add cluster size.
-            data[, "cluster_size":=.N, by="cluster_id"]
+            # Aggregate list of vimp tables.
+            vimp_object <- aggregate_vimp_table(x=vimp_table_list,
+                                                aggregation_method=x[[1]]@rank_aggregation_method,
+                                                rank_threshold=x[[1]]@rank_threshold)
             
             # Copy data element.
             y <- x[[1]]
-            y@data <- data
+            y@data <- vimp_object
             
             return(y)
           })
 
+
+#####.export (familiarDataElementVimpData)--------------------------------------
+setMethod(".export", signature(x="familiarDataElementVimpData"),
+          function(x, x_list, aggregate_results=FALSE, ...){
+            
+            if(aggregate_results){
+              x_list <- .compute_data_element_estimates(x_list)
+            }
+            
+            # Extract variable importance tables, and add identifiers.
+            x_list <- lapply(x_list,
+                             ..export_vimp_data_elements)
+            
+            # Extract the data.table and merge to a single data.table.
+            vimp_table <- lapply(x_list, function(x) x@data)
+            vimp_table <- data.table::rbindlist(vimp_table, use.names=TRUE)
+            
+            # Form prototype.
+            x <- x_list[[1]]
+            x@data <- vimp_table
+            
+            return(x)
+          })
+
+
+..export_vimp_data_elements <- function(x){
+  # Until export, all variable importance data elements are vimpTable objects.
+  # We need to export these as data.tables/
+  
+  # Convert to data.table internally.
+  if(is.list(x@data)){
+    vimp_table_list <- lapply(x@data, get_vimp_table)
+    
+  } else {
+    vimp_table_list <- list(get_vimp_table(x@data))
+  }
+  
+  # Combine to a single table.
+  vimp_table_list <- data.table::rbindlist(vimp_table_list,
+                                           use.names=TRUE)
+  
+  # Check if the resulting combined table is empty.
+  if(is_empty(vimp_table_list)) vimp_table_list <- NULL
+  
+  # Update the data attribute.
+  x@data <- vimp_table_list
+  
+  # Update grouping and value columns.
+  x@grouping_column <- "name"
+  x@value_column <- c("score", "rank")
+  
+  # Add data attributes to the table
+  x <- .identifier_as_data_attribute(x=x,
+                                     identifier="all",
+                                     as_grouping_column=TRUE)
+  
+  return(x)
+}
 
 
 #####export_model_vimp#####
@@ -389,7 +459,9 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              rank.check_aggregation_method(method=aggregation_method)
+              .check_parameter_value_is_valid(x=aggregation_method,
+                                              var_name="aggregation_method",
+                                              values=.get_available_rank_aggregation_methods())
               
               # Set aggregation method.
               x <- lapply(x, function(x, aggregation_method){
@@ -570,7 +642,9 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(aggregation_method)){
               # Check if the aggregation method is valid.
-              rank.check_aggregation_method(method=aggregation_method)
+              .check_parameter_value_is_valid(x=aggregation_method,
+                                              var_name="aggregation_method",
+                                              values=.get_available_rank_aggregation_methods())
               
               # Set aggregation method.
               x <- lapply(x, function(x, aggregation_method){
@@ -582,7 +656,9 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             
             if(!is.waive(rank_threshold)){
               # Check if the threshold is valid.
-              .check_number_in_valid_range(x=rank_threshold, var_name="rank_threshold", range=c(1, Inf))
+              .check_number_in_valid_range(x=rank_threshold,
+                                           var_name="rank_threshold",
+                                           range=c(1, Inf))
               
               # Set threshold.
               x <- lapply(x, function(x, rank_threshold){

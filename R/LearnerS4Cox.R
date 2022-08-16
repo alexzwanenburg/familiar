@@ -249,20 +249,15 @@ setMethod("..vimp", signature(object="familiarCoxPH"),
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())
             
-            # Assign to variable importance table.
-            vimp_table <- data.table::data.table("score"=coefficient_z_values,
-                                                 "name"=names(coefficient_z_values))
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=abs(coefficient_z_values),
+                                                                          "name"=names(coefficient_z_values)),
+                                        encoding_table=object@encoding_reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=object,
-                                                            vimp_table=vimp_table,
-                                                            method="max")
-            
-            # Add ranks and set multi_var
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 

@@ -49,7 +49,7 @@ testthat::test_that("Survival regression model trained correctly", {
 testthat::test_that("Survival regression model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::get_vimp_table(good_model)
   
   # Expect that the vimp table has three rows.
   testthat::expect_equal(nrow(vimp_table), 3)
@@ -69,7 +69,7 @@ testthat::test_that("Survival regression model can train for wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # With variable importance table.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
   # No valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)

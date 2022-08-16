@@ -88,6 +88,9 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
 setMethod("show", signature(object="familiarEnsemble"),
           function(object){
             
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             # Flag to show additional information.
             show_additional_information <- TRUE
             
@@ -95,13 +98,13 @@ setMethod("show", signature(object="familiarEnsemble"),
               cat(paste0("An ensemble of ", length(object@model_list), " ",
                          object@learner, " ",
                          ifelse(length(object@model_list) == 1, "model", "models"),
-                         " (v", object@familiar_version, ").\n"))
+                         " (", .familiar_version_string(object), ").\n"))
               
             } else {
               cat(paste0("An ensemble of ", length(object@model_list), " ",
                          object@learner, " ",
                          ifelse(length(object@model_list) == 1, "model", "models"),
-                         " (v", object@familiar_version, ").\n"))
+                         " (", .familiar_version_string(object), ").\n"))
               
               # Determine how many models are trained.
               model_trained <- sapply(object@model_list, model_is_trained)

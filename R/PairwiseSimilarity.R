@@ -38,8 +38,7 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
 
 
 similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_metric){
-
-
+  
   # Check categorical flag for x
   if(length(x_categorical) != 1){
     ..error_variable_has_too_many_values(x=x_categorical, var_name="x_categorical", req_length=1)
@@ -78,6 +77,15 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   if(analysis_info$type == "gaussian"){
     # Numerical y variable
     model_obj <- stats::glm(model_formula, data=data, family=stats::gaussian)
+    
+    # Check for models where the intercept completely suffices, i.e. the scale
+    # equals 0. This can happen if one of the variables is invariant.
+    if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
+    if(near(model_obj$coefficients[["x"]], 0.0, df=2*length(x))) return(0.0)
+    
+    # Check for almost exact copies, which do not show any residual deviance.
+    if(near(model_obj$deviance, 0.0)) return(1.0)
+    
     null_obj  <- stats::glm(null_formula, data=data, family=stats::gaussian)
     
     # Compute log-likelihoods
@@ -87,6 +95,16 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   } else if(analysis_info$type == "binomial"){
     # Categorical y variable with two levels
     model_obj <- stats::glm(model_formula, data=data, family=stats::binomial)
+    
+    # Check for models where the intercept completely suffices, i.e. the scale
+    # equals 0. This can happen if one of the variables is invariant.
+    scale_coefficients <- setdiff(names(coef(model_obj)), "(Intercept)")
+    if(all(!is.finite(model_obj$coefficients[scale_coefficients]))) return(0.0)
+    if(all(near(model_obj$coefficients[scale_coefficients], 0.0, df=2*length(x)))) return(0.0)
+    
+    # Check for almost exact copies, which do not show any residual deviance.
+    if(near(model_obj$deviance, 0.0)) return(1.0)
+    
     null_obj  <- stats::glm(null_formula, data=data, family=stats::binomial)
     
     # Compute log-likelihoods
@@ -137,9 +155,14 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     similarity <- 0.0
     
   } else if(similarity > 1.0){
+    # Greater than 1.0 should be set to 1.0.
     similarity <- 1.0
-  }
-
+    
+  } else if(approximately(similarity, 1.0)){
+    # Check if values are very close to 1.0.
+    similarity <- 1.0
+  } 
+  
   return(similarity)
 }
 

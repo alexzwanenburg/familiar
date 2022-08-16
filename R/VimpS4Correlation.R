@@ -75,18 +75,12 @@ setMethod("..vimp", signature(object="familiarCorrelationVimp"),
             outcome_type = object@outcome_type,
             correlation_method = object@vimp_method)
             
-            # Create the variable importance table.
-            vimp_table <- data.table::data.table("score"=correlation_coefficients,
-                                                 "name"=feature_columns)
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=abs(correlation_coefficients), "name"=feature_columns),
+                                        encoding_table=encoded_data$reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=encoded_data$reference_table,
-                                                            vimp_table=vimp_table,
-                                                            method="abs_max")
-            
-            # Add ranks and set multivariate flag.
-            vimp_table[, "rank":=data.table::frank(-abs(score), ties.method="min")]
-            vimp_table[, "multi_var":=FALSE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })

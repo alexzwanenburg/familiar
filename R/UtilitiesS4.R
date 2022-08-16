@@ -2,7 +2,7 @@
 #' @include FamiliarS4Classes.R
 
 
-#####is_empty---------------------------------------------------------------------------
+#####is_empty-------------------------------------------------------------------
 setMethod("is_empty", signature(x="NULL"), function(x) return(TRUE))
 
 setMethod("is_empty", signature(x="data.table"), function(x){
@@ -57,6 +57,8 @@ setMethod("is_empty", signature(x="list"), function(x){
     return(FALSE)
   }
 })
+
+setMethod("is_empty", signature(x="vimpTable"), function(x) return(is_empty(x@vimp_table)))
 
 setMethod("is_empty", signature(x="vector"), function(x) length(x) == 0)
 
@@ -528,87 +530,6 @@ setMethod("encode_categorical_variables", signature(data="data.table", object="A
             # Return as list
             return(list("encoded_data"=contrast_table,
                         "reference_table"=data.table::rbindlist(reference_list)))
-          })
-
-
-
-#####decode_categorical_variables_vimp------------------------------------------
-setMethod("decode_categorical_variables_vimp", signature(object="familiarModel"),
-          function(object, vimp_table, method){
-            if(!.hasSlot(object, "encoding_reference_table")){
-              ..error_reached_unreachable_code("decode_categorical_variables_vimp: the familiarModel object did not inherit the required encoding_reference_table slot.")
-            }
-            
-            return(decode_categorical_variables_vimp(object=object@encoding_reference_table,
-                                                     vimp_table=vimp_table,
-                                                     method=method))
-          })
-
-
-setMethod("decode_categorical_variables_vimp", signature(object="NULL"),
-          function(object, vimp_table, method) return(vimp_table))
-
-
-setMethod("decode_categorical_variables_vimp", signature(object="data.table"),
-          function(object, vimp_table, method){
-            # Here object is the data.table with reference data.
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            name <- original_name <- score <- NULL
-
-            # Check if any categorical variables are present.
-            if(is_empty(object)) return(vimp_table)
-            
-            # Split vimp_table into categorical and non-categorical features.
-            data_non_categorical <- vimp_table[!name %in% object$reference_name, ]
-            data_categorical <- vimp_table[name %in% object$reference_name, ]
-            
-            if(!is_empty(data_categorical)){
-              
-              # Merge with reference.
-              data_categorical <- merge(x=data_categorical, y=object, by.x="name", by.y="reference_name")
-              
-              # Summarise score by single value according to "method"
-              if(method == "max"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=max(score, na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "abs_max"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=max(abs(score), na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "min"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=min(score, na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "abs_min"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=min(abs(score), na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "mean"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=mean(score, na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "abs_mean"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=mean(abs(score), na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "median"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=stats::median(score, na.rm=TRUE)), by=original_name])
-                
-              } else if(method == "abs_median"){
-                data_categorical <- suppressWarnings(data_categorical[, list(score=stats::median(abs(score), na.rm=TRUE)), by=original_name])
-                
-              } else {
-                ..error_reached_unreachable_code("decode_categorical_variables_vimp: unknown aggregation method")
-              }
-              
-              # Change name of original_name column to name
-              data.table::setnames(data_categorical, "original_name", "name")
-            }
-            
-            # Combine to single data.table
-            vimp_table <- rbind(data_non_categorical,
-                                data_categorical)
-            
-            # Replace infinite/nan/etc values by NA
-            vimp_table[!is.finite(score), "score":=NA_real_]
-            
-            return(vimp_table)
           })
 
 

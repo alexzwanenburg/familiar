@@ -15,6 +15,9 @@ NULL
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If
 #'  `NULL` no figures are saved, but are returned instead.
+#'@param show_cluster (*optional*) Show which features were clustered together.
+#'  Currently not available in combination with variable importance obtained
+#'  during feature selection.
 #'@param discrete_palette (*optional*) Palette to use for coloring bar plots, in
 #'  case a non-singular variable was provided to the `color_by` argument.
 #'@param gradient_palette (*optional*) Palette to use for filling the bars in
@@ -68,6 +71,10 @@ NULL
 setGeneric("plot_variable_importance",
            function(object,
                     type,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_similarity_threshold=waiver(),
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
                     draw=FALSE,
@@ -102,6 +109,10 @@ setGeneric("plot_variable_importance",
 setMethod("plot_variable_importance", signature(object="ANY"),
            function(object,
                     type,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_similarity_threshold=waiver(),
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
                     draw=FALSE,
@@ -139,6 +150,10 @@ setMethod("plot_variable_importance", signature(object="ANY"),
              object <- do.call(as_familiar_collection,
                                args=c(list("object"=object,
                                            "data_element"=data_element,
+                                           "feature_cluster_method"=feature_cluster_method,
+                                           "feature_linkage_method"=feature_linkage_method,
+                                           "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                           "feature_similarity_threshold"=feature_similarity_threshold,
                                            "aggregation_method"=aggregation_method,
                                            "rank_threshold"=rank_threshold),
                                       list(...)))
@@ -146,6 +161,10 @@ setMethod("plot_variable_importance", signature(object="ANY"),
              return(do.call(plot_variable_importance,
                             args=c(list("object"=object,
                                         "type"=type,
+                                        "feature_cluster_method"=feature_cluster_method,
+                                        "feature_linkage_method"=feature_linkage_method,
+                                        "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                        "feature_similarity_threshold"=feature_similarity_threshold,
                                         "aggregation_method"=aggregation_method,
                                         "rank_threshold"=rank_threshold,
                                         "draw"=draw,
@@ -182,6 +201,10 @@ setMethod("plot_variable_importance", signature(object="ANY"),
 setMethod("plot_variable_importance", signature(object="familiarCollection"),
           function(object,
                    type,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
                    draw=FALSE,
@@ -210,8 +233,15 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(.plot_variable_importance(object=object,
                                              type=type,
+                                             feature_cluster_method=feature_cluster_method,
+                                             feature_linkage_method=feature_linkage_method,
+                                             feature_cluster_cut_method=feature_cluster_cut_method,
+                                             feature_similarity_threshold=feature_similarity_threshold,
                                              aggregation_method=aggregation_method,
                                              rank_threshold=rank_threshold,
                                              draw=draw,
@@ -284,6 +314,10 @@ plot_model_signature_variable_importance <- function(...){
 
 .plot_variable_importance <- function(object,
                                       type,
+                                      feature_cluster_method,
+                                      feature_linkage_method,
+                                      feature_cluster_cut_method,
+                                      feature_similarity_threshold,
                                       aggregation_method,
                                       rank_threshold,
                                       draw,
@@ -311,6 +345,9 @@ plot_model_signature_variable_importance <- function(...){
                                       units,
                                       export_collection=FALSE,
                                       ...){ 
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  learner <- data_set <- NULL
   
   # Get input data.
   if(type == "feature_selection"){
@@ -358,7 +395,23 @@ plot_model_signature_variable_importance <- function(...){
     return(NULL)
   }
   
-  ##### Check input arguments ##################################################
+  # Check show_cluster
+  .check_parameter_value_is_valid(show_cluster, var_name="show_cluster", values=c(FALSE, TRUE))
+  
+  if(show_cluster){
+    # Get feature similarity data.
+    feature_similarity <- export_feature_similarity(object=object,
+                                                    feature_cluster_method=feature_cluster_method,
+                                                    feature_linkage_method=feature_linkage_method,
+                                                    feature_cluster_cut_method=feature_cluster_cut_method,
+                                                    feature_similarity_threshold=feature_similarity_threshold,
+                                                    export_dendrogram=FALSE,
+                                                    export_ordered_data=FALSE,
+                                                    export_clustering=TRUE)[[1]]
+    
+  } else {
+    feature_similarity <- NULL
+  }
   
   # ggtheme
   if(!is(ggtheme, "theme")) {
@@ -366,6 +419,12 @@ plot_model_signature_variable_importance <- function(...){
     
   } else if(is.waive(rotate_x_tick_labels)){
     rotate_x_tick_labels <- FALSE
+  }
+  
+  # Clusters cannot be generated in case no cluster information is
+  # present.
+  if(is_empty(feature_similarity) || type == "feature_selection"){
+    show_cluster <- FALSE
   }
   
   # y_label
@@ -448,6 +507,52 @@ plot_model_signature_variable_importance <- function(...){
   for(x_sub in x_split){
     
     if(is_empty(x_sub)) next()
+    
+    # Rename "name" column to "feature".
+    x_sub <- data.table::copy(x_sub)
+    data.table::setnames(x_sub, old="name", new="feature")
+    
+    # Join cluster and univariate data.
+    if(show_cluster){
+      
+      # Remove redundant data.
+      # if(type == "feature_selection"){
+      #   
+      #   # Merge to introduce
+      #   x_temporary <- merge(x=x_sub,
+      #                        y=feature_similarity@data,
+      #                        by.x=c("feature", available_splitting),
+      #                        by.y=c("feature", available_splitting),
+      #                        allow.cartesian=TRUE)
+      #   
+      #   # Feature selection-based ranking do not aggregate along data-set and
+      #   # learners.
+      #   x_temporary <- x_temporary[learner %in% c(unique(x_temporary$learner)[1])]
+      #   x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
+      #   
+      # } else if(type == "model"){
+      if(type == "model"){
+        x_temporary <- merge(x=x_sub,
+                             y=feature_similarity@data,
+                             by.x=c("feature", available_splitting, "ensemble_model_name"),
+                             by.y=c("feature", available_splitting, "ensemble_model_name"),
+                             allow.cartesian=TRUE)
+        
+        # Model-based ranking does not aggregate along data-set.
+        x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
+      }
+      
+      # Check that the resulting data is not empty, because this would
+      # mean that there is e.g. only one feature.
+      if(is_empty(x_temporary)){
+        x_temporary <- data.table::copy(x_sub)
+        x_temporary[, ":="("cluster_id"=.I,
+                           "cluster_size"=1L)]
+      }
+      
+      # Replace x_sub
+      x_sub <- x_temporary
+    }
     
     if(is.waive(plot_title)){
       plot_title <- ifelse(type == "feature_selection",
@@ -565,14 +670,18 @@ plot_model_signature_variable_importance <- function(...){
   x$feature <- factor(x$feature, levels=unique(x$feature))
   
   # Generate a guide table
-  guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
+  guide_list <- plotting.create_guide_table(x=x,
+                                            color_by=color_by,
+                                            discrete_palette=discrete_palette)
 
   # Extract data
   x <- guide_list$data
   
   # Check if cluster information should be shown:
   if(show_cluster){
-    x <- plotting.add_cluster_name(x=x, color_by=color_by, facet_by=facet_by)
+    x <- plotting.add_cluster_name(x=x,
+                                   color_by=color_by,
+                                   facet_by=facet_by)
   }
   
   # Perform last checks prior to plotting

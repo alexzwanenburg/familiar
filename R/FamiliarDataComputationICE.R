@@ -973,6 +973,9 @@ setMethod("export_ice_data", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Obtain individual conditional expectation plots.
             return(.export(x=object,
                            data_slot="ice_data",
@@ -1077,6 +1080,9 @@ setMethod("export_partial_dependence_data", signature(object="familiarCollection
                    aggregate_results=TRUE,
                    export_collection=FALSE,
                    ...){
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
             
             # Obtain partial dependence
             return(.export(x=object,

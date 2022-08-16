@@ -32,6 +32,9 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
               ..error_reached_unreachable_code(paste0("promote_learner,familiarHyperparameterLearner: encountered unknown hyperparameter learner: ", learner))
             }
             
+            # Add package version.
+            object <- add_package_version(object=object)
+            
             # Return promoted object.
             return(object)
           })
@@ -138,15 +141,16 @@ setMethod("get_prediction_type", signature(object="familiarHyperparameterLearner
 ##### show (hyperparameter learner) --------------------------------------------
 setMethod("show", signature(object="familiarHyperparameterLearner"),
           function(object){
+            
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") for inferring hyperparameters of the ", object@target_learner, ". ",
-                         "This hyperparameter model could not successfully be trained (v", object@familiar_version, ").\n"))
+                         "This hyperparameter model could not successfully be trained (", .familiar_version_string(object), ").\n"))
               
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
-                                    "; v", object@familiar_version, ") ",
+                                    "; ", .familiar_version_string(object), ") ",
                                     "for inferring hyperparameters of the ", object@target_learner, " learner. ")
               
               # Describe the package(s), if any

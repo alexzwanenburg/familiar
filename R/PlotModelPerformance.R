@@ -227,7 +227,10 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    annotate_performance=NULL,
                    export_collection=FALSE,
                    ...){
-           
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             ##### Check input arguments ----------------------------------------
             
             # ggtheme

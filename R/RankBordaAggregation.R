@@ -1,4 +1,7 @@
-rank.borda_aggregation <- function(vimp_table, rank_threshold, truncated=FALSE, enhanced=FALSE){
+.compute_rank_borda <- function(x,
+                                rank_threshold,
+                                truncated=FALSE,
+                                enhanced=FALSE){
   # Borda selection methods, as in Wald R, Khoshgoftaar TM, Dittman D, Awada W,
   # Napolitano A. An extensive comparison of feature ranking aggregation
   # techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr.,
@@ -12,7 +15,10 @@ rank.borda_aggregation <- function(vimp_table, rank_threshold, truncated=FALSE, 
   # indicated by rank_threshold. Higher scores signify better features.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  aggr_score <- occurrence <- rank <- max_rank <- borda_score <- sum_score <- NULL
+  score <- occurrence <- rank <- max_rank <- borda_score <- sum_score <- NULL
+  
+  # Extract the variable importance table.
+  vimp_table <- x@vimp_table
   
   # Determine the number of runs
   n_runs <- data.table::uniqueN(vimp_table, by="run_id")
@@ -46,29 +52,32 @@ rank.borda_aggregation <- function(vimp_table, rank_threshold, truncated=FALSE, 
   if(enhanced){
     # Enhanced borda methods use the occurrence (as in stability selection) for
     # weighting the borda score.
-    occurrence_table <- rank.get_feature_occurrence(vimp_table=vimp_table, threshold=rank_threshold, n_runs=n_runs)
+    occurrence_table <- rank.get_feature_occurrence(vimp_table=vimp_table,
+                                                    threshold=rank_threshold,
+                                                    n_runs=n_runs)
     
     # Merge tables by name
-    rank_table <- merge(x=borda_count_table, y=occurrence_table, all.x=FALSE, all.y=TRUE, by=c("name"))
+    vimp_table <- merge(x=borda_count_table,
+                        y=occurrence_table,
+                        all.x=FALSE,
+                        all.y=TRUE,
+                        by=c("name"))
     
     # Compute the enhanced borda score.
-    rank_table[, "aggr_score":=sum_score * occurrence]
-    rank_table[!is.finite(aggr_score), "aggr_score":=0.0]
-   
-    # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
-    
-    # Drop superfluous columns
-    rank_table <- rank_table[, ":="("occurrence"=NULL, "sum_score"=NULL)]
+    vimp_table[, "score":=sum_score * occurrence]
+    vimp_table[!is.finite(score), "score":=0.0]
      
   } else {
     # No merging or further aggregation is required.
-    rank_table <- borda_count_table
-    data.table::setnames(rank_table, old="sum_score", new="aggr_score")
-    
-    # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
+    vimp_table <- borda_count_table
+    data.table::setnames(vimp_table, old="sum_score", new="score")
   }
   
-  return(rank_table)
+  # Attach to vimpTable object.
+  x@vimp_table <- vimp_table[, mget(c("name", "score"))]
+  
+  # Set correct invert value.
+  x@invert <- TRUE
+  
+  return(x)
 }

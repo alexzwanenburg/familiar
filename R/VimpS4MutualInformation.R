@@ -62,14 +62,13 @@ setMethod("..vimp", signature(object="familiarUnivariateMutualInfoVimp"),
             # Calculate mutual information
             mutual_information <- .compute_mutual_information(data=data, features=feature_columns)
             
-            # Generate variable importance data table.
-            vimp_table <- data.table::data.table("score"=mutual_information, "name"=feature_columns)
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=mutual_information, "name"=feature_columns),
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Add ranks and set multivariate flag.
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=FALSE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 
@@ -226,13 +225,14 @@ setMethod("..vimp", signature(object="familiarMultivariateMutualInfoVimp"),
             # Create variable importance table from the score table.
             vimp_table <- mi_data[selected == TRUE, c("name", "objective_score", "selection_step")]
             
-            # Update names in the variable importance table.
-            data.table::setnames(vimp_table, c("selection_step", "objective_score"), c("rank", "score"))
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=vimp_table$selection_step,
+                                                                          "name"=vimp_table$name),
+                                        score_aggregation="max",
+                                        invert=FALSE)
             
-            # Add multivariate flag
-            vimp_table[, "multi_var":=TRUE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
 
 

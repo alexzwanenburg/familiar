@@ -363,12 +363,7 @@
   if(is.list(object)) object <- object[[sample(x=seq_along(object), size=1L)]]
   
   # Compute variable importance.
-  vimp_table <- .vimp(object=object, data=data)
-  
-  # Rename columns.
-  data.table::setnames(vimp_table,
-                       old=c("score", "rank"),
-                       new=c("aggr_score", "aggr_rank"))
+  vimp_table <- get_vimp_table(.vimp(object=object, data=data))
   
   return(vimp_table)
 }

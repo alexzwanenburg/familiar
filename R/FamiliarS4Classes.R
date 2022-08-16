@@ -739,6 +739,7 @@ setClass("dataObject",
 #' @slot imputation_parameters Details parameters or models for imputation of missing values.
 #' @slot cluster_parameters Details parameters for forming clusters with other features.
 #' @slot required_features Details features required for clustering or imputation.
+#' @slot familiar_version Version of the familiar package.
 #'
 #' @export
 
@@ -769,7 +770,8 @@ setClass("featureInfo",
            batch_normalisation_parameters = "ANY",
            imputation_parameters = "ANY",
            cluster_parameters = "ANY",
-           required_features = "ANY"
+           required_features = "ANY",
+           familiar_version = "ANY"
          ),
          prototype = list(
            name = NA_character_,
@@ -797,9 +799,151 @@ setClass("featureInfo",
            batch_normalisation_parameters = NULL,
            imputation_parameters = NULL,
            cluster_parameters = NULL,
-           required_features = NULL
+           required_features = NULL,
+           familiar_version = NULL
          )
 )
+
+
+#### featureInfoParameters -----------------------------------------------------
+
+#' Feature information parameters object.
+#'
+#' A featureInfo object contains information for a single feature. Some
+#' information, for example concerning clustering and transformation contains
+#' various parameters that allow for applying the data transformation correctly.
+#' These are stored in featureInfoParameters objects.
+#'
+#' @slot name Name of the feature, which by default is the column name of the
+#'   feature. Typically used to correctly assign the data.
+#' @slot complete Flags whether the parameters have been completely set.
+#' @slot familiar_version Version of the familiar package.
+#'
+#' @details featureInfoParameters is normally a parent class for specific
+#'   classes, such as featureInfoParametersTransformation.
+#'
+#' @export
+setClass("featureInfoParameters",
+         slots = list(
+           name = "character",
+           complete = "logical",
+           familiar_version = "ANY"
+         ),
+         prototype = list(
+           name = NA_character_,
+           complete = FALSE,
+           familiar_version = NULL
+         )
+)
+
+
+
+#### vimpTable -----------------------------------------------------------------
+
+#' Variable importance table
+#'
+#' A vimpTable object contains information concerning variable importance of one
+#' or more features. These objects are created during feature selection.
+#'
+#' @slot vimp_table Table containing features with corresponding scores.
+#' @slot vimp_method Method used to compute variable importance scores for each
+#'   feature.
+#' @slot run_table Run table for the data used to compute variable importances
+#'   from. Used internally.
+#' @slot score_aggregation Method used to aggregate the score of contrasts for
+#'   each categorical feature, if any,
+#' @slot encoding_table Table used to relate categorical features to their
+#'   contrasts, if any. Not used for all variable importance methods.
+#' @slot cluster_table Table used to relate original features with features
+#'   after clustering. Variable importance is determined after feature
+#'   processing, which includes clustering.
+#' @slot invert Determines whether increasing score corresponds to increasing
+#'   (`FALSE`) or decreasing rank (`TRUE`). Used internally to determine how
+#'   ranks should be formed.
+#' @slot project_id Identifier of the project that generated the vimpTable
+#'   object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   table.
+#' @slot state State of the variable importance table. The object can have the
+#'   following states:
+#'
+#'   * `initial`: initial state, directly after the variable importance table is
+#'   filled.
+#'
+#'   * `decoded`: depending on the variable importance method, the initial
+#'   variable importance table may contain the scores of individual contrasts
+#'   for categorical variables. When decoded, data in the `encoding_table`
+#'   attribute has been used to aggregate scores from all contrasts into a
+#'   single score for each feature.
+#'
+#'   * `declustered`: variable importance is determined from fully processed
+#'   features, which includes clustering. This means that a single feature in
+#'   the variable importance table may represent multiple original features.
+#'   When a variable importance table has been declustered, all clusters have
+#'   been turned into their constituent features.
+#'
+#'   * `reclustered`: When the table is reclustered, features are replaced by
+#'   their respective clusters. This is actually used when updating the cluster
+#'   table to ensure it fits to a local context. This prevents issues when
+#'   attempting to aggregate or apply variable importance tables in data with
+#'   different feature preprocessing, and as a result, different clusters.
+#'
+#'   * `ranked`: The scores have been used to create ranks, with lower ranks
+#'   indicating better features.
+#'
+#'   * `aggregated`: Score and ranks from multiple variable importance tables
+#'   were aggregated.
+#'
+#' @details vimpTable objects exists in various states. These states are
+#'   generally incremental, i.e. one cannot turn a declustered table into the
+#'   initial version. Some methods such as aggregation internally do some state
+#'   reshuffling.
+#'
+#'   This object replaces the ad-hoc lists with information that were used in
+#'   versions prior to familiar 1.2.0.
+#' @seealso \code{\link{get_vimp_table}}, \code{\link{aggregate_vimp_table}}
+#' @export
+
+setClass("vimpTable",
+         slots = list(
+           # Variable importance table.
+           vimp_table = "ANY",
+           # Variable importance method that generated the current variable
+           # importance table.
+           vimp_method = "character",
+           # Run table for the current model
+           run_table = "ANY",
+           # Set how scores from encoded features should be aggregated.
+           score_aggregation = "character",
+           # Table that can be used to merge encoded features back into
+           # singleton features, if necessary.
+           encoding_table = "ANY",
+           # Table that can be used to decluster the current table.
+           cluster_table = "ANY",
+           # Whether scores should be inverted for ranking.
+           invert = "logical",
+           # Project identifier.
+           project_id = "ANY",
+           # Version of familiar used to create the object.
+           familiar_version = "ANY",
+           # State of the object.
+           state="character"
+         ),
+         prototype = list(
+           vimp_table = NULL,
+           vimp_method = NA_character_,
+           run_table = NULL,
+           score_aggregation = NA_character_,
+           encoding_table = NULL,
+           cluster_table = NULL,
+           invert = FALSE,
+           project_id = NULL,
+           familiar_version = NULL,
+           state="initial"
+         )
+)
+
+
 
 #### outcomeInfo ---------------------------------------------------------------
 
@@ -1314,3 +1458,59 @@ setClass("familiarDataElement",
            grouping_column = NULL,
            is_aggregated = FALSE)
 )
+
+
+#### experimentData ------------------------------------------------------------
+
+#' Experiment data
+#'
+#' An experimentData object contains information concerning the experiment.
+#' These objects can be used to instantiate multiple experiments using the same
+#' iterations, feature information and variable importance.
+#'
+#' @slot experiment_setup Contains regarding the experimental setup that is used
+#'   to generate the iteration list.
+#' @slot iteration_list List of iteration data that determines which instances
+#'   are assigned to training, validation and test sets.
+#' @slot feature_info Feature information objects. Only available if the
+#'   experimentData object was generated using the `precompute_feature_info` or
+#'   `precompute_vimp` functions.
+#' @slot vimp_table_list List of variable importance table objects. Only
+#'   available if the experimentData object was created using the
+#'   `precompute_vimp` function.
+#' @slot project_id Identifier of the project that generated the experimentData
+#'   object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   experimentData.
+#'
+#' @details experimentData objects are primarily used to improve
+#'   reproducibility, since these allow for training models on a shared
+#'   foundation.
+#'
+#' @seealso \code{\link{precompute_data_assignment}}
+#'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
+#' @export
+
+setClass("experimentData",
+         slots = list(
+           # Experimental design.
+           experiment_setup = "ANY",
+           # List of iteration data.
+           iteration_list = "ANY",
+           # List of feature information objects.
+           feature_info = "ANY",
+           # List of variable importance tables.
+           vimp_table_list = "ANY",
+           # Project identifier for consistency tracking
+           project_id = "ANY",
+           # Package version for backward compatibility
+           familiar_version = "ANY"
+         ),
+         prototype = list(
+           experiment_setup = NULL,
+           iteration_list = NULL,
+           feature_info = NULL,
+           vimp_table_list = NULL,
+           project_id = NULL,
+           familiar_version = NULL
+         ))

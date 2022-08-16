@@ -90,7 +90,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest impurity method correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage",
                                                                "residence_before_1940_proportion", "avg_rooms", "industry")), TRUE)
@@ -112,7 +112,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest permutation method correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("per_capita_crime",
                                                                "lower_status_percentage",
@@ -137,7 +137,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest hold-out permutation method correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage",
                                                                "residence_before_1940_proportion", "avg_rooms")), TRUE)
@@ -164,7 +164,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest impurity method correctly ranks continuous data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
@@ -185,7 +185,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest permutation method correctly ranks continuous data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
@@ -206,7 +206,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest hold-out permutation method correctly ranks continuous data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
@@ -231,7 +231,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest impurity method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity",
                                                                "clump_thickness",
@@ -256,7 +256,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest permutation method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness",
                                                                "epithelial_cell_size", "bare_nuclei")), TRUE)
@@ -279,7 +279,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest hold-out permutation method correctly ranks binomial data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness",
                                                                "epithelial_cell_size", "bare_nuclei")), TRUE)
@@ -304,7 +304,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest impurity method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -326,7 +326,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest permutation method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -347,7 +347,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest hold-out permutation method correctly ranks multinomial outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
 })
@@ -373,7 +373,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest impurity method correctly ranks survival outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })
@@ -395,7 +395,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest permutation method correctly ranks survival outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })
@@ -417,7 +417,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("The ranger random forest hold-out permutation method correctly ranks survival outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })

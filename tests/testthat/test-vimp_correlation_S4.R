@@ -24,7 +24,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Spearman correlation correctly ranks count data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage")), TRUE)
 })
@@ -45,7 +45,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Spearman correlation correctly ranks continuous data.."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
@@ -66,7 +66,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
 
 testthat::test_that(paste0("Spearman correlation correctly ranks survival outcome data."), {
   
-  vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
 })

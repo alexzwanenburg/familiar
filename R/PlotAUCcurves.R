@@ -183,6 +183,9 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(do.call(.plot_auc_curve,
                            args=list("object"=object,
                                      "curve_type"="roc",
@@ -382,6 +385,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                    units=waiver(),
                    export_collection=FALSE,
                    ...){
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
             
             return(do.call(.plot_auc_curve,
                            args=list("object"=object,

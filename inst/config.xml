@@ -156,9 +156,11 @@
       <smbo_n_random_sets></smbo_n_random_sets>
       <!-- Maximum number of iterations of sequential model based optimisation (optional, default: 20) -->
       <max_smbo_iterations></max_smbo_iterations>
-      <!-- Number of bootstraps evaluated during each SMBO initial and intensify iteration (optional, default: 5) -->
+      <!-- Number of bootstraps evaluated initially (optional, default: 1) -->
+      <smbo_initial_bootstraps></smbo_initial_bootstraps>
+      <!-- Number of bootstraps evaluated during each SMBO initial and intensify iteration (optional, default: 3) -->
       <smbo_step_bootstraps></smbo_step_bootstraps>
-      <!-- Maximum number of intensify steps within each SMBO iteration (optional, default: 3) -->
+      <!-- Maximum number of intensify steps within each SMBO iteration (optional, default: 5) -->
       <smbo_intensify_steps></smbo_intensify_steps>
       <!-- p-value for early stopping of intensify iterations (optional, default: 0.05) -->
       <smbo_stochastic_reject_p_value></smbo_stochastic_reject_p_value>

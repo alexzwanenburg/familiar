@@ -190,7 +190,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                       cluster_cut_method=feature_cluster_cut_method,
                                       cluster_similarity_threshold=feature_similarity_threshold,
                                       cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
+                                      data_type="feature")
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -279,7 +279,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                        verbose=FALSE,
                                        message_indent,
                                        ...){
-
+  
   # Compute prediction data.
   prediction_data <- .predict(object=object,
                               data=data,
@@ -529,18 +529,41 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                            1.0,
                                            Inf)
     
-    # Only use top level features.
-    cluster_table <- data.table::data.table("name"=available_features,
-                                            "similarity_threshold"=cluster_similarity_threshold,
-                                            "cluster_id"=seq_along(available_features),
-                                            "cluster_size"=1L)
+    # Create method object.
+    cluster_method_object <- create_cluster_method_object(cluster_method="none",
+                                                          data_type = "feature",
+                                                          cluster_representation_method="none")
     
+    # Update (no) similarity table.
+    cluster_method_object@similarity_table <- methods::new("noSimilarityTable",
+                                                           data=available_features,
+                                                           data_type=cluster_method_object@data_type)
+    
+    # Generate the clustering table.
+    cluster_table <- create_clusters(object=cluster_method_object,
+                                     as_cluster_object=FALSE)
+    
+    # Add in the similarity threshold.
+    cluster_table[, "similarity_threshold":=cluster_similarity_threshold]
+    cluster_table[, "cluster_size":=.N, by="cluster_id"]
+
   } else if(cluster_method %in% c("agnes", "diana", "hclust") & cluster_cut_method == "fixed_cut"){
     # Solution for methods where multiple cuts are possible.
     
-    # Compute the distance matrix
-    distance_matrix <- cluster.get_distance_matrix(similarity_table=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
-                                                   similarity_metric=cluster_similarity_metric)
+    # Create method object.
+    cluster_method_object <- create_cluster_method_object(cluster_method=cluster_method,
+                                                          data_type = "feature",
+                                                          cluster_linkage=cluster_linkage,
+                                                          cluster_cut_method=cluster_cut_method,
+                                                          cluster_similarity_threshold=cluster_similarity_threshold,
+                                                          cluster_similarity_metric=cluster_similarity_metric,
+                                                          cluster_representation_method="none")
+    
+    # Update the similarity table and attach.
+    cluster_method_object@similarity_table <- methods::new("similarityTable",
+                                                           data=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
+                                                           similarity_metric=cluster_similarity_metric,
+                                                           data_type=cluster_method_object@data_type)
     
     # Insert 1.0 if necessary.
     if(!1.0 %in% cluster_similarity_threshold) cluster_similarity_threshold <- c(1.0, cluster_similarity_threshold)
@@ -550,26 +573,22 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                          decreasing=TRUE)
     
     # Obtain cluster tables for each threshold.
-    cluster_table <- lapply(cluster_similarity_threshold, function(cluster_similarity_threshold, ...){
+    cluster_table <- lapply(cluster_similarity_threshold, function(cluster_similarity_threshold, cluster_method_object){
       
-      # Identify clusters
-      cluster_table <- cluster.get_cluster_table(require_representation=FALSE,
-                                                 cluster_similarity_threshold=cluster_similarity_threshold,
-                                                 ...)
+      # Update the similarity threshold in the object.
+      cluster_method_object@similarity_threshold <- cluster_similarity_threshold
       
-      # Add the similarity threshold.
+      # Generate the clustering table.
+      cluster_table <- create_clusters(object=cluster_method_object,
+                                       as_cluster_object=FALSE)
+      
+      # Add in the similarity threshold and cluster size.
       cluster_table[, "similarity_threshold":=cluster_similarity_threshold]
-      
-      # Reorder columns
-      data.table::setcolorder(cluster_table, c("name", "similarity_threshold", "cluster_id", "cluster_size"))
+      cluster_table[, "cluster_size":=.N, by="cluster_id"]
       
       return(cluster_table)
     },
-    distance_matrix=distance_matrix,
-    cluster_method=cluster_method,
-    cluster_linkage=cluster_linkage,
-    cluster_cut_method=cluster_cut_method,
-    cluster_similarity_metric=cluster_similarity_metric)
+    cluster_method_object=cluster_method_object)
     
     # Concatenate to single table
     cluster_table <- data.table::rbindlist(cluster_table, use.names=TRUE)
@@ -578,32 +597,30 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     cluster_table <- cluster_table[name %in% available_features]
     
   } else {
-    # Solution for methods that do not allow for multiple cuts.
+    # Solution for methods that do not allow for multiple cuts, such as PAM.
     
-    # Identify clusters
-    cluster_table <- cluster.get_cluster_table(require_representation=FALSE,
-                                               distance_matrix=cluster.get_distance_matrix(similarity_table=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
-                                                                                           similarity_metric=cluster_similarity_metric),
-                                               cluster_method=cluster_method,
-                                               cluster_linkage=cluster_linkage,
-                                               cluster_cut_method=cluster_cut_method,
-                                               cluster_similarity_metric=cluster_similarity_metric,
-                                               cluster_similarity_threshold=cluster_similarity_threshold)
+    # Create method object.
+    cluster_method_object <- create_cluster_method_object(cluster_method=cluster_method,
+                                                          data_type = "feature",
+                                                          cluster_linkage=cluster_linkage,
+                                                          cluster_cut_method=cluster_cut_method,
+                                                          cluster_similarity_threshold=cluster_similarity_threshold,
+                                                          cluster_similarity_metric=cluster_similarity_metric,
+                                                          cluster_representation_method="none")
     
+    # Update the similarity table and attach.
+    cluster_method_object@similarity_table <- methods::new("similarityTable",
+                                                           data=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
+                                                           similarity_metric=cluster_similarity_metric,
+                                                           data_type=cluster_method_object@data_type)
+    
+    # Generate the clustering table.
+    cluster_table <- create_clusters(object=cluster_method_object,
+                                     as_cluster_object=FALSE)
+
     # Add the similarity threshold.
     cluster_table[, "similarity_threshold":=-Inf]
-    
-    # Reorder columns
-    data.table::setcolorder(cluster_table, c("name", "similarity_threshold", "cluster_id", "cluster_size"))
-    
-    # Combine with all singleton features.
-    cluster_table <- data.table::rbindlist(c(list(data.table::data.table("name"=available_features,
-                                                                         "similarity_threshold"=Inf,
-                                                                         "cluster_id"=seq_along(available_features),
-                                                                         "cluster_size"=1L)),
-                                                  list(cluster_table)),
-                                           use.names=TRUE,
-                                           fill=TRUE)
+    cluster_table[, "cluster_size":=.N, by="cluster_id"]
     
     # Remove features that are not available.
     cluster_table <- cluster_table[name %in% available_features]
@@ -735,6 +752,9 @@ setMethod("export_permutation_vimp", signature(object="familiarCollection"),
                    aggregate_results=TRUE,
                    export_collection=FALSE,
                    ...){
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
             
             return(.export(x=object,
                            data_slot="permutation_vimp",

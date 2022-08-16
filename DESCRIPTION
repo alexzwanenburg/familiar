@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.1.4
+Version: 1.2.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
@@ -30,7 +30,8 @@ Depends: R (>= 4.0.0)
 License: EUPL
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
+Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Imports:
     data.table,
@@ -43,6 +44,7 @@ Suggests:
     callr (>= 3.4.3),
     cluster,
     CORElearn,
+    coro,
     cowplot,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
@@ -72,15 +74,18 @@ Suggests:
     VGAM,
     xgboost
 Collate: 
+    'FamiliarS4Classes.R'
+    'FamiliarS4Generics.R'
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
     'CheckArguments.R'
-    'FamiliarS4Classes.R'
-    'FamiliarS4Generics.R'
     'CheckHyperparameters.R'
     'CheckPackages.R'
     'ClassBalance.R'
+    'ClusteringMethod.R'
     'Clustering.R'
+    'ClusterRepresentation.R'
+    'Normalisation.R'
     'CombatNormalisation.R'
     'DataObject.R'
     'DataParameterChecks.R'
@@ -89,6 +94,7 @@ Collate:
     'DataServerBackend.R'
     'ErrorMessages.R'
     'Evaluation.R'
+    'ExperimentData.R'
     'ExperimentSetup.R'
     'Familiar.R'
     'FamiliarCollection.R'
@@ -126,6 +132,7 @@ Collate:
     'FamiliarSharedS4Methods.R'
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
+    'FeatureInfoParameters.R'
     'FeatureSelection.R'
     'FunctionWrapperUtilities.R'
     'HyperparameterOptimisation.R'
@@ -156,7 +163,6 @@ Collate:
     'MetricS4.R'
     'MetricS4ConcordanceIndex.R'
     'ModelBuilding.R'
-    'Normalisation.R'
     'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
     'NoveltyDetectorS4NoneNoveltyDetector.R'
@@ -205,6 +211,7 @@ Collate:
     'VimpS4Concordance.R'
     'VimpMain.R'
     'VimpS4CoreLearn.R'
+    'VimpTable.R'
     'aaa.R'
 Config/testthat/parallel: true
 Config/testthat/edition: 3

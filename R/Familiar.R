@@ -49,7 +49,9 @@
 #'   In case paths are provided, the data should be stored as `csv`, `rds` or
 #'   `RData` files. See documentation for the `data_files` argument for more
 #'   information.
-#'
+#'   
+#' @param experiment_data Experimental data may provided in the form of 
+#' 
 #' @param cl Cluster created using the `parallel` package. This cluster is then
 #'   used to speed up computation through parallelisation. When a cluster is not
 #'   provided, parallelisation is performed by setting up a cluster on the local
@@ -67,6 +69,7 @@
 #'   table indicated by `config` contains more than one set of configurations.
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
+#' @param .stop_after Variable for internal use.
 #'
 #' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
@@ -88,10 +91,12 @@
 #' @md
 summon_familiar <- function(formula=NULL,
                             data=NULL,
+                            experiment_data=NULL,
                             cl=NULL,
                             config=NULL,
                             config_id=1,
                             verbose=TRUE,
+                            .stop_after="evaluation",
                             ...){
   
   # Set options.
@@ -104,7 +109,12 @@ summon_familiar <- function(formula=NULL,
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L), add=TRUE)
   
-
+  # Check .stop_after
+  .check_parameter_value_is_valid(x=.stop_after,
+                                  var_name=".stop_after",
+                                  values = c("setup", "preprocessing", "vimp", "training", "evaluation"))
+  
+  
   ##### Load configuration file ------------------------------------------------
   config <- .load_configuration_file(config=config,
                                      config_id=config_id)
@@ -131,8 +141,17 @@ summon_familiar <- function(formula=NULL,
   if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
   
   ##### Load data --------------------------------------------------------------
+  dots <- list(...)
+  
+  # Add placeholder for experimental_design in case experiment_data is set.
+  if(is.null(dots$experimental_design) & !is.null(experiment_data)){
+    dots$experimental_design <- "fs+mb"
+  }
+  
   # Parse experiment and data settings
-  settings <- .parse_initial_settings(config=config, ...)
+  settings <- do.call(.parse_initial_settings,
+                      args=c(list("config"=config),
+                             dots))
   
   if(is(data, "dataObject")){
     # Reconstitute settings from the data.
@@ -169,6 +188,23 @@ summon_familiar <- function(formula=NULL,
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
 
+  
+  #### Load experiment data ----------------------------------------------------
+  if(!is.null(experiment_data)){
+    
+    # Write experiment data to the file system
+    experiment_data <- load_experiment_data(experiment_data,
+                                            file_paths=file_paths)
+    
+    # Force the use of existing experiment data.
+    settings$data$exp_design <- .get_iteration_file_name(project_id=experiment_data@project_id,
+                                                         file_paths=file_paths)
+  }
+  
+  rm(experiment_data)
+  
+  ##### Experimental setup and settings ----------------------------------------
+  
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir,
@@ -189,7 +225,7 @@ summon_familiar <- function(formula=NULL,
   outcome_info <- create_outcome_info(settings=settings)
   
   # Define iterations etc.
-  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
+  project_info <- .get_iteration_data(file_paths=file_paths,
                                       data=data,
                                       experiment_setup=experiment_setup,
                                       settings=settings,
@@ -209,12 +245,8 @@ summon_familiar <- function(formula=NULL,
                                                      settings=settings)
   }
   
-  # Generate feature info
-  feature_info_list <- .get_feature_info_data(data=data,
-                                              file_paths=file_paths,
-                                              project_id=project_info$project_id,
-                                              outcome_type=settings$data$outcome_type)
-
+  ##### Backend and parallellisation -------------------------------------------
+  
   # Identify if an external cluster is provided, and required.
   if(settings$run$parallel){
     is_external_cluster <- inherits(cl, "cluster")
@@ -235,9 +267,7 @@ summon_familiar <- function(formula=NULL,
   .assign_data_to_backend(data=data,
                           backend_type=settings$run$backend_type,
                           server_port=settings$run$server_port)
-  .assign_feature_info_to_backend(feature_info_list=feature_info_list,
-                                  backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port)
+
   .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
                                      restart_cluster=settings$run$restart_cluster,
                                      n_cores=settings$run$parallel_nr_cores,
@@ -266,6 +296,37 @@ summon_familiar <- function(formula=NULL,
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add=TRUE)
   
+  if(.stop_after %in% c("setup")){
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list))
+  }
+  
+  ##### Pre-processing ---------------------------------------------------------
+  feature_info <- NULL
+  
+  # Start pre-processing
+  run_preprocessing(cl=cl,
+                    feature_info_list=feature_info,
+                    project_info=project_info,
+                    settings=settings,
+                    file_paths=file_paths,
+                    verbose=verbose)
+  
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("preprocessing")){
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list,
+                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
+                                                                             run_id=waiver())))
+  
+  }
+  
+  
+  
+  ##### Variable importance ----------------------------------------------------
+  
   # Start feature selection
   run_feature_selection(cl=cl,
                         project_list=project_info,
@@ -273,12 +334,35 @@ summon_familiar <- function(formula=NULL,
                         file_paths=file_paths,
                         verbose=verbose)
   
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("vimp")){
+    return(create_experiment_data(project_id=project_info$project_id,
+                                  experiment_setup=experiment_setup,
+                                  iteration_list=project_info$iter_list,
+                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
+                                                                             run_id=waiver()),
+                                  vimp_table_list=.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
+                                                                                   project_list=project_info,
+                                                                                   file_paths=file_paths)))
+  }
+  
+  
+  ##### Training ---------------------------------------------------------------
+  
   # Start model building
   run_model_development(cl=cl,
                         project_list=project_info,
                         settings=settings,
                         file_paths=file_paths,
                         verbose=verbose)
+  
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("training")){
+    return(.import_all_familiar_objects(file_paths=file_paths)$familiarModel)
+  }
+  
+  
+  ##### Explanation and evaluation ---------------------------------------------
   
   # Start evaluation
   run_evaluation(cl=cl,
@@ -298,6 +382,360 @@ summon_familiar <- function(formula=NULL,
   } else {
     return(invisible(TRUE))
   }
+}
+
+
+
+#' Pre-compute data assignment
+#'
+#' @description Creates data assignment.
+#'
+#' @param experimental_design (**required**) Defines what the experiment looks
+#'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
+#'   cross-validation with nested feature selection on 20 bootstraps and
+#'   model-building. The basic workflow components are:
+#'
+#'   * `fs`: (required) feature selection step.
+#'
+#'   * `mb`: (required) model building step.
+#'
+#'   * `ev`: (optional) external validation. If validation batches or cohorts
+#'   are present in the dataset (`data`), these should be indicated in the
+#'   `validation_batch_id` argument.
+#'
+#'   The different components are linked using `+`.
+#'
+#'   Different subsampling methods can be used in conjunction with the basic
+#'   workflow components:
+#'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
+#'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
+#'
+#'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
+#'   Pre-processing parameters are determined for each iteration.
+#'
+#'   * `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are
+#'   determined for each iteration.
+#'
+#'   * `ip(x)`: imbalance partitioning for addressing class imbalances on the
+#'   data set. Pre-processing parameters are determined for each partition. The
+#'   number of partitions generated depends on the imbalance correction method
+#'   (see the `imbalance_correction_method` parameter).
+#'
+#'   As shown in the example above, sampling algorithms can be nested.
+#'
+#'   Though neither variable importance is determined nor models are learned
+#'   within `precompute_data_assignment`, the corresponding elements are still
+#'   required to prevent issues when using the resulting `experimentData` object
+#'   to warm-start the experiments.
+#'
+#'   The simplest valid experimental design is `fs+mb`. This is the default in
+#'   `precompute_data_assignment`, and will simply assign all instances to the
+#'   training set.
+#'
+#' @inheritParams summon_familiar
+#' @inheritParams .parse_feature_selection_settings
+#' @inheritDotParams .parse_experiment_settings -config
+#' @inheritDotParams .parse_setup_settings -config
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
+#'   -outcome_type
+#'
+#' @details This is a thin wrapper around `summon_familiar`, and functions like
+#'   it, but automatically skips computation of variable importance, learning
+#'   and subsequent evaluation steps.
+#'
+#'   The function returns an `experimentData` object, which can be used to
+#'   warm-start other experiments by providing it to the `experiment_data`
+#'   argument.
+#'
+#' @return An `experimentData` object.
+#'
+#' @export
+precompute_data_assignment <- function(formula=NULL,
+                                       data=NULL,
+                                       experiment_data=NULL,
+                                       cl=NULL,
+                                       experimental_design="fs+mb",
+                                       verbose=TRUE,
+                                       ...){
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_evaluation_elements, fs_method and learner if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$fs_method <- NULL
+  dots$learner <- NULL
+  
+  # Summon a familiar and compute everything up to variable importance data.
+  experiment_data <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "experiment_data"=experiment_data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "fs_method"="none",
+                                          "learner"="glm",
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="setup"),
+                                     dots)))
+  
+  # Extract familiar models.
+  return(experiment_data)
+}
+
+
+
+
+#' Pre-compute feature information
+#'
+#' @description Creates data assignment and subsequently extracts feature
+#'   information such as normalisation and clustering parameters.
+#'
+#' @param experimental_design (**required**) Defines what the experiment looks
+#'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
+#'   cross-validation with nested feature selection on 20 bootstraps and
+#'   model-building. The basic workflow components are:
+#'
+#'   * `fs`: (required) feature selection step.
+#'
+#'   * `mb`: (required) model building step.
+#'
+#'   * `ev`: (optional) external validation. If validation batches or cohorts
+#'   are present in the dataset (`data`), these should be indicated in the
+#'   `validation_batch_id` argument.
+#'
+#'   The different components are linked using `+`.
+#'
+#'   Different subsampling methods can be used in conjunction with the basic
+#'   workflow components:
+#'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
+#'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
+#'
+#'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
+#'   Pre-processing parameters are determined for each iteration.
+#'
+#'   * `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are
+#'   determined for each iteration.
+#'
+#'   * `ip(x)`: imbalance partitioning for addressing class imbalances on the
+#'   data set. Pre-processing parameters are determined for each partition. The
+#'   number of partitions generated depends on the imbalance correction method
+#'   (see the `imbalance_correction_method` parameter).
+#'
+#'   As shown in the example above, sampling algorithms can be nested.
+#'
+#'   Though neither variable importance is determined nor models are learned
+#'   within `precompute_feature_info`, the corresponding elements are still
+#'   required to prevent issues when using the resulting `experimentData` object
+#'   to warm-start the experiments.
+#'
+#'   The simplest valid experimental design is `fs+mb`. This is the default in
+#'   `precompute_feature_info`, and will determine feature parameters over the
+#'   entire dataset.
+#'   
+#'   This argument is ignored if the `experiment_data` argument is set.
+#'
+#' @inheritParams summon_familiar
+#' @inheritParams .parse_feature_selection_settings
+#' @inheritDotParams .parse_experiment_settings -config
+#' @inheritDotParams .parse_setup_settings -config
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
+#'   -outcome_type
+#'
+#' @details This is a thin wrapper around `summon_familiar`, and functions like
+#'   it, but automatically skips computation of variable importance, learning
+#'   and subsequent evaluation steps.
+#'
+#'   The function returns an `experimentData` object, which can be used to
+#'   warm-start other experiments by providing it to the `experiment_data`
+#'   argument.
+#'
+#' @return An `experimentData` object.
+#'
+#' @export
+precompute_feature_info <- function(formula=NULL,
+                                    data=NULL,
+                                    experiment_data=NULL,
+                                    cl=NULL,
+                                    experimental_design="fs+mb",
+                                    verbose=TRUE,
+                                    ...){
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_evaluation_elements, fs_method and learner if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$fs_method <- NULL
+  dots$learner <- NULL
+  
+  # Summon a familiar and compute everything up to variable importance data.
+  experiment_data <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "experiment_data"=experiment_data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "fs_method"="none",
+                                          "learner"="glm",
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="preprocessing"),
+                                     dots)))
+  
+  # Extract familiar models.
+  return(experiment_data)
+}
+
+
+#' Pre-compute variable importance
+#'
+#' @description Creates data assignment, extracts feature information and
+#'   subsequently computes variable importance.
+#'
+#' @param experimental_design (**required**) Defines what the experiment looks
+#'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
+#'   cross-validation with nested feature selection on 20 bootstraps and
+#'   model-building. The basic workflow components are:
+#'
+#'   * `fs`: (required) feature selection step.
+#'
+#'   * `mb`: (required) model building step. Though models are not learned by
+#'   `precompute_vimp`, this element is still required to prevent issues when
+#'   using the resulting `experimentData` object to warm-start the experiments.
+#'
+#'   * `ev`: (optional) external validation. If validation batches or cohorts
+#'   are present in the dataset (`data`), these should be indicated in the
+#'   `validation_batch_id` argument.
+#'
+#'   The different components are linked using `+`.
+#'
+#'   Different subsampling methods can be used in conjunction with the basic
+#'   workflow components:
+#'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
+#'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
+#'
+#'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
+#'   Pre-processing parameters are determined for each iteration.
+#'
+#'   * `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are
+#'   determined for each iteration.
+#'
+#'   * `ip(x)`: imbalance partitioning for addressing class imbalances on the
+#'   data set. Pre-processing parameters are determined for each partition. The
+#'   number of partitions generated depends on the imbalance correction method
+#'   (see the `imbalance_correction_method` parameter).
+#'
+#'   As shown in the example above, sampling algorithms can be nested.
+#'
+#'   The simplest valid experimental design is `fs+mb`. This is the default in
+#'   `precompute_vimp`, and will compute variable importance over the entire
+#'   dataset.
+#'   
+#'   This argument is ignored if the `experiment_data` argument is set.
+#'
+#' @inheritParams summon_familiar
+#' @inheritParams .parse_feature_selection_settings
+#' @inheritDotParams .parse_experiment_settings -config
+#' @inheritDotParams .parse_setup_settings -config
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
+#'   -outcome_type
+#' @inheritDotParams .parse_feature_selection_settings
+#'   parallel_feature_selection
+#'
+#' @details This is a thin wrapper around `summon_familiar`, and functions like
+#'   it, but automatically skips learning and subsequent evaluation steps.
+#'
+#'   The function returns an `experimentData` object, which can be used to
+#'   warm-start other experiments by providing it to the `experiment_data`
+#'   argument. Variable importance may be retrieved from this object using the
+#'   `get_vimp_table` and `aggregate_vimp_table` methods.
+#'
+#' @return An `experimentData` object.
+#'
+#' @seealso \code{\link{get_vimp_table}}, \code{\link{aggregate_vimp_table}}
+#'
+#' @export
+precompute_vimp <- function(formula=NULL,
+                            data=NULL,
+                            experiment_data=NULL,
+                            cl=NULL,
+                            experimental_design="fs+mb",
+                            fs_method=NULL,
+                            fs_method_parameter=NULL,
+                            verbose=TRUE,
+                          ...){
+  
+  # Check that a single learner is present.
+  fs_method <- .parse_arg(x_config=NULL,
+                          x_var=fs_method,
+                          var_name="fs_method",
+                          type="character_list",
+                          optional=FALSE)
+  
+  # Hyperparameters may be interpreted as belonging to the specified learner.
+  fs_method_parameter <- .parse_arg(x_config=NULL,
+                                    x_var=fs_method_parameter,
+                                    var_name="fs_method_parameter",
+                                    type="list",
+                                    optional=TRUE,
+                                    default=list())
+  
+  # Encode hyperparameter as expected by parsing it to a nested list.
+  if(length(fs_method_parameter) > 0 & length(fs_method) == 1){
+    if(is.null(fs_method_parameter[[fs_method]])){
+      fs_method_parameter_list <- list()
+      fs_method_parameter_list[[fs_method]] <- fs_method_parameter
+      fs_method_parameter <- fs_method_parameter_list
+    }
+  }
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_evaluation_elements, and learner if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$learner <- NULL
+  
+  # Summon a familiar and compute everything up to variable importance data.
+  experiment_data <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "experiment_data"=experiment_data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "fs_method"=fs_method,
+                                          "fs_method_parameter"=fs_method_parameter,
+                                          "learner"="glm",
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="vimp"),
+                                     dots)))
+  
+  # Extract familiar models.
+  return(experiment_data)
 }
 
 
@@ -352,6 +790,8 @@ summon_familiar <- function(formula=NULL,
 #'   method in `fs_method`. To create more models, a subsampling method should
 #'   be introduced, e.g. `bs(fs+mb,20)` to create 20 models based on bootstraps
 #'   of the data.
+#'   
+#'   This argument is ignored if the `experiment_data` argument is set.
 #'
 #' @param learner (**required**) Name of the learner used to develop a model. A
 #'   sizeable number learners is supported in `familiar`. Please see the
@@ -381,15 +821,15 @@ summon_familiar <- function(formula=NULL,
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #'
 #' @details This is a thin wrapper around `summon_familiar`, and functions like
-#'   it, but automatically skip all evaluation steps. Only a single learner is
+#'   it, but automatically skips all evaluation steps. Only a single learner is
 #'   allowed.
 #'
 #' @return One or more familiarModel objects.
 #'   
 #' @export
-#' @md
 train_familiar <- function(formula=NULL,
                            data=NULL,
+                           experiment_data=NULL,
                            cl=NULL,
                            experimental_design="fs+mb",
                            learner=NULL,
@@ -422,25 +862,29 @@ train_familiar <- function(formula=NULL,
   # Isolate dots.
   dots <- list(...)
   
-  # Drop skip_na, project_dir, experiment_dir, and config if present.
+  # Drop skip_evaluation_elements, project_dir, and experiment_dir if present.
   dots$skip_evaluation_elements <- NULL
   dots$project_dir <- NULL
   dots$experiment_dir <- NULL
   
   # Summon a familiar.
-  familiar_models <- do.call(summon_familiar, args=(c(list("formula"=formula,
-                                                           "data"=data,
-                                                           "cl"=cl,
-                                                           "experimental_design"=experimental_design,
-                                                           "learner"=learner,
-                                                           "hyperparameter"=hyperparameter,
-                                                           "experiment_dir"=NULL,
-                                                           "project_dir"=NULL,
-                                                           "skip_evaluation_elements"="all",
-                                                           "verbose"=verbose),
-                                                      dots)))
+  familiar_models <- do.call(summon_familiar,
+                             args=(c(list("formula"=formula,
+                                          "data"=data,
+                                          "experiment_data"=experiment_data,
+                                          "cl"=cl,
+                                          "experimental_design"=experimental_design,
+                                          "learner"=learner,
+                                          "hyperparameter"=hyperparameter,
+                                          "experiment_dir"=NULL,
+                                          "project_dir"=NULL,
+                                          "skip_evaluation_elements"="all",
+                                          "verbose"=verbose,
+                                          ".stop_after"="training"),
+                                     dots)))
+  
   # Extract familiar models.
-  return(familiar_models$familiarModel)
+  return(familiar_models)
 }
 
 

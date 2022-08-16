@@ -366,19 +366,17 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             vimp_table <- data.table::data.table("score"=coefficient_z_values,
                                                  "name"=names(coefficient_z_values))
             
-            # Decode any categorical variables.
-            vimp_table <- decode_categorical_variables_vimp(object=object,
-                                                            vimp_table=vimp_table,
-                                                            method="max")
-            
             # Remove NA values
             vimp_table <- vimp_table[is.finite(score)]
             
-            # Add ranks and set multi_var
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=vimp_table,
+                                        encoding_table=object@encoding_reference_table,
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            return(vimp_table)
+            return(vimp_object)
           })
 
 

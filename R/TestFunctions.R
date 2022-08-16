@@ -61,6 +61,7 @@ test_all_learners_train_predict_vimp <- function(learners,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
+    no_feature_data <- test.create_no_feature_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
@@ -355,15 +356,16 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Test that the model has variable importance.
       test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(.vimp(model, data=full_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(model,
+                                                            data=full_data)))
         
         # Extract the variable importance table for the trimmed model.
-        vimp_table_trim <- suppressWarnings(.vimp(trimmed_model,
-                                                  data=full_data))
+        vimp_table_trim <- suppressWarnings(get_vimp_table(.vimp(trimmed_model,
+                                                                 data=full_data)))
         
         # Extract the variable importance table for the reloaded model.
-        vimp_table_reloaded <- suppressWarnings(.vimp(reloaded_model,
-                                                      data=full_data))
+        vimp_table_reloaded <- suppressWarnings(get_vimp_table(.vimp(reloaded_model,
+                                                                     data=full_data)))
         
         if(has_vimp){
           # Get the number of features
@@ -382,12 +384,12 @@ test_all_learners_train_predict_vimp <- function(learners,
           
         } else {
           # Expect that the vimp table has no rows.
-          testthat::expect_equal(nrow(vimp_table), 0)
-          testthat::expect_equal(nrow(vimp_table_trim), 0)
-          testthat::expect_equal(nrow(vimp_table_reloaded), 0)
+          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_trim), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_reloaded), TRUE)
         }
       })
-
+      
       
       
       #####Bootstrapped dataset#################################################
@@ -601,6 +603,26 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(has_calibration_info(model), TRUE)
         }
       })
+      
+      
+      
+      ##### Bad dataset without features #######################################
+      # Train the model.
+      model <- suppressWarnings(test_train(data=no_feature_data,
+                                           data_bypass=full_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
+      
+      # Test that models can be created.
+      test_fun(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a dataset for ."), {
+        
+        # Test that the model could not be successfully created.
+        testthat::expect_equal(model_is_trained(model), FALSE)
+      })
+      
       
       
       #####Dataset without censored instances###################################
@@ -992,7 +1014,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Train models -------------------------------------------------------
       cl_train <- .test_start_cluster(n_cores=2L)
-
+      
       # Train the models.
       model_list <- parallel::parLapply(cl=cl_train,
                                         list("1"=full_data, "2"=full_data),
@@ -1017,16 +1039,19 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Variable importance ------------------------------------------------
       cl_vimp <- .test_start_cluster(n_cores=2L)
-
-      # Extract variable importance data.
+      
+      # Extract variable importance objects.
       vimp_table_list <- parallel::parLapply(cl=cl_vimp,
                                              model_list,
                                              .vimp,
                                              data=full_data)
       
+      # Extract the variable importance tables themselves.
+      vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
+      
       # Test that the model has variable importance.
       testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
-       
+        
         if(has_vimp){
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1042,8 +1067,8 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
           
         } else {
           # Expect that the vimp table has no rows.
-          testthat::expect_equal(nrow(vimp_table_list[[1]]), 0)
-          testthat::expect_equal(nrow(vimp_table_list[[2]]), 0)
+          testthat::expect_equal(is_empty(vimp_table_list[[1]]), TRUE)
+          testthat::expect_equal(is_empty(vimp_table_list[[2]]), TRUE)
         }
       })
       
@@ -1052,7 +1077,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       ##### Predictions --------------------------------------------------------
       cl_predict <- .test_start_cluster(n_cores=2L)
-
+      
       # Extract predictions.
       prediction_list <- parallel::parLapply(cl=cl_predict,
                                              model_list,
@@ -1061,7 +1086,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
-
+        
         # Test that the predictions were successfully made.
         testthat::expect_equal(any_predictions_valid(prediction_list[[1]], outcome_type), TRUE)
         testthat::expect_equal(any_predictions_valid(prediction_list[[2]], outcome_type), TRUE)
@@ -1124,179 +1149,195 @@ test_all_novelty_detectors <- function(detectors,
   
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
+  
+  # Obtain data.
+  full_data <- test.create_good_data_set(outcome_type)
+  full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+  one_feature_data <- test.create_one_feature_data_set(outcome_type)
+  one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
+  empty_data <- test.create_empty_data_set(outcome_type)
+  no_feature_data <- test.create_no_feature_data_set(outcome_type)
+  bad_data <- test.create_bad_data_set(outcome_type)
+  
+  # Iterate over learners.
+  for(detector in detectors){
     
-    # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
-    one_feature_data <- test.create_one_feature_data_set(outcome_type)
-    one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
-    bad_data <- test.create_bad_data_set(outcome_type)
+    # Create a familiarNoveltyDetector object.
+    object <- methods::new("familiarNoveltyDetector",
+                           learner=detector)
     
-    # Iterate over learners.
-    for(detector in detectors){
-      
-      # Create a familiarNoveltyDetector object.
-      object <- methods::new("familiarNoveltyDetector",
-                             learner=detector)
-      
-      # Promote the novelty detector to the right class.
-      object <- promote_detector(object=object)
-      
-      # Test if the detector is available.
-      if(!is_available(object)) next()
-      
-
-      #####Full dataset#########################################################
-      
-      # Train the novelty detector.
-      model <- suppressWarnings(test_train_novelty_detector(data=full_data,
-                                                            cluster_method="none",
-                                                            imputation_method="simple",
-                                                            hyperparameter_list=hyperparameter_list,
-                                                            detector=detector))
-      
-      # Create a trimmed detector.
-      trimmed_model <- trim_model(model)
-      
-      # Check that the the novelty detector can be trimmed.
-      test_fun(paste0("Detector created using the ", detector, " algorithm can be trimmed."), {
-        if(can_trim){
-          testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
-          
-        } else {
-          testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
-        }
-      })
-      
-      # Test that the novelty detector can be created.
-      test_fun(paste0("Detector can be created using the ", detector, " algorithm using a complete dataset."), {
+    # Promote the novelty detector to the right class.
+    object <- promote_detector(object=object)
+    
+    # Test if the detector is available.
+    if(!is_available(object)) next()
+    
+    
+    #####Full dataset#########################################################
+    
+    # Train the novelty detector.
+    model <- suppressWarnings(test_train_novelty_detector(data=full_data,
+                                                          cluster_method="none",
+                                                          imputation_method="simple",
+                                                          hyperparameter_list=hyperparameter_list,
+                                                          detector=detector))
+    
+    # Create a trimmed detector.
+    trimmed_model <- trim_model(model)
+    
+    # Check that the the novelty detector can be trimmed.
+    test_fun(paste0("Detector created using the ", detector, " algorithm can be trimmed."), {
+      if(can_trim){
+        testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
         
-        # Test that the novelty detector was successfully created.
-        testthat::expect_equal(model_is_trained(model),
-                               ifelse(detector %in% except_train, FALSE, TRUE))
-      })
+      } else {
+        testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+      }
+    })
+    
+    # Test that the novelty detector can be created.
+    test_fun(paste0("Detector can be created using the ", detector, " algorithm using a complete dataset."), {
       
-      # Test that the novelty detector can be used to predict the outcome.
-      test_fun(paste0("Novely predictions can be made using the ", detector, " algorithm for a complete dataset."), {
-        # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model, data=full_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                               ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-        
-        # Expect that the trimmed novelty detector produces the same predictions.
-        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                           data=full_data))
-        
-        testthat::expect_equal(prediction_table,
-                               prediction_table_trim,
-                               ignore_attr=TRUE)
-      })
+      # Test that the novelty detector was successfully created.
+      testthat::expect_equal(model_is_trained(model),
+                             ifelse(detector %in% except_train, FALSE, TRUE))
+    })
+    
+    # Test that the novelty detector can be used to predict the outcome.
+    test_fun(paste0("Novely predictions can be made using the ", detector, " algorithm for a complete dataset."), {
+      # Expect predictions to be made.
+      prediction_table <- suppressWarnings(.predict(model, data=full_data))
       
-      # Test that the novelty detector can be used to predict the outcome.
-      test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-sample dataset."), {
-        # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                               ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-
-        # Expect that the trimmed novelty detector produces the same predictions.
-        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                           data=full_one_sample_data))
-        
-        testthat::expect_equal(prediction_table,
-                               prediction_table_trim,
-                               ignore_attr=TRUE)
-      })
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
       
-      # Test that the novelty detector cannot predict for empty datasets.
-      test_fun(paste0("Novelty predictions can not be made using the ", detector, " algorithm for an empty dataset."), {
-        # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model, data=empty_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"), FALSE)
-      })
+      # Expect that the trimmed novelty detector produces the same predictions.
+      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                         data=full_data))
       
+      testthat::expect_equal(prediction_table,
+                             prediction_table_trim,
+                             ignore_attr=TRUE)
+    })
+    
+    # Test that the novelty detector can be used to predict the outcome.
+    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-sample dataset."), {
+      # Expect predictions to be made.
+      prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
       
-      #####One-feature dataset##################################################
-      # Train the novelty detector.
-      model <- suppressWarnings(test_train_novelty_detector(data=one_feature_data,
-                                                            cluster_method="none",
-                                                            imputation_method="simple",
-                                                            hyperparameter_list=hyperparameter_list,
-                                                            detector=detector))
-
-      # Create a trimmed novelty detector.
-      trimmed_model <- trim_model(model)
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
       
-      # Test that the novelty detector can be created.
-      test_fun(paste0("Detector can be created using the ", detector, " algorithm using a one-feature dataset."), {
-        
-        # Test that the novelty detector was successfully created.
-        testthat::expect_equal(model_is_trained(model),
-                               ifelse(detector %in% except_train, FALSE, TRUE))
-      })
+      # Expect that the trimmed novelty detector produces the same predictions.
+      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                         data=full_one_sample_data))
       
-      # Test that the novelty detector can be used to predict the outcome.
-      test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature dataset."), {
-        # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model,
-                                                      data=one_feature_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                               ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-        
-        # Expect that the trimmed novelty detector produces the same predictions.
-        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                           data=one_feature_data))
-        
-        testthat::expect_equal(prediction_table,
-                               prediction_table_trim,
-                               ignore_attr=TRUE)
-      })
+      testthat::expect_equal(prediction_table,
+                             prediction_table_trim,
+                             ignore_attr=TRUE)
+    })
+    
+    # Test that the novelty detector cannot predict for empty datasets.
+    test_fun(paste0("Novelty predictions can not be made using the ", detector, " algorithm for an empty dataset."), {
+      # Expect predictions to be made.
+      prediction_table <- suppressWarnings(.predict(model, data=empty_data))
       
-      # Test that the novelty detector can be used to predict the outcome.
-      test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature, one-sample dataset."), {
-        # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model,
-                                                      data=one_feature_one_sample_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                               ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-        
-        # Expect that the trimmed novelty detector produces the same predictions.
-        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                           data=one_feature_one_sample_data))
-        
-        testthat::expect_equal(prediction_table,
-                               prediction_table_trim,
-                               ignore_attr=TRUE)
-      })
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"), FALSE)
+    })
+    
+    
+    #####One-feature dataset##################################################
+    # Train the novelty detector.
+    model <- suppressWarnings(test_train_novelty_detector(data=one_feature_data,
+                                                          cluster_method="none",
+                                                          imputation_method="simple",
+                                                          hyperparameter_list=hyperparameter_list,
+                                                          detector=detector))
+    
+    # Create a trimmed novelty detector.
+    trimmed_model <- trim_model(model)
+    
+    # Test that the novelty detector can be created.
+    test_fun(paste0("Detector can be created using the ", detector, " algorithm using a one-feature dataset."), {
       
-     
-      #####Bad dataset with one sample##########################################
-      # Train the novelty detector.
-      model <- suppressWarnings(test_train_novelty_detector(data=full_one_sample_data,
-                                                            data_bypass=full_data,
-                                                            cluster_method="none",
-                                                            imputation_method="simple",
-                                                            hyperparameter_list=hyperparameter_list,
-                                                            detector=detector))
+      # Test that the novelty detector was successfully created.
+      testthat::expect_equal(model_is_trained(model),
+                             ifelse(detector %in% except_train, FALSE, TRUE))
+    })
+    
+    # Test that the novelty detector can be used to predict the outcome.
+    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature dataset."), {
+      # Expect predictions to be made.
+      prediction_table <- suppressWarnings(.predict(model,
+                                                    data=one_feature_data))
       
-      # Test that the novelty detector can be created.
-      test_fun(paste0("Detector can not be created using the ", detector, " algorithm using a bad dataset."), {
-        
-        # Test that the novelty detector was successfully created.
-        testthat::expect_equal(model_is_trained(model), FALSE)
-      })
-    }
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
+      
+      # Expect that the trimmed novelty detector produces the same predictions.
+      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                         data=one_feature_data))
+      
+      testthat::expect_equal(prediction_table,
+                             prediction_table_trim,
+                             ignore_attr=TRUE)
+    })
+    
+    # Test that the novelty detector can be used to predict the outcome.
+    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature, one-sample dataset."), {
+      # Expect predictions to be made.
+      prediction_table <- suppressWarnings(.predict(model,
+                                                    data=one_feature_one_sample_data))
+      
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
+      
+      # Expect that the trimmed novelty detector produces the same predictions.
+      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                         data=one_feature_one_sample_data))
+      
+      testthat::expect_equal(prediction_table,
+                             prediction_table_trim,
+                             ignore_attr=TRUE)
+    })
+    
+    
+    #####Bad dataset with one sample##########################################
+    # Train the novelty detector.
+    model <- suppressWarnings(test_train_novelty_detector(data=full_one_sample_data,
+                                                          data_bypass=full_data,
+                                                          cluster_method="none",
+                                                          imputation_method="simple",
+                                                          hyperparameter_list=hyperparameter_list,
+                                                          detector=detector))
+    
+    # Test that the novelty detector can be created.
+    test_fun(paste0("Detector can not be created using the ", detector, " algorithm using a bad dataset."), {
+      
+      # Test that the novelty detector was successfully created.
+      testthat::expect_equal(model_is_trained(model), FALSE)
+    })
+  }
+  
+  ##### Bad dataset without features #########################################
+  # Train the novelty detector.
+  model <- suppressWarnings(test_train_novelty_detector(data=no_feature_data,
+                                                        data_bypass=full_data,
+                                                        imputation_method="simple",
+                                                        hyperparameter_list=hyperparameter_list,
+                                                        detector=detector))
+  
+  # Test that the novelty detector can be created.
+  test_fun(paste0("Detector can not be created using the ", detector, " algorithm using a dataset without features."), {
+    
+    # Test that the novelty detector was successfully created.
+    testthat::expect_equal(model_is_trained(model), FALSE)
+  })
 }
 
 
@@ -1483,7 +1524,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_data)))
         
         # Get the number of features
         n_features <- get_n_features(full_data)
@@ -1499,7 +1541,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset with one invariant feature."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_invariant_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_one_invariant_data)))
         
         # Get the number of features
         n_features <- get_n_features(full_one_invariant_data)
@@ -1515,7 +1558,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            empty_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1524,7 +1568,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, bad_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            bad_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1533,7 +1578,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_sample_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            full_one_sample_data)))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1553,7 +1599,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_data)))
         
         # Expect that the vimp table is not empty.
         testthat::expect_equal(nrow(vimp_table), 1)
@@ -1566,7 +1613,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset with an invariant feature."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_invariant_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_invariant_data)))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1575,7 +1623,8 @@ test_all_vimp_methods <- function(vimp_methods,
       
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample dataset."), {
         
-        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_one_sample_data))
+        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                            one_feature_one_sample_data)))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1597,7 +1646,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset without censoring."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, no_censoring_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              no_censoring_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1626,7 +1676,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with one censored instance."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, one_censored_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              one_censored_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1655,7 +1706,8 @@ test_all_vimp_methods <- function(vimp_methods,
         
         test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with few censored instances."), {
           
-          vimp_table <- suppressWarnings(.vimp(vimp_object, few_censored_data))
+          vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                              few_censored_data)))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
@@ -1683,7 +1735,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
                       " for a fully prospective dataset."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, fully_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            fully_prospective_data)))
                         
                         # Expect that the vimp table is empty.
                         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1695,7 +1748,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
                       " for an almost fully prospective dataset, where outcome is known for just a single sample."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, mostly_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            mostly_prospective_data)))
                         
                         # Expect that the vimp table is empty.
                         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -1707,7 +1761,8 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method,
                       " for a partially prospective dataset, where outcome is known for most samples."), {
                         
-                        vimp_table <- suppressWarnings(.vimp(vimp_object, partially_prospective_data))
+                        vimp_table <- suppressWarnings(get_vimp_table(.vimp(vimp_object,
+                                                                            partially_prospective_data)))
                         
                         # Get the number of features
                         n_features <- get_n_features(full_data)
@@ -1790,22 +1845,25 @@ test_all_vimp_methods_parallel <- function(vimp_methods,
                                              .vimp,
                                              data=full_data)
       
+      # Extract the actual tables.
+      vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
+      
       # Test that the model has variable importance.
       testthat::test_that(paste0("Variable importance method produces variable importance for ",
                                  outcome_type, " and ", vimp_method, " for the complete dataset."), {
-        
-        # Get the number of features
-        n_features <- get_n_features(full_data)
-        
-        # Expect that the vimp table has two rows.
-        testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
-        testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
-        
-        # Expect that the names in the vimp table correspond to those of the
-        # features.
-        testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
-        testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
-      })
+                                   
+                                   # Get the number of features
+                                   n_features <- get_n_features(full_data)
+                                   
+                                   # Expect that the vimp table has two rows.
+                                   testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
+                                   testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
+                                   
+                                   # Expect that the names in the vimp table correspond to those of the
+                                   # features.
+                                   testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
+                                   testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
+                                 })
       
       # Terminate cluster.
       cl_vimp <- .terminate_cluster(cl_vimp)
@@ -4798,6 +4856,8 @@ test_export_specific <- function(export_function,
 
 
 integrated_test <- function(...,
+                            learner=NULL,
+                            hyperparameters=NULL,
                             outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                             warning_good=NULL,
                             warning_bad=NULL,
@@ -4812,6 +4872,9 @@ integrated_test <- function(...,
     suppress_fun <- suppressMessages
   }
   
+  # Set flag for missing learner.
+  learner_unset <- is.null(learner)
+  
   for(outcome_type in outcome_type_available){
     
     .warning_good <- warning_good
@@ -4825,18 +4888,27 @@ integrated_test <- function(...,
       # Create datasets
       full_data <- test.create_good_data_set(outcome_type)
       
-      # Parse hyperparameter list
-      hyperparameters <- list("sign_size"=get_n_features(full_data),
-                              "family"=switch(outcome_type,
-                                              "continuous"="gaussian",
-                                              "count"="poisson",
-                                              "binomial"="binomial",
-                                              "multinomial"="multinomial",
-                                              "survival"="cox"))
+      if(learner_unset){
+        # Set learner
+        learner <- "lasso"
+        
+        # Parse hyperparameter list
+        hyperparameters <- list("sign_size"=get_n_features(full_data),
+                                "family"=switch(outcome_type,
+                                                "continuous"="gaussian",
+                                                "count"="poisson",
+                                                "binomial"="binomial",
+                                                "multinomial"="multinomial",
+                                                "survival"="cox"))
+        
+        # Parse as list.
+        hyperparameters <- list("lasso"=hyperparameters)
+      }
+      
       if(!is.null(.warning_good)){
         testthat::expect_warning(output <- suppress_fun(summon_familiar(data=full_data,
-                                                                        learner="lasso",
-                                                                        hyperparameter=list("lasso"=hyperparameters),
+                                                                        learner=learner,
+                                                                        hyperparameter=hyperparameters,
                                                                         time_max=1832,
                                                                         verbose=debug,
                                                                         ...)),
@@ -4844,8 +4916,8 @@ integrated_test <- function(...,
         
       } else {
         output <- suppress_fun(summon_familiar(data=full_data,
-                                               learner="lasso",
-                                               hyperparameter=list("lasso"=hyperparameters),
+                                               learner=learner,
+                                               hyperparameter=hyperparameters,
                                                time_max=1832,
                                                verbose=debug,
                                                ...))
@@ -4862,31 +4934,39 @@ integrated_test <- function(...,
       bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
                                            add_na_data=TRUE)
       
-      # Parse hyperparameter list
-      hyperparameters <- list("sign_size"=get_n_features(bad_data),
-                              "family"=switch(outcome_type,
-                                              "continuous"="gaussian",
-                                              "count"="poisson",
-                                              "binomial"="binomial",
-                                              "multinomial"="multinomial",
-                                              "survival"="cox"))
+      if(learner_unset){
+        # Set learner
+        learner <- "lasso"
+        
+        # Parse hyperparameter list
+        hyperparameters <- list("sign_size"=get_n_features(bad_data),
+                                "family"=switch(outcome_type,
+                                                "continuous"="gaussian",
+                                                "count"="poisson",
+                                                "binomial"="binomial",
+                                                "multinomial"="multinomial",
+                                                "survival"="cox"))
+        
+        # Parse as list.
+        hyperparameters <- list("lasso"=hyperparameters)
+      }
       
       if(!is.null(.warning_bad)){
         testthat::expect_warning(output <- suppress_fun(summon_familiar(data=bad_data,
-                                                                         learner="lasso",
-                                                                         hyperparameter=list("lasso"=hyperparameters),
-                                                                         feature_max_fraction_missing=0.95,
-                                                                         time_max=1832,
-                                                                         verbose=debug,
-                                                                         ...)),
+                                                                        learner=learner,
+                                                                        hyperparameter=hyperparameters,
+                                                                        feature_max_fraction_missing=0.95,
+                                                                        time_max=1832,
+                                                                        verbose=debug,
+                                                                        ...)),
                                  .warning_bad)
         
       } else {
         # Note that we set a very high feature_max_fraction_missing to deal with
         # NA rows in the dataset. Also time is explicitly set to prevent an error.
         output <- suppress_fun(summon_familiar(data=bad_data,
-                                               learner="lasso",
-                                               hyperparameter=list("lasso"=hyperparameters),
+                                               learner=learner,
+                                               hyperparameter=hyperparameters,
                                                feature_max_fraction_missing=0.95,
                                                time_max=1832,
                                                verbose=debug,
@@ -5032,9 +5112,8 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
                                            parallel=FALSE)
   
   # Find required features.
-  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list),
-                                              feature_info_list=feature_info_list)
-  
+  required_features <- get_required_features(x=data,
+                                             feature_info_list=feature_info_list)
   
   if(is_vimp){
     # Create the variable importance met hod object or familiar model object

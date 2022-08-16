@@ -128,12 +128,11 @@ setMethod("..vimp", signature(object="familiarCoreLearnVimp"),
               ..error_reached_unreachable_code("..vimp,familiarCoreLearnVimp: unknown class encountered.")
             }
             
-            # Generate variable importance data table.
-            vimp_table <- data.table::data.table("score"=score, "name"=names(score))
+            # Create variable importance object.
+            vimp_object <- methods::new("vimpTable",
+                                        vimp_table=data.table::data.table("score"=score, "name"=names(score)),
+                                        score_aggregation="max",
+                                        invert=TRUE)
             
-            # Add ranks and set multivariate flag.
-            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-            vimp_table[, "multi_var":=FALSE]
-            
-            return(vimp_table)
+            return(vimp_object)
           })
