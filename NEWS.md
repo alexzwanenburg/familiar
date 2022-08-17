@@ -3,6 +3,9 @@
 ## Bug fixes
 
 - Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and consequently throw an error.
+
+- Fixed an issue where parallel clusters created outside of familiar would not receive the required data to be used for parallel processing.
+
 # Version 1.2.0 (Jocund Jackdaw)
 
 ## Major changes

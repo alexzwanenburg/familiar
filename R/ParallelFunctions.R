@@ -187,6 +187,15 @@
   # If the cluster doesn't start, return a NULL
   if(is.null(cl)) return(NULL)
   
+  # Ensure that all required data are present on the cluster.
+  cl <- .update_cluster(cl=cl, assign=assign)
+  
+  return(cl)
+}
+
+
+
+.update_cluster <- function(cl=NULL, assign=NULL){
   # Set library paths to avoid issues with non-standard library locations.
   libs <- .libPaths()
   parallel::clusterExport(cl=cl, varlist="libs", envir=environment())
@@ -223,7 +232,7 @@
   if(any(c("all", "project_info") %in% assign)){
     parallel::clusterExport(cl=cl, varlist="project_info_list", envir=familiar_global_env)
   }
-    
+  
   # Export smaller objects directly, so that we don't have to worry about them.
   parallel::clusterExport(cl=cl, varlist="settings", envir=familiar_global_env)
   parallel::clusterExport(cl=cl, varlist="file_paths", envir=familiar_global_env)
