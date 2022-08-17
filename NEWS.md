@@ -1,3 +1,8 @@
+# Version 1.2.1 (Kindhearted Koala)
+
+## Bug fixes
+
+- Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and consequently throw an error.
 # Version 1.2.0 (Jocund Jackdaw)
 
 ## Major changes
