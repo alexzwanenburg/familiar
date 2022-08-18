@@ -6,6 +6,8 @@
 
 - Fixed an issue where parallel clusters created outside of familiar would not receive the required data to be used for parallel processing.
 
+- Fixed an issue where fail-predictions (i.e. NA or infinite values) would produce errors when attempting to compute stratification thresholds.
+
 # Version 1.2.0 (Jocund Jackdaw)
 
 ## Major changes

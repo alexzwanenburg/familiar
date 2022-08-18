@@ -104,10 +104,16 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
             # Check available stratification methods.
             available_stratification_method <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@km_info$stratification_method))))
             
+            # Check that any are available.
+            if(is.null(available_stratification_method)) return(NULL)
+            
+            # Prepare the stratification_method variable for comparison. The
+            # default is to use all methods present in the dataset.
             if(is.waive(stratification_method)) stratification_method <- available_stratification_method
             
             # Check that the stratification method is valid.
-            .check_parameter_value_is_valid(x=stratification_method, var_name="stratification_method",
+            .check_parameter_value_is_valid(x=stratification_method,
+                                            var_name="stratification_method",
                                             values=available_stratification_method)
             
             
