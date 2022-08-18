@@ -2670,10 +2670,114 @@ test_all_metrics <- function(metrics,
                         # non-missing number in the range [-1, 1].
                         testthat::expect_equal(is.na(objective_score), TRUE)
                       })
+      
+      ##### Model cannot provide valid values ----------------------------------
+      model <- suppressWarnings(test_train(data=bad_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="lasso_test_all_fail",
+                                           time_max=1832))
+      
+      # Create metric object
+      metric_object <- as_metric(metric=metric,
+                                 object=model)
+      
+      test_fun(paste0("9. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+                      metric_object@name, " (", metric_object@metric, ") metric for a model that only produces invalid predictions."), {
+                        
+                        # Expect predictions to be made.
+                        prediction_table <- suppressWarnings(.predict(model, data=full_data))
+                        
+                        # Test that the predictions were successfully made.
+                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
+                        
+                        if(outcome_type %in% c("binomial", "multinomial")){
+                          # Expect that the predicted_class column is
+                          # a factor.
+                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                          
+                          # Expect that the class levels are the same
+                          # as those in the model.
+                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                        }
+                        
+                        # Compute a score.
+                        score <- compute_metric_score(metric=metric_object,
+                                                      data=prediction_table,
+                                                      object=model)
+                        
+                        # Compute an objective score.
+                        objective_score <- compute_objective_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                        
+                        # Expect that the score is NA.
+                        testthat::expect_equal(is.na(score), TRUE)
+                        
+                        # Expect that the objective score is a
+                        # non-missing number in the range [-1, 1].
+                        testthat::expect_equal(is.na(objective_score), TRUE)
+                      })
+      
+      
+      ##### Model cannot provide valid values for some instances ---------------
+      model <- suppressWarnings(test_train(data=bad_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="lasso_test_some_fail",
+                                           time_max=1832))
+      
+      # Create metric object
+      metric_object <- as_metric(metric=metric,
+                                 object=model)
+      
+      test_fun(paste0("10. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+                      metric_object@name, " (", metric_object@metric, ") metric for a model that produces some invalid predictions."), {
+                        
+                        # Expect predictions to be made.
+                        prediction_table <- suppressWarnings(.predict(model, data=full_data))
+                        
+                        # Test that the predictions were successfully made.
+                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                        
+                        if(outcome_type %in% c("binomial", "multinomial")){
+                          # Expect that the predicted_class column is
+                          # a factor.
+                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                          
+                          # Expect that the class levels are the same
+                          # as those in the model.
+                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                        }
+                        
+                        # Compute a score.
+                        score <- compute_metric_score(metric=metric_object,
+                                                      data=prediction_table,
+                                                      object=model)
+                        
+                        # Compute an objective score.
+                        objective_score <- compute_objective_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                        
+                        # Expect that the score is a finite,
+                        # non-missing number.
+                        testthat::expect_equal(data.table::between(score,
+                                                                   lower=metric_object@value_range[1],
+                                                                   upper=metric_object@value_range[2]),
+                                               TRUE)
+                        
+                        # Expect that the objective score is a
+                        # non-missing number in the range [-1, 1].
+                        testthat::expect_equal(data.table::between(objective_score,
+                                                                   lower=-1.0,
+                                                                   upper=1.0),
+                                               TRUE)
+                      })
     }
-    
   }
-  
 }
 
 
@@ -3860,11 +3964,15 @@ test_plots <- function(plot_function,
                                                               imputation_method="simple",
                                                               fs_method="mim",
                                                               hyperparameter_list=hyperparameters,
-                                                              learner="lasso_test",
+                                                              learner="lasso_test_all_fail",
                                                               time_max=1832,
                                                               create_novelty_detector=create_novelty_detector))
       
-      failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
+      failed_prediction_data <- as_familiar_data(object=model_failed_predictions,
+                                                 data=full_data,
+                                                 data_element=data_element,
+                                                 cl=cl,
+                                                 ...)
       
       test_fun(paste0("12. Plots for ", outcome_type, " outcomes ",
                       ifelse(outcome_type %in% outcome_type_available && !.except_failed_survival_prediction, "can", "cannot"),
@@ -3886,6 +3994,49 @@ test_plots <- function(plot_function,
                         }
                       })
     }
+    
+    ##### Model with partially missing or invalid predictions ------------------
+    
+    # Train the model.
+    model_failing_predictions <- suppressWarnings(test_train(cl=cl,
+                                                             data=full_data,
+                                                             cluster_method="none",
+                                                             imputation_method="simple",
+                                                             fs_method="mim",
+                                                             hyperparameter_list=hyperparameters,
+                                                             learner="lasso_test_some_fail",
+                                                             time_max=1832,
+                                                             create_novelty_detector=create_novelty_detector))
+    
+    failing_prediction_data <- as_familiar_data(object=model_failing_predictions,
+                                                data=full_data,
+                                                data_element=data_element,
+                                                cl=cl,
+                                                ...)
+    
+    test_fun(paste0("13. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for models that contain some failed predictions."), {
+                      
+                      collection <- suppressWarnings(as_familiar_collection(failing_prediction_data, familiar_data_names=c("some_fail")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE)
+                        
+                        # Test that a collection is exported.
+                        testthat::expect_s4_class(plot_list$collection, "familiarCollection")
+                        
+                      } else {
+                        # Test which plot elements are present.
+                        which_present <- .test_which_plot_present(plot_list)
+                        
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
   }
 }
 
@@ -4708,7 +4859,7 @@ test_export <- function(export_function,
                                                               imputation_method="simple",
                                                               fs_method="mim",
                                                               hyperparameter_list=hyperparameters,
-                                                              learner="lasso_test",
+                                                              learner="lasso_test_all_fail",
                                                               time_max=1832,
                                                               create_novelty_detector=create_novelty_detector))
       
@@ -4737,6 +4888,45 @@ test_export <- function(export_function,
                       })
     }
     
+    
+    ##### Model with partially missing or invalid predictions ------------------
+    
+    model_failing_predictions <- suppressWarnings(test_train(cl=cl,
+                                                             data=full_data,
+                                                             cluster_method="none",
+                                                             imputation_method="simple",
+                                                             fs_method="mim",
+                                                             hyperparameter_list=hyperparameters,
+                                                             learner="lasso_test_some_fail",
+                                                             time_max=1832,
+                                                             create_novelty_detector=create_novelty_detector))
+    
+    failing_prediction_data <- as_familiar_data(object=model_failing_predictions,
+                                                data=full_data, 
+                                                data_element=data_element,
+                                                cl=cl, 
+                                                ...)
+    
+    test_fun(paste0("13. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for models that contain some failed predictions."), {
+                      
+                      collection <- suppressWarnings(as_familiar_collection(failing_prediction_data, familiar_data_names=c("some_fail")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                        testthat::expect_s4_class(exported_collection, "familiarCollection")
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
   }
 }
 
