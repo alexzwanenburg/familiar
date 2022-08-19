@@ -164,7 +164,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Check for lasso_test
-            if(object@learner == "lasso_test") fam <- ""
+            if(object@learner %in% c("lasso_test_all_fail", "lasso_test_some_fail")) fam <- ""
             
             # Determine number of subjects
             n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))

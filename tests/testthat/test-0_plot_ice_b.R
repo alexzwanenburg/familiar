@@ -4,6 +4,7 @@ testthat::skip_on_cran()
 debug_flag <- FALSE
 
 familiar:::test_plots(plot_function=familiar:::plot_ice,
+                      except_some_failed_prediction=FALSE,
                       data_element="ice_data",
                       debug=debug_flag)
 

@@ -8,7 +8,8 @@ debug_flag <- FALSE
 familiar:::test_plots(plot_function=familiar:::plot_feature_similarity,
                       except_one_feature = TRUE,
                       except_one_sample = TRUE,
-                      except_failed_survival_prediction=FALSE,
+                      except_all_failed_prediction=FALSE,
+                      except_some_failed_prediction=FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       data_element="feature_similarity",
                       debug=debug_flag)

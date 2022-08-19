@@ -8,6 +8,7 @@ familiar:::test_plots(plot_function=familiar:::plot_permutation_variable_importa
                       data_element="permutation_vimp",
                       except_prospective = TRUE,
                       except_one_sample = TRUE,
+                      except_some_failed_prediction=FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       estimation_type="point",
                       debug=debug_flag)

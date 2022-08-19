@@ -222,7 +222,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   risk_group <- NULL
   
   if(is_empty(x)) return(NULL)
-  if(!any_predictions_valid(x@data, outcome_type="survival")) return(NULL)
+  if(!all_predictions_valid(x@data, outcome_type="survival")) return(NULL)
   
   if(!x@is_aggregated) ..error_reached_unreachable_code(".compute_risk_stratification_curves: expecting aggregated data.")
   
@@ -343,7 +343,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   outcome_time <- NULL
   
   if(is_empty(x)) return(NULL)
-  if(!any_predictions_valid(x@data, outcome_type="survival")) return(NULL)
+  if(!all_predictions_valid(x@data, outcome_type="survival")) return(NULL)
   
   if(!x@is_aggregated) ..error_reached_unreachable_code(".compute_risk_stratification_test: expecting aggregated data.")
   

@@ -5,7 +5,8 @@ debug_flag <- FALSE
 
 # Generic test
 familiar:::test_plots(plot_function=familiar:::plot_sample_clustering,
-                      except_failed_survival_prediction=FALSE,
+                      except_all_failed_prediction=FALSE,
+                      except_some_failed_prediction=FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       data_element="feature_expressions",
                       plot_args=list("verbose"=FALSE,

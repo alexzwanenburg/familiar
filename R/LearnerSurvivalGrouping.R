@@ -19,7 +19,7 @@ learner.find_survival_grouping_thresholds <- function(object, data){
                          data=data,
                          allow_recalibration=TRUE,
                          time=time_max)
-
+  
   # Check if any predictions are valid.
   if(!any_predictions_valid(pred_table,
                             outcome_type=object@outcome_type)) return(NULL)
@@ -190,6 +190,9 @@ learner.apply_risk_threshold <- function(object, predicted_values, cutoff){
   
   # Convert to factor
   risk_group <- learner.assign_risk_group_names(risk_group=risk_group, cutoff=cutoff)
+  
+  # Replace non-finite predicted values by NA.
+  risk_group[!is.finite(predicted_values)] <- NA
   
   # Return risk groups
   return(risk_group)

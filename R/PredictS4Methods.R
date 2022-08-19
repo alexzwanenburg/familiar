@@ -634,7 +634,32 @@ setMethod(".predict_risk_stratification", signature(object="character"),
 
 
 
+all_predictions_valid <- function(prediction_table, outcome_type=NULL, type="default"){
+  # Return results when checking with the "all" function.
+  return(.predictions_valid(prediction_table=prediction_table,
+                            outcome_type=outcome_type,
+                            type=type,
+                            check_type="all"))
+}
+
+
+
 any_predictions_valid <- function(prediction_table, outcome_type=NULL, type="default"){
+  # Return results when checking with the "any" function.
+  return(.predictions_valid(prediction_table=prediction_table,
+                            outcome_type=outcome_type,
+                            type=type,
+                            check_type="any"))
+}
+
+
+
+.predictions_valid <- function(prediction_table, outcome_type, type, check_type){
+  
+  # Set the check function.
+  check_fun <- switch(check_type,
+                      "all"=all,
+                      "any"=any)
   
   if(is_empty(prediction_table)) return(FALSE)
   
@@ -644,36 +669,38 @@ any_predictions_valid <- function(prediction_table, outcome_type=NULL, type="def
     }
     
     if(outcome_type %in% c("continuous", "count")){
-      return(any(is.finite(prediction_table$predicted_outcome)))
+      return(check_fun(is.finite(prediction_table$predicted_outcome)))
       
     } else if(outcome_type %in% c("survival", "competing_risk")){
       if("predicted_outcome" %in% colnames(prediction_table)){
-        return(any(is.finite(prediction_table$predicted_outcome)))
+        return(check_fun(is.finite(prediction_table$predicted_outcome)))
         
       } else if("survival_probability" %in% colnames(prediction_table)){
-        return(any(is.finite(prediction_table$survival_probability)))
+        return(check_fun(is.finite(prediction_table$survival_probability)))
         
       } else if("risk_group" %in% colnames(prediction_table)){
-        return(any(!is.na(prediction_table$risk_group)))
+        return(check_fun(!is.na(prediction_table$risk_group)))
         
       } else {
         return(FALSE)
       }
       
     } else if(outcome_type %in% c("binomial", "multinomial")){
-      return(!all(is.na(prediction_table$predicted_class)))
+      return(check_fun(!is.na(prediction_table$predicted_class)))
       
     } else {
       ..error_no_known_outcome_type(outcome_type)
     }
+    
   } else if(type %in% c("novelty")) {
-    return(any(is.finite(prediction_table$novelty)))
+    return(check_fun(is.finite(prediction_table$novelty)))
     
   } else {
     ..error_reached_unreachable_code("any_predictions_valid: unknown type encountered")
   }
-  
 }
+
+
 
 
 remove_nonvalid_predictions <- function(prediction_table, outcome_type){

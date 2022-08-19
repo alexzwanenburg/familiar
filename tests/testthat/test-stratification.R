@@ -102,3 +102,57 @@ for(stratification_method in stratification_methods){
     testthat::expect_equal(all(is.finite(predictions_risk$risk_group)), TRUE)
   })
 }
+
+# Test that creation fails for models that only yield invalid predictions
+for(stratification_method in stratification_methods){
+  
+  # Create a dataset using the good dataset.
+  data <- familiar:::test.create_good_data_set("survival")
+  
+  # Train a simple linear GLM using the good dataset.
+  fam_model <- familiar:::test_train(data=data,
+                                     cluster_method="none",
+                                     imputation_method="simple",
+                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                     learner="lasso_test_all_fail",
+                                     stratification_method=stratification_method,
+                                     create_novelty_detector=FALSE)
+  
+  # Risk stratification.
+  predictions_risk <- familiar::predict(object=fam_model,
+                                        newdata=data,
+                                        type="risk_stratification")
+  
+  testthat::test_that("Risk groups are formed.", {
+    testthat::expect_equal(fam_model@km_info$stratification_method, NULL)
+    testthat::expect_equal(any(is.finite(predictions_risk$risk_group)), FALSE)
+  })
+}
+
+
+# Test that creation succeeds for models that yield some invalid predictions.
+for(stratification_method in stratification_methods){
+  
+  # Create a dataset using the good dataset.
+  data <- familiar:::test.create_good_data_set("survival")
+  
+  # Train a simple linear GLM using the good dataset.
+  fam_model <- familiar:::test_train(data=data,
+                                     cluster_method="none",
+                                     imputation_method="simple",
+                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                     learner="lasso_test_some_fail",
+                                     stratification_method=stratification_method,
+                                     create_novelty_detector=FALSE)
+  
+  # Risk stratification.
+  predictions_risk <- familiar::predict(object=fam_model,
+                                        newdata=data,
+                                        type="risk_stratification")
+  
+  testthat::test_that("Risk groups are formed.", {
+    testthat::expect_equal(fam_model@km_info$stratification_method, stratification_method)
+    testthat::expect_equal(all(is.finite(predictions_risk$risk_group)), FALSE)
+    testthat::expect_equal(any(is.finite(predictions_risk$risk_group)), TRUE)
+  })
+}

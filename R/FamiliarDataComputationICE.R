@@ -400,6 +400,13 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Check that valid prediction data were generated.
   if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
+  # Remove data with missing predictions.
+  prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                 outcome_type=object@outcome_type)
+  
+  # Check if removing invalid predictions leaves any data.
+  if(is_empty(prediction_data)) return(NULL)
+  
   # Select prediction columns
   if(object@outcome_type %in% c("survival", "competing_risk")){
     prediction_columns <- c("survival_probability", "novelty")

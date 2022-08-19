@@ -237,11 +237,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   }
   
   # Check if any predictions are valid.
-  if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
-  
-  # Remove data with missing predictions.
-  prediction_data <- remove_nonvalid_predictions(prediction_data,
-                                                 outcome_type=object@outcome_type)
+  if(!all_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
   # Remove data with missing outcomes.
   prediction_data <- remove_missing_outcomes(data=prediction_data,

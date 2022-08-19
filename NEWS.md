@@ -1,5 +1,9 @@
 # Version 1.2.1 (Kindhearted Koala)
 
+## Minor changes
+
+- On the relatively rare occasion were a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
+
 ## Bug fixes
 
 - Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and consequently throw an error.
