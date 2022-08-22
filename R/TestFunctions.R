@@ -3436,7 +3436,6 @@ test_plots <- function(plot_function,
                                             "binomial"="binomial",
                                             "multinomial"="multinomial",
                                             "survival"="cox"))
-
     
     #####Full data set########################################################
     
