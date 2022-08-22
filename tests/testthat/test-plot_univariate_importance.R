@@ -7,6 +7,7 @@ debug_flag <- FALSE
 # not influence the produced plots.
 familiar:::test_plots(plot_function=familiar::plot_univariate_importance,
                       data_element="univariate_analysis",
+                      not_available_all_prospective = TRUE,
                       not_available_any_prospective=TRUE,
                       not_available_single_sample=TRUE,
                       not_available_all_predictions_fail=FALSE,

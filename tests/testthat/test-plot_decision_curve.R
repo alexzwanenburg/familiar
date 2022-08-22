@@ -7,6 +7,7 @@ debug_flag <- FALSE
 familiar:::test_plots(plot_function=familiar:::plot_decision_curve,
                       outcome_type_available=c("binomial", "multinomial", "survival"),
                       data_element="decision_curve_analyis",
+                      not_available_all_prospective = TRUE,
                       not_available_any_prospective = TRUE,
                       not_available_single_sample = TRUE,
                       debug=debug_flag)
