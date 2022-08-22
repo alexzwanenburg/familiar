@@ -728,7 +728,30 @@ remove_nonvalid_predictions <- function(prediction_table, outcome_type){
     prediction_table <- prediction_table[is.finite(predicted_outcome), ]
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
-    prediction_table <- prediction_table[!is.na(predicted_class), ]
+    
+    # predicted_class may be absent (e.g. for ICE-tables), so we need check if
+    # it exists.
+    if("predicted_class" %in% colnames(prediction_table)){
+      # Mask based on predicted_class.
+      prediction_table <- prediction_table[!is.na(predicted_class), ]
+      
+    } else {
+      # Mask probability columns.
+      class_probability_columns <- grepl(pattern="predicted_class_probability_",
+                                         x=colnames(prediction_table))
+      
+      # Get the names of the probability columns.
+      class_probability_columns <- colnames(prediction_table)[class_probability_columns]
+      
+      # Create mask for valid instances.
+      instance_mask <- rep.int(TRUE, nrow(prediction_table))
+      for(ii in class_probability_columns){
+        instance_mask <- instance_mask & is.finite(prediction_table[[ii]])
+      }
+      
+      # Apply mask to the prediction table.
+      prediction_table <- prediction_table[instance_mask, ]
+    }
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
