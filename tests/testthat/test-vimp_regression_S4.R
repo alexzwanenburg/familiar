@@ -7,7 +7,7 @@ testthat::skip_on_cran()
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_univariate_regression_vimp_methods(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE,
-                                            always_available=TRUE)
+                                            not_available_no_samples=FALSE)
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_univariate_regression_vimp_methods(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_univariate_regression_vimp_methods(show_general=FALSE))
@@ -15,7 +15,7 @@ familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_univariate_r
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_multivariate_regression_vimp_methods(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE,
-                                            always_available=TRUE)
+                                            not_available_no_samples=FALSE)
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_multivariate_regression_vimp_methods(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_multivariate_regression_vimp_methods(show_general=FALSE))
