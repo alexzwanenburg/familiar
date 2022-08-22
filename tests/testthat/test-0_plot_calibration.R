@@ -5,32 +5,32 @@ debug_flag <- FALSE
 
 familiar:::test_plots(plot_function=familiar:::plot_calibration_data,
                       data_element="calibration_data",
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_all_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # With the ensemble detail level.
 familiar:::test_plots(plot_function=familiar:::plot_calibration_data,
                       detail_level = "ensemble",
                       data_element="calibration_data",
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_all_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # For bias-corrected data
 familiar:::test_plots(plot_function=familiar:::plot_calibration_data,
                       estimation_type = "bias_correction",
                       data_element="calibration_data",
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_all_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # For point estimates
 familiar:::test_plots(plot_function=familiar:::plot_calibration_data,
                       estimation_type = "point",
                       data_element="calibration_data",
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_all_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # Test without density plot

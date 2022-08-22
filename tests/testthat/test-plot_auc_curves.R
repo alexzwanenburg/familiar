@@ -8,8 +8,8 @@ debug_flag <- FALSE
 familiar:::test_plots(plot_function=familiar::plot_auc_roc_curve,
                       data_element="auc_data",
                       outcome_type_available=c("binomial", "multinomial"),
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_any_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # Test with step-wise confidence interval
@@ -55,8 +55,8 @@ familiar:::test_plot_ordering(plot_function=familiar::plot_auc_roc_curve,
 familiar:::test_plots(plot_function=familiar::plot_auc_precision_recall_curve,
                       data_element="auc_data",
                       outcome_type_available=c("binomial", "multinomial"),
-                      except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      not_available_any_prospective = TRUE,
+                      not_available_single_sample = TRUE,
                       debug=debug_flag)
 
 # Test with step-wise confidence interval

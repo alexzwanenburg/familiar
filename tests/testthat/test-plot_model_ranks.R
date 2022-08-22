@@ -5,7 +5,9 @@ debug_flag <- FALSE
 
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_model_signature_occurrence,
-                      always_available = TRUE,
+                      not_available_no_samples = FALSE,
+                      not_available_all_predictions_fail = FALSE,
+                      not_available_some_predictions_fail = FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       data_element="model_vimp",
                       debug=debug_flag)
@@ -27,7 +29,9 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_model_signature_occu
 
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_model_signature_variable_importance,
-                      always_available = TRUE,
+                      not_available_no_samples = FALSE,
+                      not_available_all_predictions_fail = FALSE,
+                      not_available_some_predictions_fail = FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       data_element="model_vimp",
                       debug=debug_flag)

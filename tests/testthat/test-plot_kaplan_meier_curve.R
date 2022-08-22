@@ -6,9 +6,9 @@ debug_flag <- FALSE
 # Generic test
 # Note that one-sample kaplan-meier curves can be created.
 familiar:::test_plots(plot_function=familiar:::plot_kaplan_meier,
+                      not_available_all_prospective=TRUE,
                       outcome_type_available=c("survival"),
                       data_element="risk_stratification_data",
-                      except_prospective = TRUE,
                       debug=debug_flag)
 
 # Test alignment of different plots, with missing data.
