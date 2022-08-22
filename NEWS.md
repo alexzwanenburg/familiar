@@ -6,11 +6,11 @@
 
 ## Bug fixes
 
-- Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and consequently throw an error.
+- Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and subsequently cause an error.
 
 - Fixed an issue where parallel clusters created outside of familiar would not receive the required data to be used for parallel processing.
 
-- Fixed an issue where fail-predictions (i.e. NA or infinite values) would produce errors when attempting to compute stratification thresholds.
+- Fixed an issue where invalid predictions (i.e. NA or infinite values) would produce errors when attempting to compute stratification thresholds.
 
 # Version 1.2.0 (Jocund Jackdaw)
 
