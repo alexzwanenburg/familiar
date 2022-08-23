@@ -3541,7 +3541,7 @@ test_plots <- function(plot_function,
     
     # Create plots.
     test_fun(paste0("2B. Plots for ", outcome_type, " outcomes ",
-                    ifelse(outcome_type %in% outcome_type_available & !.not_available_any_prospective & !.not_available_single_sample, "can", "cannot"),
+                    ifelse(outcome_type %in% outcome_type_available & (!.not_available_any_prospective | !.not_available_single_sample), "can", "cannot"),
                     " be created for a prospective data set with one instance with known outcome."), {
                       
                       object <- list(data_prospective_most_1)
@@ -3552,7 +3552,7 @@ test_plots <- function(plot_function,
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
                       
-                      if(outcome_type %in% outcome_type_available & !.not_available_any_prospective & !.not_available_single_sample){
+                      if(outcome_type %in% outcome_type_available & (!.not_available_any_prospective | !.not_available_single_sample)){
                         testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else if(!outcome_type %in% outcome_type_available){
