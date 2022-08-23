@@ -59,18 +59,24 @@
 
 ..replace_broken_function <- function(FUN, object, trimmed_object){
   
+  # Apply function using the original, untrimmed object.
   quiet(initial_info <- tryCatch(do.call(FUN, list(object@model)),
                                  error=identity))
   
+  # If an error occurs, the required function is not implemented for the object.
   if(inherits(initial_info, "error")) return(NULL)
   
   quiet(new_info <- tryCatch(do.call(FUN, list(trimmed_object@model)),
                              error=identity))
   
+  # If an error occurs, it means that the information required to create the
+  # function is no longer available due to object trimming.
   if(inherits(new_info, "error")){
     
     # Check for elements that contain stuff.
     if(is.list(initial_info)){
+      # This is the generic check for S3-methods.
+      
       if(!is.null(names(initial_info))){
         # Check for call.
         if(is.call(initial_info$call)) initial_info$call <- call("trimmed")
@@ -81,6 +87,26 @@
         # Check for terms.
         if(inherits(initial_info$terms, "terms")) initial_info$terms <- .replace_environment(initial_info$terms)
       }
+      
+    } else if(is(initial_info, "summary.vglm")){
+      # This is the check for the summary.vglm S4 object.
+      
+      # Check for call.
+      if(is.call(initial_info@call)) initial_info@call <- call("trimmed")
+      
+      # Check for terms.
+      initial_info@terms <- lapply(initial_info@terms,
+                                   function(x){
+                                     if(!inherits(x, "terms")) return(x)
+                                     
+                                     return(.replace_environment(x))
+                                   })
+      
+      # Check for formula.
+      if(inherits(initial_info@misc$formula, "formula")) initial_info@misc$formula <- .replace_environment(initial_info@misc$formula) 
+      
+      # Replace qr attribute.
+      initial_info@qr <- list()
     }
     
     return(initial_info)

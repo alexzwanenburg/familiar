@@ -1,8 +1,14 @@
+# Version 1.2.2
+
+## Minor changes
+
+- Trimming now also trims trimmed functions, which on occassion could still contain large environments.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
 
-- On the relatively rare occasion were a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
+- On the relatively rare occasion where a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
 
 ## Bug fixes
 
