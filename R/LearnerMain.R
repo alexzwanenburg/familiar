@@ -99,9 +99,13 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Extreme gradient boosted trees
               object <- methods::new("familiarXGBoostDart", object)
 
-            } else if(learner %in% .get_available_glmnet_lasso_learners_test()){
+            } else if(learner %in% .get_available_glmnet_lasso_learners_test_all_fail()){
               # Lasso penalised regression models for testing purposes.
-              object <- methods::new("familiarGLMnetLassoTest", object)
+              object <- methods::new("familiarGLMnetLassoTestAllFail", object)
+              
+            } else if(learner %in% .get_available_glmnet_lasso_learners_test_some_fail()){
+              # Lasso penalised regression models for testing purposes.
+              object <- methods::new("familiarGLMnetLassoTestSomeFail", object)
             }
             
             # Add package version.

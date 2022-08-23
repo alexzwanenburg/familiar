@@ -54,8 +54,8 @@ data_list <- list("good_binomial"    = list("data"=data_good_binomial,    "outco
 
 familiar:::test_all_metrics_available(metrics=familiar:::.get_available_auc_roc_metrics())
 familiar:::test_all_metrics(metrics=familiar:::.get_available_auc_roc_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 ##### Area under the curve #####################################################
 testthat::test_that("AUC-ROC is correct", {

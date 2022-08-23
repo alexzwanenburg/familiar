@@ -75,8 +75,6 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
   # Test if the any of the models in the ensemble were trained.
   if(!model_is_trained(object)) return(NULL)
   
-
-  
   if(is(object, "familiarModel")){
     # Iterate over stratification parameters
     data <- lapply(object@km_info$parameters,
@@ -91,6 +89,9 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
     
     # Combine to single list
     data <- data.table::rbindlist(data, use.names=TRUE)
+    
+    # Check that any data is available..
+    if(is_empty(data)) return(NULL)
     
   } else {
     # Compute risk stratification data.

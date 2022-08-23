@@ -5,14 +5,18 @@ debug_flag <- FALSE
 
 familiar:::test_export(export_function=familiar:::export_hyperparameters,
                        data_element="hyperparameters",
-                       always_available=TRUE,
+                       not_available_no_samples=FALSE,
+                       not_available_all_predictions_fail=FALSE,
+                       not_available_some_predictions_fail=FALSE,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                        debug=debug_flag)
 
 
 familiar:::test_export(export_function=familiar:::export_hyperparameters,
                        data_element="hyperparameters",
-                       always_available=TRUE,
+                       not_available_no_samples=FALSE,
+                       not_available_all_predictions_fail=FALSE,
+                       not_available_some_predictions_fail=FALSE,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                        export_args=list("aggregate_results"=FALSE),
                        debug=debug_flag)

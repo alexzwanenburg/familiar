@@ -281,7 +281,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
-            if(!any_predictions_valid(x@data, outcome_type="survival")) return(NULL)
+            if(!all_predictions_valid(x@data, outcome_type="survival")) return(NULL)
             
             # Remove non-valid risk groups
             x@data <- x@data[!is.na(risk_group)]

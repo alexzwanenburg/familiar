@@ -20,12 +20,19 @@ familiar:::integrated_test(backend_type="socket_server",
                            parallel=TRUE,
                            skip_evaluation_elements="all")
 
-# Perform an integrated test using the RServe backend.
-# familiar:::integrated_test(backend_type="rserve",
-#                            experimental_design="bt(fs+mb,20)",
-#                            parallel_nr_cores=2,
-#                            fs_method="none",
-#                            cluster_method="none",
-#                            imputation_method="simple",
-#                            parallel=TRUE,
-#                            skip_evaluation_elements="all")
+# Test external 
+
+# Start cluster
+cl <- familiar:::.start_cluster(n_cores=2L, cluster_type="psock")
+
+familiar:::integrated_test(backend_type="none",
+                           cl=cl,
+                           experimental_design="bt(fs+mb,20)",
+                           fs_method="mrmr",
+                           cluster_method="none",
+                           imputation_method="simple",
+                           parallel=TRUE,
+                           skip_evaluation_elements="all",
+                           debug=TRUE)
+
+cl <- familiar:::.terminate_cluster(cl=cl)

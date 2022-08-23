@@ -34,6 +34,12 @@ setClass("familiarGLMnetElasticNet",
 setClass("familiarGLMnetLassoTest",
          contains="familiarGLMnetLasso")
 
+setClass("familiarGLMnetLassoTestAllFail",
+         contains="familiarGLMnetLassoTest")
+
+setClass("familiarGLMnetLassoTestSomeFail",
+         contains="familiarGLMnetLassoTest")
+
 
 .get_available_glmnet_ridge_learners <- function(show_general=TRUE){
   
@@ -158,7 +164,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Check for lasso_test
-            if(object@learner == "lasso_test") fam <- ""
+            if(object@learner %in% c("lasso_test_all_fail", "lasso_test_some_fail")) fam <- ""
             
             # Determine number of subjects
             n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
@@ -698,12 +704,12 @@ setMethod(".trim_model", signature(object="familiarGLMnet"),
 
 
 
-.get_available_glmnet_lasso_learners_test <- function(show_general=TRUE){
-  
-  # Learners
-  learners <- c("lasso_test")
+.get_available_glmnet_lasso_learners_test_all_fail <- function(show_general=TRUE){
+  return("lasso_test_all_fail")
+}
 
-  return(learners)
+.get_available_glmnet_lasso_learners_test_some_fail <- function(show_general=TRUE){
+  return("lasso_test_some_fail")
 }
 
 
@@ -715,8 +721,8 @@ setMethod("is_available", signature(object="familiarGLMnetLassoTest"),
 
 
 
-#####..predict (test) ##########################################################
-setMethod("..predict", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+#####..predict (all fail) ------------------------------------------------------
+setMethod("..predict", signature(object="familiarGLMnetLassoTestAllFail", data="dataObject"),
           function(object, data, type="default", ...){
             
             # Check if the model was trained.
@@ -743,6 +749,43 @@ setMethod("..predict", signature(object="familiarGLMnetLassoTest", data="dataObj
           })
 
 
+#####..predict (some fail) -----------------------------------------------------
+setMethod("..predict", signature(object="familiarGLMnetLassoTestSomeFail", data="dataObject"),
+          function(object, data, type="default", ...){
+            
+            # Check if the model was trained.
+            if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check if the data is empty.
+            if(is_empty(data)) return(callNextMethod())
+            
+            # Get an empty prediction table.
+            prediction_table <- callNextMethod()
+            
+            if(object@outcome_type %in% c("binomial", "multinomial")){
+              
+              # Set all class probabilities for the first row to infinite.
+              class_probability_columns <- get_class_probability_name(x=object)
+              for(ii in seq_along(class_probability_columns)){
+                prediction_table[1L, (class_probability_columns[ii]):= Inf]
+              }
+              
+              # Set the class to NA.
+              prediction_table[1L, "predicted_class":=NA]
+              
+            } else if(object@outcome_type %in% c("survival", "continuous", "count")){
+              
+              # Add regression.
+              prediction_table[1L, "predicted_outcome":=Inf]
+              
+            } else {
+              ..error_outcome_type_not_implemented(object@outcome_type)
+            }
+            
+            return(prediction_table)
+          })
+
+
 #####get_prediction_type (test)#####
 setMethod("get_prediction_type", signature(object="familiarGLMnetLassoTest"),
           function(object, type="default"){
@@ -762,8 +805,9 @@ setMethod("get_prediction_type", signature(object="familiarGLMnetLassoTest"),
           })
 
 
-#####..predict_survival_probability (test) #####
-setMethod("..predict_survival_probability", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+
+#####..predict_survival_probability (all fail) #####
+setMethod("..predict_survival_probability", signature(object="familiarGLMnetLassoTestAllFail", data="dataObject"),
           function(object, data, time){
             
             if(object@outcome_type != "survival") return(callNextMethod())
@@ -783,3 +827,25 @@ setMethod("..predict_survival_probability", signature(object="familiarGLMnetLass
             return(survival_table)
           })
 
+
+
+#####..predict_survival_probability (all fail) #####
+setMethod("..predict_survival_probability", signature(object="familiarGLMnetLassoTestSomeFail", data="dataObject"),
+          function(object, data, time){
+            
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # If time is unset, read the max time stored by the model.
+            if(is.null(time)) time <- object@settings$time_max
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
+            # Predict, just to obtain a correctly formatted table.
+            survival_table <- learner.survival_probability_relative_risk(object=object, data=data, time=time)
+            
+            # Set first predicted probability to infinite.
+            survival_table[1L, "survival_probability":=Inf]
+            
+            return(survival_table)
+          })

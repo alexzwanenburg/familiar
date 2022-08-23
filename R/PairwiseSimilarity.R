@@ -116,7 +116,12 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
                     purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", similarity_metric, " metric"))
     
     # Categorical y variable with over two levels
-    model_obj <- VGAM::vglm(model_formula, family=VGAM::multinomial, data=data)
+    model_obj <- tryCatch(VGAM::vglm(model_formula, family=VGAM::multinomial, data=data),
+                          error=identity)
+    
+    # In case of errors, return 0.0.
+    if(inherits(model_obj, "error"))  return(0.0)
+    
     null_obj  <- VGAM::vglm(null_formula, family=VGAM::multinomial, data=data)
     
     # Compute log-likelihoods

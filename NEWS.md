@@ -1,3 +1,17 @@
+# Version 1.2.1 (Kindhearted Koala)
+
+## Minor changes
+
+- On the relatively rare occasion were a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
+
+## Bug fixes
+
+- Fixed a rare issue where `VGAM::vglm` would fail to create a model for computing McFadden's R<sup>2</sup>, and subsequently cause an error.
+
+- Fixed an issue where parallel clusters created outside of familiar would not receive the required data to be used for parallel processing.
+
+- Fixed an issue where invalid predictions (i.e. NA or infinite values) would produce errors when attempting to compute stratification thresholds.
+
 # Version 1.2.0 (Jocund Jackdaw)
 
 ## Major changes

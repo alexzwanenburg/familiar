@@ -5,14 +5,18 @@ debug_flag <- FALSE
 
 familiar:::test_export(export_function=familiar:::export_calibration_info,
                        data_element="calibration_info",
-                       always_available=TRUE,
+                       not_available_no_samples=FALSE,
+                       not_available_all_predictions_fail=FALSE,
+                       not_available_some_predictions_fail=FALSE,
                        outcome_type_available=c("survival"),
                        debug=debug_flag)
 
 
 familiar:::test_export(export_function=familiar:::export_calibration_info,
                        data_element="calibration_info",
-                       always_available=TRUE,
+                       not_available_no_samples=FALSE,
+                       not_available_all_predictions_fail=FALSE,
+                       not_available_some_predictions_fail=FALSE,
                        outcome_type_available=c("survival"),
                        export_args=list("aggregate_results"=FALSE),
                        debug=debug_flag)

@@ -87,8 +87,8 @@ data_list <- list("good_no_censoring_risk"       = list("data"=data_good_no_cens
 
 familiar:::test_all_metrics_available(metrics=familiar:::.get_available_concordance_index_metrics())
 familiar:::test_all_metrics(metrics=familiar:::.get_available_concordance_index_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 ##### Test for risk-like predictions
 testthat::test_that("Concordance index for risk-like predictions is correct", {

@@ -19,7 +19,15 @@ learner.find_survival_grouping_thresholds <- function(object, data){
                          data=data,
                          allow_recalibration=TRUE,
                          time=time_max)
-
+  
+  # Check if any predictions are valid.
+  if(!any_predictions_valid(pred_table,
+                            outcome_type=object@outcome_type)) return(NULL)
+  
+  # Remove data with missing predictions.
+  pred_table <- remove_nonvalid_predictions(pred_table,
+                                            outcome_type=object@outcome_type)
+  
   km_info_list <- list()
   
   # Iterate over stratification methods
@@ -131,7 +139,11 @@ learner.find_maxstat_threshold <- function(pred_table){
   if(length(h$cuts) < 4) return(unname(h$estimate))
   
   # Smoothed scores
-  spline_fit <- stats::smooth.spline(x=h$cuts, y=h$stats)$fit
+  spline_fit <- tryCatch(stats::smooth.spline(x=h$cuts, y=h$stats)$fit,
+                         error=identity)
+  
+  # Capture error.
+  if(inherits(spline_fit, "error")) return(unname(h$estimate))
   
   # Predict scores on a fine grid
   x_sample_cuts <- seq(from=min(h$cuts), to=max(h$cuts), length.out=100)
@@ -178,6 +190,9 @@ learner.apply_risk_threshold <- function(object, predicted_values, cutoff){
   
   # Convert to factor
   risk_group <- learner.assign_risk_group_names(risk_group=risk_group, cutoff=cutoff)
+  
+  # Replace non-finite predicted values by NA.
+  risk_group[!is.finite(predicted_values)] <- NA
   
   # Return risk groups
   return(risk_group)

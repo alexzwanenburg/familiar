@@ -412,7 +412,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
   if(outcome_type %in% c("binomial", "multinomial")){
     
     # Identify the name of the most probable class
-    new_predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    new_predicted_class <- class_levels[max.col(prediction_data[, mget(prediction_columns)])]
     
     # Add the names as the predicted outcome
     prediction_data[, "predicted_class":=new_predicted_class]
@@ -500,14 +500,29 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
   
   # Calculate ensemble value for the prediction columns.
   if(is.null(bootstrap_ci_method)){
-    ensemble_values <- lapply(prediction_columns, function(ii_col) (FUN(x[[ii_col]], na.rm=TRUE)))
-    
+    ensemble_values <- lapply(prediction_columns,
+                              function(ii_col, x, aggr_FUN){
+                                values <- x[[ii_col]]
+                                return(aggr_FUN(values[is.finite(values)]))
+                              },
+                              x=x,
+                              aggr_FUN=FUN)
+
   } else {
-    ensemble_values <- lapply(prediction_columns, function(ii_col) (FUN(x = x[estimation_type != "point"][[ii_col]],
-                                                                        x0 = x[estimation_type == "point"][[ii_col]],
-                                                                        bootstrap_ci_method = bootstrap_ci_method,
-                                                                        confidence_level = confidence_level,
-                                                                        percentiles = percentiles)))
+    ensemble_values <- lapply(prediction_columns,
+                              function(ii_col,
+                                       x,
+                                       aggr_FUN){
+                                values <- x[estimation_type != "point"][[ii_col]]
+                                
+                                return(aggr_FUN(x=values[is.finite(values)],
+                                                x0=x[estimation_type == "point"][[ii_col]],
+                                                bootstrap_ci_method = bootstrap_ci_method,
+                                                confidence_level = confidence_level,
+                                                percentiles = percentiles))
+                              },
+                              x=x,
+                              aggr_FUN=FUN)
   }
   
   # Determine column names

@@ -157,8 +157,8 @@ testthat::test_that("confusion matrix is correct", {
 
 ##### Accuracy #################################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_accuracy_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("accuracy is correct", {
   for(metric in familiar:::.get_available_accuracy_metrics()){
@@ -171,8 +171,8 @@ testthat::test_that("accuracy is correct", {
 
 ##### Balanced accuracy ########################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_balanced_accuracy_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("balanced accuracy is correct", {
   for(metric in familiar:::.get_available_balanced_accuracy_metrics()){
@@ -185,8 +185,8 @@ testthat::test_that("balanced accuracy is correct", {
 
 ##### Balanced error rate ######################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_balanced_error_rate_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("balanced error rate is correct", {
   for(metric in familiar:::.get_available_balanced_error_rate_metrics()){
@@ -200,8 +200,8 @@ testthat::test_that("balanced error rate is correct", {
 
 ##### Cohen's kappa ############################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_cohen_kappa_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Cohen's kappa is correct", {
   for(metric in familiar:::.get_available_cohen_kappa_metrics()){
@@ -214,8 +214,8 @@ testthat::test_that("Cohen's kappa is correct", {
 
 ##### F1 score #################################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_f1_score_metrics(),
-                            except_one_sample="binomial",
-                            except_identical="binomial")
+                            not_available_single_sample="binomial",
+                            not_available_all_samples_identical="binomial")
 
 testthat::test_that("F1-score is correct", {
   for(metric in familiar:::.get_available_f1_score_metrics()){
@@ -230,9 +230,9 @@ testthat::test_that("F1-score is correct", {
 
 ##### False detection rate #####################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_fdr_metrics(),
-                            except_one_sample="binomial",
-                            except_identical="binomial",
-                            except_same_prediction="binomial")
+                            not_available_single_sample="binomial",
+                            not_available_all_samples_identical="binomial",
+                            not_available_all_predictions_identical="binomial")
 
 testthat::test_that("False detection rate is correct", {
   for(metric in familiar:::.get_available_fdr_metrics()){
@@ -250,8 +250,8 @@ testthat::test_that("False detection rate is correct", {
 
 ##### Informedness #############################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_informedness_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("Informedness is correct", {
   for(metric in familiar:::.get_available_informedness_metrics()){
@@ -264,9 +264,9 @@ testthat::test_that("Informedness is correct", {
 
 ##### Markedness ###############################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_markedness_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE,
-                            except_same_prediction=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE,
+                            not_available_all_predictions_identical=TRUE)
 
 testthat::test_that("Markedness is correct", {
   for(metric in familiar:::.get_available_markedness_metrics()){
@@ -305,9 +305,9 @@ testthat::test_that("Negative predictive value is correct", {
 
 ##### Positive predictive value ################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_ppv_metrics(),
-                            except_one_sample="binomial",
-                            except_identical="binomial",
-                            except_same_prediction="binomial")
+                            not_available_single_sample="binomial",
+                            not_available_all_samples_identical="binomial",
+                            not_available_all_predictions_identical="binomial")
 
 testthat::test_that("Positive predictive value is correct", {
   for(metric in familiar:::.get_available_ppv_metrics()){
@@ -322,8 +322,8 @@ testthat::test_that("Positive predictive value is correct", {
 
 ##### Recall ###################################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_sensitivity_metrics(),
-                            except_one_sample="binomial",
-                            except_identical="binomial")
+                            not_available_single_sample="binomial",
+                            not_available_all_samples_identical="binomial")
 
 testthat::test_that("Recall is correct", {
   for(metric in familiar:::.get_available_sensitivity_metrics()){
@@ -357,12 +357,12 @@ metric_non_micro <- metric_youden[!endsWith(x=metric_youden, suffix="_micro")]
 metric_micro <- metric_youden[endsWith(x=metric_youden, suffix="_micro")]
 
 familiar:::test_all_metrics(metrics=metric_non_micro,
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 familiar:::test_all_metrics(metrics=metric_micro,
-                            except_one_sample="binomial",
-                            except_identical="binomial")
+                            not_available_single_sample="binomial",
+                            not_available_all_samples_identical="binomial")
 
 testthat::test_that("Youden's J statistic is correct", {
   for(metric in familiar:::.get_available_youden_metrics()){

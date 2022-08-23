@@ -421,6 +421,13 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Create unique row names for samples and insert.
   ice_data[, "sample":=get_unique_row_names(x=data)]
 
+  # Remove data with missing predictions.
+  ice_data <- remove_nonvalid_predictions(ice_data,
+                                          outcome_type=object@outcome_type)
+  
+  # Check if removing invalid predictions leaves any data.
+  if(is_empty(ice_data)) return(NULL)
+  
   if(object@outcome_type %in% c("binomial", "multinomial")){
     
     # Determine class levels.

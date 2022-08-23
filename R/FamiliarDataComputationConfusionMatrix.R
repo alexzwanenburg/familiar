@@ -108,11 +108,7 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
                                 ensemble_method=ensemble_method,
                                 is_pre_processed=is_pre_processed)
     
-    if(!any_predictions_valid(prediction_table=prediction_data, outcome_type=object@outcome_type)) return(NULL)
-    
-    # Remove data with missing predictions.
-    prediction_data <- remove_nonvalid_predictions(prediction_data,
-                                                   outcome_type=object@outcome_type)
+    if(!all_predictions_valid(prediction_table=prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
     # Remove data with missing outcomes.
     prediction_data <- remove_missing_outcomes(data=prediction_data,

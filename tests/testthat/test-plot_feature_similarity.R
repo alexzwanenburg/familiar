@@ -6,9 +6,10 @@ debug_flag <- FALSE
 # Generic test
 # Feature similarity can be computed for failing survival predictions.
 familiar:::test_plots(plot_function=familiar:::plot_feature_similarity,
-                      except_one_feature = TRUE,
-                      except_one_sample = TRUE,
-                      except_failed_survival_prediction=FALSE,
+                      not_available_single_feature = TRUE,
+                      not_available_single_sample = TRUE,
+                      not_available_all_predictions_fail = FALSE,
+                      not_available_some_predictions_fail = FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       data_element="feature_similarity",
                       debug=debug_flag)

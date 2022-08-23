@@ -795,12 +795,14 @@ setMethod("..set_risk_stratification_thresholds", signature(object="familiarMode
             
             if(object@outcome_type %in% c("survival", "competing_risk") & model_is_trained(object)){
               object@km_info <- learner.find_survival_grouping_thresholds(object=object, data=data)
+              
             } else {
               object@km_info <- NULL
             }
             
             return(object)
           })
+
 #####..set_vimp_parameters#####
 setMethod("..set_vimp_parameters", signature(object="familiarModel"),
           function(object, ...) return(object))

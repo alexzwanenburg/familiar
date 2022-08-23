@@ -287,6 +287,10 @@ summon_familiar <- function(formula=NULL,
     # Start processes locally.
     cl <- waiver()
     
+  } else if(settings$run$parallel & is_external_cluster){
+    # Make sure that everything is present on the external cluster.
+    cl <- .update_cluster(cl=cl, assign="all")
+    
   } else if(!settings$run$parallel){
     # No cluster is created when 
     cl <- NULL

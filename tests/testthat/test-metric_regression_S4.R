@@ -56,8 +56,8 @@ testthat::skip_on_cran()
 
 #### Mean absolute error #######################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mae_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Mean absolute error is correct", {
   for(metric in familiar:::.get_available_mae_metrics()){
@@ -72,8 +72,8 @@ testthat::test_that("Mean absolute error is correct", {
 
 ##### Relative absolute error ##################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_rae_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("Relative absolute error is correct", {
   for(metric in familiar:::.get_available_rae_metrics()){
@@ -87,8 +87,8 @@ testthat::test_that("Relative absolute error is correct", {
 
 ##### Mean log absolute error ##################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mlae_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Mean log absolute error is correct", {
   for(metric in familiar:::.get_available_mlae_metrics()){
@@ -108,8 +108,8 @@ testthat::test_that("Mean log absolute error is correct", {
 
 ##### Mean squared error #######################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mse_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Mean squared error is correct", {
   for(metric in familiar:::.get_available_mse_metrics()){
@@ -124,8 +124,8 @@ testthat::test_that("Mean squared error is correct", {
 
 ##### Relative squared error ###################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_rse_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("Relative squared error is correct", {
   for(metric in familiar:::.get_available_rse_metrics()){
@@ -140,8 +140,8 @@ testthat::test_that("Relative squared error is correct", {
 
 ##### Mean squared log error ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_msle_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Mean squared log error is correct", {
   
@@ -162,8 +162,8 @@ testthat::test_that("Mean squared log error is correct", {
 
 ##### Median absolute error ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_medea_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Median absolute error is correct", {
   for(metric in familiar:::.get_available_medea_metrics()){
@@ -177,8 +177,8 @@ testthat::test_that("Median absolute error is correct", {
 
 ##### Root mean square error ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_rmse_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Root mean square error is correct", {
   for(metric in familiar:::.get_available_rmse_metrics()){
@@ -192,8 +192,8 @@ testthat::test_that("Root mean square error is correct", {
 
 ##### Root relative squared error ###########################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_rrse_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("Root relative squared error is correct", {
   for(metric in familiar:::.get_available_rrse_metrics()){
@@ -209,8 +209,8 @@ testthat::test_that("Root relative squared error is correct", {
 
 ##### Root mean square log error ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_rmsle_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Root mean square log error is correct", {
   
@@ -235,8 +235,8 @@ testthat::test_that("Root mean square log error is correct", {
 
 ##### Explained variance ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_explained_variance_metrics(),
-                            except_one_sample=FALSE,
-                            except_identical=FALSE)
+                            not_available_single_sample=FALSE,
+                            not_available_all_samples_identical=FALSE)
 
 testthat::test_that("Explained variance is correct", {
   for(metric in familiar:::.get_available_explained_variance_metrics()){
@@ -250,8 +250,8 @@ testthat::test_that("Explained variance is correct", {
 
 ##### R2 score ###############################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_r_squared_metrics(),
-                            except_one_sample=TRUE,
-                            except_identical=TRUE)
+                            not_available_single_sample=TRUE,
+                            not_available_all_samples_identical=TRUE)
 
 testthat::test_that("R2 score is correct", {
   for(metric in familiar:::.get_available_r_squared_metrics()){
