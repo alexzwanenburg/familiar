@@ -1488,10 +1488,10 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
       }
     }
     
-    # Check whether the VGAM package has been installed.
+    # Check whether the nnet package has been installed.
     if(.hasSlot(object, "similarity_metric")){
       if(object@similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-        require_package(x="VGAM",
+        require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ",
                                        object@similarity_metric, " metric"),
                         message_type=message_type)

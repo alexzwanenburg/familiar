@@ -1,8 +1,12 @@
-# Version 1.2.2
+# Version 1.3.0
+
+## Major changes
+
+- Improved speed of fitting generalised models by switching to the `fastglm` and `nnet` packages. This not only affects learners, but also univariate importance and pseudo-R<sup>2</sup> similarity metrics.
 
 ## Minor changes
 
-- Trimming now also trims trimmed functions, which on occassion could still contain large environments.
+- Trimming now also trims trimmed functions, which on occasion could still contain large environments.
 
 # Version 1.2.1 (Kindhearted Koala)
 

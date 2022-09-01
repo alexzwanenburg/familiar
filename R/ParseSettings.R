@@ -1552,13 +1552,13 @@
                                   values=c("none", "low_variance", "univariate_test", "robustness"))
   
   if(outcome_type == "multinomial" & "univariate_test" %in% settings$filter_method){
-    # The VGAM package is required for univariate tests with multinomial
+    # The nnet package is required for univariate tests with multinomial
     # endpoints.
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose="to filter features using univariate tests",
                         message_type="backend_warning")){
       
-      # If the VGAM package is not present, avoid the univariate test.
+      # If the nnet package is not present, avoid the univariate test.
       settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
       if(length(settings$filter_method) == 0) settings$filter_method <- "none"
     }
@@ -1822,7 +1822,7 @@
                                                    default="mcfadden_r2")
   
   if(settings$cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$cluster_similarity_metric, " metric"),
                         message_type="backend_warning")){
       
@@ -3594,7 +3594,7 @@
   
   if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements) &
      settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$feature_similarity_metric, " metric"),
                         message_type="backend_warning")){
       
@@ -3651,7 +3651,7 @@
   
   if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
      settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$sample_similarity_metric, " metric"),
                         message_type="backend_warning")){
       

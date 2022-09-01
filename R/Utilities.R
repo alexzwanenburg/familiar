@@ -61,39 +61,74 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 }
 
 
-.univariate_cox_regression_test <- function(x, outcome_data){
-  # Cox regression model for univariable analysis
+
+..univariate_test_variable_encoding <- function(x, insert_intercept=FALSE){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
+  if(is.factor(x)){
+    # Categorical variables are encoded as numeric levels (ordinal), or using
+    # one-hot-encoding (nominal).
+    if(is.ordered(x)){
+      x <- list(as.numeric(x))
+      
+    } else {
+      # Drop unused levels.
+      x <- droplevels(x)
+      
+      # Dummy encoding of categorical variable.
+      level_names <- levels(x)
+      level_count <- nlevels(x)
+      
+      x <- lapply(level_names[2:level_count], function(ii, x) (as.numeric(x==ii)), x=x)
+    }
+    
+  } else {
+    # Numeric variables are only stored as a list.
+    x <- list(x)
+  }
+  
+  # Set names
+  names(x) <- paste0("name_", seq_along(x))
+  
+  if(insert_intercept){
+    x <- c(x,
+           list("intercept__"=numeric(length(x)) + 1.0))
+  }
+  
+  return(data.table::as.data.table(x))
+}
+
+
+
+.univariate_cox_regression_test <- function(x, outcome_data){
+  # Cox regression model for univariate analysis
   
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
-  # Combine the feature value column with the outcome
-  data <- data.table::data.table("value"=x,
-                                 "outcome_time"=outcome_data$outcome_time,
-                                 "outcome_event"=outcome_data$outcome_event)
+  # Extract response
+  y_time <- outcome_data$outcome_time
+  y_event <- outcome_data$outcome_event
   
-  # Drop entries with missing feature values.
-  data <- data[is.finite(value)]
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y_time) & is.finite(y_event)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Check if the data is empty.
-  if(is_empty(data)) return(NA_real_)
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y_time <- y_time[valid_elements]
+  y_event <- y_event[valid_elements]
   
-  # Check if the feature column is singular
-  if(is_singular_data(data$value)) return(NA_real_)
+  # Check if the feature column is singular.
+  if(is_singular_data(x)) return(NA_real_)
   
-  # Drop levels from factor
-  if(is.factor(data$value)){
-    data$value <- droplevels(data$value)
-  }
+  # Bind data.
+  data <- cbind(..univariate_test_variable_encoding(x, insert_intercept=FALSE),
+                data.table::data.table("time"=y_time,
+                                       "event"=y_event))
   
   # Construct model
-  model <- tryCatch(coxph(Surv(outcome_time, outcome_event) ~ .,
-                               data=data,
-                               na.action=stats::na.omit,
-                               model=TRUE),
+  model <- tryCatch(coxph(Surv(time, event) ~ .,
+                               data=data),
                         error=identity)
 
   # Check if the model did not converge.
@@ -101,9 +136,6 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   # Compute z-statistic.
   z <- .compute_z_statistic(model)
-  
-  # Remove intercept (if present).
-  z <- z[names(z) != "(Intercept)"]
   
   # Compute the p-value from a t-distribution
   p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
@@ -120,34 +152,44 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_linear_regression_test <- function(x, outcome_data){
   # Gaussian regression for univariable analysis
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
-  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
-  # Combine the feature value column with the outcome
-  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
+  # Extract response
+  y <- outcome_data$outcome
   
-  # Drop entries with missing feature values.
-  data <- data[is.finite(value)]
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Check if the data is empty.
-  if(is_empty(data)) return(NA_real_)
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
   
-  # Check if the feature column is singular
-  if(is_singular_data(data$value)) return(NA_real_)
+  # Check if the feature column is singular.
+  if(is_singular_data(x)) return(NA_real_)
   
-  # Drop levels from factor
-  if(is.factor(data$value)){
-    data$value <- droplevels(data$value)
+  # Bind data.
+  data <- cbind(..univariate_test_variable_encoding(x, insert_intercept=TRUE),
+                data.table::data.table("response"=y))
+  
+  if(require_package("fastglm", message_type="silent")){
+    # Using fastglm.
+    predictors <- setdiff(colnames(data), "response")
+    
+    # Construct model.
+    model <- fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
+                              y=data$response,
+                              family=stats::gaussian(link="identity"),
+                              method=3L)
+    
+  } else {
+    # Construct model
+    model <- tryCatch(stats::glm(response ~ . -1,
+                                 data=data,
+                                 family=stats::gaussian(link="identity")),
+                      error=identity)
   }
-  
-  # Construct model
-  model <- tryCatch(stats::glm(outcome ~ .,
-                               data=data,
-                               family=stats::gaussian(link="identity")),
-                    error=identity)
   
   # Check if the model did not converge.
   if(inherits(model, "error")) return(NA_real_)
@@ -156,7 +198,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
-  z <- z[names(z) != "(Intercept)"]
+  z <- z[!names(z) %in% "intercept__"]
   
   # Compute the p-value from a t-distribution
   p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
@@ -173,34 +215,44 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_poisson_regression_test <- function(x, outcome_data){
   # Poisson regression for univariable analysis with count-type outcomes
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
-  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
-  # Combine the feature value column with the outcome
-  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
+  # Extract response
+  y <- outcome_data$outcome
   
-  # Drop entries with missing feature values.
-  data <- data[is.finite(value)]
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Check if the data is empty.
-  if(is_empty(data)) return(NA_real_)
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
   
-  # Check if the feature column is singular
-  if(is_singular_data(data$value)) return(NA_real_)
+  # Check if the feature column is singular.
+  if(is_singular_data(x)) return(NA_real_)
   
-  # Drop levels from factor
-  if(is.factor(data$value)){
-    data$value <- droplevels(data$value)
+  # Bind data.
+  data <- cbind(..univariate_test_variable_encoding(x, insert_intercept=TRUE),
+                data.table::data.table("response"=y))
+  
+  if(require_package("fastglm", message_type="silent")){
+    # Using fastglm.
+    predictors <- setdiff(colnames(data), "response")
+    
+    # Construct model.
+    model <- fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
+                              y=data$response,
+                              family=stats::poisson(),
+                              method=3L)
+    
+  } else {
+    
+    model <- suppressWarnings(tryCatch(stats::glm(response~ . -1,
+                                                  data=data,
+                                                  family=stats::poisson(link="log")),
+                                       error=identity))
   }
-  
-  # Construct model
-  model <- suppressWarnings(tryCatch(stats::glm(outcome~.,
-                                                data=data,
-                                                family=stats::poisson(link="log")),
-                                     error=identity))
   
   # Check if the model did not converge.
   if(inherits(model, "error")) return(NA_real_)
@@ -209,7 +261,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
-  z <- z[names(z) != "(Intercept)"]
+  z <- z[names(z) != "intercept__"]
   
   # Compute the p-value from a t-distribution
   p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
@@ -226,34 +278,55 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_binomial_logistic_regression_test <- function(x, outcome_data){
   #Binomial model for univariable analysis using logistic regression
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
-  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
-  # Combine the feature value column with the outcome
-  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
+  # Extract response
+  y <- outcome_data$outcome
   
-  # Drop entries with missing feature values.
-  data <- data[is.finite(value)]
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Check if the data is empty.
-  if(is_empty(data)) return(NA_real_)
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
   
-  # Check if the feature column is singular
-  if(is_singular_data(data$value)) return(NA_real_)
+  # Check if the feature column is singular.
+  if(is_singular_data(x)) return(NA_real_)
   
-  # Drop levels from factor
-  if(is.factor(data$value)){
-    data$value <- droplevels(data$value)
+  # Bind data.
+  data <- cbind(..univariate_test_variable_encoding(x, insert_intercept=TRUE),
+                data.table::data.table("response"=y))
+  
+  if(require_package("fastglm", message_type="silent")){
+    # Using fastglm.
+    predictors <- setdiff(colnames(data), "response")
+    
+    # Construct model.
+    model <- suppressWarnings(fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
+                                               y=as.numeric(data$response) - 1,
+                                               family=stats::binomial(link="logit"),
+                                               method=3L))
+    
+    # Check for Hauck-Donner effect.
+    if(approximately(model$deviance, 0.0)){
+      model_2 <- fastglm::fastglm(x=as.matrix(data[, mget(setdiff(predictors, "intercept__"))]),
+                                  y=as.numeric(data$response) - 1,
+                                  family=stats::binomial(link="logit"),
+                                  method=3L)
+      
+      # Replace by intercept-less model in case the deviance is higher.
+      if(model_2$deviance > model$deviance) model <- model_2
+    }
+    
+  } else {
+    # Construct model
+    model <- suppressWarnings(tryCatch(stats::glm(response ~ . -1,
+                                                  data=data,
+                                                  family=stats::binomial(link="logit")),
+                                       error=identity))
   }
-  
-  # Construct model
-  model <- suppressWarnings(tryCatch(stats::glm(outcome ~ .,
-                                                data=data,
-                                                family=stats::binomial(link="logit")),
-                                     error=identity))
   
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
@@ -262,7 +335,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
-  z <- z[names(z) != "(Intercept)"]
+  z <- z[names(z) != "intercept__"]
   
   # Compute the p-value from a t-distribution
   p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
@@ -279,50 +352,64 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_multinomial_logistic_regression_test <- function(x, outcome_data){
   # Multinomial model for univariable analysis using logistic regression
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
-  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
-  # Combine the feature value column with the outcome
-  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
+  # Extract response
+  y <- outcome_data$outcome
   
-  # Drop entries with missing feature values.
-  data <- data[is.finite(value)]
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Check if the data is empty.
-  if(is_empty(data)) return(NA_real_)
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
   
-  # Check if the feature column is singular
-  if(is_singular_data(data$value)) return(NA_real_)
+  # Check if the feature column is singular.
+  if(is_singular_data(x)) return(NA_real_)
   
-  # Drop levels from factor
-  if(is.factor(data$value)){
-    data$value <- droplevels(data$value)
-  }
+  # Bind data.
+  data <- cbind(..univariate_test_variable_encoding(x, insert_intercept=TRUE),
+                data.table::data.table("response"=y))
   
   # Check if the package is installed and attached.
-  require_package(x="VGAM",
+  require_package(x="nnet",
                   purpose="to determine univariate p-values for multinomial outcomes")
   
   # Construct model
-  model <- suppressWarnings(tryCatch(VGAM::vglm(outcome ~ .,
-                                                data=data,
-                                                family=VGAM::multinomial()),
-                                     error=identity))
+  quiet(
+    model <- nnet::multinom(response ~ . -1,
+                            data=data,
+                            maxit=500)
+  )
   
+  # Check if the model converged. NNET might fail to converge if the
+  # Hauck-Donner effect is present.
+  if(model$convergence == 1){
+    quiet(
+      model2 <- nnet::multinom(response ~ . -1 -intercept__,
+                               data=data,
+                               maxit=500)
+    )
+    
+    # If the Hauck-Donner effect is indeed present, the new model without the
+    # intercept should converge quickly.
+    if(model2$convergence == 0) model <- model2
+  }
+
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
   z <- .compute_z_statistic(model)
-  
+
   # Remove intercept (if present).
-  z <- z[names(z) != "(Intercept)"]
+  predictors <- setdiff(colnames(data), c("response", "intercept__"))
+  z <- if(is.matrix(z)) as.vector(z[, predictors]) else z[predictors]
   
   # Compute the p-value from a t-distribution
-  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x) * (nlevels(y) - 1L)))
   
   # Check if the value is finite.
   if(all(!is.finite(p_value))) return(NA_real_)
@@ -946,7 +1033,7 @@ is_valid_data <- function(x){
 
 .compute_z_statistic <- function(model, fix_all_missing=FALSE){
   
-  mu <- cov_matrix <- NULL
+  mu <- cov_matrix <- stdevs <- NULL
   
   if(is(model, "familiarModel")){
     # Attempt to extract the estimates and the covariance matrix from the
@@ -971,23 +1058,40 @@ is_valid_data <- function(x){
     if(is.null(mu)) mu <- VGAM::coefvlm(model)
     if(is.null(cov_matrix)) cov_matrix <- VGAM::vcovvlm(model)
     
+  } else if(inherits(model, "fastglm")){
+    require_package(x="fastglm",
+                    purpose="to determine z-scores for generalised linear regression models")
+    
+    if(is.null(mu)) mu <- stats::coef(model)
+    
+    stdevs <- model$se
+    names(stdevs) <- names(mu)
+  
+  } else if(inherits(model, "nnet")){
+    
+    if(is.null(mu)) mu <- stats::coef(model)
+    if(is.null(cov_matrix)) cov_matrix <- stats::vcov(model)
+    
   } else {
+    
     if(is.null(mu)) mu <- stats::coef(model)
     if(is.null(cov_matrix)) cov_matrix <- stats::vcov(model)
   }
   
-  if(is.matrix(mu)){
-    stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
-    
-  } else {
-    stdevs <- sqrt(diag(cov_matrix))
-    
-    # Order standard deviations according to the estimates.
-    if(is.null(names(stdevs))){
-      stdevs <- stdevs[seq_along(mu)]
+  if(is.null(stdevs)){
+    if(is.matrix(mu)){
+      stdevs <- matrix(sqrt(diag(cov_matrix)), ncol=ncol(mu), byrow=TRUE)
       
     } else {
-      stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+      stdevs <- sqrt(diag(cov_matrix))
+      
+      # Order standard deviations according to the estimates.
+      if(is.null(names(stdevs))){
+        stdevs <- stdevs[seq_along(mu)]
+        
+      } else {
+        stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+      }
     }
   }
   

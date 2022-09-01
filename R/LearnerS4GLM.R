@@ -4,8 +4,10 @@ NULL
 
 setClass("familiarGLM",
          contains="familiarModel",
-         slots=list("encoding_reference_table" = "ANY"),
-         prototype=list("encoding_reference_table" = NULL))
+         slots=list("encoding_reference_table" = "ANY",
+                    "feature_order" = "character"),
+         prototype=list("encoding_reference_table" = NULL,
+                        "feature_order"=character()))
 
 #####initialize#################################################################
 setMethod("initialize", signature(.Object="familiarGLM"),
@@ -15,13 +17,13 @@ setMethod("initialize", signature(.Object="familiarGLM"),
             .Object <- callNextMethod()
             
             if(.Object@outcome_type == "multinomial"){
-              .Object@package <- "VGAM"
+              .Object@package <- "nnet"
               
             } else if(.Object@outcome_type == "survival"){
               .Object@package <- "survival"
               
             } else {
-              .Object@package <- "stats"
+              .Object@package <- c("stats", "fastglm")
             }
             
             return(.Object)
@@ -238,23 +240,59 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
                                                normalisation="average_one")
             
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
-              # Train the model.
-              model <- do.call_with_handlers(stats::glm,
-                                             args=list(formula,
-                                                       "data"=encoded_data$encoded_data@data,
-                                                       "weights"=weights,
-                                                       "family"=family,
-                                                       "model"=FALSE,
-                                                       "x"=FALSE,
-                                                       "y"=FALSE))
+              # Faster implementation using fastglm. We keep the stats::glm
+              # implementation in case fastglm disappears from CRAN at some
+              # point.
+              
+              version <- "fastglm"
+              
+              # fastglm has some issues with the poisson family as of version 0.0.3.
+              # if(object@hyperparameters$family %in% c("poisson", "log_poisson")) version <- "stats"
+              
+              if(version == "fastglm"){
+                outcome_data <- encoded_data$encoded_data@data$outcome
+                if(object@outcome_type == "binomial"){
+                  # Convert levels to [0, 1] range.
+                  outcome_data <- as.numeric(outcome_data) - 1
+                }
+                
+                # Add intercept.
+                encoded_data$encoded_data@data[, "intercept__":=1.0]
+                
+                # Fit using fastglm using the LDLT Cholesky method.
+                model <- do.call_with_handlers(
+                  fastglm::fastglm,
+                  args=list("x"=as.matrix(encoded_data$encoded_data@data[, mget(c(feature_columns, "intercept__"))]),
+                            "y"=matrix(outcome_data, ncol=1L),
+                            "weights"=weights,
+                            "family"=family,
+                            "method"=3L)
+                )
+                
+              } else {
+                
+                model <- do.call_with_handlers(
+                  stats::glm,
+                  args=list(formula,
+                            "data"=encoded_data$encoded_data@data,
+                            "weights"=weights,
+                            "family"=family,
+                            "model"=FALSE,
+                            "x"=FALSE,
+                            "y"=FALSE)
+                )
+              }
               
             } else if(object@outcome_type=="multinomial"){
-              # Train the model.
-              model <- do.call_with_handlers(VGAM::vglm,
-                                             args=list(formula,
-                                                       "data"=encoded_data$encoded_data@data,
-                                                       "weights"=weights,
-                                                       "family"=family))
+              
+              # Fit multinomial logistic models using nnet::multinom.
+              model <- do.call_with_handlers(
+                nnet::multinom,
+                args=list(formula,
+                          "data"=encoded_data$encoded_data@data,
+                          "weights"=weights,
+                          "maxit"=500)
+              )
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLM: unknown outcome type: ", object@outcome_type))
@@ -279,6 +317,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
+            
+            # Add feature order
+            object@feature_order <- feature_columns
             
             # Set learner version
             object <- set_package_version(object)
@@ -310,18 +351,36 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                                                            encoding_method="dummy",
                                                            drop_levels=FALSE)
               
+              # Add intercept variable, because by default, fastglm does not fit
+              # an intercept.
+              if(inherits(object@model, "fastglm")){
+                encoded_data$encoded_data@data[, "intercept__":=1.0]
+              }
+              
               # Get an empty prediction table.
               prediction_table <- get_placeholder_prediction_table(object=object,
                                                                    data=encoded_data$encoded_data,
                                                                    type=type)
               
               if(object@outcome_type == "binomial"){
-                #####Binomial outcomes######
+                #### Binomial outcomes -----------------------------------------
                 
-                # Use the model for prediction.
-                model_predictions <- suppressWarnings(predict(object=object@model,
-                                                              newdata=encoded_data$encoded_data@data,
-                                                              type="response"))
+                if(inherits(object@model, "fastglm")){
+                  # For fastglm::fastglm models.
+                  model_predictions <- suppressWarnings(
+                    predict(object=object@model,
+                            newdata=as.matrix(encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))]),
+                            type="response")
+                  ) 
+                  
+                } else {
+                  # For stats::glm models.
+                  model_predictions <- suppressWarnings(
+                    predict(object=object@model,
+                            newdata=encoded_data$encoded_data@data,
+                            type="response")
+                  ) 
+                }
                 
                 # Obtain class levels.
                 class_levels <- get_outcome_class_levels(x=object)
@@ -338,12 +397,26 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                 prediction_table[, "predicted_class":=class_predictions]
                 
               } else if(object@outcome_type == "multinomial") {
-                #####Multinomial outcomes######
+                #### Multinomial outcomes --------------------------------------
                 
-                # Use the model for prediction.
-                model_predictions <- suppressWarnings(VGAM::predictvglm(object=object@model,
-                                                                        newdata=encoded_data$encoded_data@data,
-                                                                        type="response"))
+                if(inherits(object@model, "nnet")){
+                  # For nnet::multinomial models.
+                  model_predictions <- predict(
+                    object@model,
+                    newdata=encoded_data$encoded_data@data[, mget(object@feature_order)],
+                    type="probs"
+                  )
+                  
+                } else {
+                  # For VGAM::vglm
+                  .Deprecated(msg="The use of VGAM for multinomial logistic models will be deprecated in version 2.0.0.")
+
+                  model_predictions <- suppressWarnings(
+                    VGAM::predictvglm(object=object@model,
+                                      newdata=encoded_data$encoded_data@data,
+                                      type="response")
+                  )
+                }
                 
                 # Obtain class levels.
                 class_levels <- get_outcome_class_levels(x=object)
@@ -351,7 +424,12 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                 # Add class probabilities.
                 class_probability_columns <- get_class_probability_name(x=object)
                 for(ii in seq_along(class_probability_columns)){
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+                  if(is.matrix(model_predictions)){
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+                    
+                  } else {
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[ii]]
+                  }
                 }
                 
                 # Update predicted class based on provided probabilities.
@@ -360,12 +438,24 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                 prediction_table[, "predicted_class":=class_predictions]
                 
               } else if(object@outcome_type %in% c("continuous", "count")){
-                #####Count and continuous outcomes#####
+                #### Count and continuous outcomes -----------------------------
                 
-                # Use the model for prediction.
-                model_predictions <- suppressWarnings(predict(object=object@model,
-                                                              newdata=encoded_data$encoded_data@data,
-                                                              type="response"))
+                if(inherits(object@model, "fastglm")){
+                  # For fastglm::fastglm models.
+                  model_predictions <- suppressWarnings(
+                    predict(object=object@model,
+                            newdata=as.matrix(encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))]),
+                            type="response")
+                  ) 
+                  
+                } else {
+                  # For stats::glm models.
+                  model_predictions <- suppressWarnings(
+                    predict(object=object@model,
+                            newdata=encoded_data$encoded_data@data,
+                            type="response")
+                  ) 
+                }
                 
                 # Add regression.
                 prediction_table[, "predicted_outcome":=model_predictions]
@@ -391,24 +481,48 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                                                            encoding_method="dummy",
                                                            drop_levels=FALSE)
               
+              if(inherits(object@model, "fastglm")){
+                encoded_data$encoded_data@data[, "intercept__":=1.0]
+              }
+              
               if(object@outcome_type  %in% c("continuous", "count", "binomial")){
-                #####Binomial, count and continuous outcomes####################
+                #### Binomial, count and continuous outcomes -------------------
                 
-                # Use the model for prediction.
-                return(predict(object=object@model,
-                               newdata=encoded_data$encoded_data@data,
-                               type=type,
-                               ...))
+                if(inherits(object@model, "fastglm")){
+                  return(predict(object=object@model,
+                                 newdata=as.matrix(encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))]),
+                                 type=type,
+                                 ...))
+                  
+                } else {
+                  # Use the model for prediction.
+                  return(predict(object=object@model,
+                                 newdata=encoded_data$encoded_data@data,
+                                 type=type,
+                                 ...))
+                }
                 
               } else if(object@outcome_type == "multinomial") {
-                #####Multinomial outcomes#######################################
+                #### Multinomial outcomes --------------------------------------
                 
-                # Use the model for prediction.
-                return(suppressWarnings(VGAM::predictvglm(object=object@model,
-                                                          newdata=encoded_data$encoded_data@data,
-                                                          type=type,
-                                                          ...)))
-                
+                if(inherits(object@model, "nnet")){
+                  # For nnet::multinomial models.
+                  return(predict(object@model,
+                                 newdata=encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))],
+                                 type=type,
+                                 ...))
+                  
+                } else {
+                  # For VGAM::vglm
+                  .Deprecated(msg="The use of VGAM for multinomial logistic models will be deprecated in familiar version 2.0.0.")
+                  
+                  # Use the model for prediction.
+                  return(VGAM::predictvglm(object=object@model,
+                                           newdata=encoded_data$encoded_data@data,
+                                           type=type,
+                                           ...))
+                }
+                  
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
@@ -433,18 +547,25 @@ setMethod("..vimp", signature(object="familiarGLM"),
             coefficient_z_values <- .compute_z_statistic(object, fix_all_missing=TRUE)
             
             if(is(object@model, "vglm")){
+              .Deprecated(msg="The use of VGAM for multinomial logistic models will be deprecated in version 2.0.0.")
               
               # Parse coefficient names. vglm adds :1 and :2 (and so on) to
               # coefficient names.
               coefficient_names <- strsplit(x=names(coefficient_z_values), split=":", fixed=TRUE)
               coefficient_names <- sapply(coefficient_names, function(coefficient_name) coefficient_name[1])
               names(coefficient_z_values) <- coefficient_names
+              
+            } else if(inherits(object@model, "nnet")){
+              coefficient_names <- colnames(coefficient_z_values)
+              coefficient_names <- rep(coefficient_names, each=nrow(coefficient_z_values))
+              coefficient_z_values <- as.vector(coefficient_z_values)
+              names(coefficient_z_values) <- coefficient_names
             }
             
             # Remove intercept from the coefficients.
-            coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
+            coefficient_z_values <- coefficient_z_values[!names(coefficient_z_values) %in% c("(Intercept)", "intercept__")]
             if(length(coefficient_z_values) == 0) return(callNextMethod())
-          
+            
             # Assign to variable importance table.
             vimp_table <- data.table::data.table("score"=abs(coefficient_z_values),
                                                  "name"=names(coefficient_z_values))
@@ -508,7 +629,7 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
               family_fun <- stats::poisson(link="log")
               
             } else if(family == "multinomial"){
-              family_fun <- VGAM::multinomial()
+              family_fun <- "_placeholder_"
               
             } else {
               ..error_reached_unreachable_code(paste0("..get_distribution_family,familiarGLM: unknown family.", family))
@@ -575,28 +696,22 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
 setMethod(".trim_model", signature(object="familiarGLM"),
           function(object, ...){
             
-            if(object@outcome_type == "multinomial"){
+            if(inherits(object@model, "fastglm")){
               # Update model by removing the call.
-              object@model@call <- call("trimmed")
+              object@model$call <- call("trimmed")
               
               # Add show.
               object <- .capture_show(object)
               
-              # Remove .Environment.
-              object@model@terms$terms <- .replace_environment(object@model@terms$terms)
-              object@model@misc$formula <- .replace_environment(object@model@misc$formula)
+              object@model$fitted.values <- NULL
+              object@model$linear.predictors <- NULL
+              object@model$weights <- NULL
+              object@model$prior.weights <- NULL
+              object@model$y <- NULL
+              object@model$n <- NULL
+              object@model$residuals <- NULL
               
-              # Remove elements that contain sample-specific values.
-              object@model@predictors <- matrix(0)
-              object@model@effects <- numeric(0)
-              object@model@qr$qr <- NULL
-              object@model@fitted.values <- matrix(0)
-              object@model@residuals <- matrix(0)
-              object@model@weights <- matrix(0)
-              object@model@x <- matrix(0)
-              object@model@y <- matrix(0)
-              
-            } else {
+            } else if(inherits(object@model, "glm")){
               # Update model by removing the call.
               object@model$call <- call("trimmed")
               
@@ -616,6 +731,43 @@ setMethod(".trim_model", signature(object="familiarGLM"),
               object@model$qr$qr <- NULL
               object@model$residuals <- NULL
               object@model$effects <- NULL
+              
+            } else if(inherits(object@model, "nnet")){
+              # Update model by removing the call.
+              object@model$call <- call("trimmed")
+              
+              # Add show.
+              object <- .capture_show(object)
+              
+              # Remove .Environment.
+              object@model$terms <- .replace_environment(object@model$terms)
+              
+              # Remove elements that contain sample-specific values.
+              object@model$fitted.values <- NULL
+              object@model$weights <- NULL
+              object@model$residuals <- NULL
+              
+            } else if(inherits(object@model, "vglm")){
+              .Deprecated(msg="The use of VGAM for multinomial logistic models will be deprecated in version 2.0.0.")
+              # Update model by removing the call.
+              object@model@call <- call("trimmed")
+              
+              # Add show.
+              object <- .capture_show(object)
+              
+              # Remove .Environment.
+              object@model@terms$terms <- .replace_environment(object@model@terms$terms)
+              object@model@misc$formula <- .replace_environment(object@model@misc$formula)
+              
+              # Remove elements that contain sample-specific values.
+              object@model@predictors <- matrix(0)
+              object@model@effects <- numeric(0)
+              object@model@qr$qr <- NULL
+              object@model@fitted.values <- matrix(0)
+              object@model@residuals <- matrix(0)
+              object@model@weights <- matrix(0)
+              object@model@x <- matrix(0)
+              object@model@y <- matrix(0)
             }
             
             # Set is_trimmed to TRUE.

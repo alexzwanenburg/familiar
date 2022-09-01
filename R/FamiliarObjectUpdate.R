@@ -101,6 +101,12 @@ setMethod("update_object", signature(object="familiarModel"),
               object@novelty_detector <- update_object(object@novelty_detector)
             }
             
+            
+            if(tail(object@familiar_version, n=1L) < "1.3.0" & is(object, "familiarGLM")){
+              # Add feature_order slot to familiarGLM objects.
+              attr(object, "feature_order") <- character()
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
             # Update package version.

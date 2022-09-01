@@ -39,6 +39,38 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
 
 similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_metric){
   
+  ..encode_variable_to_list <- function(x, is_categorical, insert_intercept=FALSE){
+    
+    if(is_categorical) {
+      # Categorical variables are encoded as numeric levels (ordinal), or using
+      # one-hot-encoding (nominal).
+      if(is.ordered(x)){
+        x <- list(as.numeric(x))
+        
+      } else {
+        # Dummy encoding of categorical variable.
+        level_names <- levels(x)
+        level_count <- nlevels(x)
+        
+         x <- lapply(level_names[2:level_count], function(ii, x) (as.numeric(x==ii)), x=x)
+      }
+      
+    } else {
+      # Numeric variables are only stored as a list.
+      x <- list(x)
+    }
+    
+    # Set names
+    names(x) <- paste0("name_", seq_along(x))
+    
+    if(insert_intercept){
+      x <- c(x,
+             list("intercept__"=numeric(length(x)) + 1.0))
+    }
+    
+    return(data.table::as.data.table(x))
+  }
+  
   # Check categorical flag for x
   if(length(x_categorical) != 1){
     ..error_variable_has_too_many_values(x=x_categorical, var_name="x_categorical", req_length=1)
@@ -56,77 +88,185 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
                                                           x_categorical=x_categorical,
                                                           y_categorical=y_categorical)
   
-  # Determine model formulae
-  model_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ y", "y ~ x"))
-  null_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ 1", "y ~ 1"))
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
   
-  # Create data.table to perform the regression
-  data <- data.table::data.table("x"=x, "y"=y)
-  
-  # Only allow complete observations. This check should not be required in
-  # practice.
-  data <- data[is.finite(x) & is.finite(y)]
-  
-  # Check if there is sufficient data left over.
-  if(nrow(data) <= 1) return(as.double(NA))
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
   
   # Check if there are more than one unique values in x and or y.
   if(length(unique(x)) == 1 & length(unique(y)) == 1) return(1.0)
   
   # Compute log-likelihoods so that the pseudo-R^2 measures can be computed.
   if(analysis_info$type == "gaussian"){
-    # Numerical y variable
-    model_obj <- stats::glm(model_formula, data=data, family=stats::gaussian)
     
-    # Check for models where the intercept completely suffices, i.e. the scale
-    # equals 0. This can happen if one of the variables is invariant.
-    if(!is.finite(model_obj$coefficients[["x"]])) return(0.0)
-    if(near(model_obj$coefficients[["x"]], 0.0, df=2*length(x))) return(0.0)
+    #### Regression ------------------------------------------------------------
     
-    # Check for almost exact copies, which do not show any residual deviance.
-    if(near(model_obj$deviance, 0.0)) return(1.0)
-    
-    null_obj  <- stats::glm(null_formula, data=data, family=stats::gaussian)
+    if(require_package("fastglm", message_type="silent")){
+      
+      if(!analysis_info$swap){
+        predictors <- ..encode_variable_to_list(x=x,
+                                                is_categorical=x_categorical,
+                                                insert_intercept=TRUE)
+        response <- y
+        
+      } else {
+        predictors <- ..encode_variable_to_list(x=y,
+                                                is_categorical=y_categorical,
+                                                insert_intercept=TRUE)
+        response <- x
+      }
+      
+      # Fit informative model.
+      model <- fastglm::fastglm(x=as.matrix(predictors),
+                                y=response,
+                                family=stats::gaussian(),
+                                method=3L)
+      
+      predictor_names <- setdiff(names(model$coefficients), "intercept__")
+      if(any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
+      if(all(near(model$coefficients[predictor_names], 0.0, df=2*length(x)))) return(0.0)
+      
+      if(approximately(model$deviance, 0.0)) return(1.0)
+      
+      # Fit uninformative model
+      null_model <- fastglm::fastglm(x=as.matrix(numeric(length(response)), ncol=1L),
+                                     y=response,
+                                     family=stats::gaussian(),
+                                     method=3L)
+      
+    } else {
+      
+      # Determine model formulae
+      model_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ y", "y ~ x"))
+      null_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ 1", "y ~ 1"))
+      
+      # Numerical y variable
+      model <- stats::glm(model_formula,
+                          data=data.table::data.table("x"=x, "y"=y),
+                          family=stats::gaussian())
+      
+      # Check for models where the intercept completely suffices, i.e. the scale
+      # equals 0. This can happen if one of the variables is invariant.
+      if(!is.finite(model$coefficients[["x"]])) return(0.0)
+      if(near(model$coefficients[["x"]], 0.0, df=2*length(x))) return(0.0)
+      
+      # Check for almost exact copies, which do not show any residual deviance.
+      if(approximately(model$deviance, 0.0)) return(1.0)
+      
+      null_model  <- stats::glm(null_formula,
+                                data=data.table::data.table("x"=x, "y"=y),
+                                family=stats::gaussian())
+    }
     
     # Compute log-likelihoods
-    model_loglik <- stats::logLik(model_obj)[1]
-    null_loglik <- stats::logLik(null_obj)[1]
+    model_loglik <- stats::logLik(model)[1]
+    null_loglik <- stats::logLik(null_model)[1]
     
   } else if(analysis_info$type == "binomial"){
-    # Categorical y variable with two levels
-    model_obj <- stats::glm(model_formula, data=data, family=stats::binomial)
     
-    # Check for models where the intercept completely suffices, i.e. the scale
-    # equals 0. This can happen if one of the variables is invariant.
-    scale_coefficients <- setdiff(names(coef(model_obj)), "(Intercept)")
-    if(all(!is.finite(model_obj$coefficients[scale_coefficients]))) return(0.0)
-    if(all(near(model_obj$coefficients[scale_coefficients], 0.0, df=2*length(x)))) return(0.0)
+    #### Two-class -------------------------------------------------------------
     
-    # Check for almost exact copies, which do not show any residual deviance.
-    if(near(model_obj$deviance, 0.0)) return(1.0)
-    
-    null_obj  <- stats::glm(null_formula, data=data, family=stats::binomial)
+    if(require_package("fastglm", message_type="silent")){
+      
+      if(!analysis_info$swap){
+        predictors <- ..encode_variable_to_list(x=x,
+                                                is_categorical=x_categorical,
+                                                insert_intercept=TRUE)
+        response <- as.numeric(y) - 1
+        
+      } else {
+        predictors <- ..encode_variable_to_list(x=y,
+                                                is_categorical=y_categorical,
+                                                insert_intercept=TRUE)
+        response <- as.numeric(x) - 1
+      }
+      
+      # Fit informative model.
+      model <- fastglm::fastglm(x=as.matrix(predictors),
+                                y=response,
+                                family=stats::binomial(),
+                                method=3L)
+      
+      predictor_names <- setdiff(names(model$coefficients), "intercept__")
+      if(any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
+      if(all(near(model$coefficients[predictor_names], 0.0, df=2*length(x)))) return(0.0)
+
+      if(approximately(model$deviance, 0.0)) return(1.0)
+      
+      # Fit uninformative model
+      null_model <- fastglm::fastglm(x=as.matrix(numeric(length(response)), ncol=1L),
+                                     y=response,
+                                     family=stats::binomial(),
+                                     method=3L)
+      
+    } else {
+      # Determine model formulae
+      model_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ y", "y ~ x"))
+      null_formula <- stats::as.formula(ifelse(analysis_info$swap, "x ~ 1", "y ~ 1"))
+      
+      # Categorical y variable with two levels
+      model <- stats::glm(model_formula,
+                          data=data.table::data.table("x"=x, "y"=y),
+                          family=stats::binomial())
+      
+      # Check for models where the intercept completely suffices, i.e. the scale
+      # equals 0. This can happen if one of the variables is invariant.
+      predictor_names <- setdiff(names(coef(model)), "(Intercept)")
+      if(any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
+      if(all(near(model$coefficients[predictor_names], 0.0, df=2*length(x)))) return(0.0)
+      
+      # Check for almost exact copies, which do not show any residual deviance.
+      if(approximately(model$deviance, 0.0)) return(1.0)
+      
+      null_model  <- stats::glm(null_formula,
+                                data=data.table::data.table("x"=x, "y"=y),
+                                family=stats::binomial())
+    }
     
     # Compute log-likelihoods
-    model_loglik <- stats::logLik(model_obj)[1]
-    null_loglik <- stats::logLik(null_obj)[1]
+    model_loglik <- stats::logLik(model)[1]
+    null_loglik <- stats::logLik(null_model)[1]
     
   } else if(analysis_info$type == "multinomial") {
-    require_package(x="VGAM",
+    #### Multi-class -----------------------------------------------------------
+    
+    require_package(x="nnet",
                     purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", similarity_metric, " metric"))
     
-    # Categorical y variable with over two levels
-    model_obj <- tryCatch(VGAM::vglm(model_formula, family=VGAM::multinomial, data=data),
-                          error=identity)
+    if(!analysis_info$swap){
+      predictors <- ..encode_variable_to_list(x=x, is_categorical=x_categorical)
+      response <- data.table::data.table("response"=y)
+      
+    } else {
+      predictors <- ..encode_variable_to_list(x=y, is_categorical=y_categorical)
+      response <- data.table::data.table("response"=x)
+    }
     
-    # In case of errors, return 0.0.
-    if(inherits(model_obj, "error"))  return(0.0)
+    # Determine model formulae
+    model_formula <- stats::reformulate(termlabels=names(predictors), response=quote(response))
+    null_formula <- stats::as.formula("response ~ 1")
     
-    null_obj  <- VGAM::vglm(null_formula, family=VGAM::multinomial, data=data)
+    quiet(model <- nnet::multinom(model_formula,
+                                  data=cbind(predictors, response),
+                                  maxit=500))
+    
+    model_coefficients <- stats::coef(model)
+    predictor_names <- setdiff(colnames(model_coefficients), "(Intercept)")
+    if(any(!is.finite(model_coefficients[, predictor_names]))) return(0.0)
+    if(all(near(as.vector(model_coefficients[, predictor_names]), 0.0, df=2*length(x)))) return(0.0)
+    
+    if(approximately(model$deviance, 0.0)) return(1.0)
+    
+    quiet(null_model <- nnet::multinom(null_formula,
+                                       data=cbind(predictors, response),
+                                       maxit=500))
     
     # Compute log-likelihoods
-    model_loglik <- VGAM::logLik.vlm(model_obj)[1]
-    null_loglik <- VGAM::logLik.vlm(null_obj)[1]
+    model_loglik <- stats::logLik(model)[1]
+    null_loglik <- stats::logLik(null_model)[1]
     
   } else {
     ..error_reached_unreachable_code("similarity.pseudo_r2: encountered unknown analysis type")
