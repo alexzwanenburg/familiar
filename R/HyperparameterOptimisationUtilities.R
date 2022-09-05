@@ -1202,3 +1202,54 @@ get_best_hyperparameter_set <- function(score_table,
   
   return(x)
 }
+
+
+
+.set_signature_size <- function(object,
+                                rank_table_list,
+                                suggested_range=NULL){
+  
+  if(is.null(suggested_range)) suggested_range <- c(1, Inf)
+  
+  # Update minimum signature size in object.
+  object@hyperparameters$sign_size <- min(suggested_range)
+  
+  # Some variable importance methods fail to produce a list (e.g. none,
+  # signature_only, random). We create a single element list in that case.
+  if(is_empty(rank_table_list)) rank_table_list <- list(NULL)
+  
+  # Determine the lower range of the signature.
+  signature_list <- lapply(rank_table_list,
+                           function(rank_table, object){
+                             get_signature(object=object,
+                                           rank_table=rank_table)
+                           },
+                           object=object)
+  
+  # Find the minimum number of 
+  min_signature_size <- min(sapply(signature_list, length))
+  
+  # Update maximum signature size in the list.
+  object@hyperparameters$sign_size <- max(suggested_range)
+  
+  # Determine the lower range of the signature.
+  signature_list <- lapply(rank_table_list,
+                           function(rank_table, object){
+                             get_signature(object=object,
+                                           rank_table=rank_table)
+                           },
+                           object=object)
+  
+  # Update maximum signature size in the list.
+  max_signature_size <- max(sapply(signature_list, length))
+  
+  # Add minimum and maximum signature size, if necessary.
+  if(any(suggested_range < min_signature_size)) suggested_range <- c(suggested_range, min_signature_size)
+  if(any(suggested_range > max_signature_size)) suggested_range <- c(suggested_range, max_signature_size)
+  
+  # Limit range to unique values within the range.
+  suggested_range <- suggested_range[suggested_range >= min_signature_size & suggested_range <= max_signature_size]
+  suggested_range <- unique(suggested_range)
+  
+  return(suggested_range)
+}
