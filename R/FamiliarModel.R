@@ -972,6 +972,9 @@ setMethod("get_signature", signature(object="list"),
               selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
                                                              feature_info_list=object)
               
+              # Shrink signature sizes that are too large.
+              if(signature_size > length(selected_features)) signature_size <- length(selected_features)
+              
               # Randomly pick the signature.
               selected_features <- fam_sample(x=selected_features,
                                               size=signature_size,

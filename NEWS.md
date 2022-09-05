@@ -8,6 +8,10 @@
 
 - Trimming now also trims trimmed functions, which on occasion could still contain large environments.
 
+## Bug fixes
+
+- Fixed an error that may occur if the signature size was larger than the number of available features when using the `random` variable importance method.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
