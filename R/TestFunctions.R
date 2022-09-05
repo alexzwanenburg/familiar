@@ -2788,6 +2788,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                                              learners=NULL,
                                              outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                              not_available_no_samples=TRUE,
+                                             not_available_invariant_data=TRUE,
                                              no_hyperparameters=FALSE,
                                              n_max_bootstraps=25L,
                                              n_max_optimisation_steps=3L,
@@ -2865,6 +2866,9 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     # Set exceptions per outcome type.
     .not_available_no_samples <- not_available_no_samples
     if(is.character(.not_available_no_samples)) .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
+    
+    .not_available_invariant_data <- not_available_invariant_data
+    if(is.character(.not_available_invariant_data)) .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
     
     # Iterate over learners or variable importance methods..
     for(current_method in method_pool){
@@ -2970,12 +2974,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only identical entries."), {
                         
-                        if(no_hyperparameters | not_available_no_samples){
+                        if(no_hyperparameters | .not_available_invariant_data){
                           # Test that no hyperparameters are set. Models cannot
                           # train on completely invariant data.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!not_available_no_samples){
+                        } else if(!.not_available_invariant_data){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
