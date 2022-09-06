@@ -34,16 +34,12 @@ familiar:::test_all_vimp_methods_parallel(vimp_methods=familiar:::.get_available
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_glmnet_ridge_vimp_methods(show_general=FALSE),
-                                            not_available_invariant_data=FALSE,
                                             debug=TRUE,
-                                            parallel=FALSE,
-                                            always_available=TRUE)
+                                            parallel=FALSE)
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_glmnet_lasso_vimp_methods(show_general=FALSE),
-                                            not_available_invariant_data=FALSE,
                                             debug=TRUE,
-                                            parallel=FALSE,
-                                            always_available=TRUE)
+                                            parallel=FALSE)
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_glmnet_elastic_net_vimp_methods(show_general=TRUE),
                                             debug=TRUE,

@@ -10,7 +10,6 @@ for(hyperparameter_learner in familiar:::.get_available_hyperparameter_learners(
                                                 outcome_type_available="binomial",
                                                 acquisition_function=acquisition_function,
                                                 hyperparameter_learner=hyperparameter_learner,
-                                                not_available_invariant_data=FALSE,
                                                 debug=FALSE,
                                                 parallel=FALSE)
   }
@@ -22,7 +21,6 @@ for(optimisation_function in familiar:::.get_available_optimisation_functions())
   familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
                                               outcome_type_available="binomial",
                                               optimisation_function=optimisation_function,
-                                              not_available_invariant_data=FALSE,
                                               debug=FALSE,
                                               parallel=FALSE)
 }
@@ -33,7 +31,6 @@ for(optimisation_function in familiar:::.get_available_optimisation_functions())
                                               outcome_type_available="binomial",
                                               optimisation_function=optimisation_function,
                                               metric=c("auc", "brier", "balanced_accuracy"),
-                                              not_available_invariant_data=FALSE,
                                               debug=FALSE,
                                               parallel=FALSE)
 }
@@ -44,7 +41,6 @@ for(hyperparameter_learner in familiar:::.get_available_hyperparameter_learners(
   familiar:::test_hyperparameter_optimisation(learners="cox",
                                               outcome_type_available="survival",
                                               hyperparameter_learner=hyperparameter_learner,
-                                              not_available_invariant_data=FALSE,
                                               debug=FALSE,
                                               parallel=FALSE)
 }
@@ -53,7 +49,6 @@ for(hyperparameter_learner in familiar:::.get_available_hyperparameter_learners(
 ##### Test without measuring time ##############################################
 familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
                                             outcome_type_available="binomial",
-                                            not_available_invariant_data=FALSE,
                                             measure_time=FALSE,
                                             debug=FALSE,
                                             parallel=FALSE)
