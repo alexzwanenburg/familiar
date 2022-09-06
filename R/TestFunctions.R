@@ -2788,8 +2788,6 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                                              learners=NULL,
                                              outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                              not_available_no_samples=TRUE,
-                                             not_available_invariant_data=TRUE,
-                                             no_hyperparameters=FALSE,
                                              n_max_bootstraps=25L,
                                              n_max_optimisation_steps=3L,
                                              n_max_intensify_steps=2L,
@@ -2867,7 +2865,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     .not_available_no_samples <- not_available_no_samples
     if(is.character(.not_available_no_samples)) .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
     
-    .not_available_invariant_data <- not_available_invariant_data
+    .not_available_invariant_data <- FALSE
     if(is.character(.not_available_invariant_data)) .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
     
     # Iterate over learners or variable importance methods..
@@ -2886,6 +2884,8 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
       if(!.check_learner_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
       if(!.check_vimp_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
       
+      
+      
       #####Full data set--------------------------------------------------------
       
       # Create object
@@ -2897,6 +2897,26 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
       
       # Check that object is available for the outcome.
       if(!is_available(object)) next()
+      
+      .not_available_invariant_data <- FALSE
+      .no_hyperparameters <- FALSE
+      
+      # Check default parameters
+      default_hyperparameters <- get_default_hyperparameters(object, data=full_data)
+      if(length(default_hyperparameters) > 0){
+        randomised_hyperparameters <- sapply(default_hyperparameters, function(x) x$randomise)
+        
+        if("sign_size" %in% names(randomised_hyperparameters)){
+          .not_available_invariant_data <- sum(randomised_hyperparameters) > 1L || !randomised_hyperparameters["sign_size"]
+          
+        } else {
+          .not_available_invariant_data <- sum(randomised_hyperparameters) > 0L
+        }
+        
+      } else {
+        .no_hyperparameters <- TRUE
+        .not_available_invariant_data <- TRUE
+      }
       
       if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
                                  ifelse(is_vimp, " variable importance method", " learner"), " and ",
@@ -2921,11 +2941,11 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a complete data set."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!no_hyperparameters | !not_available_no_samples){
+                        } else if(!.no_hyperparameters | !not_available_no_samples){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
@@ -2974,7 +2994,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only identical entries."), {
                         
-                        if(no_hyperparameters | .not_available_invariant_data){
+                        if(.no_hyperparameters | .not_available_invariant_data){
                           # Test that no hyperparameters are set. Models cannot
                           # train on completely invariant data.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
@@ -3028,7 +3048,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one entry."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set. Single entry
                           # data cannot be used to generate hyperparameter sets
                           # unless they are always available.
@@ -3109,7 +3129,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(!not_available_no_samples, "can", "cannot"),
                       " be created for an empty data set."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set. Empty datasets
                           # cannot be used to create hyperparameters.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
@@ -3177,11 +3197,11 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one feature."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!no_hyperparameters | !not_available_no_samples){
+                        } else if(!.no_hyperparameters | !not_available_no_samples){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
@@ -3220,7 +3240,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one feature and sample."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with only
                           # a single sample.
@@ -3289,7 +3309,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one, invariant feature."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with
                           # invariant features.
