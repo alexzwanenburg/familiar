@@ -1,4 +1,4 @@
-# Version 1.3.0
+# Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes
 
@@ -6,7 +6,7 @@
 
 ## Minor changes
 
-- The signature size range is now determined by the variable importance method. Familiar will now determine a valid range based on the features ranked by the variable importance method. For univariate methods, these are typically all features. However, multivariate variable importance methods often select a smaller subset of features. The size of that subset is now used as the default maximum range, instead of the number of features present in the entire data set. As a bonus, the same code is used to determine the size of the signature and to set the signature. This avoids issues due to discrepancies between the two that would produce errors in older versions.
+- The signature size range for hyperparameter optimisation is now determined by the variable importance method. Familiar will now determine a valid range based on the features ranked by the variable importance method. For univariate methods, these are typically all features. However, multivariate variable importance methods often select a smaller subset of features. The size of that subset is now used as the default maximum range, instead of the number of features present in the entire data set. As a bonus, the same code is used to determine the size of the signature and to set the signature. This avoids issues due to discrepancies between the two that would produce errors in older versions.
 
 - Trimming now also trims trimmed functions, which on occasion could still contain large environments.
 
