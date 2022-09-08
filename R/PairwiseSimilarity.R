@@ -127,7 +127,7 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
       
       predictor_names <- setdiff(names(model$coefficients), "intercept__")
       if(any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
-      if(all(near(model$coefficients[predictor_names], 0.0, df=2*length(x)))) return(0.0)
+      if(all(approximately(model$coefficients[predictor_names], 0.0))) return(0.0)
       
       if(approximately(model$deviance, 0.0)) return(1.0)
       
@@ -192,7 +192,7 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
       
       predictor_names <- setdiff(names(model$coefficients), "intercept__")
       if(any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
-      if(all(near(model$coefficients[predictor_names], 0.0, df=2*length(x)))) return(0.0)
+      if(all(approximately(model$coefficients[predictor_names], 0.0))) return(0.0)
 
       if(approximately(model$deviance, 0.0)) return(1.0)
       
