@@ -322,8 +322,8 @@ similarity.pseudo_r2.get_analysis_type <- function(x, y, x_categorical, y_catego
   # swapped in the analysis.
 
   # Determine number of levels of categorical features.
-  n_x <- ifelse(x_categorical, nlevels(x), length(x))
-  n_y <- ifelse(y_categorical, nlevels(y), length(y))
+  n_x <- ifelse(x_categorical, nlevels(x), data.table::uniqueN(x))
+  n_y <- ifelse(y_categorical, nlevels(y), data.table::uniqueN(y))
   
   if(x_categorical & y_categorical){
     # Case 1: Both x and y are categorical variables.
@@ -355,7 +355,7 @@ similarity.pseudo_r2.get_analysis_type <- function(x, y, x_categorical, y_catego
   } else {
     # Case 4: both x and y are numerical variables.
     analysis_type <- "gaussian"
-    requires_swap <- FALSE
+    requires_swap <- n_x < n_y
   }
   
   return(list("type"=analysis_type, "swap"=requires_swap))

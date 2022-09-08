@@ -14,6 +14,8 @@
 
 - Fixed an error that may occur if the signature size was larger than the number of available features when using the `random` variable importance method.
 
+- Fixed an issue with high pseudo-R<sup>2</sup> similarity being computed between two numeric features where one numeric feature consisted of only few unique values.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
