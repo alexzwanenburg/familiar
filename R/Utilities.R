@@ -175,13 +175,23 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   if(require_package("fastglm", message_type="silent")){
     # Using fastglm.
+    
     predictors <- setdiff(colnames(data), "response")
     
     # Construct model.
-    model <- fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
-                              y=data$response,
-                              family=stats::gaussian(link="identity"),
-                              method=3L)
+    model <- do.call_with_handlers(
+      fastglm::fastglm,
+      args=list("x"=as.matrix(data[, mget(predictors)]),
+                "y"=data$response,
+                "family"=stats::gaussian(link="identity"),
+                "method"=3L)
+    )
+    
+    # Check for errors.
+    if(!is.null(model$error)) return(NA_real_)
+    
+    # Extract the model itself.
+    model <- model$value
     
   } else {
     # Construct model
@@ -189,10 +199,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
                                  data=data,
                                  family=stats::gaussian(link="identity")),
                       error=identity)
+    
+    # Check if the model did not converge.
+    if(inherits(model, "error")) return(NA_real_)
   }
-  
-  # Check if the model did not converge.
-  if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
   z <- .compute_z_statistic(model)
@@ -241,21 +251,30 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
     predictors <- setdiff(colnames(data), "response")
     
     # Construct model.
-    model <- fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
-                              y=data$response,
-                              family=stats::poisson(),
-                              method=3L)
+    model <- do.call_with_handlers(
+      fastglm::fastglm,
+      args=list("x"=as.matrix(data[, mget(predictors)]),
+                "y"=data$response,
+                "family"=stats::poisson(),
+                "method"=3L)
+    )
+    
+    # Check for errors.
+    if(!is.null(model$error)) return(NA_real_)
+    
+    # Extract the model itself.
+    model <- model$value
     
   } else {
-    
+    # Using glm as backup option.
     model <- suppressWarnings(tryCatch(stats::glm(response~ . -1,
                                                   data=data,
                                                   family=stats::poisson(link="log")),
                                        error=identity))
+    
+    # Check if the model did not converge.
+    if(inherits(model, "error")) return(NA_real_)
   }
-  
-  # Check if the model did not converge.
-  if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
   z <- .compute_z_statistic(model)
@@ -304,20 +323,42 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
     predictors <- setdiff(colnames(data), "response")
     
     # Construct model.
-    model <- suppressWarnings(fastglm::fastglm(x=as.matrix(data[, mget(predictors)]),
-                                               y=as.numeric(data$response) - 1,
-                                               family=stats::binomial(link="logit"),
-                                               method=3L))
+    model <- do.call_with_handlers(
+      fastglm::fastglm,
+      args=list("x"=as.matrix(data[, mget(predictors)]),
+                "y"=as.numeric(data$response) - 1,
+                "family"=stats::binomial(link="logit"),
+                "method"=3L)
+    )
+    
+    # Check for errors.
+    if(!is.null(model$error)) return(NA_real_)
+    
+    # Extract the model itself.
+    model <- model$value
     
     # Check for Hauck-Donner effect.
     if(approximately(model$deviance, 0.0)){
-      model_2 <- fastglm::fastglm(x=as.matrix(data[, mget(setdiff(predictors, "intercept__"))]),
-                                  y=as.numeric(data$response) - 1,
-                                  family=stats::binomial(link="logit"),
-                                  method=3L)
       
-      # Replace by intercept-less model in case the deviance is higher.
-      if(model_2$deviance > model$deviance) model <- model_2
+      # Create a model without an intercept.
+      model_2 <- do.call_with_handlers(
+        fastglm::fastglm,
+        args=list("x"=as.matrix(data[, mget(setdiff(predictors, "intercept__"))]),
+                  "y"=as.numeric(data$response) - 1,
+                  "family"=stats::binomial(link="logit"),
+                  "method"=3L)
+      )
+      
+      # Check for errors, and only attempt to replace model by model_2 if no
+      # errors are present.
+      if(is.null(model_2$error)){
+        
+        # Extract the model itself.
+        model_2 <- model_2$value
+        
+        # Replace by intercept-less model in case the deviance is higher.
+        if(model_2$deviance > model$deviance) model <- model_2
+      }
     }
     
   } else {
@@ -326,10 +367,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
                                                   data=data,
                                                   family=stats::binomial(link="logit")),
                                        error=identity))
+    
+    # Check if the model did not converge
+    if(inherits(model, "error")) return(NA_real_)
   }
-  
-  # Check if the model did not converge
-  if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
   z <- .compute_z_statistic(model)
@@ -378,28 +419,41 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
                   purpose="to determine univariate p-values for multinomial outcomes")
   
   # Construct model
-  quiet(
-    model <- nnet::multinom(response ~ . -1,
-                            data=data,
-                            maxit=500)
+  model <- do.call_with_handlers(
+    nnet::multinom,
+    args=list(response ~ . -1,
+              "data"=data,
+              "maxit"=500)
   )
+  
+  # Check for errors.
+  if(!is.null(model$error)) return(NA_real_)
+  
+  # Extract the model itself.
+  model <- model$value
   
   # Check if the model converged. NNET might fail to converge if the
   # Hauck-Donner effect is present.
   if(model$convergence == 1){
-    quiet(
-      model2 <- nnet::multinom(response ~ . -1 -intercept__,
-                               data=data,
-                               maxit=500)
+    model_2 <- do.call_with_handlers(
+      nnet::multinom,
+      args=list(response ~ . -1 -intercept__,
+                "data"=data,
+                "maxit"=500)
     )
     
-    # If the Hauck-Donner effect is indeed present, the new model without the
-    # intercept should converge quickly.
-    if(model2$convergence == 0) model <- model2
+    # Check for errors, and only attempt to replace model by model_2 if no
+    # errors are present.
+    if(is.null(model_2$error)){
+      
+      # Extract the model itself.
+      model_2 <- model_2$value
+      
+      # If the Hauck-Donner effect is indeed present, the new model without the
+      # intercept should converge quickly.
+      if(model_2$convergence == 0) model <- model_2
+    }
   }
-
-  # Check if the model did not converge
-  if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
   z <- .compute_z_statistic(model)
