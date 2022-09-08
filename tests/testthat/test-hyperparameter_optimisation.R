@@ -271,3 +271,37 @@ testthat::test_that("Test that \"stochastic_reject\" exploration method may prun
   testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
   testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
+
+
+
+##### Test time truncation -----------------------------------------------------
+
+# Create dataset.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+
+# Create object.
+object <- familiar:::.test_create_hyperparameter_object(data=data,
+                                                        vimp_method="mim",
+                                                        learner="elastic_net",
+                                                        is_vimp=FALSE,
+                                                        set_signature_feature=FALSE)
+
+# Hyperparameter optimisation without pruning and marginal time limit. This
+# should just complete the initial step.
+new_object <- familiar:::optimise_hyperparameters(object=object,
+                                                  data=data,
+                                                  time_limit=0.000001,
+                                                  n_max_bootstraps=25L,
+                                                  n_max_optimisation_steps=1L,
+                                                  n_max_intensify_steps=4L,
+                                                  n_intensify_step_bootstraps=1L,
+                                                  n_random_sets=16L,
+                                                  n_challengers=10L,
+                                                  exploration_method="none",
+                                                  is_vimp=FALSE,
+                                                  verbose=verbose)
+
+testthat::test_that("Time limits are respected and only the initial bootstraps are run.",{
+  testthat::expect_gte(new_object@hyperparameter_data$time_taken, 0.000001)
+  testthat::expect_equal(all(new_object@hyperparameter_data$score_table$iteration_id == 0), TRUE)
+})
