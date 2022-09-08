@@ -50,7 +50,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  testthat::expect_s4_class(summary(model), "summary.vglm")
+  testthat::expect_s3_class(summary(model), "summary.multinom")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
   testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
