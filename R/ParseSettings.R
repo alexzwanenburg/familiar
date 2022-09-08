@@ -2693,7 +2693,8 @@
   if(!is.null(settings$hpo_time_limit)){
     .check_number_in_valid_range(x=settings$hpo_time_limit,
                                  var_name="smbo_time_limit",
-                                 range=c(1.0, Inf))
+                                 range=c(0.0, Inf),
+                                 closed=c(FALSE, TRUE))
   }
   
   
