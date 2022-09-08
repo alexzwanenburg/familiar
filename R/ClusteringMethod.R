@@ -1196,7 +1196,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
     
   } else if(n_features == 2){
     
-    if(all(distance_matrix < 2.0 * .Machine$double.eps)){
+    if(all(approximately(distance_matrix, 0.0, tol=1E-4))){
       # Zero distance can be safely imputed as being identical.
       return(1L)
       
@@ -1207,7 +1207,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   }
   
   # If all elements have distance 0, return 1 cluster.
-  if(all(distance_matrix < 2.0 * .Machine$double.eps)) return(1L)
+  if(all(approximately(distance_matrix, 0.0, tol=1E-4))) return(1L)
   
   # The optimiser doesn't like a singular interval, which occurs for n_features
   # == 3.

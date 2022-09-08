@@ -16,6 +16,8 @@
 
 - Fixed an issue with high pseudo-R<sup>2</sup> similarity being computed between two numeric features where one numeric feature consisted of only few unique values.
 
+- Relaxed distance requirements for assigning all features to the same cluster using silhouette-based clustering. Since pseudo-R<sup>2</sup> are now computed using approximative methods, distance for assigning all features to the same cluster can deviate somewhat from 0. This would be noticeable when exactly two features are present.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
