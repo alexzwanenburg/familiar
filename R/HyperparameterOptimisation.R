@@ -1019,7 +1019,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                "parameter_table"=parameter_table,
                                                "time_taken"=as.numeric(difftime(Sys.time(), optimisation_start_time, units="mins")),
                                                "hyperparameter_learner"=hyperparameter_learner,
-                                               "optimisation_function"=optimisation_function)
+                                               "optimisation_function"=optimisation_function,
+                                               "n_samples"=get_n_samples(data),
+                                               "n_features"=get_n_features(data))
             
             return(object)
           })
