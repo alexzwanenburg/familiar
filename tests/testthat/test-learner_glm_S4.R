@@ -267,26 +267,27 @@ testthat::test_that("Generalised linear model has variable importance", {
 })
 
 
-testthat::test_that("Generalised linear model can not train on wide data", {
+testthat::test_that("Generalised linear model can train on wide data", {
   
-  # Model cannot be trained.
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
+  # Model can be trained -- even if the neural network does not converge
+  # completely, it still functions.
+  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is empty.
-  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), TRUE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::get_vimp_table(wide_model)), FALSE)
   
-  # Valid predictions cannot be made.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  # Valid predictions cann be made.
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
   
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)
   
-  # Test that specific warnings and errors appear.
-  testthat::expect_equal(length(wide_model@messages$error), 1L)
-  testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="vglm.fitter: There are", fixed=TRUE) &&
-                           grepl(x=wide_model@messages$error, pattern="parameters but only", fixed=TRUE) &&
-                           grepl(x=wide_model@messages$error, pattern="observations", fixed=TRUE),
-                         TRUE)
+  # Test that specific warnings and errors appear -- these no longer appear.
+  # testthat::expect_equal(length(wide_model@messages$error), 1L)
+  # testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="vglm.fitter: There are", fixed=TRUE) &&
+  #                          grepl(x=wide_model@messages$error, pattern="parameters but only", fixed=TRUE) &&
+  #                          grepl(x=wide_model@messages$error, pattern="observations", fixed=TRUE),
+  #                        TRUE)
 })
 
 
