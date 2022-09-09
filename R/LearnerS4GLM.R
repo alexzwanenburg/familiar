@@ -23,7 +23,10 @@ setMethod("initialize", signature(.Object="familiarGLM"),
               .Object@package <- "survival"
               
             } else {
-              .Object@package <- c("stats", "fastglm")
+              # The default option is to use "fastglm::fastglm" for speed, but
+              # if this package is not available, switch to the "stats::glm"
+              # backup option.
+              .Object@package <- if(is_package_installed("fastglm")) c("stats", "fastglm") else "stats"
             }
             
             return(.Object)
@@ -244,10 +247,7 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
               # implementation in case fastglm disappears from CRAN at some
               # point.
               
-              version <- "fastglm"
-              
-              # fastglm has some issues with the poisson family as of version 0.0.3.
-              # if(object@hyperparameters$family %in% c("poisson", "log_poisson")) version <- "stats"
+              version <- ifelse(require_package("fastglm", message_type="silent"), "fastglm", "stats")
               
               if(version == "fastglm"){
                 outcome_data <- encoded_data$encoded_data@data$outcome
