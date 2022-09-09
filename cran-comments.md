@@ -1,4 +1,4 @@
-Update familiar to version 1.2.0
+Update familiar to version 1.3.0
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
@@ -40,7 +40,7 @@ Fedora Linux, R-devel, clang, gfortran:
 0 errors | 0 warnings | 3 notes
 
 * checking package dependencies ... NOTE
-Package suggested but not available for checking: ‘qvalue’
+Packages suggested but not available for checking: 'fastglm', 'qvalue'
 
 * checking installed package size ... NOTE
   installed size is  5.7Mb
@@ -51,6 +51,8 @@ Package suggested but not available for checking: ‘qvalue’
     
 * checking HTML version of manual ... NOTE
 Skipping checking HTML validation: no command 'tidy' found
+Skipping checking math rendering: package 'V8' unavailable
+
 
 **Maintainer**: I am unsure what causes this note. It doesn't appear locally, or for the other builds.
 
@@ -61,9 +63,9 @@ Ubuntu Linux 20.04.1 LTS, R-release, GCC:
 0 errors | 0 warnings | 1 note
 
 * checking installed package size ... NOTE
-  installed size is  5.7Mb
+  installed size is  5.8Mb
   sub-directories of 1Mb or more:
-    R      3.4Mb
+    R      3.5Mb
     doc    1.0Mb
     help   1.1Mb
 
