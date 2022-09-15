@@ -37,7 +37,7 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
 
 
 
-similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_metric){
+similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_metric, type="approximate"){
   
   ..encode_variable_to_list <- function(x, is_categorical, insert_intercept=FALSE){
     
@@ -71,6 +71,8 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     return(data.table::as.data.table(x))
   }
   
+  .check_parameter_value_is_valid(type, "type", c("exact", "approximate"))
+  
   # Check categorical flag for x
   if(length(x_categorical) != 1){
     ..error_variable_has_too_many_values(x=x_categorical, var_name="x_categorical", req_length=1)
@@ -80,13 +82,6 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   if(length(y_categorical) != 1){
     ..error_variable_has_too_many_values(x=y_categorical, var_name="y_categorical", req_length=1)
   }
-  
-  # Find analysis type and whether x and y should be swapped in the models,
-  # based on information content.
-  analysis_info <- similarity.pseudo_r2.get_analysis_type(x=x,
-                                                          y=y,
-                                                          x_categorical=x_categorical,
-                                                          y_categorical=y_categorical)
   
   # Remove missing elements.
   valid_elements <- is.finite(x) & is.finite(y)
@@ -98,6 +93,29 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   
   # Check if there are more than one unique values in x and or y.
   if(length(unique(x)) == 1 & length(unique(y)) == 1) return(1.0)
+  
+  if(type == "approximate"){
+    
+    # Select the number of samples for the computing approximate distances.
+    n_samples <- min(c(length(x), ceiling(1000^0.3 * length(x)^0.7)))
+    
+    # Set sample indices - avoid selecting samples randomly, as that is a
+    # somewhat costly operation.
+    sample_index <-  as.integer(round(seq_len(n_samples) * length(x) / n_samples))
+    
+    # Select sample subset.
+    x <- x[sample_index]
+    if(x_categorical) x <- droplevels(x)
+    y <- y[sample_index]
+    if(y_categorical) y <- droplevels(y)
+  }
+  
+  # Find analysis type and whether x and y should be swapped in the models,
+  # based on information content.
+  analysis_info <- similarity.pseudo_r2.get_analysis_type(x=x,
+                                                          y=y,
+                                                          x_categorical=x_categorical,
+                                                          y_categorical=y_categorical)
   
   # Compute log-likelihoods so that the pseudo-R^2 measures can be computed.
   if(analysis_info$type == "gaussian"){
