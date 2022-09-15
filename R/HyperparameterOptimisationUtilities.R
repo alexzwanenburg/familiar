@@ -363,7 +363,14 @@
   if(is.list(object)) object <- object[[sample(x=seq_along(object), size=1L)]]
   
   # Compute variable importance.
-  vimp_table <- get_vimp_table(.vimp(object=object, data=data))
+  vimp_table <- .vimp(object=object,
+                      data=data)
+  
+  # Form clusters.
+  vimp_table <- recluster_vimp_table(vimp_table)
+  
+  # Compute variable importance.
+  vimp_table <- get_vimp_table(vimp_table)
   
   return(vimp_table)
 }
