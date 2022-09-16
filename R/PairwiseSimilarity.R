@@ -269,7 +269,7 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     
     quiet(model <- nnet::multinom(model_formula,
                                   data=cbind(predictors, response),
-                                  maxit=500))
+                                  maxit=ifelse(type=="approximate", 100L, 500L)))
     
     model_coefficients <- stats::coef(model)
     predictor_names <- setdiff(colnames(model_coefficients), "(Intercept)")
@@ -280,7 +280,7 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     
     quiet(null_model <- nnet::multinom(null_formula,
                                        data=cbind(predictors, response),
-                                       maxit=500))
+                                       maxit=ifelse(type=="approximate", 100L, 500L)))
     
     # Compute log-likelihoods
     model_loglik <- stats::logLik(model)[1]
