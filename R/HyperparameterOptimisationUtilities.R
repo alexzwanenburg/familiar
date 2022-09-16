@@ -510,7 +510,8 @@
   # Train model with the set of hyperparameters.
   object <- .train(object=object,
                    data=data_training,
-                   get_additional_info=FALSE)
+                   get_additional_info=FALSE,
+                   trim_model=FALSE)
   
   # Generate scores.
   score_table <- mapply(function(data, data_set, object, metric_objects, settings){
