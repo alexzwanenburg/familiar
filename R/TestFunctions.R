@@ -5309,6 +5309,8 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
                                                vimp_method,
                                                learner,
                                                is_vimp,
+                                               cluster_method="none",
+                                               ...,
                                                set_signature_feature=FALSE){
   
   if(set_signature_feature){
@@ -5322,8 +5324,9 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
   feature_info_list <- create_feature_info(data=data,
                                            fs_method=vimp_method,
                                            learner=learner,
-                                           cluster_method="none",
+                                           cluster_method=cluster_method,
                                            imputation_method="simple",
+                                           ...,
                                            signature=signature_features,
                                            parallel=FALSE)
   
