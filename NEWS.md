@@ -2,7 +2,7 @@
 
 ## Major changes
 
-- Improved speed of fitting generalised models by switching to the `fastglm` and `nnet` packages. This not only affects learners, but also univariate importance and pseudo-R<sup>2</sup> similarity metrics.
+- Improved speed of fitting generalised models by switching to the `fastglm` and `nnet` packages. This not only affects learners, but also univariate importance and pseudo-R<sup>2</sup> similarity metrics. This difference is most notable for datasets with large numbers of samples.
 
 ## Minor changes
 
