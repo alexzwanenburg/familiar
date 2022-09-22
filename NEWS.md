@@ -12,11 +12,15 @@
 
 ## Bug fixes
 
+- Models were unnecessarily trimmed during hyperparameter optimisation, which unnecessarily slowed down the optimisation process.
+
 - Fixed an error that may occur if the signature size was larger than the number of available features when using the `random` variable importance method.
 
 - Fixed an issue with high pseudo-R<sup>2</sup> similarity being computed between two numeric features where one numeric feature consisted of only few unique values.
 
 - Relaxed distance requirements for assigning all features to the same cluster using silhouette-based clustering. Since pseudo-R<sup>2</sup> are now computed using approximative methods, distance for assigning all features to the same cluster can deviate somewhat from 0. This would be noticeable when exactly two features are present.
+
+- Fixed an error due to not passing a `cl` argument when performing evaluation steps with `detail_level="model"` and parallel processing.
 
 # Version 1.2.1 (Kindhearted Koala)
 
