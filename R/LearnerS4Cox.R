@@ -235,16 +235,18 @@ setMethod("..predict_survival_probability", signature(object="familiarCoxPH", da
 setMethod("..vimp", signature(object="familiarCoxPH"),
           function(object, ...){
             
-            # Suppress NOTES due to non-standard evaluation in data.table
-            score <- NULL
-            
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Check that required packages are loaded and installed.
             require_package(object, "vimp")
             
             # Define p-values
-            coefficient_z_values <- .compute_z_statistic(object)
+            coefficient_z_values <- tryCatch(.compute_z_statistic(object),
+                                             error=identity)
+            
+            if(inherits(coefficient_z_values, "error")) return(callNextMethod())
+            
+            # Remove any coefficients for the intercept.
             coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())

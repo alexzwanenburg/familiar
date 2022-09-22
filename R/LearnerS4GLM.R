@@ -544,7 +544,10 @@ setMethod("..vimp", signature(object="familiarGLM"),
             require_package(object, "vimp")
             
             # Compute z-values
-            coefficient_z_values <- .compute_z_statistic(object, fix_all_missing=TRUE)
+            coefficient_z_values <- tryCatch(.compute_z_statistic(object, fix_all_missing=TRUE),
+                                             error=identity)
+            
+            if(inherits(coefficient_z_values, "error")) return(callNextMethod())
             
             if(is(object@model, "vglm")){
               .Deprecated(msg="The use of VGAM for multinomial logistic models will be deprecated in version 2.0.0.")

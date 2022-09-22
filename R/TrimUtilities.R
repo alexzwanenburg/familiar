@@ -60,18 +60,20 @@
 ..replace_broken_function <- function(FUN, object, trimmed_object){
   
   # Apply function using the original, untrimmed object.
-  quiet(initial_info <- tryCatch(do.call(FUN, list(object@model)),
-                                 error=identity))
+  initial_info <- do.call_with_handlers_timeout(FUN, args=list(object@model), timeout=60000)
+
+  # If an error occurs or the project times out the required function is not
+  # considered implemented for the object.
+  if(!is.null(initial_info$error) | initial_info$timeout==TRUE) return(NULL)
+  initial_info <- initial_info$value
   
-  # If an error occurs, the required function is not implemented for the object.
-  if(inherits(initial_info, "error")) return(NULL)
-  
-  quiet(new_info <- tryCatch(do.call(FUN, list(trimmed_object@model)),
-                             error=identity))
+  # Attempt to extract the results from the trimmed object.
+  new_info <- do.call_with_handlers_timeout(FUN, args=list(trimmed_object@model), timeout=60000)
   
   # If an error occurs, it means that the information required to create the
-  # function is no longer available due to object trimming.
-  if(inherits(new_info, "error")){
+  # function is no longer available due to object trimming, or recreating the
+  # object takes a long time.
+  if(!is.null(new_info$error) | new_info$timeout==TRUE){
     
     # Check for elements that contain stuff.
     if(is.list(initial_info)){
@@ -110,7 +112,7 @@
     }
     
     return(initial_info)
-  } 
+  }
   
   return(NULL)
 }
