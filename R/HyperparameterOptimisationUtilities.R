@@ -255,7 +255,7 @@
 
 
 
-.optimisation_process_time_available <- function(start_time,
+.optimisation_process_time_available <- function(process_clock,
                                                  time_limit=NULL,
                                                  message_indent=0L,
                                                  verbose=FALSE){
@@ -264,7 +264,7 @@
   if(is.null(time_limit)) return(TRUE)
   
   # Compute time spent optimising.
-  optimisation_time <- as.numeric(difftime(Sys.time(), start_time, units="mins"))
+  optimisation_time <- process_clock$time(units="mins")
   
   # Check if there still is time left.
   if(optimisation_time < time_limit) return(TRUE)

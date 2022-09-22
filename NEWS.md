@@ -11,6 +11,9 @@
 - Trimming now also trims trimmed functions, which on occasion could still contain large environments.
 
 - Defining a replacement for a trimmed model now may not take more than 1 minute. For some model types (e.g. `nnet::multinom`) creating the replacement co-variance matrix can be computationally expensive for larger datasets. If a replacement can not be created in time, no replacement function is created. Parts of the code where that may produce issues now capture errors related to this issue.
+
+- Hyperparameter optimisation now takes suspension of the R process into account when determining the optimisation time limit.
+
 ## Bug fixes
 
 - Models were unnecessarily trimmed during hyperparameter optimisation, which unnecessarily slowed down the optimisation process.

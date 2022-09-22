@@ -635,8 +635,23 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             ##### Perform initial set of computations --------------------------
             
-            # Set the process start time.
-            optimisation_start_time <- Sys.time()
+            # Initialise the process clock.
+            process_clock <- NULL
+            if(!is.null(time_limit)){
+              if(require_package(c("callr", "microbenchmark"),
+                                 purpose="to measure hyperparameter optimisation time",
+                                 message_type="warning")){
+                
+                process_clock <- ProcessClock$new()
+                on.exit(process_clock$close(), add=TRUE)
+                
+              } else {
+                # If the required packages are not present, avoid early
+                # abortion of the process.
+                time_limit <- NULL
+              }
+            }
+                
             
             if(measure_time & n_initial_bootstraps > 1L) {
               
@@ -669,7 +684,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Get errors encountered during model training.
               train_errors <- score_results$error
               
-              if(.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(.optimisation_process_time_available(process_clock=process_clock,
                                                       time_limit=time_limit,
                                                       verbose=FALSE)){
                 
@@ -784,7 +799,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Stop optimisation if there is no time left. This is an initial
               # check because the nested loop may break for different reasons.
               # This check is not verbose, pending a later, final check.
-              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(!.optimisation_process_time_available(process_clock=process_clock,
                                                        time_limit=time_limit,
                                                        verbose=FALSE)){
                 break()
@@ -839,7 +854,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               while(n_intensify_steps < n_max_intensify_steps){
                 
                 # Check if there is time left for intensification.
-                if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                if(!.optimisation_process_time_available(process_clock=process_clock,
                                                          time_limit=time_limit,
                                                          verbose=FALSE)){
                   break()
@@ -942,7 +957,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Check time and finish the optimisation process if required. This
               # will also automatically generate a message if verbose is TRUE.
-              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(!.optimisation_process_time_available(process_clock=process_clock,
                                                        time_limit=time_limit,
                                                        message_indent=message_indent,
                                                        verbose=verbose)){
@@ -1017,12 +1032,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Update attributes of object.
             object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
-                                               "time_taken"=as.numeric(difftime(Sys.time(), optimisation_start_time, units="mins")),
+                                               "time_taken"=process_clock$time(units="mins"),
                                                "hyperparameter_learner"=hyperparameter_learner,
                                                "optimisation_function"=optimisation_function,
                                                "n_samples"=get_n_samples(data),
                                                "n_features"=get_n_features(data))
-            
+            browser()
             return(object)
           })
 

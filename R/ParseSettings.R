@@ -2695,6 +2695,10 @@
                                  var_name="smbo_time_limit",
                                  range=c(0.0, Inf),
                                  closed=c(FALSE, TRUE))
+    
+    require_package(c("callr", "microbenchmark"),
+                    purpose="to measure hyperparameter optimisation time",
+                    message_type="backend_warning")
   }
   
   
