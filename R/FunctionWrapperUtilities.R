@@ -11,6 +11,74 @@ do.call_strict <- function(what, args, quote = FALSE, envir = parent.frame()){
 
 
 
+do.call_with_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE){
+  # Set up the muffler that captures all output.
+  muffle_fun <- identity
+  if(muffle) muffle_fun <- quiet
+  
+  if(!require_package("callr",
+                      purpose="to allow for executing functions with timeout",
+                      message_type="warning")){
+    
+    # If callr cannot be loaded, execute the function as is.
+    muffle_fun(value <- do.call(what=what, args=args, envir=envir))
+    
+    # Return data.
+    return(list("value"=value,
+                "timeout"=FALSE))
+    
+  } else {
+    
+    # Launch as background to allow for non-blocking timeout checks.
+    bg_process <- callr::r_bg(func=what, args=args, package=TRUE)
+    
+    # Wait until the timeout, or until the background process completes,
+    # whichever happens first.
+    bg_process$wait(timeout)
+    
+    # If the process is still running past the timeout, kill it.
+    if(bg_process$is_alive()){
+      bg_process$kill()
+      
+      return(list("value"=NULL,
+                  "timeout"=TRUE))
+      
+    } else {
+      return(list("value"=bg_process$get_result(),
+                  "timeout"=FALSE))
+    }
+  }
+}
+
+
+
+do.call_with_handlers_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE){
+  
+  # Pass to do.call_with_timeout, which then calls do.call_with_handlers on
+  # "what" with specified arguments "args".
+  results <- do.call_with_timeout(
+    what=do.call_with_handlers,
+    args=list("what"=what,
+              "args"=args,
+              "quote"=quote,
+              "envir"=envir,
+              "muffle"=muffle),
+    timeout=timeout,
+    muffle=muffle
+  )
+  
+  # Flatten results.
+  if(!is.null(results$value)){
+    results$error <- results$value$error
+    results$warning <- results$value$warning
+    results$value <- results$value$value
+  }
+  
+  return(results)
+}
+
+
+
 do.call_with_handlers <- function(what, args, quote=FALSE, envir=parent.frame(), muffle=TRUE){
 
   # Set up the muffler that captures all output.
@@ -84,9 +152,14 @@ condition_parser <- function(x, ...){
       deparsed_condition_call <- paste0(deparsed_condition_call, "[...]")
     }
     
-    # Add in the deparsed condition call, and combine.
-    parsed_condition <- paste0(deparsed_condition_call, ": ", 
-                               condition_message)
+    if(nchar(deparsed_condition_call) > 0){
+      # Add in the deparsed condition call, and combine.
+      parsed_condition <- paste0(deparsed_condition_call, ": ", 
+                                 condition_message)
+      
+    } else {
+      parsed_condition <- condition_message
+    }
     
   } else {
     # Set message.
