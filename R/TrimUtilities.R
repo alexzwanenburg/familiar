@@ -1,9 +1,15 @@
 ..trim_functions <- function(){
   
-  return(list("coef"=stats::coef,
-              "vcov"=stats::vcov,
-              "summary"=summary,
-              "varimp"=mboost::varimp))
+  return(list(
+    "coef"=list("FUN"=stats::coef,
+                "with_timeout"=FALSE),
+    "vcov"=list("FUN"=stats::vcov,
+                "with_timeout"=TRUE),
+    "summary"=list("FUN"=summary,
+                   "with_timeout"=TRUE),
+    "varimp"=list("FUN"=mboost::varimp,
+                  "with_timeout"=TRUE))
+  )
 }
 
 
@@ -40,27 +46,57 @@
 
 
 
-.replace_broken_functions <- function(object, trimmed_object){
+.replace_broken_functions <- function(object, trimmed_object, timeout=60000){
+  
+  # Find all methods that are trimmable.
+  trimmable_methods <- names(..trim_functions())
+  
+  # Load packages associated with the model into the namespace so that all
+  # associated methods may be found.
+  require_package(object)
+  
+  # Find all methods associated with the model object itself.
+  class_methods <- .get_class_methods(object@model)
+  
+  # Find those methods that are actually associated with the class.
+  trimmable_methods <- trimmable_methods[trimmable_methods %in% class_methods]
+  
+  # Return trimmed object if there are no associated trimmable functions.
+  if(is_empty(trimmable_methods)) return(trimmed_object)
+  
+  trimmable_methods <- ..trim_functions()[trimmable_methods]
   
   # Generate replacement functions, if required.
-  replacement_functions <- lapply(..trim_functions(),
+  replacement_functions <- lapply(trimmable_methods,
                                   ..replace_broken_function,
                                   object=object,
-                                  trimmed_object=trimmed_object)
+                                  trimmed_object=trimmed_object,
+                                  timeout=timeout)
   
   # Get non-null items and add to existing functions.
-  trimmed_object@trimmed_function <- c(trimmed_object@trimmed_function,
-                                       replacement_functions[!sapply(replacement_functions, is.null)])
+  trimmed_object@trimmed_function <- c(
+    trimmed_object@trimmed_function,
+    replacement_functions[!sapply(replacement_functions, is.null)]
+  )
   
   return(trimmed_object)
 }
 
 
 
-..replace_broken_function <- function(FUN, object, trimmed_object){
+..replace_broken_function <- function(method_list, object, trimmed_object, timeout){
+  
+  # Isolate FUN and with_timeout:
+  FUN <- method_list$FUN
+  if(!method_list$with_timeout) timeout <- Inf
   
   # Apply function using the original, untrimmed object.
-  initial_info <- do.call_with_handlers_timeout(FUN, args=list(object@model), timeout=60000)
+  initial_info <- do.call_with_handlers_timeout(
+    FUN,
+    args=list(object@model),
+    timeout=timeout,
+    additional_packages=object@package
+  )
 
   # If an error occurs or the project times out the required function is not
   # considered implemented for the object.
@@ -73,7 +109,7 @@
   # If an error occurs, it means that the information required to create the
   # function is no longer available due to object trimming, or recreating the
   # object takes a long time.
-  if(!is.null(new_info$error) | new_info$timeout==TRUE){
+  if(!is.null(new_info$error)){
     
     # Check for elements that contain stuff.
     if(is.list(initial_info)){
