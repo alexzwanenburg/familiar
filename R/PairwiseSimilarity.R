@@ -101,7 +101,7 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     
     # Set sample indices - avoid selecting samples randomly, as that is a
     # somewhat costly operation.
-    sample_index <-  as.integer(round(seq_len(n_samples) * length(x) / n_samples))
+    sample_index <-  as.integer(round(seq_len(n_samples) / n_samples * length(x)))
     
     # Select sample subset.
     x <- x[sample_index]
