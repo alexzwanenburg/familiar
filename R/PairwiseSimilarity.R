@@ -532,6 +532,21 @@ similarity.to_distance <- function(x, similarity_metric){
 
 
 
+similarity.highly_similar <- function(x, similarity_metric){
+  
+  if(similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+    return(similarity.to_distance(0.8, similarity_metric=similarity_metric))
+    
+  } else if(similarity_metric %in% c("spearman", "kendall", "pearson")){
+    return(similarity.to_distance(0.9, similarity_metric=similarity_metric))
+    
+  } else {
+    return(0.01)
+  }
+}
+
+
+
 similarity.to_similarity <- function(x, similarity_metric){
   # From distance back to similarity.
   if(similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){

@@ -1190,13 +1190,15 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   # Determine the number of features.
   n_features <- length(get_similarity_names(object@similarity_table))
   
+  highly_similar_distance <- similarity.highly_similar(similarity_metric=object@similarity_metric)
+  
   # Check problematic values.
   if(n_features == 1){
     return(1L)
     
   } else if(n_features == 2){
     
-    if(all(approximately(distance_matrix, 0.0, tol=1E-4))){
+    if(all(distance_matrix <= highly_similar_distance)){
       # Zero distance can be safely imputed as being identical.
       return(1L)
       
@@ -1207,7 +1209,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   }
   
   # If all elements have distance 0, return 1 cluster.
-  if(all(approximately(distance_matrix, 0.0, tol=1E-4))) return(1L)
+  if(all(distance_matrix <= highly_similar_distance)) return(1L)
   
   # The optimiser doesn't like a singular interval, which occurs for n_features
   # == 3.
