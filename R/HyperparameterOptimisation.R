@@ -1029,15 +1029,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               object@hyperparameters <- NULL
             }
             
+            time_taken <- NULL
+            if(is(process_clock, "processClock")) time_taken <- process_clock$time(units="mins")
+            
             # Update attributes of object.
             object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
-                                               "time_taken"=process_clock$time(units="mins"),
+                                               "time_taken"=time_taken,
                                                "hyperparameter_learner"=hyperparameter_learner,
                                                "optimisation_function"=optimisation_function,
                                                "n_samples"=get_n_samples(data),
                                                "n_features"=get_n_features(data))
-            browser()
+            
             return(object)
           })
 
