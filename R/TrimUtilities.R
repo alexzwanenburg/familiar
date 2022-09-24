@@ -104,7 +104,10 @@
   initial_info <- initial_info$value
   
   # Attempt to extract the results from the trimmed object.
-  new_info <- do.call_with_handlers_timeout(FUN, args=list(trimmed_object@model), timeout=60000)
+  new_info <- do.call_with_handlers(
+    FUN,
+    args=list(trimmed_object@model)
+  )
   
   # If an error occurs, it means that the information required to create the
   # function is no longer available due to object trimming, or recreating the
