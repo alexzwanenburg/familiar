@@ -110,6 +110,9 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     if(y_categorical) y <- droplevels(y)
   }
   
+  # Check if there are more than one unique values in x and or y.
+  if(length(unique(x)) == 1 & length(unique(y)) == 1) return(1.0)
+  
   # Find analysis type and whether x and y should be swapped in the models,
   # based on information content.
   analysis_info <- similarity.pseudo_r2.get_analysis_type(x=x,
