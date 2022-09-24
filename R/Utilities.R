@@ -1085,6 +1085,30 @@ is_valid_data <- function(x){
 }
 
 
+
+.get_class_methods <- function(object){
+  
+  # In R, methods are not really inherently associated with a class, but they
+  # are functions that are dispatched to a specific class using magic. This
+  # function identifies which methods are associated with an object.
+  
+  associated_methods <- NULL
+  for(object_class in class(object)){
+    
+    # The utils::methods function can return all known (i.e. package in
+    # namespace) methods for an object.
+    associated_methods <- c(associated_methods,
+                            attr(utils::methods(class=object_class), "info")$generic)
+  }
+  
+  # Keep only unique methods.
+  associated_methods <- unique(associated_methods)
+  
+  return(associated_methods)
+}
+
+
+
 .compute_z_statistic <- function(model, fix_all_missing=FALSE){
   
   mu <- cov_matrix <- stdevs <- NULL
