@@ -101,6 +101,32 @@ testthat::test_that("Processes that are called with handles and timeout function
 
 
 
+testthat::test_that("Processes that are called with handles and infinite timeout function correctly",{
+  
+  results_normal <- familiar:::do.call_with_handlers_timeout(test_fun_normal, list("x"="done"), timeout=Inf)
+  
+  testthat::expect_equal(results_normal$value, "done")
+  testthat::expect_equal(is.null(results_normal$warning), TRUE)
+  testthat::expect_equal(is.null(results_normal$error), TRUE)
+  testthat::expect_equal(results_normal$timeout, FALSE)
+  
+  results_warning <- familiar:::do.call_with_handlers_timeout(test_fun_warning, list("x"="done"), timeout=Inf)
+  
+  testthat::expect_equal(results_warning$value, "done")
+  testthat::expect_equal(results_warning$warning, "warning")
+  testthat::expect_equal(is.null(results_warning$error), TRUE)
+  testthat::expect_equal(results_warning$timeout, FALSE)
+  
+  results_error <- familiar:::do.call_with_handlers_timeout(test_fun_error, list("x"="done"), timeout=Inf)
+  
+  testthat::expect_equal(is.null(results_error$value), TRUE)
+  testthat::expect_equal(results_error$warning, "warning")
+  testthat::expect_equal(results_error$error, "error")
+  testthat::expect_equal(results_error$timeout, FALSE)
+})
+
+
+
 testthat::test_that("Processes that complete outside timeout fail",{
   
   results_normal <- familiar:::do.call_with_handlers_timeout(test_fun_normal, list("x"="done"), timeout=500)

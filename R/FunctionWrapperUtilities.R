@@ -11,7 +11,7 @@ do.call_strict <- function(what, args, quote = FALSE, envir = parent.frame()){
 
 
 
-do.call_with_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE){
+do.call_with_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE, additional_packages=NULL){
   # Set up the muffler that captures all output.
   muffle_fun <- identity
   if(muffle) muffle_fun <- quiet
@@ -27,10 +27,33 @@ do.call_with_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.
     return(list("value"=value,
                 "timeout"=FALSE))
     
+  } else if(!is.finite(timeout)){
+    
+    # If there is no finite timeout, execute the function as is.
+    muffle_fun(value <- do.call(what=what, args=args, envir=envir))
+    
+    # Return data.
+    return(list("value"=value,
+                "timeout"=FALSE))
+    
   } else {
     
+    bg_function_wrapper <- function(what, args, additional_packages){
+      if(!is.null(bg_function_wrapper)){
+        for(package in additional_packages){
+          requireNamespace(package)
+        }
+      } 
+      
+      do.call(what=what, args=args)
+    }
+    
     # Launch as background to allow for non-blocking timeout checks.
-    bg_process <- callr::r_bg(func=what, args=args, package=TRUE)
+    bg_process <- callr::r_bg(func=bg_function_wrapper,
+                              args=list("what"=what,
+                                        "args"=args,
+                                        "additional_packages"=additional_packages),
+                              package=TRUE)
     
     # Wait until the timeout, or until the background process completes,
     # whichever happens first.
@@ -52,7 +75,7 @@ do.call_with_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.
 
 
 
-do.call_with_handlers_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE){
+do.call_with_handlers_timeout <- function(what, args, timeout, quote=FALSE, envir=parent.frame(), muffle=TRUE, additional_packages=NULL){
   
   # Pass to do.call_with_timeout, which then calls do.call_with_handlers on
   # "what" with specified arguments "args".
@@ -64,7 +87,8 @@ do.call_with_handlers_timeout <- function(what, args, timeout, quote=FALSE, envi
               "envir"=envir,
               "muffle"=muffle),
     timeout=timeout,
-    muffle=muffle
+    muffle=muffle,
+    additional_packages=additional_packages
   )
   
   # Flatten results.
