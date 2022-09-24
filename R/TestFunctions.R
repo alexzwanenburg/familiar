@@ -105,9 +105,11 @@ test_all_learners_train_predict_vimp <- function(learners,
                                            hyperparameter_list=hyperparameters,
                                            learner=learner,
                                            time_max=1832,
-                                           trim_model = FALSE))
+                                           trim_model=FALSE))
       
-      # Create a trimmed model.
+      # Create a trimmed model -- this is the only instance were we do that
+      # without setting the time-out to infinite to test whether the timeout
+      # handler returns it correctly.
       trimmed_model <- trim_model(model)
       
       # Generate a file name to save the model to.
@@ -428,7 +430,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                            time_max=1832))
       
       # Create a trimmed model.
-      trimmed_model <- trim_model(model)
+      trimmed_model <- trim_model(model, timeout=Inf)
       
       # Test that models can be created.
       test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature dataset."), {
@@ -640,7 +642,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset without censoring."), {
@@ -734,7 +736,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with one censored sample."), {
@@ -828,7 +830,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with few censored samples."), {
@@ -1183,7 +1185,7 @@ test_all_novelty_detectors <- function(detectors,
                                                           detector=detector))
     
     # Create a trimmed detector.
-    trimmed_model <- trim_model(model)
+    trimmed_model <- trim_model(model, timeout=Inf)
     
     # Check that the the novelty detector can be trimmed.
     test_fun(paste0("Detector created using the ", detector, " algorithm can be trimmed."), {
@@ -1258,7 +1260,7 @@ test_all_novelty_detectors <- function(detectors,
                                                           detector=detector))
     
     # Create a trimmed novelty detector.
-    trimmed_model <- trim_model(model)
+    trimmed_model <- trim_model(model, timeout=Inf)
     
     # Test that the novelty detector can be created.
     test_fun(paste0("Detector can be created using the ", detector, " algorithm using a one-feature dataset."), {

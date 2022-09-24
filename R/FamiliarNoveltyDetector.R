@@ -9,6 +9,7 @@ setMethod(".train", signature(object="familiarNoveltyDetector", data="dataObject
                    get_additional_info=FALSE,
                    is_pre_processed=FALSE,
                    trim_model=TRUE,
+                   timeout=60000,
                    ...) {
             # Train method for novelty detectors.
             
@@ -48,7 +49,7 @@ setMethod(".train", signature(object="familiarNoveltyDetector", data="dataObject
                                              data=data)
             }
             
-            if(trim_model) object <- trim_model(object=object)
+            if(trim_model) object <- trim_model(object=object, timeout=timeout)
             
             # Empty slots if a model can not be trained.
             if(!can_train){
@@ -228,7 +229,7 @@ setMethod("..predict", signature(object="familiarNoveltyDetector", data="dataObj
 
 #####trim_model (familiarNoveltyDetector)---------------------------------------
 setMethod("trim_model", signature(object="familiarNoveltyDetector"),
-          function(object, ...){
+          function(object, timeout=60000, ...){
             
             # Do not trim the model if there is nothing to trim.
             if(!model_is_trained(object)) return(object)
@@ -241,7 +242,8 @@ setMethod("trim_model", signature(object="familiarNoveltyDetector"),
             
             # Go over different functions.
             trimmed_object <- .replace_broken_functions(object=object,
-                                                        trimmed_object=trimmed_object)
+                                                        trimmed_object=trimmed_object,
+                                                        timeout=timeout)
             
             return(trimmed_object)
           })
