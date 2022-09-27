@@ -26,6 +26,8 @@
 
 - Fixed an error due to not passing a `cl` argument when performing evaluation steps with `detail_level="model"` and parallel processing.
 
+- Fixed an issue that could cause the hyperparameter optimisation algorithm to become myopic and focus on hyperparameter sets that generally fail, except for a few instances.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
