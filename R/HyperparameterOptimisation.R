@@ -1036,6 +1036,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
                                                "time_taken"=time_taken,
+                                               "metric"=metric,
+                                               "metric_object"=metric_object_list,
                                                "hyperparameter_learner"=hyperparameter_learner,
                                                "optimisation_function"=optimisation_function,
                                                "n_samples"=get_n_samples(data),
