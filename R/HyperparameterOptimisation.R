@@ -778,7 +778,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                            verbose=verbose)
             
             # Check whether any combination yielded anything valid.
-            skip_optimisation <- incumbent_set$summary_score == -1.0
+            skip_optimisation <- incumbent_set$summary_score <= -1.0
             
             # Update n_intensify_step_bootstraps and n_max_intensify_steps when
             # exploration_method equals none. There is no reason to perform
