@@ -50,6 +50,8 @@
       <exclude_features></exclude_features>
       <!-- Names of features/columns that should be exclusively selected (optional) -->
       <include_features></include_features>
+      <!-- Method used to set the reference level for categorical features (optional) -->
+      <reference_method></reference_method>
     </data>
     <run>
       <!--Parallisation master switch (optional, default: TRUE). If set to FALSE, suppresses all parallelisation.-->

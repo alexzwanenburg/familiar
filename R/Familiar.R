@@ -176,18 +176,21 @@ summon_familiar <- function(formula=NULL,
   }
   
   # Parse data
-  data <- .finish_data_preparation(data = data,
-                                   sample_id_column = settings$data$sample_col,
-                                   batch_id_column = settings$data$batch_col,
-                                   series_id_column = settings$data$series_col,
-                                   outcome_column = settings$data$outcome_col,
-                                   outcome_type = settings$data$outcome_type,
-                                   include_features = settings$data$include_features,
-                                   class_levels = settings$data$class_levels,
-                                   censoring_indicator=settings$data$censoring_indicator,
-                                   event_indicator=settings$data$event_indicator,
-                                   competing_risk_indicator=settings$data$competing_risk_indicator)
-
+  data <- .finish_data_preparation(
+    data = data,
+    sample_id_column = settings$data$sample_col,
+    batch_id_column = settings$data$batch_col,
+    series_id_column = settings$data$series_col,
+    outcome_column = settings$data$outcome_col,
+    outcome_type = settings$data$outcome_type,
+    include_features = settings$data$include_features,
+    class_levels = settings$data$class_levels,
+    censoring_indicator=settings$data$censoring_indicator,
+    event_indicator=settings$data$event_indicator,
+    competing_risk_indicator=settings$data$competing_risk_indicator,
+    reference_method = settings$data$reference_method
+  )
+  
   
   #### Load experiment data ----------------------------------------------------
   if(!is.null(experiment_data)){

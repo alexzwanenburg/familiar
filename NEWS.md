@@ -4,6 +4,8 @@
 
 - Improved speed of fitting generalised models by switching to the `fastglm` and `nnet` packages. This not only affects learners, but also univariate importance and pseudo-R<sup>2</sup> similarity metrics. This difference is most notable for datasets with large numbers of samples.
 
+- Normalised mutual information (`mutual_information`) is now the default similarity metric. The previous default similarity metric (`mcfadden_r2`) was found to handle sparse features poorly. The implementation is based on the `praznik` package.
+
 ## Minor changes
 
 - Mutual information-based variable importance methods will now use the mutual information computation as implemented in `praznik` by default.
