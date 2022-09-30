@@ -18,6 +18,8 @@
 
 - Hyperparameter optimisation now takes suspension of the R process into account when determining the optimisation time limit.
 
+- Reference levels for categorical features are now set to the most frequent level for categorical features that are automatically detected. This behaviour can be specified using the `reference_method` parameter.
+
 ## Bug fixes
 
 - Models were unnecessarily trimmed during hyperparameter optimisation, which unnecessarily slowed down the optimisation process.
