@@ -19,6 +19,13 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
                                                           x_categorical=x_categorical,
                                                           y_categorical=y_categorical,
                                                           similarity_metric=similarity_metric))
+  
+  } else if(similarity_metric %in% c("mutual_information")){
+    similarity <- suppressWarnings(similarity.mutual_information(x=x,
+                                                                 y=y,
+                                                                 x_categorical=x_categorical,
+                                                                 y_categorical=y_categorical,
+                                                                 similarity_metric=similarity_metric))
     
   } else if(similarity_metric %in% c("gower", "euclidean", "manhattan", "chebyshev", "cosine", "canberra", "bray_curtis")){
     # Distance-based similarity measures
@@ -460,6 +467,32 @@ similarity.correlation <- function(x, y, x_categorical, y_categorical, similarit
 }
 
 
+similarity.mutual_information <- function(x, y, x_categorical, y_categorical, similarity_metric){
+  # Remove missing elements.
+  valid_elements <- is.finite(x) & is.finite(y)
+  if(sum(valid_elements) <= 1) return(NA_real_)
+  
+  # Keep only valid elements.
+  x <- x[valid_elements]
+  y <- y[valid_elements]
+  
+  # Check if there are more than one unique values in x and or y.
+  if(length(unique(x)) == 1 & length(unique(y)) == 1) return(1.0)
+  
+  # Ensure that numeric values are actually encoded as numeric, because praznik
+  # handles integers as categorical variables. This is not the convention used
+  # by familiar.
+  if(!x_categorical && is.integer(x)) x <- as.numeric(x)
+  if(!y_categorical && is.integer(y)) y <- as.numeric(y)
+  
+  require_package(x="praznik",
+                  purpose=paste0("to compute similarity using the ", similarity_metric, " metric"))
+  
+  # Compute normalised mutual information.
+  return(praznik::miScores(x, y, threads=1L) / praznik::jhScores(x, y, threads=1L))
+}
+
+
 similarity.distance_based <- function(x, y, x_categorical, y_categorical, similarity_metric){
   
   # Check categorical feature mask for x.
@@ -527,6 +560,10 @@ similarity.to_distance <- function(x, similarity_metric){
     # Correlation-based metrics
     return(1-abs(x))
     
+  } else if(similarity_metric %in% c("mutual_information")){
+    # Normalised mutual information
+    return(1-x)
+    
   } else {
     # Distance metrics (e.g. Gower's distance). These are natural distances.
     return(x)
@@ -542,6 +579,9 @@ similarity.highly_similar <- function(x, similarity_metric){
     
   } else if(similarity_metric %in% c("spearman", "kendall", "pearson")){
     return(similarity.to_distance(0.9, similarity_metric=similarity_metric))
+  
+  } else if(similarity_metric %in% c("mutual_information")){
+    return(similarity.to_distance(0.45, similarity_metric=similarity_metric))
     
   } else {
     return(0.01)
@@ -559,6 +599,10 @@ similarity.to_similarity <- function(x, similarity_metric){
   } else if(similarity_metric %in% c("spearman", "kendall", "pearson")) {
     # Correlation-based metrics. Note that the sign is lost at conversion.
     return(1-abs(x))
+    
+  } else if(similarity_metric %in% c("mutual_information")){
+    # Normalised mutual information.
+    return(1-x)
     
   } else {
     # Distance metrics (e.g. Gower's distance). These do not generally have a
@@ -598,6 +642,9 @@ similarity.message_similarity_metric <- function(similarity_metric){
     
   } else if(similarity_metric == "euclidean"){
     return("Euclidean distance")
+  
+  } else if(similarity_metric == "mutual_information"){
+    return("normalised mutual information")
     
   } else {
     ..error_reached_unreachable_code("similarity.message_similarity_metric: encountered unknown similarity metric")
@@ -625,7 +672,7 @@ similarity.requires_normalisation <- function(similarity_metric){
 .get_available_similarity_metrics <- function(data_type="feature"){
   if(data_type %in% c("feature", "cluster")){
     # Pair-wise comparison between features.
-    return(c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "spearman", "kendall", "pearson"))
+    return(c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "spearman", "kendall", "pearson", "mutual_information"))
     
   } else {
     # Pair-wise comparison between samples.
@@ -640,7 +687,7 @@ similarity.metric_range <- function(similarity_metric, as_distance=FALSE){
   similarity_metric <- gsub(x=similarity_metric, pattern="_trim", replacement="", fixed=TRUE)
   similarity_metric <- gsub(x=similarity_metric, pattern="_winsor", replacement="", fixed=TRUE)
   
-  if(similarity_metric %in% c("gower", "mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+  if(similarity_metric %in% c("gower", "mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "mutual_information")){
     return(c(0.0, 1.0))
     
   } else if(similarity_metric %in% c("spearman", "kendall", "pearson") & !as_distance){
@@ -658,7 +705,7 @@ similarity.metric_range <- function(similarity_metric, as_distance=FALSE){
 
 similarity.default_is_distance <- function(similarity_metric){
   # Returns if the metric is a distance-metric by default.
-  if(similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "spearman", "kendall", "pearson")){
+  if(similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "spearman", "kendall", "pearson", "mutual_information")){
     return(FALSE)
     
   } else {

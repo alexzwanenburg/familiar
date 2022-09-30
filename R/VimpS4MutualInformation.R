@@ -299,41 +299,60 @@ setMethod("..vimp", signature(object="familiarMultivariateMutualInfoVimp"),
   if(x_type == "discrete") x <- droplevels(x)
   if(y_type == "discrete") y <- droplevels(y)
   
-  if(y_type == "survival"){
-    # Mutual information for survival.
-    mutual_information <- ..compute_mutual_information_any_survival(x=x, y=y)
-     
-  } else if(y_type == "discrete"){
+  if(x_type == "continuous" & is.integer(x)) x <- as.numeric(x)
+  if(y_type == "continuous" & is.integer(y)) y <- as.numeric(y)
+  
+  if(require_package("praznik", message_type="silent")){
+    # Praznik-based computation.
     
-    if(x_type == "continuous"){
-      # Mutual information for continuous and discrete variables.
-      mutual_information <- ..compute_mutual_information_continuous_discrete(x=x, y=y)
-      
-    } else if(x_type == "discrete"){
-      # Mutual information for two discrete variables.
-      mutual_information <- ..compute_mutual_information_discrete_discrete(x=x, y=y)
+    if(y_type == "survival"){
+      # Mutual information for survival.
+      mutual_information <- ..compute_mutual_information_any_survival(x=x, y=y)
       
     } else {
-      ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable x.")
-    }
-    
-  } else if(y_type == "continuous"){
-    
-    if(x_type == "continuous"){
-      # Mutual information for two continuous variables.
-      mutual_information <- ..compute_mutual_information_continuous_continuous(x=x, y=y)
-      
-    } else if(x_type == "discrete"){
-      # Mutual information for continuous and discrete variables. Note that the
-      # order is reversed so that y is the discrete variable.
-      mutual_information <- ..compute_mutual_information_continuous_discrete(x=y, y=x)
-      
-    } else {
-      ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable x.")
+      # Use praznik package.
+      mutual_information <- praznik::miScores(X=x, Y=y, threads=1L)
     }
     
   } else {
-    ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable y.")
+    # Computation using internal methods.
+    
+    if(y_type == "survival"){
+      # Mutual information for survival.
+      mutual_information <- ..compute_mutual_information_any_survival(x=x, y=y)
+      
+    } else if(y_type == "discrete"){
+      
+      if(x_type == "continuous"){
+        # Mutual information for continuous and discrete variables.
+        mutual_information <- ..compute_mutual_information_continuous_discrete(x=x, y=y)
+        
+      } else if(x_type == "discrete"){
+        # Mutual information for two discrete variables.
+        mutual_information <- ..compute_mutual_information_discrete_discrete(x=x, y=y)
+        
+      } else {
+        ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable x.")
+      }
+      
+    } else if(y_type == "continuous"){
+      
+      if(x_type == "continuous"){
+        # Mutual information for two continuous variables.
+        mutual_information <- ..compute_mutual_information_continuous_continuous(x=x, y=y)
+        
+      } else if(x_type == "discrete"){
+        # Mutual information for continuous and discrete variables. Note that the
+        # order is reversed so that y is the discrete variable.
+        mutual_information <- ..compute_mutual_information_continuous_discrete(x=y, y=x)
+        
+      } else {
+        ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable x.")
+      }
+      
+    } else {
+      ..error_reached_unreachable_code("..compute_mutual_information: unknown variable type encountered for variable y.")
+    }
   }
   
   # Check for invalid values.

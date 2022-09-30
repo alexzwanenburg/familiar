@@ -65,6 +65,7 @@ Suggests:
     microbenchmark,
     nnet,
     partykit,
+    praznik,
     proxy,
     qvalue,
     randomForestSRC,
