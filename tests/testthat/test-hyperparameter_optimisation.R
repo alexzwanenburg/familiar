@@ -320,6 +320,7 @@ object <- familiar:::.test_create_hyperparameter_object(data=data,
                                                         learner="elastic_net",
                                                         is_vimp=FALSE,
                                                         cluster_method="hclust",
+                                                        cluster_similarity_metric="mcfadden_r2",
                                                         cluster_similarity_threshold=0.90,
                                                         set_signature_feature=FALSE)
 
