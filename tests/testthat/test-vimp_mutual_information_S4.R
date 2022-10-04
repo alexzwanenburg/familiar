@@ -155,7 +155,7 @@ testthat::test_that(paste0("MIFS correctly ranks binomial data."), {
   
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
+  testthat::expect_equal("cell_shape_uniformity" %in% vimp_table[rank <= 2]$name, TRUE)
 })
 
 # Process dataset.
@@ -171,7 +171,7 @@ testthat::test_that(paste0("MRMR correctly ranks binomial data."), {
   
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
+  testthat::expect_equal("cell_shape_uniformity" %in% vimp_table[rank <= 2]$name, TRUE)
 })
 
 
