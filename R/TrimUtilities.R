@@ -58,6 +58,14 @@
   # Find all methods associated with the model object itself.
   class_methods <- .get_class_methods(object@model)
   
+  # Special check for S3 methods defined outside of standard packages, or
+  # dependent packages. There seems to be an issue with visibility of such
+  # methods when the package is only loaded, not attached. I don't want to
+  # attach packages because that may alter the search space of the user.
+  if(any(class(object@model) %in% c("mboost"))){
+    class_methods <- unique(c(class_methods, "varimp"))
+  }
+  
   # Find those methods that are actually associated with the class.
   trimmable_methods <- trimmable_methods[trimmable_methods %in% class_methods]
   
