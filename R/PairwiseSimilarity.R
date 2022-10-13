@@ -279,7 +279,8 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     
     quiet(model <- nnet::multinom(model_formula,
                                   data=cbind(predictors, response),
-                                  maxit=ifelse(type=="approximate", 100L, 500L)))
+                                  maxit=ifelse(type=="approximate", 100L, 500L),
+                                  MaxNWts=Inf))
     
     model_coefficients <- stats::coef(model)
     predictor_names <- setdiff(colnames(model_coefficients), "(Intercept)")

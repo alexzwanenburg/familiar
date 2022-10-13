@@ -193,7 +193,7 @@ setMethod("get_prediction_type", signature(object="familiarGLM"),
 
 #####..train####
 setMethod("..train", signature(object="familiarGLM", data="dataObject"),
-          function(object, data, ...){
+          function(object, data, approximate=FALSE, ...){
             
             # For survival outcomes, switch to familiarCoxPH.
             if(object@outcome_type == "survival"){
@@ -285,13 +285,20 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
               
             } else if(object@outcome_type=="multinomial"){
               
+              max_iterations <- ifelse(approximate, 100L, 500L)
+              absolute_tolerance <- ifelse(approximate, 1.0e-2, 1.0e-4)
+              relative_tolerance <- ifelse(approximate, 1.0e-2, 1.0e-8)
+              
               # Fit multinomial logistic models using nnet::multinom.
               model <- do.call_with_handlers(
                 nnet::multinom,
                 args=list(formula,
                           "data"=encoded_data$encoded_data@data,
                           "weights"=weights,
-                          "maxit"=500)
+                          "maxit"=max_iterations,
+                          "abstol"=absolute_tolerance,
+                          "reltol"=relative_tolerance,
+                          "MaxNWts"=Inf)
               )
               
             } else {
