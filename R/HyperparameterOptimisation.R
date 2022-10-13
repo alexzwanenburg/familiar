@@ -667,16 +667,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Build and evaluate models. This creates a table with metric
               # values, objective scores for in-bag and out-of-bag data.
-              score_results <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                       object=object,
-                                                                       run_table=run_table,
-                                                                       bootstraps=bootstraps,
-                                                                       data=data,
-                                                                       rank_table_list=rank_table_list,
-                                                                       parameter_table=parameter_table,
-                                                                       metric_objects=metric_object_list,
-                                                                       iteration_id=0L,
-                                                                       verbose=verbose)
+              score_results <- .compute_hyperparameter_model_performance(
+                cl=cl,
+                object=object,
+                run_table=run_table,
+                bootstraps=bootstraps,
+                data=data,
+                rank_table_list=rank_table_list,
+                parameter_table=parameter_table,
+                metric_objects=metric_object_list,
+                iteration_id=0L,
+                verbose=verbose
+              )
               
               # Get score table.
               score_table <- score_results$results

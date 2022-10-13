@@ -11,6 +11,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
                    is_pre_processed=FALSE,
                    trim_model=TRUE,
                    timeout=60000,
+                   approximate=FALSE,
                    ...) {
             # Train method for model training
             
@@ -52,6 +53,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object,
                                             data=data,
+                                            approximate=approximate,
                                             ...)
             
             # Extract information required for assessing model performance,

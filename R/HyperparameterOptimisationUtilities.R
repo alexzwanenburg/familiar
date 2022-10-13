@@ -511,7 +511,8 @@
   object <- .train(object=object,
                    data=data_training,
                    get_additional_info=FALSE,
-                   trim_model=FALSE)
+                   trim_model=FALSE,
+                   approximate=TRUE)
   
   # Generate scores.
   score_table <- mapply(function(data, data_set, object, metric_objects, settings){
