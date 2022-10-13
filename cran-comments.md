@@ -42,6 +42,8 @@ Fedora Linux, R-devel, clang, gfortran:
 * checking package dependencies ... NOTE
 Packages suggested but not available for checking: 'fastglm', 'qvalue'
 
+**Maintainer**: The package uses stats::glm as a fallback if fastglm is not available.
+
 * checking installed package size ... NOTE
   installed size is  5.7Mb
   sub-directories of 1Mb or more:
