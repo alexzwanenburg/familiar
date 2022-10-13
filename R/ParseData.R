@@ -358,7 +358,8 @@
                                      censoring_indicator,
                                      event_indicator,
                                      competing_risk_indicator,
-                                     check_stringency = "strict"){
+                                     check_stringency = "strict",
+                                     reference_method = "auto"){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- batch_id <- N <- NULL
@@ -592,7 +593,8 @@
   
   # Convert data to categorical features
   data <- .parse_categorical_features(data=data,
-                                      outcome_type=outcome_type)
+                                      outcome_type=outcome_type,
+                                      reference_method=reference_method)
   
   return(data)
 }
@@ -603,10 +605,8 @@
 #'
 #' @param data data.table with feature data
 #' @param outcome_type character, indicating the type of outcome
-#' @param reference list with class levels (`levels`) and ordering (`ordered`)
-#'   per list entry. Each list entry should have the name of the corresponding
-#'   feature. The intended use is that `featureInfo` objects are parsed to
-#'   generate such a reference.
+#' @param reference_method character, indicating the type of method used to set
+#'   the reference level.
 #'
 #' @details This function parses columns containing feature data to factors if
 #'   the data contained therein have logical (TRUE, FALSE), character, or factor
@@ -617,13 +617,11 @@
 #'
 #' @md
 #' @keywords internal
-.parse_categorical_features <- function(data, outcome_type){
+.parse_categorical_features <- function(data, outcome_type, reference_method="auto"){
   # Replace columns types so that only numeric and categorical features remain
 
   # Check presence of feature columns
-  if(!has_feature_data(x=data, outcome_type=outcome_type)){
-    ..error_data_set_has_no_features()
-  }
+  if(!has_feature_data(x=data, outcome_type=outcome_type)) ..error_data_set_has_no_features()
 
   # Get feature columns
   feature_columns <- get_feature_columns(x=data, outcome_type=outcome_type)
@@ -644,19 +642,34 @@
   # Iterate over categorical columns
   for(ii in categorical_columns){
     
-    # Check if the data is a factor
-    if(!is.factor(data[[ii]])){
-      # Identify class levels in the current column
-      class_levels <- sort(unique_na(data[[ii]]))
-      is_ordered      <- FALSE
-    } else {
-      # Identify class levels from factor attributes.
-      class_levels <- levels(data[[ii]])
-      is_ordered      <- is.ordered(data[[ii]])
+    # The default option is to parse categorical features by setting the most
+    # frequent level as reference.
+    factor_FUN <- ..parse_categorical_most_frequent
+    
+    # Check if the feature was externally set to be a factor.
+    is_external <- is.factor(data[[ii]])
+    
+    if(reference_method == "auto"){
+      # Under "auto" mode, the most frequent level is used for categorical
+      # features that are not externally set, whereas features that are
+      # externally set are not re-ordered.
+      if(is_external) factor_FUN <- ..parse_categorical_as_is
+      
+    } else if(reference_method == "never"){
+      # Under "never" mode, the  categorical features that are not externally
+      # set are simply ordered, whereas features that are externally set are not
+      # re-ordered.
+      factor_FUN <- if(is_external) ..parse_categorical_as_is else ..parse_categorical_sorted
+    }
+    
+    # Exclude any potential re-ordering of known ordinal features under all
+    # conditions.
+    if(is_external){
+      if(is.ordered(data[[ii]])) factor_FUN <- ..parse_categorical_as_is
     }
     
     # Create a categorical variable for the current column.
-    data.table::set(data, j=ii, value=factor(data[[ii]], levels=class_levels, ordered=is_ordered))
+    data.table::set(data, j=ii, value=factor_FUN(data[[ii]]))
   }
   
   # Raise an error in case there are missing class levels for any feature.
@@ -666,6 +679,52 @@
   
   return(data)
 }
+
+
+
+..parse_categorical_as_is <- function(x){
+  # Return as is.
+  return(x)
+}
+
+
+..parse_categorical_sorted <- function(x){
+  # Find class levels.
+  class_levels <- if(is.factor(x)) levels(x) else unique_na(x)
+  
+  # Sort class levels.
+  class_levels <- sort(class_levels)
+  
+  return(factor(x=x, levels=class_levels))
+}
+
+
+..parse_categorical_most_frequent <- function(x){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  n <- NULL
+  
+  # Created sorted table
+  class_level_data <- data.table::data.table("x"=x)[, list("n"=.N), by="x"][order(-n, x)]
+  
+  # Keep only non-NA values.
+  class_level_data <- class_level_data[!is.na(x)]
+  
+  # Convert to character.
+  class_levels <- as.character(class_level_data$x)
+  
+  # Get the reference level.
+  reference_level <- head(class_levels, n=1L)
+  
+  # Order class levels.
+  class_levels <- sort(class_levels)
+  
+  # Insert the reference level in the first position.
+  class_levels <- setdiff(class_levels, reference_level)
+  class_levels <- c(reference_level, class_levels)
+  
+  return(factor(x=x, levels=class_levels))
+}
+
 
 
 update_data_set <- function(data, object){

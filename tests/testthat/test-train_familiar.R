@@ -21,7 +21,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
+  # testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)  ## fastglm has no vcov
   
   # Assert that between 1 and 9 features are present, aside from the intercept.
   testthat::expect_gte(length(model@model_features), 1L)
@@ -50,7 +50,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  testthat::expect_s4_class(summary(model), "summary.vglm")
+  testthat::expect_s3_class(summary(model), "summary.multinom")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
   testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
@@ -78,7 +78,7 @@ testthat::test_that("Poisson model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
+  # testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)  ## fastglm has no vcov
 })
 
 
@@ -104,7 +104,7 @@ testthat::test_that("Gaussian model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
+  # testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)  ## fastglm has no vcov
 })
 
 

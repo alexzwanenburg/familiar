@@ -38,7 +38,7 @@ setMethod("test_train", signature(data="dataObject"),
                    create_bootstrap=FALSE,
                    create_novelty_detector=FALSE,
                    cl=NULL,
-                   trim_model=TRUE,
+                   trim_model=FALSE,
                    ...){
             
             # The bypass data allows for bypassing important aspects of the
@@ -182,7 +182,8 @@ setMethod("test_train", signature(data="dataObject"),
             object <- .train(object=object,
                              data=data,
                              get_additional_info=TRUE,
-                             trim_model=trim_model)
+                             trim_model=trim_model,
+                             timeout=Inf)
             
             # Train novelty detector.
             object <- .train_novelty_detector(object=object,
@@ -233,7 +234,7 @@ setMethod("test_train_novelty_detector", signature(data="dataObject"),
                    hyperparameter_list=list(),
                    create_bootstrap=FALSE,
                    cl=NULL,
-                   trim_model=TRUE,
+                   trim_model=FALSE,
                    ...){
             
             # The bypass data allows for bypassing important aspects of the
@@ -372,7 +373,8 @@ setMethod("test_train_novelty_detector", signature(data="dataObject"),
             object <- .train(object=object,
                              data=data,
                              get_additional_info=TRUE,
-                             trim_model=trim_model)
+                             trim_model=trim_model,
+                             timeout=Inf)
 
             return(object)
           })

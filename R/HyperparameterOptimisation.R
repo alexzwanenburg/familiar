@@ -466,13 +466,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             ##### Create and update hyperparameter sets ------------------------
             
-            # Obtain standard parameters.
-            parameter_list <- get_default_hyperparameters(object=object,
-                                                          data=data)
-            
-            # Check that any parameters are present.
-            if(is_empty(parameter_list)) return(object)
-            
             # Set the user_list if it is not present, or set through
             # hyperparameter attribute.
             if(is.null(user_list) & is.null(object@hyperparameters)){
@@ -482,55 +475,110 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               user_list <- object@hyperparameters
             }
             
-            # Set the signature size. This parameter may not be used by all
-            # feature selection methods, and will be ignored in that case.
-            if(object@fs_method == "none"){
-              user_list$sign_size <- get_n_features(x=data)
-              
-            } else if(object@fs_method == "signature_only") {
-              user_list$sign_size <- sum(sapply(object@feature_info, is_in_signature))
-              
-              # If no signature is set, use all features.
-              if(user_list$sign_size == 0) user_list$sign_size <- get_n_features(x=data)
-              
-            } else if(is.null(user_list$sign_size)){
-              # Set the signature size based on the number of signature features
-              # and the maximum default range.
-              n_signature_features <- sum(sapply(object@feature_info, is_in_signature))
-              n_max_features <- max(parameter_list$sign_size$range)
-              
-              # Set signature size as range.
-              user_list$sign_size <- c(n_signature_features,
-                                       ifelse(n_max_features < n_signature_features, n_signature_features, n_max_features))
-              
-              # Replace the initial range in case no features are assigned as a
-              # signature.
-              if(user_list$sign_size[1] == 0) user_list$sign_size[1] <- 1
-            }
-            
-            # Recreate the default parameter list with information from the
+            # Create the default parameter list with information from the
             # user-provided list, if any. This allows for changing some
             # hyperparameter settings that depend on other hyperparameters.
             parameter_list <- get_default_hyperparameters(object=object,
                                                           data=data,
                                                           user_list=user_list)
             
+            # Check that any parameters are present.
+            if(is_empty(parameter_list)) return(object)
+            
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
                                                       user_list=user_list,
                                                       n_features=get_n_features(data))
             
-            # Update hyperparameters to set any fixed parameters.
-            object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
-            
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
+              
+              # Update hyperparameters to set any fixed parameters.
+              object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+              
               logger.message("Hyperparameter optimisation: All hyperparameters are fixed. No optimisation is required.",
                              indent=message_indent,
                              verbose=verbose)
               
               return(object)
             }
+            
+            ##### Create bootstrap samples -------------------------------------
+            
+            # Generate bootstrap samples
+            bootstraps <- tryCatch(.create_bootstraps(n_iter=n_max_bootstraps,
+                                                      outcome_type=object@outcome_type,
+                                                      data=data@data),
+                                   error=identity)
+            
+            # Check that bootstraps could be created. This may fail if the data
+            # set is too small.
+            if(inherits(bootstraps, "error")){
+              logger.message("Hyperparameter optimisation: Failed to create bootstraps. The dataset may be too small.",
+                             indent=message_indent,
+                             verbose=verbose)
+              
+              # Remove any fixed hyperparameters.
+              object@hyperparameters <- NULL
+              
+              return(object)
+            } 
+            
+            ##### Create or obtain variable importance -------------------------
+            rank_table_list <- .compute_hyperparameter_variable_importance(
+              cl=cl,
+              determine_vimp=determine_vimp,
+              object=object,
+              data=data,
+              bootstraps=bootstraps$train_list,
+              metric=metric,
+              measure_time=measure_time,
+              optimisation_function=optimisation_function,
+              acquisition_function=acquisition_function,
+              grid_initialisation_method=grid_initialisation_method,
+              n_random_sets=min(c(n_random_sets, 50L)),
+              n_max_bootstraps=min(c(n_max_bootstraps, 20L)),
+              n_max_optimisation_steps=min(c(n_max_optimisation_steps, 5L)),
+              n_max_intensify_steps=min(c(n_max_intensify_steps, 3L)),
+              n_intensify_step_bootstraps=min(c(n_intensify_step_bootstraps, 5L)),
+              intensify_stop_p_value=intensify_stop_p_value,
+              convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
+              convergence_stopping=min(c(convergence_stopping, 3L)),
+              time_limit=time_limit,
+              verbose=verbose,
+              message_indent=message_indent
+            )
+            
+            ##### Set signature size -------------------------------------------
+            # Signature size depends on the variable importance method that is
+            # used.
+            
+            if(!is.null(parameter_list$sign_size)){
+              
+              # Set signature size.
+              user_list$sign_size <- .set_signature_size(object=object,
+                                                         rank_table_list=rank_table_list,
+                                                         suggested_range=user_list$sign_size)
+              
+              # Update the parameter list With user-defined variables.
+              parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
+                                                        user_list=user_list,
+                                                        n_features=get_n_features(data))
+              
+              # Check that any parameters can be randomised.
+              if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
+                
+                # Update hyperparameters to set any fixed parameters.
+                object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+                
+                logger.message("Hyperparameter optimisation: All hyperparameters are fixed. No optimisation is required.",
+                               indent=message_indent,
+                               verbose=verbose)
+                
+                return(object)
+              }
+            }
+            
             
             ##### Create metric objects ----------------------------------------
             
@@ -574,47 +622,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               return(object)
             } 
             
-            # Generate bootstrap samples
-            bootstraps <- tryCatch(.create_bootstraps(n_iter=n_max_bootstraps,
-                                                      outcome_type=object@outcome_type,
-                                                      data=data@data),
-                                   error=identity)
-            
-            # Check that bootstraps could be created. This may fail if the data
-            # set is too small.
-            if(inherits(bootstraps, "error")){
-              logger.message("Hyperparameter optimisation: Failed to create bootstraps. The dataset may be too small.",
-                             indent=message_indent,
-                             verbose=verbose)
-              
-              # Remove any fixed hyperparameters.
-              object@hyperparameters <- NULL
-              
-              return(object)
-            } 
-            
-            ##### Create or obtain variable importance -------------------------
-            rank_table_list <- .compute_hyperparameter_variable_importance(cl=cl,
-                                                                           determine_vimp=determine_vimp,
-                                                                           object=object,
-                                                                           data=data,
-                                                                           bootstraps=bootstraps$train_list,
-                                                                           metric=metric,
-                                                                           measure_time=measure_time,
-                                                                           optimisation_function=optimisation_function,
-                                                                           acquisition_function=acquisition_function,
-                                                                           grid_initialisation_method=grid_initialisation_method,
-                                                                           n_random_sets=min(c(n_random_sets, 50L)),
-                                                                           n_max_bootstraps=min(c(n_max_bootstraps, 20L)),
-                                                                           n_max_optimisation_steps=min(c(n_max_optimisation_steps, 5L)),
-                                                                           n_max_intensify_steps=min(c(n_max_intensify_steps, 3L)),
-                                                                           n_intensify_step_bootstraps=min(c(n_intensify_step_bootstraps, 5L)),
-                                                                           intensify_stop_p_value=intensify_stop_p_value,
-                                                                           convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
-                                                                           convergence_stopping=min(c(convergence_stopping, 3L)),
-                                                                           time_limit=time_limit,
-                                                                           verbose=verbose,
-                                                                           message_indent=message_indent)
             
             ##### Setup the hyperparameter model prototype ---------------------
             
@@ -628,8 +635,23 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             ##### Perform initial set of computations --------------------------
             
-            # Set the process start time.
-            optimisation_start_time <- Sys.time()
+            # Initialise the process clock.
+            process_clock <- NULL
+            if(!is.null(time_limit)){
+              if(require_package(c("callr", "microbenchmark"),
+                                 purpose="to measure hyperparameter optimisation time",
+                                 message_type="warning")){
+                
+                process_clock <- ProcessClock$new()
+                on.exit(process_clock$close(), add=TRUE)
+                
+              } else {
+                # If the required packages are not present, avoid early
+                # abortion of the process.
+                time_limit <- NULL
+              }
+            }
+                
             
             if(measure_time & n_initial_bootstraps > 1L) {
               
@@ -645,16 +667,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Build and evaluate models. This creates a table with metric
               # values, objective scores for in-bag and out-of-bag data.
-              score_results <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                       object=object,
-                                                                       run_table=run_table,
-                                                                       bootstraps=bootstraps,
-                                                                       data=data,
-                                                                       rank_table_list=rank_table_list,
-                                                                       parameter_table=parameter_table,
-                                                                       metric_objects=metric_object_list,
-                                                                       iteration_id=0L,
-                                                                       verbose=verbose)
+              score_results <- .compute_hyperparameter_model_performance(
+                cl=cl,
+                object=object,
+                run_table=run_table,
+                bootstraps=bootstraps,
+                data=data,
+                rank_table_list=rank_table_list,
+                parameter_table=parameter_table,
+                metric_objects=metric_object_list,
+                iteration_id=0L,
+                verbose=verbose
+              )
               
               # Get score table.
               score_table <- score_results$results
@@ -662,7 +686,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Get errors encountered during model training.
               train_errors <- score_results$error
               
-              if(.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(.optimisation_process_time_available(process_clock=process_clock,
                                                       time_limit=time_limit,
                                                       verbose=FALSE)){
                 
@@ -756,7 +780,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                            verbose=verbose)
             
             # Check whether any combination yielded anything valid.
-            skip_optimisation <- incumbent_set$summary_score == -1.0
+            skip_optimisation <- incumbent_set$summary_score <= -1.0
             
             # Update n_intensify_step_bootstraps and n_max_intensify_steps when
             # exploration_method equals none. There is no reason to perform
@@ -777,7 +801,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Stop optimisation if there is no time left. This is an initial
               # check because the nested loop may break for different reasons.
               # This check is not verbose, pending a later, final check.
-              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(!.optimisation_process_time_available(process_clock=process_clock,
                                                        time_limit=time_limit,
                                                        verbose=FALSE)){
                 break()
@@ -832,7 +856,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               while(n_intensify_steps < n_max_intensify_steps){
                 
                 # Check if there is time left for intensification.
-                if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                if(!.optimisation_process_time_available(process_clock=process_clock,
                                                          time_limit=time_limit,
                                                          verbose=FALSE)){
                   break()
@@ -935,7 +959,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Check time and finish the optimisation process if required. This
               # will also automatically generate a message if verbose is TRUE.
-              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+              if(!.optimisation_process_time_available(process_clock=process_clock,
                                                        time_limit=time_limit,
                                                        message_indent=message_indent,
                                                        verbose=verbose)){
@@ -1007,12 +1031,19 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               object@hyperparameters <- NULL
             }
             
+            time_taken <- NULL
+            if(is(process_clock, "processClock")) time_taken <- process_clock$time(units="mins")
+            
             # Update attributes of object.
             object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
-                                               "time_taken"=as.numeric(difftime(Sys.time(), optimisation_start_time, units="mins")),
+                                               "time_taken"=time_taken,
+                                               "metric"=metric,
+                                               "metric_object"=metric_object_list,
                                                "hyperparameter_learner"=hyperparameter_learner,
-                                               "optimisation_function"=optimisation_function)
+                                               "optimisation_function"=optimisation_function,
+                                               "n_samples"=get_n_samples(data),
+                                               "n_features"=get_n_features(data))
             
             return(object)
           })

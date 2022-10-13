@@ -74,6 +74,7 @@ setMethod("as_data_object", signature(data="data.table"),
                    class_levels=waiver(),
                    exclude_features=waiver(),
                    include_features=waiver(),
+                   reference_method=waiver(),
                    check_stringency="strict",
                    ...){
             
@@ -245,7 +246,8 @@ setMethod("as_data_object", signature(data="data.table"),
                                             "competing_risk_indicator"=competing_risk_indicator,
                                             "class_levels"=class_levels,
                                             "exclude_features"=exclude_features,
-                                            "include_features"=include_features),
+                                            "include_features"=include_features,
+                                            "reference_method"=reference_method),
                                        list(...)))
             
             # Prepare data.table.
@@ -260,18 +262,21 @@ setMethod("as_data_object", signature(data="data.table"),
                                                  check_stringency=check_stringency)
             
             # Parse data
-            data <- .finish_data_preparation(data = data,
-                                             sample_id_column = settings$data$sample_col,
-                                             batch_id_column = settings$data$batch_col,
-                                             series_id_column = settings$data$series_col,
-                                             outcome_column = settings$data$outcome_col,
-                                             outcome_type = settings$data$outcome_type,
-                                             include_features = settings$data$include_features,
-                                             class_levels = settings$data$class_levels,
-                                             censoring_indicator = settings$data$censoring_indicator,
-                                             event_indicator = settings$data$event_indicator,
-                                             competing_risk_indicator = settings$data$competing_risk_indicator,
-                                             check_stringency = check_stringency)
+            data <- .finish_data_preparation(
+              data = data,
+              sample_id_column = settings$data$sample_col,
+              batch_id_column = settings$data$batch_col,
+              series_id_column = settings$data$series_col,
+              outcome_column = settings$data$outcome_col,
+              outcome_type = settings$data$outcome_type,
+              include_features = settings$data$include_features,
+              class_levels = settings$data$class_levels,
+              censoring_indicator = settings$data$censoring_indicator,
+              event_indicator = settings$data$event_indicator,
+              competing_risk_indicator = settings$data$competing_risk_indicator,
+              check_stringency = check_stringency,
+              reference_method = settings$data$reference_method
+            )
             
             # Update the dataset according to the feature info list.
             if(has_model_object) data <- update_data_set(data=data, object=object)

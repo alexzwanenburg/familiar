@@ -1190,13 +1190,15 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   # Determine the number of features.
   n_features <- length(get_similarity_names(object@similarity_table))
   
+  highly_similar_distance <- similarity.highly_similar(similarity_metric=object@similarity_metric)
+  
   # Check problematic values.
   if(n_features == 1){
     return(1L)
     
   } else if(n_features == 2){
     
-    if(all(distance_matrix < 2.0 * .Machine$double.eps)){
+    if(all(distance_matrix <= highly_similar_distance)){
       # Zero distance can be safely imputed as being identical.
       return(1L)
       
@@ -1207,7 +1209,7 @@ setMethod(".cluster_by_silhouette", signature(object="clusterMethodHierarchical"
   }
   
   # If all elements have distance 0, return 1 cluster.
-  if(all(distance_matrix < 2.0 * .Machine$double.eps)) return(1L)
+  if(all(distance_matrix <= highly_similar_distance)) return(1L)
   
   # The optimiser doesn't like a singular interval, which occurs for n_features
   # == 3.
@@ -1488,10 +1490,10 @@ setMethod(".cluster_by_dynamic_cut", signature(object="clusterMethodHClust"),
       }
     }
     
-    # Check whether the VGAM package has been installed.
+    # Check whether the nnet package has been installed.
     if(.hasSlot(object, "similarity_metric")){
       if(object@similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-        require_package(x="VGAM",
+        require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ",
                                        object@similarity_metric, " metric"),
                         message_type=message_type)

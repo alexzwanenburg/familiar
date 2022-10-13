@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.2.1
+Version: 1.3.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
@@ -50,6 +50,7 @@ Suggests:
     e1071 (>= 1.7.5),
     Ecdat,
     fastcluster,
+    fastglm,
     ggplot2 (>= 3.0.0),
     glmnet,
     gtable,
@@ -62,7 +63,9 @@ Suggests:
     maxstat,
     mboost (>= 2.9.0),
     microbenchmark,
+    nnet,
     partykit,
+    praznik,
     proxy,
     qvalue,
     randomForestSRC,
@@ -189,6 +192,7 @@ Collate:
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'
     'PredictS4Methods.R'
+    'ProcessTimeUtilites.R'
     'Random.R'
     'RandomGrouping.R'
     'RankBordaAggregation.R'

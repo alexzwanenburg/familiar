@@ -8,32 +8,28 @@ testthat::skip_on_cran()
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_corelearn_gini_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_gini_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_gini_vimp_method(show_general=FALSE))
 
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_corelearn_mdl_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_mdl_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_mdl_vimp_method(show_general=FALSE))
 
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_corelearn_relieff_exp_rank_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_relieff_exp_rank_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_relieff_exp_rank_vimp_method(show_general=FALSE))
 
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
 

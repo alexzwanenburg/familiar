@@ -368,7 +368,8 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
     # Train the model using the train data.
     fam_model <- suppressWarnings(.train(object=fam_model,
                                          data=train_data,
-                                         get_additional_info=FALSE))
+                                         get_additional_info=FALSE,
+                                         trim_model=FALSE))
     
     # Compute score using the metrics.
     score_table <- mapply(function(data, data_set, object, metric_objects, settings){

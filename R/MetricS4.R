@@ -562,7 +562,8 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
 
 
 metric.compute_optimisation_score <- function(score_table,
-                                              optimisation_function){
+                                              optimisation_function,
+                                              replace_na=TRUE){
   # Compute an optimisation score from validation and training scores. This
   # optimisation score is typically computed for each set of hyperparameters
   # (param_id) and subsample (run_id).
@@ -601,6 +602,9 @@ metric.compute_optimisation_score <- function(score_table,
   optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_fun(training=training,
                                                                                         validation=validation)),
                                            by=c(id_columns, "metric")]
+  
+  # Replace NA entries with the minimum optimisation score.
+  if(replace_na) optimisation_table[is.na(optimisation_score), optimisation_score:=-1.0]
   
   # Average optimisation score over metrics.
   optimisation_table <- optimisation_table[, list("optimisation_score"=mean(optimisation_score, na.rm=TRUE)),

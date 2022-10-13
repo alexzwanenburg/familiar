@@ -164,7 +164,7 @@ object <- familiar:::.test_create_hyperparameter_object(data=data,
                                                         vimp_method="mim",
                                                         learner="elastic_net",
                                                         is_vimp=FALSE,
-                                                        set_signature_feature=TRUE)
+                                                        set_signature_feature=FALSE)
 
 # Hyperparameter optimisation.
 new_object <- familiar:::optimise_hyperparameters(object=object,
@@ -270,4 +270,75 @@ expected_rows_upper <- (16 * 2 + 10 * 5 * 4 + 1 * 5 * 4) * 2  # initial + steps 
 testthat::test_that("Test that \"stochastic_reject\" exploration method may prune any hyperparameter sets during intensification",{
   testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
   testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
+})
+
+
+
+##### Test time truncation -----------------------------------------------------
+
+# Create dataset.
+data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+
+# Create object.
+object <- familiar:::.test_create_hyperparameter_object(data=data,
+                                                        vimp_method="mim",
+                                                        learner="elastic_net",
+                                                        is_vimp=FALSE,
+                                                        set_signature_feature=FALSE)
+
+# Hyperparameter optimisation without pruning and marginal time limit. This
+# should just complete the initial step.
+new_object <- familiar:::optimise_hyperparameters(object=object,
+                                                  data=data,
+                                                  time_limit=0.000001,
+                                                  n_max_bootstraps=25L,
+                                                  n_max_optimisation_steps=1L,
+                                                  n_max_intensify_steps=4L,
+                                                  n_intensify_step_bootstraps=1L,
+                                                  n_random_sets=16L,
+                                                  n_challengers=10L,
+                                                  exploration_method="none",
+                                                  is_vimp=FALSE,
+                                                  verbose=verbose)
+
+testthat::test_that("Time limits are respected and only the initial bootstraps are run.",{
+  testthat::expect_gte(new_object@hyperparameter_data$time_taken, 0.000001)
+  testthat::expect_equal(all(new_object@hyperparameter_data$score_table$iteration_id == 0), TRUE)
+})
+
+
+
+##### Test that clustered data are correctly handled ---------------------------
+# Create data,
+data <- familiar:::test_create_synthetic_correlated_data(outcome_type="continuous",
+                                                         n_numeric=4,
+                                                         cluster_size=c(3, 3, 3, 3))
+
+# Create object.
+object <- familiar:::.test_create_hyperparameter_object(data=data,
+                                                        vimp_method="mim",
+                                                        learner="elastic_net",
+                                                        is_vimp=FALSE,
+                                                        cluster_method="hclust",
+                                                        cluster_similarity_metric="mcfadden_r2",
+                                                        cluster_similarity_threshold=0.90,
+                                                        set_signature_feature=FALSE)
+
+new_object <- familiar:::optimise_hyperparameters(object=object,
+                                                  data=data,
+                                                  n_max_bootstraps=25L,
+                                                  n_max_optimisation_steps=1L,
+                                                  n_max_intensify_steps=5L,
+                                                  n_intensify_step_bootstraps=1L,
+                                                  n_random_sets=16L,
+                                                  n_challengers=10L,
+                                                  exploration_method="successive_halving",
+                                                  is_vimp=FALSE,
+                                                  verbose=verbose)
+
+testthat::test_that("One to four features are assessed for clustered features.",{
+  testthat::expect(all(new_object@hyperparameter_data$parameter_table$sign_size >= 1 &
+                     new_object@hyperparameter_data$parameter_table$sign_size <= 4), TRUE)
+  testthat::expect(any(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
+  testthat::expect(any(new_object@hyperparameter_data$parameter_table$sign_size == 4), TRUE)
 })

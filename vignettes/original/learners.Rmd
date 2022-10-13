@@ -214,9 +214,10 @@ include linkage functions and are shown in the table below.
 
 ### Linear models for multinomial outcomes
 
-The linear model for multinomial outcomes is implemented using the `VGAM::vglm`
-function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. Hyperparameters for this model
-are shown in the table below.
+Prior to version 1.3.0 the linear model for multinomial outcomes was implemented
+using the `VGAM::vglm` function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. For
+better scalability, this has been replaced by the `nnet::multinom` function
+[@Venables2002-ma]. Hyperparameters for this model are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|

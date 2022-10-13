@@ -113,6 +113,103 @@ testthat::test_that("Extra levels are detected", {
 })
 
 
+#### Test methods to set reference levels --------------------------------------
+data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data$rx <- stats::relevel(data$rx, ref="Lev")
+original_TRUE <- data$adhere == "TRUE"
+data[adhere == "FALSE", "adhere":="TRUE"]
+data[original_TRUE, "adhere":="FALSE"]
+
+testthat::test_that("Auto-method does not re-order existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="auto"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Lev")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+testthat::test_that("Always-method re-orders existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="always"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Obs")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+testthat::test_that("Never-method does not re-order existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="never"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Lev")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+# Now for automatic conversion of categorical variables.
+data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data$rx <- as.character(data$rx)
+data$adhere <- as.logical(data$adhere)
+
+testthat::test_that("Auto-method re-orders existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="auto"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Obs")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+testthat::test_that("Always-method re-orders existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="always"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Obs")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+testthat::test_that("Never-method sorts existing levels.", {
+  parsed_data <- familiar::as_data_object(
+    data=data.table::copy(data),
+    sample_id_column="id",
+    outcome_column=c("time", "status"),
+    outcome_type="survival",
+    include_features=c("nodes", "rx", "adhere"),
+    reference_method="never"
+  )
+  
+  testthat::expect_equal(head(levels(parsed_data@data$rx), n=1L), "Lev")
+  testthat::expect_equal(head(levels(parsed_data@data$adhere), n=1L), "FALSE")
+})
+
+
 ##### Censoring and event identifiers are set ----------------------------------
 data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
 

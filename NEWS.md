@@ -1,8 +1,44 @@
+# Version 1.3.0 (Loquacious Limpet)
+
+## Major changes
+
+- Improved speed of fitting generalised models by switching to the `fastglm` and `nnet` packages. This not only affects learners, but also univariate importance and pseudo-R<sup>2</sup> similarity metrics. This difference is most notable for datasets with large numbers of samples.
+
+- Normalised mutual information (`mutual_information`) is now the default similarity metric. The previous default similarity metric (`mcfadden_r2`) was found to handle sparse features poorly. The implementation is based on the `praznik` package.
+
+## Minor changes
+
+- Mutual information-based variable importance methods will now use the mutual information computation as implemented in `praznik` by default.
+
+- The signature size range for hyperparameter optimisation is now determined by the variable importance method. Familiar will now determine a valid range based on the features ranked by the variable importance method. For univariate methods, these are typically all features. However, multivariate variable importance methods often select a smaller subset of features. The size of that subset is now used as the default maximum range, instead of the number of features present in the entire data set. As a bonus, the same code is used to determine the size of the signature and to set the signature. This avoids issues due to discrepancies between the two that would produce errors in older versions.
+
+- Trimming now also trims trimmed functions, which on occasion could still contain large environments.
+
+- Defining a replacement for a trimmed model now may not take more than 1 minute. For some model types (e.g. `nnet::multinom`) creating the replacement co-variance matrix can be computationally expensive for larger datasets. If a replacement can not be created in time, no replacement function is created. Parts of the code where that may produce issues now capture errors related to this issue.
+
+- Hyperparameter optimisation now takes suspension of the R process into account when determining the optimisation time limit.
+
+- Reference levels for categorical features are now set to the most frequent level for categorical features that are automatically detected. This behaviour can be specified using the `reference_method` parameter.
+
+## Bug fixes
+
+- Models were unnecessarily trimmed during hyperparameter optimisation, which unnecessarily slowed down the optimisation process.
+
+- Fixed an error that may occur if the signature size was larger than the number of available features when using the `random` variable importance method.
+
+- Fixed an issue with high pseudo-R<sup>2</sup> similarity being computed between two numeric features where one numeric feature consisted of only few unique values.
+
+- Relaxed distance requirements for assigning all features to the same cluster using silhouette-based clustering. Since pseudo-R<sup>2</sup> are now computed using approximative methods, distance for assigning all features to the same cluster can deviate somewhat from 0. This would be noticeable when exactly two features are present.
+
+- Fixed an error due to not passing a `cl` argument when performing evaluation steps with `detail_level="model"` and parallel processing.
+
+- Fixed an issue that could cause the hyperparameter optimisation algorithm to become myopic and focus on hyperparameter sets that generally fail, except for a few instances.
+
 # Version 1.2.1 (Kindhearted Koala)
 
 ## Minor changes
 
-- On the relatively rare occasion were a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
+- On the relatively rare occasion where a model fails to yield one or more valid predictions, all evaluation steps concerning model performance will not produce results. This affects AUC curves, calibration, confusion matrices, decision curves, model performance plots, and Kaplan-Meier plots.
 
 ## Bug fixes
 

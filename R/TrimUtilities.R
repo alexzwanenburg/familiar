@@ -1,9 +1,15 @@
 ..trim_functions <- function(){
   
-  return(list("coef"=stats::coef,
-              "vcov"=stats::vcov,
-              "summary"=summary,
-              "varimp"=mboost::varimp))
+  return(list(
+    "coef"=list("FUN"=stats::coef,
+                "with_timeout"=FALSE),
+    "vcov"=list("FUN"=stats::vcov,
+                "with_timeout"=TRUE),
+    "summary"=list("FUN"=summary,
+                   "with_timeout"=TRUE),
+    "varimp"=list("FUN"=mboost::varimp,
+                  "with_timeout"=TRUE))
+  )
 }
 
 
@@ -40,37 +46,86 @@
 
 
 
-.replace_broken_functions <- function(object, trimmed_object){
+.replace_broken_functions <- function(object, trimmed_object, timeout=60000){
+  
+  # Find all methods that are trimmable.
+  trimmable_methods <- names(..trim_functions())
+  
+  # Load packages associated with the model into the namespace so that all
+  # associated methods may be found.
+  require_package(object)
+  
+  # Find all methods associated with the model object itself.
+  class_methods <- .get_class_methods(object@model)
+  
+  # Special check for S3 methods defined outside of standard packages, or
+  # dependent packages. There seems to be an issue with visibility of such
+  # methods when the package is only loaded, not attached. I don't want to
+  # attach packages because that may alter the search space of the user.
+  if(any(class(object@model) %in% c("mboost"))){
+    class_methods <- unique(c(class_methods, "varimp"))
+  }
+  
+  # Find those methods that are actually associated with the class.
+  trimmable_methods <- trimmable_methods[trimmable_methods %in% class_methods]
+  
+  # Return trimmed object if there are no associated trimmable functions.
+  if(is_empty(trimmable_methods)) return(trimmed_object)
+  
+  trimmable_methods <- ..trim_functions()[trimmable_methods]
   
   # Generate replacement functions, if required.
-  replacement_functions <- lapply(..trim_functions(),
+  replacement_functions <- lapply(trimmable_methods,
                                   ..replace_broken_function,
                                   object=object,
-                                  trimmed_object=trimmed_object)
+                                  trimmed_object=trimmed_object,
+                                  timeout=timeout)
   
   # Get non-null items and add to existing functions.
-  trimmed_object@trimmed_function <- c(trimmed_object@trimmed_function,
-                                       replacement_functions[!sapply(replacement_functions, is.null)])
+  trimmed_object@trimmed_function <- c(
+    trimmed_object@trimmed_function,
+    replacement_functions[!sapply(replacement_functions, is.null)]
+  )
   
   return(trimmed_object)
 }
 
 
 
-..replace_broken_function <- function(FUN, object, trimmed_object){
+..replace_broken_function <- function(method_list, object, trimmed_object, timeout){
   
-  quiet(initial_info <- tryCatch(do.call(FUN, list(object@model)),
-                                 error=identity))
+  # Isolate FUN and with_timeout:
+  FUN <- method_list$FUN
+  if(!method_list$with_timeout) timeout <- Inf
   
-  if(inherits(initial_info, "error")) return(NULL)
+  # Apply function using the original, untrimmed object.
+  initial_info <- do.call_with_handlers_timeout(
+    FUN,
+    args=list(object@model),
+    timeout=timeout,
+    additional_packages=object@package
+  )
+
+  # If an error occurs or the project times out the required function is not
+  # considered implemented for the object.
+  if(!is.null(initial_info$error) | initial_info$timeout==TRUE) return(NULL)
+  initial_info <- initial_info$value
   
-  quiet(new_info <- tryCatch(do.call(FUN, list(trimmed_object@model)),
-                             error=identity))
+  # Attempt to extract the results from the trimmed object.
+  new_info <- do.call_with_handlers(
+    FUN,
+    args=list(trimmed_object@model)
+  )
   
-  if(inherits(new_info, "error")){
+  # If an error occurs, it means that the information required to create the
+  # function is no longer available due to object trimming, or recreating the
+  # object takes a long time.
+  if(!is.null(new_info$error)){
     
     # Check for elements that contain stuff.
     if(is.list(initial_info)){
+      # This is the generic check for S3-methods.
+      
       if(!is.null(names(initial_info))){
         # Check for call.
         if(is.call(initial_info$call)) initial_info$call <- call("trimmed")
@@ -81,10 +136,30 @@
         # Check for terms.
         if(inherits(initial_info$terms, "terms")) initial_info$terms <- .replace_environment(initial_info$terms)
       }
+      
+    } else if(is(initial_info, "summary.vglm")){
+      # This is the check for the summary.vglm S4 object.
+      
+      # Check for call.
+      if(is.call(initial_info@call)) initial_info@call <- call("trimmed")
+      
+      # Check for terms.
+      initial_info@terms <- lapply(initial_info@terms,
+                                   function(x){
+                                     if(!inherits(x, "terms")) return(x)
+                                     
+                                     return(.replace_environment(x))
+                                   })
+      
+      # Check for formula.
+      if(inherits(initial_info@misc$formula, "formula")) initial_info@misc$formula <- .replace_environment(initial_info@misc$formula) 
+      
+      # Replace qr attribute.
+      initial_info@qr <- list()
     }
     
     return(initial_info)
-  } 
+  }
   
   return(NULL)
 }

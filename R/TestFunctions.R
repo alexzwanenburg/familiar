@@ -105,9 +105,11 @@ test_all_learners_train_predict_vimp <- function(learners,
                                            hyperparameter_list=hyperparameters,
                                            learner=learner,
                                            time_max=1832,
-                                           trim_model = FALSE))
+                                           trim_model=FALSE))
       
-      # Create a trimmed model.
+      # Create a trimmed model -- this is the only instance were we do that
+      # without setting the time-out to infinite to test whether the timeout
+      # handler returns it correctly.
       trimmed_model <- trim_model(model)
       
       # Generate a file name to save the model to.
@@ -428,7 +430,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                            time_max=1832))
       
       # Create a trimmed model.
-      trimmed_model <- trim_model(model)
+      trimmed_model <- trim_model(model, timeout=Inf)
       
       # Test that models can be created.
       test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature dataset."), {
@@ -640,7 +642,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset without censoring."), {
@@ -734,7 +736,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with one censored sample."), {
@@ -828,7 +830,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                              time_max=1832))
         
         # Create a trimmed model.
-        trimmed_model <- trim_model(model)
+        trimmed_model <- trim_model(model, timeout=Inf)
         
         # Test that models can be created.
         test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with few censored samples."), {
@@ -1183,7 +1185,7 @@ test_all_novelty_detectors <- function(detectors,
                                                           detector=detector))
     
     # Create a trimmed detector.
-    trimmed_model <- trim_model(model)
+    trimmed_model <- trim_model(model, timeout=Inf)
     
     # Check that the the novelty detector can be trimmed.
     test_fun(paste0("Detector created using the ", detector, " algorithm can be trimmed."), {
@@ -1258,7 +1260,7 @@ test_all_novelty_detectors <- function(detectors,
                                                           detector=detector))
     
     # Create a trimmed novelty detector.
-    trimmed_model <- trim_model(model)
+    trimmed_model <- trim_model(model, timeout=Inf)
     
     # Test that the novelty detector can be created.
     test_fun(paste0("Detector can be created using the ", detector, " algorithm using a one-feature dataset."), {
@@ -2788,7 +2790,6 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                                              learners=NULL,
                                              outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                              not_available_no_samples=TRUE,
-                                             no_hyperparameters=FALSE,
                                              n_max_bootstraps=25L,
                                              n_max_optimisation_steps=3L,
                                              n_max_intensify_steps=2L,
@@ -2866,6 +2867,9 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     .not_available_no_samples <- not_available_no_samples
     if(is.character(.not_available_no_samples)) .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
     
+    .not_available_invariant_data <- FALSE
+    if(is.character(.not_available_invariant_data)) .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
+    
     # Iterate over learners or variable importance methods..
     for(current_method in method_pool){
       
@@ -2882,6 +2886,8 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
       if(!.check_learner_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
       if(!.check_vimp_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
       
+      
+      
       #####Full data set--------------------------------------------------------
       
       # Create object
@@ -2893,6 +2899,26 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
       
       # Check that object is available for the outcome.
       if(!is_available(object)) next()
+      
+      .not_available_invariant_data <- FALSE
+      .no_hyperparameters <- FALSE
+      
+      # Check default parameters
+      default_hyperparameters <- get_default_hyperparameters(object, data=full_data)
+      if(length(default_hyperparameters) > 0){
+        randomised_hyperparameters <- sapply(default_hyperparameters, function(x) x$randomise)
+        
+        if("sign_size" %in% names(randomised_hyperparameters)){
+          .not_available_invariant_data <- sum(randomised_hyperparameters) > 1L || !randomised_hyperparameters["sign_size"]
+          
+        } else {
+          .not_available_invariant_data <- sum(randomised_hyperparameters) > 0L
+        }
+        
+      } else {
+        .no_hyperparameters <- TRUE
+        .not_available_invariant_data <- TRUE
+      }
       
       if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
                                  ifelse(is_vimp, " variable importance method", " learner"), " and ",
@@ -2917,11 +2943,11 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a complete data set."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!no_hyperparameters | !not_available_no_samples){
+                        } else if(!.no_hyperparameters | !not_available_no_samples){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
@@ -2970,12 +2996,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only identical entries."), {
                         
-                        if(no_hyperparameters | not_available_no_samples){
+                        if(.no_hyperparameters | .not_available_invariant_data){
                           # Test that no hyperparameters are set. Models cannot
                           # train on completely invariant data.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!not_available_no_samples){
+                        } else if(!.not_available_invariant_data){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
@@ -3024,7 +3050,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one entry."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set. Single entry
                           # data cannot be used to generate hyperparameter sets
                           # unless they are always available.
@@ -3105,7 +3131,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(!not_available_no_samples, "can", "cannot"),
                       " be created for an empty data set."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set. Empty datasets
                           # cannot be used to create hyperparameters.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
@@ -3173,11 +3199,11 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one feature."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           
-                        } else if(!no_hyperparameters | !not_available_no_samples){
+                        } else if(!.no_hyperparameters | !not_available_no_samples){
                           # Test that hyperparameters are set.
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
@@ -3216,7 +3242,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one feature and sample."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with only
                           # a single sample.
@@ -3285,7 +3311,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one, invariant feature."), {
                         
-                        if(no_hyperparameters){
+                        if(.no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with
                           # invariant features.
@@ -5285,6 +5311,8 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
                                                vimp_method,
                                                learner,
                                                is_vimp,
+                                               cluster_method="none",
+                                               ...,
                                                set_signature_feature=FALSE){
   
   if(set_signature_feature){
@@ -5298,8 +5326,9 @@ test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
   feature_info_list <- create_feature_info(data=data,
                                            fs_method=vimp_method,
                                            learner=learner,
-                                           cluster_method="none",
+                                           cluster_method=cluster_method,
                                            imputation_method="simple",
+                                           ...,
                                            signature=signature_features,
                                            parallel=FALSE)
   

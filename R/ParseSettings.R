@@ -565,6 +565,22 @@
 #'   `signature` and `novelty_features` are always included. If both
 #'   `exclude_features` and `include_features` are provided, `include_features`
 #'   takes precedence, provided that there is no overlap between the two.
+#' @param reference_method (*optional*) Method used to set reference levels for
+#'   categorical features. There are several options:
+#'
+#'   * `auto` (default): Categorical features that are not explicitly set by the
+#'   user, i.e. columns containing boolean values or characters, use the most
+#'   frequent level as reference. Categorical features that are explicitly set,
+#'   i.e. as factors, are used as is.
+#'
+#'   * `always`: Both automatically detected and user-specified categorical
+#'   features have the reference level set to the most frequent level. Ordinal
+#'   features are not altered, but are used as is.
+#'
+#'   * `never`: User-specified categorical features are used as is.
+#'   Automatically detected categorical features are simply sorted, and the
+#'   first level is then used as the reference level. This was the behaviour
+#'   prior to familiar version 1.3.0.
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)+ev` for 2 times repeated 3-fold
@@ -661,6 +677,7 @@
                                        novelty_features=waiver(),
                                        exclude_features=waiver(),
                                        include_features=waiver(),
+                                       reference_method=waiver(),
                                        experimental_design=waiver(),
                                        imbalance_correction_method=waiver(),
                                        imbalance_n_partitions=waiver(),
@@ -863,6 +880,20 @@
                                           default=NULL)
   
   if(!is.null(settings$exclude_features)) settings$exclude_features <- check_column_name(settings$exclude_features)
+  
+  
+  #### reference_method --------------------------------------------------------
+  # Determine how reference levels for categorical features are set.
+  settings$reference_method <- .parse_arg(x_config=config$reference_method,
+                                          x_var=reference_method,
+                                          var_name="reference_method",
+                                          type="character",
+                                          optional=TRUE,
+                                          default="auto")
+  
+  .check_parameter_value_is_valid(x=settings$reference_method,
+                                  var_name="reference_method",
+                                  values=c("auto", "always", "never"))
   
   return(settings)
 }
@@ -1348,7 +1379,9 @@
 #'   clustering. The following metrics are supported to compute pairwise
 #'   similarities:
 #'
-#'   * `mcfadden_r2` (default): McFadden's pseudo R-squared (McFadden, 1974).
+#'   * `mutual_information` (default): normalised mutual information.
+#'
+#'   * `mcfadden_r2`: McFadden's pseudo R-squared (McFadden, 1974).
 #'
 #'   * `cox_snell_r2`: Cox and Snell's pseudo R-squared (Cox and Snell, 1989).
 #'
@@ -1380,7 +1413,7 @@
 #'   reasonable threshold value depends strongly on the similarity metric. The
 #'   following are the default values used:
 #'
-#'   * `mcfadden_r2`: `0.30`
+#'   * `mcfadden_r2` and `mutual_information`: `0.30`
 #'
 #'   * `cox_snell_r2` and `nagelkerke_r2`: `0.75`
 #'
@@ -1390,11 +1423,11 @@
 #'   whether any clustering should be performed, because the data may not
 #'   contain highly similar features. The default values in this situation are:
 #'
-#'   * `mcfadden_r2`: `0.05`
+#'   * `mcfadden_r2`  and `mutual_information`: `0.25`
 #'
 #'   * `cox_snell_r2` and `nagelkerke_r2`: `0.40`
 #'
-#'   * `spearman`, `kendall` and `pearson`: `0.50`
+#'   * `spearman`, `kendall` and `pearson`: `0.70`
 #'
 #'   The threshold value is converted to a distance (1-similarity) prior to
 #'   cutting hierarchical trees.
@@ -1552,13 +1585,13 @@
                                   values=c("none", "low_variance", "univariate_test", "robustness"))
   
   if(outcome_type == "multinomial" & "univariate_test" %in% settings$filter_method){
-    # The VGAM package is required for univariate tests with multinomial
+    # The nnet package is required for univariate tests with multinomial
     # endpoints.
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose="to filter features using univariate tests",
                         message_type="backend_warning")){
       
-      # If the VGAM package is not present, avoid the univariate test.
+      # If the nnet package is not present, avoid the univariate test.
       settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
       if(length(settings$filter_method) == 0) settings$filter_method <- "none"
     }
@@ -1819,11 +1852,19 @@
                                                    var_name="cluster_similarity_metric",
                                                    type="character",
                                                    optional=TRUE,
-                                                   default="mcfadden_r2")
+                                                   default="mutual_information")
   
   if(settings$cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$cluster_similarity_metric, " metric"),
+                        message_type="backend_warning")){
+      
+      settings$cluster_similarity_metric <- "spearman"
+    }
+    
+  } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
+    if(!require_package(x="praznik",
+                        purpose=paste0("to compute similarity using the ", settings$cluster_similarity_metric, " metric"),
                         message_type="backend_warning")){
       
       settings$cluster_similarity_metric <- "spearman"
@@ -1848,6 +1889,9 @@
       # be produced.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
         settings$cluster_similarity_threshold <- 0.30
+      
+      } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
+        settings$cluster_similarity_threshold <- 0.30
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")){
         settings$cluster_similarity_threshold <- 0.75
@@ -1861,13 +1905,16 @@
       # potentially be found. The threshold is set low so that other cut methods
       # can be explored.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
-        settings$cluster_similarity_threshold <- 0.05
+        settings$cluster_similarity_threshold <- 0.25
+      
+      } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
+        settings$cluster_similarity_threshold <- 0.25
         
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
         settings$cluster_similarity_threshold <- 0.40
         
       } else {
-        settings$cluster_similarity_threshold <- 0.50
+        settings$cluster_similarity_threshold <- 0.70
       }
     }
   }
@@ -2693,7 +2740,12 @@
   if(!is.null(settings$hpo_time_limit)){
     .check_number_in_valid_range(x=settings$hpo_time_limit,
                                  var_name="smbo_time_limit",
-                                 range=c(1.0, Inf))
+                                 range=c(0.0, Inf),
+                                 closed=c(FALSE, TRUE))
+    
+    require_package(c("callr", "microbenchmark"),
+                    purpose="to measure hyperparameter optimisation time",
+                    message_type="backend_warning")
   }
   
   
@@ -3064,7 +3116,7 @@
 #'  similarity between features. Similarity is computed in the same manner as
 #'  for clustering, and `feature_similarity_metric` therefore has the same
 #'  options as `cluster_similarity_metric`: `mcfadden_r2`, `cox_snell_r2`,
-#'  `nagelkerke_r2`, `spearman`, `kendall` and `pearson`.
+#'  `nagelkerke_r2`, `mutual_information`, `spearman`, `kendall` and `pearson`.
 #'
 #'  The value used for the `cluster_similarity_metric` configuration parameter
 #'  is used by default.
@@ -3594,11 +3646,19 @@
   
   if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements) &
      settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$feature_similarity_metric, " metric"),
                         message_type="backend_warning")){
       
       settings$feature_similarity_metric <- "spearman"
+    }
+    
+  } else if(settings$feature_similarity_metric %in% c("mutual_information")){
+    if(!require_package(x="praznik",
+                        purpose=paste0("to compute similarity using the ", settings$feature_similarity_metric, " metric"),
+                        message_type="backend_warning")){
+      
+      settings$cluster_similarity_metric <- "spearman"
     }
   }
   
@@ -3651,7 +3711,7 @@
   
   if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
      settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="VGAM",
+    if(!require_package(x="nnet",
                         purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$sample_similarity_metric, " metric"),
                         message_type="backend_warning")){
       

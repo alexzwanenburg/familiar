@@ -6,15 +6,13 @@ testthat::skip_on_cran()
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=FALSE))
 
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=TRUE),
                                             debug=FALSE,
-                                            parallel=FALSE,
-                                            no_hyperparameters=TRUE)
+                                            parallel=FALSE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=FALSE))
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=FALSE))
 
@@ -157,7 +155,7 @@ testthat::test_that(paste0("MIFS correctly ranks binomial data."), {
   
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
+  testthat::expect_equal("cell_shape_uniformity" %in% vimp_table[rank <= 2]$name, TRUE)
 })
 
 # Process dataset.
@@ -173,7 +171,7 @@ testthat::test_that(paste0("MRMR correctly ranks binomial data."), {
   
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
+  testthat::expect_equal("cell_shape_uniformity" %in% vimp_table[rank <= 2]$name, TRUE)
 })
 
 

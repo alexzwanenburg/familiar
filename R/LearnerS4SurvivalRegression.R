@@ -357,7 +357,12 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             require_package(object, "vimp")
             
             # Define p-values
-            coefficient_z_values <- .compute_z_statistic(object)
+            coefficient_z_values <- tryCatch(.compute_z_statistic(object),
+                                             error=identity)
+            
+            if(inherits(coefficient_z_values, "error")) return(callNextMethod())
+            
+            # Remove any intercept from the data.
             coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())
