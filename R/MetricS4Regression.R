@@ -3,8 +3,38 @@
 NULL
 
 setClass("familiarMetricRegression",
-         contains="familiarMetric")
+         contains="familiarMetric",
+         slots=list("robust"="character"),
+         prototype=list("robust"="none"))
 
+setMethod("initialize", signature(.Object="familiarMetricRegression"),
+          function(.Object, metric, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            if(endsWith(x=metric, suffix="_trim")){
+              .Object@robust <- "trim"
+              .Object@metric <- sub_last(x=metric,
+                                         pattern="_trim",
+                                         replacement="",
+                                         fixed=TRUE)
+              
+            } else if(endsWith(x=metric, suffix="_winsor")){
+              .Object@robust <- "winsor"
+              .Object@metric <- sub_last(x=metric,
+                                         pattern="_winsor",
+                                         replacement="",
+                                         fixed=TRUE)
+              
+            } else {
+              # Default setting.
+              .Object@robust <- "none"
+              .Object@metric <- metric
+            }
+            
+            return(.Object)
+          })
 
 setMethod("is_available", signature(object="familiarMetricRegression"),
           function(object, ...){
@@ -37,7 +67,7 @@ setClass("familiarMetricMAE",
 
 
 .get_available_mae_metrics <- function(){
-  return(c("mae", "mean_absolute_error"))
+  return(paste_c(c("mae", "mean_absolute_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -72,7 +102,7 @@ setClass("familiarMetricRAE",
                                       higher_better = FALSE))
 
 .get_available_rae_metrics <- function(){
-  return(c("rae", "relative_absolutive_error"))
+  return(paste_c(c("rae", "relative_absolutive_error"), c("", "_trim", "_winsor")))
 }
 
 
@@ -121,7 +151,7 @@ setClass("familiarMetricMLAE",
 
 
 .get_available_mlae_metrics <- function(){
-  return(c("mlae", "mean_log_absolute_error"))
+  return(paste_c(c("mlae", "mean_log_absolute_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -157,7 +187,7 @@ setClass("familiarMetricMSE",
 
 
 .get_available_mse_metrics <- function(){
-  return(c("mse", "mean_squared_error"))
+  return(paste_c(c("mse", "mean_squared_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -192,7 +222,7 @@ setClass("familiarMetricRSE",
 
 
 .get_available_rse_metrics <- function(){
-  return(c("rse", "relative_squared_error"))
+  return(paste_c(c("rse", "relative_squared_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -244,7 +274,7 @@ setClass("familiarMetricMSLE",
 
 
 .get_available_msle_metrics <- function(){
-  return(c("msle", "mean_squared_log_error"))
+  return(paste_c(c("msle", "mean_squared_log_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -282,7 +312,7 @@ setClass("familiarMetricMedianAE",
 
 
 .get_available_medea_metrics <- function(){
-  return(c("medae", "median_absolute_error"))
+  return(paste_c(c("medae", "median_absolute_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -318,7 +348,7 @@ setClass("familiarMetricRMSE",
 
 
 .get_available_rmse_metrics <- function(){
-  return(c("rmse", "root_mean_square_error"))
+  return(paste_c(c("rmse", "root_mean_square_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -354,7 +384,7 @@ setClass("familiarMetricRRSE",
 
 
 .get_available_rrse_metrics <- function(){
-  return(c("rrse", "root_relative_squared_error"))
+  return(paste_c(c("rrse", "root_relative_squared_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -406,7 +436,7 @@ setClass("familiarMetricRMSLE",
 
 
 .get_available_rmsle_metrics <- function(){
-  return(c("rmsle", "root_mean_square_log_error"))
+  return(paste_c(c("rmsle", "root_mean_square_log_error"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -443,7 +473,7 @@ setClass("familiarMetricR2",
 
 
 .get_available_r_squared_metrics <- function(){
-  return(c("r2_score", "r_squared"))
+  return(paste_c(c("r2_score", "r_squared"), c("", "_trim", "_winsor")))
 } 
 
 
@@ -494,7 +524,7 @@ setClass("familiarMetricExplainedVariance",
 
 
 .get_available_explained_variance_metrics <- function(){
-  return(c("explained_variance"))
+  return(paste_c(c("explained_variance"), c("", "_trim", "_winsor")))
 } 
 
 
