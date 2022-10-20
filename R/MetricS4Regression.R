@@ -76,13 +76,9 @@ setClass("familiarMetricMAE",
 setMethod("compute_metric_score", signature(metric="familiarMetricMAE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -110,13 +106,9 @@ setClass("familiarMetricRAE",
 setMethod("compute_metric_score", signature(metric="familiarMetricRAE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -160,13 +152,9 @@ setClass("familiarMetricMLAE",
 setMethod("compute_metric_score", signature(metric="familiarMetricMLAE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -196,13 +184,9 @@ setClass("familiarMetricMSE",
 setMethod("compute_metric_score", signature(metric="familiarMetricMSE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -231,13 +215,9 @@ setClass("familiarMetricRSE",
 setMethod("compute_metric_score", signature(metric="familiarMetricRSE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -283,13 +263,9 @@ setClass("familiarMetricMSLE",
 setMethod("compute_metric_score", signature(metric="familiarMetricMSLE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -321,13 +297,9 @@ setClass("familiarMetricMedianAE",
 setMethod("compute_metric_score", signature(metric="familiarMetricMedianAE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -357,13 +329,9 @@ setClass("familiarMetricRMSE",
 setMethod("compute_metric_score", signature(metric="familiarMetricRMSE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -393,13 +361,9 @@ setClass("familiarMetricRRSE",
 setMethod("compute_metric_score", signature(metric="familiarMetricRRSE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -445,13 +409,9 @@ setClass("familiarMetricRMSLE",
 setMethod("compute_metric_score", signature(metric="familiarMetricRMSLE"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -482,13 +442,9 @@ setClass("familiarMetricR2",
 setMethod("compute_metric_score", signature(metric="familiarMetricR2"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
            
@@ -533,13 +489,9 @@ setClass("familiarMetricExplainedVariance",
 setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVariance"),
           function(metric, data, ...){
             
-            # Remove any entries that lack valid predictions.
-            data <- remove_nonvalid_predictions(prediction_table=data,
-                                                outcome_type=metric@outcome_type)
-            
-            # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(data=data,
-                                            outcome_type=metric@outcome_type)
+            # Prepare data for computing metric values.
+            data <- ..process_data_for_regression_metrics(object=object,
+                                                          data=data)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -565,3 +517,51 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
             
             return(score)
           })
+
+
+
+..process_data_for_regression_metrics <- function(object, data, fraction=0.1){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome <- predicted_outcome <- NULL
+  
+  # Remove any entries that lack valid predictions.
+  data <- remove_nonvalid_predictions(prediction_table=data,
+                                      outcome_type=object@outcome_type)
+  
+  # Remove any entries that lack observed values.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=object@outcome_type)
+  
+  if(is_empty(data)) return(data)
+  
+  if(object@robust == "trim"){
+    # Compute absolute prediction error
+    abs_error <- abs(data$outcome - data$predicted_outcome)
+    
+    # Determine threshold for truncating the data.
+    threshold <- stats::quantile(x=abs_error, probs=1-fraction, na.rm=TRUE)
+    
+    # Set mask to identify instances that should be kept.
+    mask <- abs_error <= threshold[1]
+    
+    # Filter data to only include instances within the mask.
+    data <- data[mask, ]
+    
+  } else if(object@robust == "winsor"){
+    # Compute absolute prediction error
+    abs_error <- abs(data$outcome - data$predicted_outcome)
+    
+    # Determine threshold for truncating the data.
+    threshold <- stats::quantile(x=abs_error, probs=1-fraction, na.rm=TRUE)
+    
+    # Set mask to identify instances that should be updated.
+    mask <- !(abs_error <= threshold[1])
+    
+    # Update data by winsorising outlier data.
+    data[mask & outcome > predicted_outcome, "predicted_outcome":=outcome - threshold]
+    data[mask & outcome < predicted_outcome, "predicted_outcome":=outcome + threshold]
+  }
+  
+  return(data)
+}
