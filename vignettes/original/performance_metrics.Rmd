@@ -265,6 +265,15 @@ Performance metrics for models with regression outcomes, i.e. `count` and
 | root relative squared error| `rrse`, `root_relative_squared_error` |
 | root mean square log error | `rmsle`, `root_mean_square_log_error` |
 
+Each of the above metrics can be made more robust against rare outliers by
+appending `_winsor` or `_trim` as a suffix to the metric name. This respectively
+performs winsorising (clipping) and trimming (truncating) based on the absolute
+prediction error, prior to computing the metric. Winsorising clips the predicted
+values for 5% of the instances with the most extreme absolute errors prior to
+computing the performance metric, whereas trimming removes these instances. For
+example, winsored and trimmed versions of the mean squared error metric are
+specified as `mse_winsor` and `mse_trim` respectively.
+
 Let $y$ be the set of observed values, and $\hat{y}$ the corresponding predicted
 values. The error is then $\epsilon = y-\hat{y}$.
 
