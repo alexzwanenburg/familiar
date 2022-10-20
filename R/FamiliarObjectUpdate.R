@@ -107,6 +107,16 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "feature_order") <- character()
             }
             
+            if(tail(object@familiar_version, n=1L) < "1.4.0"){
+              
+              # Add a robust slot to familiarMetricRegression objects.
+              for(ii in seq_along(object@hyperparameter_data$metric_object)){
+                if(is(object@hyperparameter_data$metric_object[[ii]], "familiarMetricRegression")){
+                  attr(object@hyperparameter_data$metric_object[[ii]], "robust") <- "none"
+                }
+              }
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
             # Update package version.
