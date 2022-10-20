@@ -77,7 +77,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMAE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -107,7 +107,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRAE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -153,7 +153,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMLAE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -185,7 +185,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -216,7 +216,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRSE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -264,7 +264,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSLE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -298,7 +298,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMedianAE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -330,7 +330,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -362,7 +362,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRRSE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -410,7 +410,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSLE"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -443,7 +443,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricR2"),
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -490,7 +490,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
           function(metric, data, ...){
             
             # Prepare data for computing metric values.
-            data <- ..process_data_for_regression_metrics(object=object,
+            data <- ..process_data_for_regression_metrics(metric=metric,
                                                           data=data)
             
             if(is_empty(data)) return(callNextMethod())
@@ -520,22 +520,22 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
 
 
 
-..process_data_for_regression_metrics <- function(object, data, fraction=0.1){
+..process_data_for_regression_metrics <- function(metric, data, fraction=0.05){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- predicted_outcome <- NULL
   
   # Remove any entries that lack valid predictions.
   data <- remove_nonvalid_predictions(prediction_table=data,
-                                      outcome_type=object@outcome_type)
+                                      outcome_type=metric@outcome_type)
   
   # Remove any entries that lack observed values.
   data <- remove_missing_outcomes(data=data,
-                                  outcome_type=object@outcome_type)
+                                  outcome_type=metric@outcome_type)
   
   if(is_empty(data)) return(data)
   
-  if(object@robust == "trim"){
+  if(metric@robust == "trim"){
     # Compute absolute prediction error
     abs_error <- abs(data$outcome - data$predicted_outcome)
     
@@ -548,7 +548,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
     # Filter data to only include instances within the mask.
     data <- data[mask, ]
     
-  } else if(object@robust == "winsor"){
+  } else if(metric@robust == "winsor"){
     # Compute absolute prediction error
     abs_error <- abs(data$outcome - data$predicted_outcome)
     
