@@ -48,6 +48,15 @@ paste_s <- function(...){
 
 
 
+paste_c <- function(x, y, collapse=NULL){
+  # Create combinations of strings in x and y.
+  str_combinations <- unlist(lapply(x, paste0, y, collapse=collapse))
+  
+  return(str_combinations)
+}
+
+
+
 rstring <- function(n=1L, character_set="alphanumeric"){
   # Initialise the available set.
   available_characters <- NULL
