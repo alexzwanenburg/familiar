@@ -19,26 +19,29 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
             # Process data, if required.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed = is_pre_processed,
-                                       stop_at="clustering")
+            data <- process_input_data(
+              object=object,
+              data=data,
+              is_pre_processed = is_pre_processed,
+              stop_at="clustering"
+            )
             
             # Work only with data that has known outcomes when training.
             data <- filter_missing_outcome(data=data)
             
-            # Set the training flag
-            can_train <- TRUE
+            # Set the training flags
+            can_train <- can_train_naive <- TRUE
             
             # Check if there are any data entries. The familiar model cannot be
-            # trained otherwise
-            if(is_empty(x=data)){
-              can_train <- FALSE
+            # trained otherwise. We do allow for no features being present.
+            if(is_empty(x=data, allow_no_features=TRUE)){
+              can_train <- can_train_naive <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_training_data_available())
             } 
             
-            # Check the number of features in data; if it has no features, the
-            # familiar model can not be trained
+            # Check the number of features in data; if it has no features, a
+            # standard familiar model can not be trained. However, it might be
+            # possible to train a naive model.
             if(!has_feature_data(x=data)){
               can_train <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_features_selected_for_training())
@@ -46,15 +49,28 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             
             # Check if the hyperparameters are plausible.
             if(!has_optimised_hyperparameters(object=object)){
-              can_train <- FALSE
+              can_train <- can_train_naive <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())
             } 
             
-            # Train a new model based on data.
-            if(can_train) object <- ..train(object=object,
-                                            data=data,
-                                            approximate=approximate,
-                                            ...)
+            # Check if a naive model should be trained.
+            if(!requires_naive_model(object)){
+              can_train_naive <- FALSE
+            }
+            
+            # Train a new model based on data. If a normal model cannot be
+            # trained, attempt to train a naive model.
+            if(can_train){
+              object <- ..train(object=object,
+                                data=data,
+                                approximate=approximate,
+                                ...)
+              
+            } else if(can_train_naive){
+              object <- ..train_naive(object=object,
+                                      data=data,
+                                      ...)
+            }
             
             # Extract information required for assessing model performance,
             # calibration (e.g. baseline survival) etc.
@@ -72,7 +88,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # types require calibration info. Currently calibration
               # information is only retrieved for survival outcomes, in the form
               # of baseline survival curves.
-              if(can_train) object <- ..set_calibration_info(object=object, data=data)
+              if(can_train | can_train_naive) object <- ..set_calibration_info(object=object, data=data)
               
               # Set stratification thresholds. This is currently only done for
               # survival outcomes.
