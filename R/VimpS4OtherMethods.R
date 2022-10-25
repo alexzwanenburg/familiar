@@ -11,6 +11,9 @@ setClass("familiarNoneVimp",
 setClass("familiarSignatureVimp",
          contains="familiarVimpMethod")
 
+setClass("familiarNoFeaturesVimp",
+         contains="familiarVimpMethod")
+
 .get_available_random_vimp_methods <- function(show_general=TRUE){
   return("random")
 }
@@ -21,6 +24,10 @@ setClass("familiarSignatureVimp",
 
 .get_available_signature_only_vimp_methods <- function(show_general=TRUE){
   return("signature_only")
+}
+
+.get_available_no_features_vimp_methods <- function(show_general=TRUE){
+  return("no_features")
 }
 
 
@@ -38,6 +45,12 @@ setMethod("is_available", signature(object="familiarNoneVimp"),
 
 #####is_available (signature only)#####
 setMethod("is_available", signature(object="familiarSignatureVimp"),
+          function(object, ...){
+            return(TRUE)
+          })
+
+#### is_available (signature only) ---------------------------------------------
+setMethod("is_available", signature(object="familiarNoFeaturesVimp"),
           function(object, ...){
             return(TRUE)
           })
