@@ -992,13 +992,13 @@ setMethod("get_signature", signature(object="list"),
             # Find features that are pre-assigned to the signature.
             signature_features <- names(object)[sapply(object, is_in_signature)]
             
-            if(vimp_method == "signature_only"){
+            if(vimp_method %in% .get_available_signature_only_vimp_methods()){
               # Only select signature
               if(length(signature_features) == 0) stop("No signature was provided.")
               
               selected_features <- signature_features
               
-            } else if(vimp_method == "none"){
+            } else if(vimp_method %in% .get_available_none_vimp_methods()){
               # Select all features
               selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
                                                              feature_info_list=object)
@@ -1009,7 +1009,7 @@ setMethod("get_signature", signature(object="list"),
                                               size=length(selected_features),
                                               replace=FALSE)
               
-            } else if(vimp_method == "random"){
+            } else if(vimp_method %in% .get_available_random_vimp_methods()){
               # Select all features.
               selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
                                                              feature_info_list=object)
@@ -1021,6 +1021,10 @@ setMethod("get_signature", signature(object="list"),
               selected_features <- fam_sample(x=selected_features,
                                               size=signature_size,
                                               replace=FALSE)
+              
+            } else if(vimp_method %in% .get_available_no_features_vimp_methods()){
+              # No features are selected.
+              selected_features <- NULL
               
             } else {
               # Select signature and any additional features according to rank.
