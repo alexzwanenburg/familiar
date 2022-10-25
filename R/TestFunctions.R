@@ -2961,12 +2961,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
@@ -3015,12 +3019,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
@@ -3070,12 +3078,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
