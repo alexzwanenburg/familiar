@@ -638,7 +638,7 @@
                                "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
-  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd")){
+  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd", "model_balanced_estimate", "model_balanced_estimate_minus_sd")){
     # Model based summary scores. The main difference with other optimisation
     # functions is that a hyperparameter model is used to both infer the summary
     # scores and the score estimate.
@@ -654,7 +654,7 @@
     # Model was successfully trained.
     prediction_table <- .predict(object=optimisation_model,
                                  data=parameter_data,
-                                 type=ifelse(optimisation_function=="model_estimate", "default", "sd"))
+                                 type=ifelse(optimisation_function %in% c("model_estimate", "model_balanced_estimate"), "default", "sd"))
     
     # Check the prediction table has returned sensible information.
     if(any(is.finite(prediction_table$mu))){
@@ -668,14 +668,14 @@
                     all.y=FALSE,
                     by="param_id")
       
-      if(optimisation_function == "model_estimate"){
+      if(optimisation_function %in% c("model_estimate", "model_balanced_estimate")){
         # Copy mu as score estimate.
         data[, "score_estimate":=mu]
         
         # Rename mu to summary_score.
         data.table::setnames(data, old="mu", new="summary_score")
         
-      } else if(optimisation_function == "model_estimate_minus_sd"){
+      } else if(optimisation_function %in% c("model_estimate_minus_sd", "model_balanced_estimate_minus_sd")){
         # Compute summary score.
         data[, "summary_score":=mu - sigma]
         
@@ -692,16 +692,17 @@
                     score_estimate=NA_real_)]
       }
       
-    } else if(optimisation_function == "model_estimate"){
+    } else if(optimisation_function %in% c("model_estimate", "model_balanced_estimate")){
       # In absence of suitable data, use the model-less equivalent of
-      # model_estimate, namely "validation".
+      # model_estimate or model_balanced_estimate, namely "validation".
       data <- score_table[, list("summary_score"=mean(optimisation_score, na.rm=TRUE),
                                  "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]
       
-    } else if(optimisation_function == "model_estimate_minus_sd"){
+    } else if(optimisation_function %in% c("model_estimate_minus_sd", "model_balanced_estimate_minus_sd")){
       # In absence of suitable data, use the model-less equivalent of
-      # model_estimate_minus_sd, namely "validation_minus_sd".
+      # model_estimate_minus_sd or model_balanced_estimate_minus_sd,
+      # namely "validation_minus_sd".
       data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
                                  "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]

@@ -432,7 +432,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
                                                "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
                                                "model_estimate"="maximising performance estimates from the hyperparameter model",
-                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model")
+                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model",
+                                               "model_balanced_estimate"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data",
+                                               "model_balanced_estimate_minus_sd"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data while penalising estimated variance in performance differences")
             
             logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                   " by ", optimisation_description, "."),

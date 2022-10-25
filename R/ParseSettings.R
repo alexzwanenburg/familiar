@@ -2427,7 +2427,17 @@
 #'   * `model_estimate_minus_sd`: seeks to maximise the OOB score estimate minus
 #'   its estimated standard deviation, as predicted by the hyperparameter
 #'   learner (not available for random search).
-#'
+#'   
+#'   * `model_balanced_estimate`: seeks to maximise the estimate of the balanced
+#'   IB and OOB score. This is similar to the `balanced` score, and in fact uses
+#'   a hyperparameter learner to predict said score (not available for random
+#'   search).
+#'   
+#'   * `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the
+#'   balanced IB and OOB score, minus its estimated standard deviation. This is
+#'   similar to the `balanced` score, but takes into account its estimated
+#'   spread.
+#'   
 #'   Additional detail are provided in the *Learning algorithms and
 #'   hyperparameter optimisation* vignette.
 #'

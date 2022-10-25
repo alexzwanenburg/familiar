@@ -583,7 +583,9 @@ metric.compute_optimisation_score <- function(score_table,
                              "validation_minus_sd" = metric.optim_score.max_validation,
                              "validation_25th_percentile" = metric.optim_score.max_validation,
                              "model_estimate" = metric.optim_score.max_validation,
-                             "model_estimate_minus_sd" = metric.optim_score.max_validation)
+                             "model_estimate_minus_sd" = metric.optim_score.max_validation,
+                             "model_balanced_estimate" = metric.optim_score.balanced,
+                             "model_balanced_estimate_minus_sd" = metric.optim_score.balanced)
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
@@ -666,7 +668,7 @@ metric.optim_score.stronger_balance <- function(training, validation) return(val
   # All optimisation functions.
   all_optimisation_functions <- c("validation", "max_validation", "balanced", "stronger_balance",
                                   "validation_minus_sd", "validation_25th_percentile", "model_estimate",
-                                  "model_estimate_minus_sd")
+                                  "model_estimate_minus_sd", "model_balanced_estimate", "model_balanced_estimate_minus_sd")
   
   if(is.null(hyperparameter_learner)){
     return(all_optimisation_functions)
@@ -675,7 +677,8 @@ metric.optim_score.stronger_balance <- function(training, validation) return(val
     # Random search does not return an estimate that can be used for
     # optimisation.
     return(setdiff(all_optimisation_functions,
-                   c("model_estimate", "model_estimate_minus_sd")))
+                   c("model_estimate", "model_estimate_minus_sd", 
+                     "model_balanced_estimate", "model_balanced_estimate_minus_sd")))
   }
   
   return(all_optimisation_functions)
