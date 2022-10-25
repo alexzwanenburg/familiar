@@ -290,7 +290,8 @@
   
   if(object@fs_method %in% .get_available_random_vimp_methods() |
      object@fs_method %in% .get_available_none_vimp_methods() | 
-     object@fs_method %in% .get_available_signature_only_vimp_methods()) return(NULL)
+     object@fs_method %in% .get_available_signature_only_vimp_methods() |
+     object@fs_method %in% .get_available_no_features_vimp_methods()) return(NULL)
   
   # Check if the code is called downstream from summon_familiar.
   is_main_process <- !inherits(tryCatch(get_file_paths(), error=identity), "error")
