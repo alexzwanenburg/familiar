@@ -336,6 +336,30 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
 
 
 
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarGLM", data="dataObject"),
+          function(object, data, ...){
+            # For survival outcomes, switch to familiarCoxPH.
+            if(object@outcome_type == "survival"){
+              # Create a familiarCoxPH object.
+              object <- methods::new("familiarCoxPH", object)
+              
+              return(..train_naive(object=object,
+                                   data=data,
+                                   ...))
+            }
+            
+            # Turn into a Naive model.
+            object <- methods::new("familiarNaiveModel", object)
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
+          })
+
+
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
           function(object, data, type="default", ...){
