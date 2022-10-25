@@ -244,6 +244,8 @@ setGeneric("get_default_hyperparameters", function(object, ...) standardGeneric(
 
 setGeneric("..train", function(object, data, ...) standardGeneric("..train"))
 
+setGeneric("..train_naive", function(object, data, ...) standardGeneric("..train_naive"))
+
 setGeneric("..predict", function(object, data, ...) standardGeneric("..predict"))
 
 setGeneric("..predict_survival_probability", function(object, data, time, ...) standardGeneric("..predict_survival_probability"))

@@ -739,6 +739,27 @@ setMethod("..train", signature(object="familiarModel", data="NULL"),
 
 
 
+#### ..train_naive (familiarModel, dataObject) ---------------------------------
+setMethod("..train_naive", signature(object="familiarModel", data="dataObject"),
+          function(object, data, ...){
+            
+            # Set a NULL model
+            object@model <- NULL
+            
+            return(object)
+          })
+
+#### ..train_naive (familiarModel, NULL) ---------------------------------------
+setMethod("..train_naive", signature(object="familiarModel", data="NULL"),
+          function(object, data, ...){
+            
+            # Set a NULL model.
+            object@model <- NULL
+            
+            return(object)
+          })
+
+
 
 #####..predict (familiarModel, dataObject)#####
 setMethod("..predict", signature(object="familiarModel", data="dataObject"),
