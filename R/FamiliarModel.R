@@ -845,6 +845,23 @@ setMethod(".trim_model", signature(object="familiarModel"),
           })
 
 
+#### requires_naive_model ------------------------------------------------------
+setMethod("requires_naive_model", signature(object="familiarModel"),
+          function(object, ...){
+            # Determine if the model hyperparameters specify that a naive model
+            # should be trained.
+            if(!has_optimised_hyperparameters(object=object)){
+              ..error_reached_unreachable_code("optimised hyperparameters are expected")
+            }
+            
+            # Check if the signature size hyperparameter exists.
+            if(is.null(object@hyperparameters$sign_size)) return(FALSE)
+            
+            # Check if the signature size is 0.
+            return(object@hyperparameters$sign_size == 0)
+          })
+
+
 #####..update_warnings----------------------------------------------------------
 setMethod("..update_warnings", signature(object="familiarModel"),
           function(object, messages){

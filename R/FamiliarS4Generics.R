@@ -274,6 +274,7 @@ setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
 
 setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
 
+setGeneric("requires_naive_model", function(object, ...) standardGeneric("requires_naive_model"))
 
 ##### familiarNoveltyDetector methods #####
 setGeneric("promote_detector", function(object, ...) standardGeneric("promote_detector"))
