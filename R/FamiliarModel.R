@@ -58,6 +58,9 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               can_train_naive <- FALSE
             }
             
+            # Add outcome distribution data.
+            object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
+            
             # Train a new model based on data. If a normal model cannot be
             # trained, attempt to train a naive model.
             if(can_train){
@@ -100,9 +103,6 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             }
             
             if(trim_model) object <- trim_model(object=object, timeout=timeout)
-            
-            # Add outcome distribution data
-            object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
             
             # Empty slots if a model can not be trained.
             if(!can_train){
