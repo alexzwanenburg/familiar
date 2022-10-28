@@ -1000,6 +1000,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimal_set_table <- parameter_table[param_id==incumbent_set$param_id, ]
             optimal_set_table[ ,"param_id":=NULL]
             
+            # TODO: Check that the mean validation objective score is > 0.
+            # Values lower than this value indicates that naive models may be
+            # better. When this happens, and if the variable importance is not
+            # none or signature_only, set sign_size to 0 to force naive models
+            # to be trained.
+            
             # Check that a suitable set of hyperparameters was found.
             if(incumbent_set$summary_score > -1){
               object@hyperparameters <- as.list(optimal_set_table)
