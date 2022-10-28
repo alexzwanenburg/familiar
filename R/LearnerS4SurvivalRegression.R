@@ -185,6 +185,21 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
 
 
 
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarSurvRegr", data="dataObject"),
+          function(object, data, ...){
+            
+            # Turn into a Naive model.
+            object <- methods::new("familiarNaiveSurvivalTimeModel", object)
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
+          })
+
+
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarSurvRegr", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
