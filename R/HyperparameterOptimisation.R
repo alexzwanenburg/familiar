@@ -488,9 +488,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(is_empty(parameter_list)) return(object)
             
             # Update the parameter list With user-defined variables.
-            parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
-                                                      user_list=user_list,
-                                                      n_features=get_n_features(data))
+            parameter_list <- .update_hyperparameters(
+              parameter_list=parameter_list,
+              user_list=user_list,
+              n_features=ifelse(object@fs_method %in% .get_available_no_features_vimp_methods(),
+                                0L,
+                                get_n_features(data))
+            )
             
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
