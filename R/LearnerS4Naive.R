@@ -93,7 +93,7 @@ setMethod("..predict", signature(object="familiarNaiveModel", data="dataObject")
               ..error_outcome_type_not_implemented(object@outcome_type)
             }
             
-            return(object@outcome_type)
+            return(prediction_table)
           })
 
 
@@ -118,7 +118,7 @@ setMethod("..predict", signature(object="familiarNaiveCoxModel", data="dataObjec
               ..error_outcome_type_not_implemented(object@outcome_type)
             }
             
-            return(object@outcome_type)
+            return(prediction_table)
           })
 
 
@@ -146,7 +146,7 @@ setMethod("..predict", signature(object="familiarNaiveSurvivalTimeModel", data="
               ..error_outcome_type_not_implemented(object@outcome_type)
             }
             
-            return(object@outcome_type)
+            return(prediction_table)
           })
 
 
@@ -182,7 +182,7 @@ setMethod("..predict", signature(object="familiarNaiveCumulativeHazardsModel", d
               ..error_outcome_type_not_implemented(object@outcome_type)
             }
             
-            return(object@outcome_type)
+            return(prediction_table)
           })
 
 
