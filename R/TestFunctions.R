@@ -36,14 +36,16 @@ test_all_learners_available <- function(learners){
 
 
 
-test_all_learners_train_predict_vimp <- function(learners,
-                                                 hyperparameter_list=NULL,
-                                                 except_train=NULL,
-                                                 except_predict=NULL,
-                                                 except_predict_survival=NULL,
-                                                 has_vimp=TRUE,
-                                                 can_trim=TRUE,
-                                                 debug=FALSE){
+test_all_learners_train_predict_vimp <- function(
+    learners,
+    hyperparameter_list=NULL,
+    except_train=NULL,
+    except_naive=NULL,
+    except_predict=NULL,
+    except_predict_survival=NULL,
+    has_vimp=TRUE,
+    can_trim=TRUE,
+    debug=FALSE){
   
   if(debug){
     test_fun <- debug_test_that
@@ -95,6 +97,60 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
+      
+      #### Naive model ---------------------------------------------------------
+      
+      # Train a naive model.
+      model <- suppressWarnings(
+        train_familiar(data=full_data,
+                       experimental_design="fs+mb",
+                       cluster_method="none",
+                       imputation_method="simple",
+                       fs_method="no_features",
+                       learner=learner,
+                       hyperparameter=hyperparameters,
+                       verbose=debug)
+      )
+      
+      test_fun(paste0("Naive predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(model, data=full_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, outcome_type),
+          ifelse(learner %in% c(except_train, except_predict, except_naive), FALSE, TRUE)
+        )
+        
+        if(outcome_type %in% c("binomial", "multinomial")){
+          # Expect that the predicted_class column is a factor.
+          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+          
+          # Expect that the class levels are the same as those in the model.
+          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+          
+        } else if(outcome_type %in% c("count", "continuous", "survival", "competing_risk")){
+          # Expect that the predicted outcome is valid.
+          testthat::expect_equal(is.numeric(prediction_table$predicted_outcome), TRUE)
+        }
+        
+        if(outcome_type %in% c("survival", "competing_risk")){
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(
+            .predict(model,
+                     data=full_data,
+                     type="survival_probability",
+                     time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            ifelse(learner %in% c(except_train, except_predict, except_predict_survival, except_naive), FALSE, TRUE)
+          )
+        }
+      })
+      
       
       #####Full dataset#########################################################
       
