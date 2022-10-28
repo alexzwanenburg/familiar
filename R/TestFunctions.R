@@ -109,6 +109,7 @@ test_all_learners_train_predict_vimp <- function(
                        fs_method="no_features",
                        learner=learner,
                        hyperparameter=hyperparameters,
+                       parallel=FALSE,
                        verbose=debug)
       )
       
