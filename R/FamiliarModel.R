@@ -894,6 +894,9 @@ setMethod("requires_naive_model", signature(object="familiarModel"),
             # Check if the signature size hyperparameter exists.
             if(is.null(object@hyperparameters$sign_size)) return(FALSE)
             
+            # Check if the no-features variable importance.
+            if(object@fs_method %in% .get_available_no_features_vimp_methods()) return(TRUE)
+            
             # Check if the signature size is 0.
             return(object@hyperparameters$sign_size == 0)
           })
