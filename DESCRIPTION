@@ -156,6 +156,7 @@ Collate:
     'LearnerS4Cox.R'
     'LearnerMain.R'
     'LearnerRecalibration.R'
+    'LearnerS4Naive.R'
     'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
     'Logger.R'

@@ -339,6 +339,7 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
 #### ..train_naive -------------------------------------------------------------
 setMethod("..train_naive", signature(object="familiarGLM", data="dataObject"),
           function(object, data, ...){
+            
             # For survival outcomes, switch to familiarCoxPH.
             if(object@outcome_type == "survival"){
               # Create a familiarCoxPH object.
