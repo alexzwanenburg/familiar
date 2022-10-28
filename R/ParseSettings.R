@@ -632,7 +632,7 @@
 #'   analyses can be done by obtaining one or more `familiarModel` objects from
 #'   others and applying them to your own data set.
 #'
-#'   Alternatively, the `experiment_design` parameter may be used to provide a
+#'   Alternatively, the `experimental_design` parameter may be used to provide a
 #'   path to a file containing iterations, which is named `####_iterations.RDS`
 #'   by convention. This path can be relative to the directory of the current
 #'   experiment (`experiment_dir`), or an absolute path. The absolute path may
