@@ -269,3 +269,99 @@ setMethod("get_prediction_type", signature(object="familiarNaiveCumulativeHazard
               ..error_reached_unreachable_code("get_prediction_type,familiarNaiveCumulativeHazardsModel: unknown type")
             } 
           })
+
+
+
+#### show (familiarNaiveModel) -------------------------------------------------
+setMethod("show", signature(object="familiarNaiveModel"),
+          function(object){
+            
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
+            if(!model_is_trained(object)){
+              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                         ") that was not successfully trained (", .familiar_version_string(object), ").\n"))
+              
+              if(length(object@messages$warning) > 0){
+                condition_messages <- condition_summary(object@messages$warning)
+                cat(paste0("\nThe following ",
+                           ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+                           " generated while trying to train the model:\n",
+                           paste0(condition_messages, collapse="\n"),
+                           "\n"))
+              }
+              
+              if(length(object@messages$error) > 0){
+                condition_messages <- condition_summary(object@messages$error)
+                cat(paste0("\nThe following ",
+                           ifelse(length(condition_messages) == 1, "error was", "errors were"),
+                           " encountered while trying to train the model:\n",
+                           paste0(condition_messages, collapse="\n"),
+                           "\n"))
+              }
+              
+            } else {
+              # Describe the learner and the version of familiar.
+              message_str <- paste0("A naive ", object@learner, " model (class: ", class(object)[1],
+                                    "; ", .familiar_version_string(object), ")")
+              
+              # Describe the package(s), if any
+              if(!is.null(object@package)){
+                message_str <- c(message_str,
+                                 paste0(" trained using "),
+                                 paste_s(mapply(..message_package_version, x=object@package, version=object@package_version)),
+                                 ifelse(length(object@package) > 1, " packages", " package"))
+              }
+              
+              # Complete message and write.
+              message_str <- paste0(c(message_str, ".\n"), collapse="")
+              cat(message_str)
+              
+              cat(paste0("\n--------------- Model details ---------------\n"))
+              
+              # Model details
+              if(object@is_trimmed){
+                cat(object@trimmed_function$show, sep="\n")
+                
+              } else {
+                show(object@model)
+              }
+              
+              cat(paste0("\n---------------------------------------------\n"))
+              
+              # Outcome details
+              cat("\nThe following outcome was modelled:\n")
+              show(object@outcome_info)
+              
+              # Details concerning hyperparameters.
+              cat("\nThe model was trained using the following hyperparameters:\n")
+              invisible(lapply(names(object@hyperparameters), function(x, object){
+                cat(paste0("  ", x, ": ", object@hyperparameters[[x]], "\n"))
+              }, object=object))
+              
+              if(length(object@messages$warning) > 0 || length(object@messages$error) > 0){
+                
+                cat(paste0("\n------------ Warnings and errors ------------\n"))
+                
+                if(length(object@messages$warning) > 0){
+                  condition_messages <- condition_summary(object@messages$warning)
+                  cat(paste0("\nThe following ",
+                             ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+                             " generated while training the model:\n",
+                             paste0(condition_messages, collapse="\n")))
+                }
+                
+                if(length(object@messages$error) > 0){
+                  condition_messages <- condition_summary(object@messages$error)
+                  cat(paste0("\nThe following ",
+                             ifelse(length(condition_messages) == 1, "error was", "errors were"),
+                             " encountered while training the model:\n",
+                             paste0(condition_messages, collapse="\n")))
+                }
+              }
+              
+              # Check package version.
+              check_package_version(object)
+            }
+          })
