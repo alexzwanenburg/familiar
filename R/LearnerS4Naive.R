@@ -271,6 +271,25 @@ setMethod("get_prediction_type", signature(object="familiarNaiveCumulativeHazard
           })
 
 
+#### ..set_calibration_info ----------------------------------------------------
+setMethod("..set_calibration_info", signature(object="familiarNaiveModel"),
+          function(object, data){
+            
+            # Check if calibration info already.
+            if(has_calibration_info(object)) return(object)
+            
+            if(object@outcome_type == "survival"){
+              # Determine baseline survival.
+              object@calibration_info <- get_baseline_survival(data=data)
+              
+            } else {
+              return(callNextMethod())
+            }
+            
+            return(object)
+          })
+
+
 
 #### show (familiarNaiveModel) -------------------------------------------------
 setMethod("show", signature(object="familiarNaiveModel"),
