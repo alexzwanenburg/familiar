@@ -327,7 +327,7 @@ get_outcome_info_from_backend <- function(){
   outcome_columns <- get_outcome_columns(x=data)
   
   # Check for empty datasets, and return without setting distribution info.
-  if(is_empty(data)) return(object)
+  if(is_empty(data, allow_no_features=TRUE)) return(object)
   
   # Placeholder distribution list
   distr_list <- list()
