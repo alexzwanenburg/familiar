@@ -168,9 +168,7 @@ setMethod("..predict", signature(object="familiarNaiveCumulativeHazardsModel", d
               
               # If time is not provided, set the time at the last observed
               # event.
-              
-              # TODO: IMPLEMENT THIS
-              if(is.null(time)) time <- NA
+              if(is.null(time)) time <- object@model$event_fivenum$max
               
               browser()
               
