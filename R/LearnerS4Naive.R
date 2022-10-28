@@ -138,9 +138,27 @@ setMethod("..predict", signature(object="familiarNaiveSurvivalTimeModel", data="
               # For survival outcomes based on survival times, predict the
               # average survival time.
               
-              browser()
-              #TODO: CHECK THIS
-              prediction_table[, "predicted_outcome":=NA]
+              # Check if the median survival time was measured.
+              if(any(object@model$survival_probability$survival_probability <= 0.5)){
+                
+                # Interpolate the survival function to find the median survival
+                # time.
+                survival_time <- suppressWarnings(
+                  stats::approx(
+                    x=object@model$survival_probability$survival_probability,
+                    y=object@model$survival_probability$time,
+                    xout=0.5,
+                    method="linear",
+                    rule=2)$y
+                )
+                
+              } else {
+                # Use the last known time point.
+                survival_time <- max(object@model$survival_probability$time)
+              }
+              
+              # Set the survival time.
+              prediction_table[, "predicted_outcome":=survival_time]
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)
@@ -151,7 +169,7 @@ setMethod("..predict", signature(object="familiarNaiveSurvivalTimeModel", data="
 
 
 
-#### ..predict (familiarNaiveSurvivalTimeModel) --------------------------------
+#### ..predict (familiarNaiveCumulativeHazardsModel) ---------------------------
 setMethod("..predict", signature(object="familiarNaiveCumulativeHazardsModel", data="dataObject"),
           function(object, data, time=NULL, ...){
             
@@ -172,8 +190,8 @@ setMethod("..predict", signature(object="familiarNaiveCumulativeHazardsModel", d
               
               browser()
               
+              
               # Compute the cumulative hazard at the indicated time point.
-              #TODO: CHECK THIS
               prediction_table[, "predicted_outcome":=NA]
               
             } else {
