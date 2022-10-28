@@ -196,6 +196,23 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
 
 
 
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarKNN", data="dataObject"),
+          function(object, data, ...){
+            
+            if(object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")){
+              # Turn into a naive model.
+              object <- methods::new("familiarNaiveModel", object)
+            }
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
+          })
+
+
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
           function(object, data, type="default", ...){

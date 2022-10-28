@@ -436,6 +436,27 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
 
 
 
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarGLMnet", data="dataObject"),
+          function(object, data, ...){
+            
+            if(object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")){
+              # Turn into a Naive model.
+              object <- methods::new("familiarNaiveModel", object)
+              
+            } else if(object@outcome_type %in% c("survival")){
+              # Turn into a Naive model.
+              object <- methods::new("familiarNaiveCoxModel", object)
+            }
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
+          })
+
+
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
           function(object, data, type="default", ...){
