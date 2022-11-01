@@ -8,6 +8,12 @@
 
 - Metrics for assessing performance of regression models, such as mean squared error, can now be computed in winsorised or trimmed (truncated) forms. These can be specified by appending `_winsor` or `_trim` as a suffix to the metric name. Winsorising clips the predicted values for 5% of the instances with the most extreme absolute errors prior to computing the performance metric, whereas trimming removes these instances. The result of either option is that for many metrics, the assessed model performance is less skewed by rare outliers.
 
+- Two additional optimisation functions were defined to assess suitability of hyperparameter sets:
+
+  - `model_balanced_estimate`: seeks to maximise the estimate of the balanced IB and OOB score. This is similar to the `balanced` score, and in fact uses a hyperparameter learner to predict said score (not available for random search).
+  
+  - `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the balanced IB and OOB score, minus its estimated standard deviation. This is similar to the `balanced` score, but takes into account its estimated spread.
+
 # Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes
