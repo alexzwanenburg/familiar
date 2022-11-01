@@ -4,37 +4,51 @@ familiar:::test_all_vimp_methods_available(familiar:::.get_available_ranger_defa
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),
-                                 hyperparameter_list=list("count"=list("n_tree"=4,
-                                                                       "sample_size"=1.00,
-                                                                       "m_try"=0.3,
-                                                                       "node_size"=5,
-                                                                       "tree_depth"=5,
-                                                                       "alpha"=0.1),
-                                                          "continuous"=list("n_tree"=4,
-                                                                            "sample_size"=1.00,
-                                                                            "m_try"=0.3,
-                                                                            "node_size"=5,
-                                                                            "tree_depth"=5,
-                                                                            "alpha"=0.1),
-                                                          "binomial"=list("n_tree"=4,
-                                                                          "sample_size"=1.00,
-                                                                          "m_try"=0.3,
-                                                                          "node_size"=5,
-                                                                          "tree_depth"=5,
-                                                                          "alpha"=0.1),
-                                                          "multinomial"=list("n_tree"=4,
-                                                                             "sample_size"=1.00,
-                                                                             "m_try"=0.3,
-                                                                             "node_size"=5,
-                                                                             "tree_depth"=5,
-                                                                             "alpha"=0.1),
-                                                          "survival"=list("n_tree"=4,
-                                                                          "sample_size"=1.00,
-                                                                          "m_try"=0.3,
-                                                                          "node_size"=5,
-                                                                          "tree_depth"=5,
-                                                                          "alpha"=0.1)))
+familiar:::test_all_vimp_methods(
+  familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),
+  hyperparameter_list=list(
+    "count"=list(
+      "n_tree"=4,
+      "sample_size"=1.00,
+      "m_try"=0.3,
+      "node_size"=5,
+      "tree_depth"=5,
+      "alpha"=0.1
+    ),
+    "continuous"=list(
+      "n_tree"=4,
+      "sample_size"=1.00,
+      "m_try"=0.3,
+      "node_size"=5,
+      "tree_depth"=5,
+      "alpha"=0.1
+    ),
+    "binomial"=list(
+      "n_tree"=4,
+      "sample_size"=1.00,
+      "m_try"=0.3,
+      "node_size"=5,
+      "tree_depth"=5,
+      "alpha"=0.1
+    ),
+    "multinomial"=list(
+      "n_tree"=4,
+      "sample_size"=1.00,
+      "m_try"=0.3,
+      "node_size"=5,
+      "tree_depth"=5,
+      "alpha"=0.1
+    ),
+    "survival"=list(
+      "n_tree"=4,
+      "sample_size"=1.00,
+      "m_try"=0.3,
+      "node_size"=5,
+      "tree_depth"=5,
+      "alpha"=0.1
+    )
+  )
+)
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_default_vimp_methods(show_general=FALSE))
 

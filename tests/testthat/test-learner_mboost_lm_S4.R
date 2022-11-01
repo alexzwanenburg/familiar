@@ -4,18 +4,32 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_mboost
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_mboost_lm_learners(show_general=FALSE),
-                                                hyperparameter_list=list("count"=list("n_boost"=2,
-                                                                                      "learning_rate"=-5),
-                                                                         "continuous"=list("n_boost"=2,
-                                                                                           "learning_rate"=-3),
-                                                                         "binomial"=list("n_boost"=2,
-                                                                                         "learning_rate"=-3),
-                                                                         "survival"=list("n_boost"=2,
-                                                                                         "learning_rate"=-3)),
-                                                except_predict_survival=c("boosted_glm_loglog",
-                                                                          "boosted_glm_lognormal",
-                                                                          "boosted_glm_weibull"))
+familiar:::test_all_learners_train_predict_vimp(
+  learners=familiar:::.get_available_mboost_lm_learners(show_general=FALSE),
+  hyperparameter_list=list(
+    "count"=list(
+      "n_boost"=2,
+      "learning_rate"=-5
+    ),
+    "continuous"=list(
+      "n_boost"=2,
+      "learning_rate"=-3
+    ),
+    "binomial"=list(
+      "n_boost"=2,
+      "learning_rate"=-3
+    ),
+    "survival"=list(
+      "n_boost"=2,
+      "learning_rate"=-3
+    )
+  ),
+  except_predict_survival=c(
+    "boosted_glm_loglog",
+    "boosted_glm_lognormal",
+    "boosted_glm_weibull"
+  )
+)
 
 familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_mboost_lm_learners(show_general=FALSE),
                                                          hyperparameter_list=list("count"=list("n_boost"=2,
