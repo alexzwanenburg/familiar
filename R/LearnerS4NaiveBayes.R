@@ -115,8 +115,9 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
           })
 
 
+
 #### ..train_naive -------------------------------------------------------------
-setMethod("..train_naive", signature(object="familiarKNN", data="dataObject"),
+setMethod("..train_naive", signature(object="familiarNaiveBayes", data="dataObject"),
           function(object, data, ...){
             
             if(object@outcome_type %in% c("binomial", "multinomial")){
@@ -129,6 +130,7 @@ setMethod("..train_naive", signature(object="familiarKNN", data="dataObject"),
               data=data,
               ...))
           })
+
 
 
 #####..predict#####

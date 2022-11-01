@@ -484,7 +484,7 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
 
 
 #### ..train_naive -------------------------------------------------------------
-setMethod("..train_naive", signature(object="familiarGLMnet", data="dataObject"),
+setMethod("..train_naive", signature(object="familiarMBoost", data="dataObject"),
           function(object, data, ...){
             
             if(object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")){
