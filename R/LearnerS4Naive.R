@@ -11,7 +11,7 @@ setClass("familiarNaiveCoxModel",
 setClass("familiarNaiveSurvivalTimeModel",
          contains="familiarNaiveModel")
 
-setClass("familiarNaiveCumulativeHazardsModel",
+setClass("familiarNaiveCumulativeIncidenceModel",
          contains="familiarNaiveModel")
 
 
@@ -169,8 +169,8 @@ setMethod("..predict", signature(object="familiarNaiveSurvivalTimeModel", data="
 
 
 
-#### ..predict (familiarNaiveCumulativeHazardsModel) ---------------------------
-setMethod("..predict", signature(object="familiarNaiveCumulativeHazardsModel", data="dataObject"),
+#### ..predict (familiarNaiveCumulativeIncidenceModel) ---------------------------
+setMethod("..predict", signature(object="familiarNaiveCumulativeIncidenceModel", data="dataObject"),
           function(object, data, time=NULL, ...){
             
             # Get an empty prediction table.
@@ -272,8 +272,8 @@ setMethod("get_prediction_type", signature(object="familiarNaiveSurvivalTimeMode
 
 
 
-#### get_prediction_type (familiarNaiveCumulativeHazardsModel) -----------------
-setMethod("get_prediction_type", signature(object="familiarNaiveCumulativeHazardsModel"),
+#### get_prediction_type (familiarNaiveCumulativeIncidenceModel) ---------------
+setMethod("get_prediction_type", signature(object="familiarNaiveCumulativeIncidenceModel"),
           function(object, type="default"){
             
             # These models predict an cumulative hazard by default.
@@ -284,7 +284,7 @@ setMethod("get_prediction_type", signature(object="familiarNaiveCumulativeHazard
               return("survival_probability")
               
             } else {
-              ..error_reached_unreachable_code("get_prediction_type,familiarNaiveCumulativeHazardsModel: unknown type")
+              ..error_reached_unreachable_code("get_prediction_type,familiarNaiveCumulativeIncidenceModel: unknown type")
             } 
           })
 

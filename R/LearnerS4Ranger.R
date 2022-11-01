@@ -440,8 +440,8 @@ setMethod("..train_naive", signature(object="familiarRanger", data="dataObject")
               object <- methods::new("familiarNaiveModel", object)
               
             } else if(object@outcome_type %in% c("survival")){
-              # Turn into a Naive Cox model.
-              object <- methods::new("familiarNaiveCumulativeHazardsModel", object)
+              # Turn into a Naive cumulative incidence model.
+              object <- methods::new("familiarNaiveCumulativeIncidenceModel", object)
             }
             
             return(..train(
