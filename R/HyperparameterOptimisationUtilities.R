@@ -930,12 +930,27 @@ get_best_hyperparameter_set <- function(score_table,
       convergence_counter_score <- 0L
     }
   }
+
+  # Read the no-naive-improvement counter. Can be NULL initially. This reduces
+  # needless search for meaningless hyperparameter sets.
+  no_naive_improvement_counter <- stop_data$no_naive_improvement_counter
+  if(is.null(no_naive_improvement_counter)) no_naive_improvement_counter <- 0L
+  
+  if(set_data$validation_score <= 0){
+    # The best known model does not predict better than a naive_model.
+    no_naive_improvement_counter <- no_naive_improvement_counter + 1L
+    
+  } else {
+    # The best known model predicts better than a naive model.
+    no_naive_improvement_counter <- 0L
+  }
   
   # Return list with stopping parameters.
   return(list("score"=summary_scores,
               "parameter_id"=incumbent_parameter_id,
               "convergence_counter_score" = convergence_counter_score,
-              "convergence_counter_parameter_id" = convergence_counter_parameter_id))
+              "convergence_counter_parameter_id" = convergence_counter_parameter_id,
+              "no_naive_improvement_counter"= no_naive_improvement_counter))
 }
 
 
