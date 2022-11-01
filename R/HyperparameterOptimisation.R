@@ -1017,25 +1017,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimal_set_table <- parameter_table[param_id==incumbent_set$param_id, ]
             optimal_set_table[ ,"param_id":=NULL]
             
-            # TODO: Check that the mean validation objective score is > 0.
-            # Values lower than this value indicates that naive models may be
-            # better. When this happens, and if the variable importance is not
-            # none or signature_only, set sign_size to 0 to force naive models
-            # to be trained.
-            
             # Check that a suitable set of hyperparameters was found.
-            if(incumbent_set$summary_score > -1){
-              object@hyperparameters <- as.list(optimal_set_table)
+            if(incumbent_set$summary_score <= -1.0){
+              # In this case, no suitable hyperparameters were found, for
+              # whatever reason.
               
-              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: score ",
-                                    incumbent_set$summary_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                      parameter_table=parameter_table,
-                                                                      parameter_list=parameter_list)),
-                             indent=message_indent,
-                             verbose=verbose)
-              
-            } else {
               logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
                              indent=message_indent,
                              verbose=verbose)
@@ -1058,21 +1044,48 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Set NULL.
               object@hyperparameters <- NULL
+              
+            } else if(incumbent_set$validation_score < 0.0 & !object@fs_method %in% c("none", "signature_only")){
+              # In this case, no set of hyperparameters found that led to a
+              # model that was better than the naive model. We then train a
+              # naive model instead, by forcing sign_size to 0.
+              
+              object@hyperparameters <- as.list(optimal_set_table)
+              object@hyperparameters$sign_size <- 0
+              
+              logger.message(paste0("Hyperparameter optimisation: No set of hyperparameters was identified that ",
+                                    "leads to a model that performs better than a naive model."),
+                             indent=message_indent,
+                             verbose=verbose)
+              
+            } else {
+              # In this case the model trained properly.
+              object@hyperparameters <- as.list(optimal_set_table)
+              
+              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: ",
+                                    ..parse_optimisation_summary_to_string(
+                                      parameter_set=incumbent_set,
+                                      parameter_table=parameter_table,
+                                      parameter_list=parameter_list)),
+                             indent=message_indent,
+                             verbose=verbose)
             }
             
             time_taken <- NULL
             if(is(process_clock, "processClock")) time_taken <- process_clock$time(units="mins")
             
             # Update attributes of object.
-            object@hyperparameter_data <- list("score_table"=score_table,
-                                               "parameter_table"=parameter_table,
-                                               "time_taken"=time_taken,
-                                               "metric"=metric,
-                                               "metric_object"=metric_object_list,
-                                               "hyperparameter_learner"=hyperparameter_learner,
-                                               "optimisation_function"=optimisation_function,
-                                               "n_samples"=get_n_samples(data),
-                                               "n_features"=get_n_features(data))
+            object@hyperparameter_data <- list(
+              "score_table"=score_table,
+              "parameter_table"=parameter_table,
+              "time_taken"=time_taken,
+              "metric"=metric,
+              "metric_object"=metric_object_list,
+              "hyperparameter_learner"=hyperparameter_learner,
+              "optimisation_function"=optimisation_function,
+              "n_samples"=get_n_samples(data),
+              "n_features"=get_n_features(data)
+            )
             
             return(object)
           })
