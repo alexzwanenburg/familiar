@@ -778,10 +778,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Message the user concerning the initial optimisation score.
             logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
-                                  incumbent_set$summary_score, "; ",
-                                  ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                    parameter_table=parameter_table,
-                                                                    parameter_list=parameter_list)),
+                                  ..parse_optimisation_summary_to_string(
+                                    parameter_set=incumbent_set,
+                                    parameter_table=parameter_table,
+                                    parameter_list=parameter_list)),
                            indent=message_indent+1L,
                            verbose=verbose)
             
@@ -944,10 +944,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # incumbents.
               
               # Get all runs and compute details for the incumbent set.
-              incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
-                                                           parameter_table=parameter_table,
-                                                           optimisation_model=optimisation_model_prototype,
-                                                           n_max_bootstraps=n_max_bootstraps)
+              incumbent_set <- get_best_hyperparameter_set(
+                score_table=score_table,
+                parameter_table=parameter_table,
+                optimisation_model=optimisation_model_prototype,
+                n_max_bootstraps=n_max_bootstraps
+              )
               
               # Update list with stopping criteria
               stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
@@ -955,11 +957,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                                   tolerance=convergence_tolerance)
               
               # Message progress.
-              logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
-                                    incumbent_set$summary_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                      parameter_table=parameter_table,
-                                                                      parameter_list=parameter_list)),
+              logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": ",
+                                    ..parse_optimisation_summary_to_string(
+                                      parameter_set=incumbent_set,
+                                      parameter_table=parameter_table,
+                                      parameter_list=parameter_list)),
                              indent=message_indent+1L,
                              verbose=verbose)
               

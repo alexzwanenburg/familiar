@@ -848,33 +848,47 @@ get_best_hyperparameter_set <- function(score_table,
 
 
 
-..parse_hyperparameters_to_string <- function(id, parameter_table, parameter_list){
+..parse_optimisation_summary_to_string <- function(parameter_set,
+                                                   parameter_table,
+                                                   parameter_list){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
   
-  # Initialise an empty string
-  parameter_string <- character(0)
+  # Set up string.
+  message_str <- character(0L)
   
-  # Iterate through parameter list and identify parameters that are being optimised
+  # Add summary score.
+  message_str <- c(message_str,
+                   paste0("summary score: ", sprintf("%.4f", parameter_set$summary_score[1])))
+  
+  # Add validation optimisation score.
+  message_str <- c(message_str,
+                   paste0("validation optimisation score: ", sprintf("%.4f", parameter_set$validation_score[1])))
+  
+  
+  # Add metric scores.
+  for(metric in colnames(parameter_set$metric_score)){
+    message_str <- c(message_str,
+                     paste0(metric, ": ", sprintf("%.4f", parameter_set$metric_score[[metric]][1])))
+  }
+  
+  # Add hyperparameters. Iterate through parameter list and identify parameters
+  # that are being optimised.
   for(current_parameter in names(parameter_list)){
     
     # Check if the current parameter is randomised.
     if(parameter_list[[current_parameter]]$randomise==TRUE){
       # Determine the value of the parameter for the set identified by the id
       # variable.
-      optimal_value <- parameter_table[param_id==id, ][[current_parameter]][1]
+      optimal_value <- parameter_table[param_id==parameter_set$param_id, ][[current_parameter]][1]
       
       # Append to string.
-      parameter_string <- c(parameter_string,
-                            paste0(current_parameter, ": ", optimal_value))
+      message_str <- c(message_str,
+                       paste0(current_parameter, ": ", optimal_value))
     }
   }
   
-  # Concatenate all separate strings into one string.
-  parameter_string <- paste(parameter_string, collapse="; ")
-  
-  return(parameter_string)
 }
 
 
