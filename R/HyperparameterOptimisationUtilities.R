@@ -889,6 +889,7 @@ get_best_hyperparameter_set <- function(score_table,
     }
   }
   
+  return(paste0(message_str, collapse="; "))
 }
 
 
