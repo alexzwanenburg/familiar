@@ -360,6 +360,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    intensify_stop_p_value=0.05,
                    convergence_tolerance=NULL,
                    convergence_stopping=3,
+                   no_decent_model_stopping=4,
                    time_limit=NULL,
                    verbose=TRUE,
                    message_indent=0L,
@@ -952,9 +953,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               )
               
               # Update list with stopping criteria
-              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
-                                                                                  stop_data=stop_list,
-                                                                                  tolerance=convergence_tolerance)
+              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
+                set_data=incumbent_set,
+                stop_data=stop_list,
+                tolerance=convergence_tolerance
+              )
               
               # Message progress.
               logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": ",
@@ -984,6 +987,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                verbose=verbose)
                 
                 # Stop SMBO
+                break()
+              }
+              
+              # Break if no model better than the naive model was found.
+              if(stop_list$no_naive_improvement_counter >= no_decent_model_stopping){
+                
+                # Message early stopping.
+                logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early because no models were found to perform better than naive models."),
+                               indent=message_indent,
+                               verbose=verbose)
+                
+                # Stop SMBO.
                 break()
               }
               
