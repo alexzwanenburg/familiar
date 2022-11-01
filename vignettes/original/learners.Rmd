@@ -500,6 +500,10 @@ the exploration method.
 established by further exploring the hyperparameter space, the total number of
 iterations has been reached, or bootstraps samples have been exhausted.
 
+- If the best set of hyperparameters does not lead to a model that exceeds
+performance of a naive model, e.g. one that always predicts the majority class
+or median value, a naive model is trained instead.
+
 ## Predicting run time of model
 
 Models take a certain time to train. Familiar is actively measuring this time

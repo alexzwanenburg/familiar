@@ -1,5 +1,9 @@
 # Version 1.4.0 (development)
 
+## Major changes
+
+- Hyperparameter optimisation now trains naive models if none of the hyperparameter sets lead to models that perform better than these models. Previously a model was trained regardless of whether such a model would actually be better than a naive model. Naive models, for example, predict the majority class or median value, depending on the problem.
+
 ## Minor changes
 
 - Metrics for assessing performance of regression models, such as mean squared error, can now be computed in winsorised or trimmed (truncated) forms. These can be specified by appending `_winsor` or `_trim` as a suffix to the metric name. Winsorising clips the predicted values for 5% of the instances with the most extreme absolute errors prior to computing the performance metric, whereas trimming removes these instances. The result of either option is that for many metrics, the assessed model performance is less skewed by rare outliers.
