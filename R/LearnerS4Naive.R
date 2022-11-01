@@ -188,11 +188,18 @@ setMethod("..predict", signature(object="familiarNaiveCumulativeIncidenceModel",
               # event.
               if(is.null(time)) time <- object@model$event_fivenum$max
               
-              browser()
-              
+              # Approximate cumulative incidence.
+              cumulative_incidence <- suppressWarnings(
+                stats::approx(
+                  x=object@model$cumulative_incidence$time,
+                  y=object@model$cumulative_incidence$cumulative_incidence,
+                  xout=time,
+                  method="linear",
+                  rule=2)$y
+              )
               
               # Compute the cumulative hazard at the indicated time point.
-              prediction_table[, "predicted_outcome":=NA]
+              prediction_table[, "predicted_outcome":=cumulative_incidence]
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)
