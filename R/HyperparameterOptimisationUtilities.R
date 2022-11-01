@@ -791,33 +791,46 @@ get_best_hyperparameter_set <- function(score_table,
   score_estimate <- data$score_estimate
   if(!is.finite(score_estimate)) score_estimate <- -1.0
   
-  # Compute mean validation score as a summary score, as well as mean validation
-  # scores of the raw metric values.
-  additional_scores <- .compute_hyperparameter_additional_scores(score_table=score_table[param_id %in% data$param_id])
-  
-  # Merge additional scores with summary data and sort again to prevent any
-  # merge issues.
-  data <- merge(x=data,
-                y=additional_scores,
-                by="param_id")
-  data <- data[order(-summary_score)]
-  
-  # Find metric columns
-  metric_columns <- unique(score_table$metric)
-  
-  # Extract the summary score, score estimate, and time taken, and return with
-  # other information.
-  return(list(
-    "param_id"=data$param_id,
-    "t"=t,
-    "time"=data$time_taken,
-    "max_time"=max_time,
-    "summary_score"=summary_score,
-    "score_estimate"=score_estimate,
-    "validation_score"=data$validation_score,
-    "metric_score"=data[, mget(c(metric_columns))],
-    "n"=n_max_bootstraps)
-  )
+  if(!"optimisation_score" %in% colnames(score_table)){
+    # Compute mean validation score as a summary score, as well as mean validation
+    # scores of the raw metric values.
+    additional_scores <- .compute_hyperparameter_additional_scores(score_table=score_table[param_id %in% data$param_id])
+    
+    # Merge additional scores with summary data and sort again to prevent any
+    # merge issues.
+    data <- merge(x=data,
+                  y=additional_scores,
+                  by="param_id")
+    data <- data[order(-summary_score)]
+    
+    # Find metric columns
+    metric_columns <- unique(score_table$metric)
+    
+    # Extract the summary score, score estimate, and time taken, and return with
+    # other information.
+    return(list(
+      "param_id"=data$param_id,
+      "t"=t,
+      "time"=data$time_taken,
+      "max_time"=max_time,
+      "summary_score"=summary_score,
+      "score_estimate"=score_estimate,
+      "validation_score"=data$validation_score,
+      "metric_score"=data[, mget(c(metric_columns))],
+      "n"=n_max_bootstraps)
+    )
+    
+  } else {
+    return(list(
+      "param_id"=data$param_id,
+      "t"=t,
+      "time"=data$time_taken,
+      "max_time"=max_time,
+      "summary_score"=summary_score,
+      "score_estimate"=score_estimate,
+      "n"=n_max_bootstraps)
+    )
+  }
 }
 
 
