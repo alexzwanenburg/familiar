@@ -384,6 +384,11 @@ setMethod("show", signature(object="familiarNaiveModel"),
                 cat(paste0("  ", x, ": ", object@hyperparameters[[x]], "\n"))
               }, object=object))
               
+              # Add note that naive models don't directly use hyperparameters.
+              if(model_is_trained(object)){
+                cat("Note that the above hyperparameters are not directly used by the naive model.\n")
+              }
+              
               if(length(object@messages$warning) > 0 || length(object@messages$error) > 0){
                 
                 cat(paste0("\n------------ Warnings and errors ------------\n"))
