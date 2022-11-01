@@ -425,42 +425,48 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                             values=.get_available_hyperparameter_exploration_methods())
             
             # Report on methodology used.
-            optimisation_description <- switch(optimisation_function,
-                                               "max_validation"="maximising out-of-bag performance",
-                                               "validation"="maximising out-of-bag performance",
-                                               "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
-                                               "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
-                                               "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
-                                               "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
-                                               "model_estimate"="maximising performance estimates from the hyperparameter model",
-                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model",
-                                               "model_balanced_estimate"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data",
-                                               "model_balanced_estimate_minus_sd"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data while penalising estimated variance in performance differences")
+            optimisation_description <- switch(
+              optimisation_function,
+              "max_validation"="maximising out-of-bag performance",
+              "validation"="maximising out-of-bag performance",
+              "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
+              "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
+              "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
+              "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
+              "model_estimate"="maximising performance estimates from the hyperparameter model",
+              "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model",
+              "model_balanced_estimate"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data",
+              "model_balanced_estimate_minus_sd"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data while penalising estimated variance in performance differences"
+            )
             
             logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                   " by ", optimisation_description, "."),
                            indent=message_indent+1L,
                            verbose=verbose)
             
-            inference_description <- switch(hyperparameter_learner,
-                                            "random_forest"="selected after inferring utility using a Random Forest",
-                                            "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
-                                            "bayesian_additive_regression_trees"="selected after inferring utility using Bayesian Additive Regression Trees",
-                                            "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
-                                            "random"="drawn randomly",
-                                            "random_search"="drawn randomly")
+            inference_description <- switch(
+              hyperparameter_learner,
+              "random_forest"="selected after inferring utility using a Random Forest",
+              "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
+              "bayesian_additive_regression_trees"="selected after inferring utility using Bayesian Additive Regression Trees",
+              "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
+              "random"="drawn randomly",
+              "random_search"="drawn randomly"
+            )
             
             logger.message(paste0("Candidate hyperparameter sets after the initial run are ", inference_description, "."),
                            indent=message_indent+1L,
                            verbose=verbose)
             
             if(!hyperparameter_learner %in% c("random", "random_search")){
-              utility_description <- switch(acquisition_function,
-                                            "improvement_probability"="probability of improvement over the best known hyperparameter set",
-                                            "improvement_empirical_probability"="empirical probability of improvement over the best known hyperparameter set",
-                                            "expected_improvement"="expected improvement",
-                                            "upper_confidence_bound"="the upper regret bound",
-                                            "bayes_upper_confidence_bound"="the Bayesian upper confidence bound")
+              utility_description <- switch(
+                acquisition_function,
+                "improvement_probability"="probability of improvement over the best known hyperparameter set",
+                "improvement_empirical_probability"="empirical probability of improvement over the best known hyperparameter set",
+                "expected_improvement"="expected improvement",
+                "upper_confidence_bound"="the upper regret bound",
+                "bayes_upper_confidence_bound"="the Bayesian upper confidence bound"
+              )
               
               logger.message(paste0("Utility is measured as ", utility_description, "."),
                              indent=message_indent+1L,
@@ -935,9 +941,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Update the model that predicts the time a process takes to
                 # complete training.
-                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
-                                                                                          parameter_table=parameter_table,
-                                                                                          optimisation_function=optimisation_function)
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(
+                  score_table=score_table,
+                  parameter_table=parameter_table,
+                  optimisation_function=optimisation_function
+                )
               }
               
               ##### SMBO - Evaluate --------------------------------------------
