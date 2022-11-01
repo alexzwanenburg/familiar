@@ -445,7 +445,7 @@ test_all_learners_train_predict_vimp <- function(
         # Test that the predictions were successfully made.
         testthat::expect_equal(
           any_predictions_valid(prediction_table, outcome_type),
-          ifelse(learner %in% c(except_train, except_predict, except_naive), FALSE, TRUE)
+          ifelse(learner %in% c(except_train, except_naive), FALSE, TRUE)
         )
         
         if(outcome_type %in% c("binomial", "multinomial")){
@@ -472,7 +472,7 @@ test_all_learners_train_predict_vimp <- function(
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table, outcome_type),
-            ifelse(learner %in% c(except_train, except_predict, except_predict_survival, except_naive), FALSE, TRUE)
+            ifelse(learner %in% c(except_train, except_naive), FALSE, TRUE)
           )
         }
       })
