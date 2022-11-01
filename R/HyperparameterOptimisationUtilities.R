@@ -632,7 +632,6 @@
                                "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
-    
   } else if(optimisation_function %in% c("validation_25th_percentile")){
     # Summary score is formed by the 25th percentile of the optimisation scores.
     data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE, na.rm=TRUE),
@@ -792,82 +791,60 @@ get_best_hyperparameter_set <- function(score_table,
   score_estimate <- data$score_estimate
   if(!is.finite(score_estimate)) score_estimate <- -1.0
   
+  # Compute mean validation score as a summary score, as well as mean validation
+  # scores of the raw metric values.
+  additional_scores <- .compute_hyperparameter_additional_scores(score_table=score_table[param_id %in% data$param_id])
+  
+  # Merge additional scores with summary data and sort again to prevent any
+  # merge issues.
+  data <- merge(x=data,
+                y=additional_scores,
+                by="param_id")
+  data <- data[order(-summary_score)]
+  
+  # Find metric columns
+  metric_columns <- unique(score_table$metric)
+  
   # Extract the summary score, score estimate, and time taken, and return with
   # other information.
-  return(list("param_id"=data$param_id,
-              "t"=t,
-              "time"=data$time_taken,
-              "max_time"=max_time,
-              "summary_score"=summary_score,
-              "score_estimate"=score_estimate,
-              "n"=n_max_bootstraps))
+  return(list(
+    "param_id"=data$param_id,
+    "t"=t,
+    "time"=data$time_taken,
+    "max_time"=max_time,
+    "summary_score"=summary_score,
+    "score_estimate"=score_estimate,
+    "validation_score"=data$validation_score,
+    "metric_score"=data[, mget(c(metric_columns))],
+    "n"=n_max_bootstraps)
+  )
 }
 
 
 
-# ..get_acquisition_function_parameters <- function(optimisation_score_table,
-#                                                   acquisition_function,
-#                                                   n_max_bootstraps){
-#   # Determine optimal score.
-#   best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-#                                                            acquisition_function=acquisition_function,
-#                                                            n=1L)
-#   
-#   # Determine the optimal parameter score tau.
-#   tau <- best_hyperparameter_set$optimisation_score
-#   
-#   # Determine time corresponding to the best parameter set.
-#   time <- best_hyperparameter_set$time_taken
-#   
-#   # Determine round t.
-#   t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
-#   
-#   # Determine maximum time that can be countenanced.
-#   max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
-#   
-#   # Check that the maximum time is not trivially small (i.e. less than 10
-#   # seconds).
-#   if(is.na(max_time)){
-#     max_time <- Inf
-#   } else if(max_time < 10.0) {
-#     max_time <- 10.0
-#   }
-#   
-#   return(list("t"=t,
-#               "time"=time,
-#               "max_time"=max_time,
-#               "tau"=tau,
-#               "n"=n_max_bootstraps))
-# }
-
-
-
-# ..get_best_hyperparameter_set <- function(optimisation_score_table,
-#                                           acquisition_function,
-#                                           n=1L){
-#   # Find the best configurations based on the optimisation score
-#   
-#   # Suppress NOTES due to non-standard evaluation in data.table
-#   optimisation_score <- time_taken <- .NATURAL <- NULL
-#   
-#   # Compute time taken.
-#   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
-#   
-#   # Compute the summary score per parameter id.
-#   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
-#                                                        method=acquisition_function)
-#   
-#   # Join with time table.
-#   summary_table <- summary_table[time_table, on=.NATURAL]
-#   
-#   # Sort by decreasing optimisation score.
-#   summary_table <- summary_table[order(-optimisation_score)]
-#   
-#   # Average objective score over known available in the score table.
-#   best_parameter_data <- head(summary_table, n=n)
-#   
-#   return(best_parameter_data)
-# }
+.compute_hyperparameter_additional_scores <- function(score_table){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  data_set <- optimisation_score <- value <- NULL
+  
+  # Compute mean validation score, which is the typical objective score for
+  # hyperparameter optimisation.
+  mean_validation_scores <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                                       optimisation_function="validation")
+  mean_validation_scores <- mean_validation_scores[,
+                                                   list("validation_score"=mean(optimisation_score, na.rm=TRUE)),
+                                                   by=c("param_id")]
+  
+  # Compute mean metric values.
+  mean_metric_scores <- score_table[data_set == "validation",
+                                    list("average_metric_value"=mean(value, na.rm=TRUE)),
+                                    by=c("param_id", "metric")]
+  mean_metric_scores <- data.table::dcast(mean_metric_scores, param_id ~ metric, value.var="average_metric_value")
+  
+  return(merge(x=mean_validation_scores,
+               y=mean_metric_scores,
+               by="param_id"))
+}
 
 
 
