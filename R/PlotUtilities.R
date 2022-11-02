@@ -14,6 +14,107 @@ plotting.get_theme <- function(use_theme=NULL){
   if(is.null(use_theme) & is_package_installed("cowplot")){
     # Get cowplot theme.
     ggtheme <- cowplot::theme_cowplot(font_size=9)
+#' Familiar ggplot2 theme
+#'
+#' This is the default theme used for plots created by familiar. The theme uses
+#' `ggplot2::theme_light` as the base template.
+#'
+#' @param base_size Base font size in points. Size of other plot text elements
+#'   is based off this.
+#' @param base_family Font family used for text elements.
+#' @param base_line_size Base size for line elements, in points.
+#' @param base_rect_size Base size for rectangular elements, in points.
+#'
+#' @return A complete plotting theme.
+#' @export
+theme_familiar <- function(base_size = 11,
+                           base_family = "",
+                           base_line_size = 0.5,
+                           base_rect_size = 0.5){
+  
+  # The default familiar theme is based on ggplot2::theme_light.
+  ggtheme <- ggplot2::theme_light(
+    base_size=base_size,
+    base_family=base_family,
+    base_line_size = base_line_size,
+    base_rect_size = base_rect_size
+  )
+  
+  # Set colour to black.
+  ggtheme$axis.text$colour <- "black"
+  ggtheme$axis.ticks$colour <- "black"
+  ggtheme$axis.line <- ggplot2::element_line(colour="black", lineend = "square")
+  
+  # Legend does not have a legend or border, and reserves less space.
+  ggtheme$legend.background <- ggplot2::element_blank()
+  ggtheme$legend.key <- ggplot2::element_blank()
+  ggtheme$legend.key.size <- grid::unit(base_size * 1.1, "pt")
+  ggtheme$legend.justification <- c("left", "center")
+  ggtheme$legend.margin <- grid::unit(c(0.0, 0.0, 0.0, 0.0), "pt")
+  
+  # Panel does not have a background, grid, or border.
+  ggtheme$panel.background <- ggplot2::element_blank()
+  ggtheme$panel.border <- ggplot2::element_blank()
+  ggtheme$panel.grid <- ggplot2::element_blank()
+  
+  # Avoid removing some elements altogether by directly assigning NULL.
+  ggtheme["panel.grid.major"] <- list(NULL)
+  ggtheme["panel.grid.minor"] <- list(NULL)
+  
+  # Minimal plot margins
+  ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
+  
+  # The plot does not have a background
+  ggtheme$plot.background <- ggplot2::element_blank()
+  
+  # Make title a bit smaller, and bold.
+  ggtheme$plot.title <- ggplot2::element_text(
+    face="bold",
+    size=ggplot2::rel(1.1),
+    hjust=0.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
+  
+  # Make subtitle a bit smaller.
+  ggtheme$plot.subtitle <- ggplot2::element_text(
+    size=ggplot2::rel(0.8),
+    hjust=0.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
+  
+  # Make caption a bit smaller.
+  ggtheme$plot.caption <- ggplot2::element_text(
+    size=ggplot2::rel(0.7),
+    hjust=1.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
+  
+  # Make tag bold.
+  ggtheme$plot.tag <- ggplot2::element_text(
+    face="bold",
+    hjust=0,
+    vjust=0.7
+  )
+  
+  # Make strip text black.
+  ggtheme$strip.text <- ggplot2::element_text(
+    size=ggplot2::rel(0.8),
+    colour="black",
+    margin=grid::unit(c(base_size / 4, base_size / 4, base_size / 4, base_size / 4), "pt")
+  )
+  
+  # Make strip background a lighter shade of gray.
+  ggtheme$strip.background <- ggplot2::element_rect(
+    fill="gray90",
+    colour=NA,
+    inherit.blank=TRUE
+  )
+  
+  return(ggtheme)
+}
     
     # Update theme to reduce plot margins
     ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
