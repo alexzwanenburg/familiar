@@ -14,6 +14,12 @@
   
   - `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the balanced IB and OOB score, minus its estimated standard deviation. This is similar to the `balanced` score, but takes into account its estimated spread.
 
+- The default familiar plotting theme is now exported as `theme_familiar`. This allows for changing tweaking the default theme, for example, setting a larger font size, or selecting a different font family.
+
+## Bug fixes
+
+- `ggtheme` is now checked for completeness, which prevents errors with unclear causes or solutions.
+
 # Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes
