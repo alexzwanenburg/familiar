@@ -45,7 +45,6 @@ Suggests:
     cluster,
     CORElearn,
     coro,
-    cowplot,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
     Ecdat,
