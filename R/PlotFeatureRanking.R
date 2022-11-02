@@ -414,10 +414,10 @@ plot_model_signature_variable_importance <- function(...){
   }
   
   # ggtheme
-  if(!is(ggtheme, "theme")) {
-    ggtheme <- plotting.get_theme(use_theme=ggtheme)
-    
-  } else if(is.waive(rotate_x_tick_labels)){
+  ggtheme <- .check_ggtheme(ggtheme)
+  
+  # rotate_x_tick_labels
+  if(is.waive(rotate_x_tick_labels)){
     rotate_x_tick_labels <- FALSE
   }
   

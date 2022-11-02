@@ -206,11 +206,10 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             ##### Check input arguments ------------------------------------------------
             
             # ggtheme
-            if(!inherits(ggtheme, "theme")){
-              ggtheme <- plotting.get_theme(use_theme=ggtheme)
-              ggtheme$panel.grid <- ggplot2::element_blank()
-              
-            } else if(is.waive(rotate_x_tick_labels)){
+            ggtheme <- .check_ggtheme(ggtheme)
+            
+            # rotate_x_tick_labels
+            if(is.waive(rotate_x_tick_labels)){
               rotate_x_tick_labels <- FALSE
             }
             

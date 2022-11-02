@@ -596,7 +596,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             ##### Check input arguments ------------------------------------------------
             
             # ggtheme
-            if(!inherits(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+            ggtheme <- .check_ggtheme(ggtheme)
 
             # Determine whether 1D or 2D plots are shown.
             show_2d <- any(sapply(ice_data, function(x) (!is.null(x@identifiers$feature_y))))

@@ -244,7 +244,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             ##### Check input arguments ------------------------------------------------
 
             # ggtheme
-            if(!inherits(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+            ggtheme <- .check_ggtheme(ggtheme)
             
             # x_label
             if(is.waive(x_label)) x_label <- "threshold probability"

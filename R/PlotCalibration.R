@@ -298,7 +298,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             ##### Check input arguments ########################################
             
             # ggtheme
-            if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+            ggtheme <- .check_ggtheme(ggtheme)
             
             # x_label_shared
             if(!is.waive(x_label_shared)){

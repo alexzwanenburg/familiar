@@ -9,11 +9,7 @@
 }
 
 
-plotting.get_theme <- function(use_theme=NULL){
 
-  if(is.null(use_theme) & is_package_installed("cowplot")){
-    # Get cowplot theme.
-    ggtheme <- cowplot::theme_cowplot(font_size=9)
 #' Familiar ggplot2 theme
 #'
 #' This is the default theme used for plots created by familiar. The theme uses
@@ -115,59 +111,57 @@ theme_familiar <- function(base_size = 11,
   
   return(ggtheme)
 }
+
+
+
+.check_ggtheme <- function(ggtheme){
+  
+  # Check if the provided theme is a suitable theme.
+  if(inherits(ggtheme, "theme")){
     
-    # Update theme to reduce plot margins
-    ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
+    # Check if the theme is complete.
+    if(!attr(ggtheme, "complete")){
+      stop(paste0("The plotting theme is not complete. The most likely cause is lack of a valid template, such as ",
+                  "theme_familiar or ggplot2::theme_light. Note that ggplot2::theme is designed to tweak existing ",
+                  "themes when creating a plot."))
+      
+    }
     
-    return(ggtheme)
+  } else if(is.null(ggtheme)){
+    ggtheme <- theme_familiar(base_size=9)
     
   } else {
-    # Get ggplot light theme
-    ggtheme <- ggplot2::theme_light(base_size=9)
     
-    # Update theme to reduce plot margins
-    ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
+    # Get the specified theme.
+    ggtheme_fun <- switch(
+      ggtheme,
+      "default"=theme_familiar,
+      "theme_familiar"=theme_familiar,
+      "theme_gray"=ggplot2::theme_gray,
+      "theme_grey"=ggplot2::theme_grey,
+      "theme_bw"=ggplot2::theme_bw,
+      "theme_linedraw"=ggplot2::theme_linedraw,
+      "theme_light"=ggplot2::theme_light,
+      "theme_dark"=ggplot2::theme_dark,
+      "theme_minimal"=ggplot2::theme_minimal,
+      "theme_classic"=ggplot2::theme_classic
+    )
     
-    return(ggtheme)
+    if(is.null(ggtheme_fun)){
+      stop(paste0("The selected theme is not the default theme, or a standard ggplot2 theme. Found: ", ggtheme))
+    }
+    
+    # Generate theme
+    ggtheme <- ggtheme_fun(base_size=9)
   }
   
-  if(use_theme == "cowplot" & is_package_installed("cowplot")){
-    return(cowplot::theme_cowplot(font_size=9))
-  }
-  
-  if(use_theme %in% c("theme_grey", "theme_gray")){
-    return(ggplot2::theme_grey(base_size=9))
-  }
-  
-  if(use_theme == "theme_bw"){
-    return(ggplot2::theme_bw(base_size=9))
-  }
-  
-  if(use_theme == "theme_linedraw"){
-    return(ggplot2::theme_linedraw(base_size=9))
-  }
-  
-  if(use_theme == "theme_light"){
-    return(ggplot2::theme_light(base_size=9))
-  }
-  
-  if(use_theme == "theme_dark"){
-    return(ggplot2::theme_dark(base_size=9))
-  }
-  
-  if(use_theme == "theme_minimal"){
-    return(ggplot2::theme_minimal(base_size=9))
-  }
-  
-  if(use_theme == "theme_classic"){
-    return(ggplot2::theme_classic(base_size=9))
-  }
-  
-  stop("The requested theme could not be found.")
+  return(ggtheme)
 }
 
 
-#' Checks and sanitizes spliting variables for plotting.
+
+
+#' Checks and sanitizes splitting variables for plotting.
 #'
 #' @param x data.table or data.frame containing the data used for splitting.
 #' @param split_by (*optional*) Splitting variables. This refers to column names
@@ -788,7 +782,7 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
   # Obtain spacing from a ggtheme element
   
   # Import default ggtheme in case none is provided.
-  if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+  ggtheme <- .check_ggtheme(ggtheme)
   
   # Get spacing for the specific axis, if present.
   spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
@@ -824,9 +818,7 @@ plotting.get_geom_text_settings <- function(ggtheme=NULL){
   # Import formatting settings from the provided ggtheme.
   
   # Import default ggtheme in case none is provided.
-  if(!is(ggtheme, "theme")) {
-    ggtheme <- plotting.get_theme(use_theme=ggtheme)
-  }
+  ggtheme <- .check_ggtheme(ggtheme)
   
   # Find the text size for the table. This is based on text sizes in the ggtheme.
   fontsize <- ggtheme$text$size

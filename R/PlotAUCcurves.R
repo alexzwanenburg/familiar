@@ -503,7 +503,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   ##### Check input arguments ------------------------------------------------
   
   # ggtheme
-  if(!inherits(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+  ggtheme <- .check_ggtheme(ggtheme)
   
   # x_label
   if(is.waive(x_label) & curve_type == "roc") x_label <- "1 - specificity"
