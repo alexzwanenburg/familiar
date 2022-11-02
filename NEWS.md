@@ -1,4 +1,4 @@
-# Version 1.4.0 (development)
+# Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes
 
