@@ -3761,7 +3761,7 @@ test_plots <- function(plot_function,
     
     # Train a naive model.
     naive_model <- suppressWarnings(
-      train_familiar(data=full_data,
+      train_familiar(data=multi_data[[1]],
                      experimental_design="fs+mb",
                      cluster_method="hclust",
                      imputation_method="simple",
@@ -3773,6 +3773,9 @@ test_plots <- function(plot_function,
                      parallel=FALSE,
                      verbose=FALSE)
     )
+    
+    # Replace fs_method attribute
+    naive_model@fs_method <- "none"
     
     # Add naive model to the multi-model dataset.
     multi_model_set <- c(multi_model_set, list("naive"=naive_model))
@@ -4661,7 +4664,7 @@ test_export <- function(export_function,
     # Train a naive model.
     naive_model <- suppressWarnings(
       train_familiar(
-        data=full_data,
+        data=multi_data[[1]],
         experimental_design="fs+mb",
         cluster_method="hclust",
         imputation_method="simple",
@@ -4674,6 +4677,9 @@ test_export <- function(export_function,
         verbose=FALSE
       )
     )
+    
+    # Replace fs_method attribute
+    naive_model@fs_method <- "none"
     
     # Add naive model to the multi-model dataset.
     multi_model_set <- c(multi_model_set, list("naive"=naive_model))
