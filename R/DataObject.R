@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include LearnerS4Naive.R
 NULL
 
 #'@title Creates a valid data object from input data.
@@ -693,7 +694,6 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             }
             
             return(new_data)
-            
           })
 
 
@@ -731,6 +731,29 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"
             
             return(data)
           })
+
+
+
+#### preprocess_data (familiarNaiveModel) --------------------------------------
+# familiarNaiveModels do not have any features, so we remove them.
+setMethod("preprocess_data", signature(data="dataObject", object="familiarNaiveModel"),
+          function(data, object, stop_at="clustering", keep_novelty=FALSE, ...){
+            
+            if(.as_preprocessing_level(data@preprocessing_level) > .as_preprocessing_level(stop_at)) {
+              ..error_reached_unreachable_code("preprocess_data,dataObject,familiarNaiveModel: data were preprocessed at a higher level than required by stop_at.")
+            }
+            
+            # Apply the signature.
+            data <- select_features(data=data,
+                                    features=NULL)
+            
+            # Set the pre-processing level.
+            data@preprocessing_level <- stop_at  
+            
+            return(data)
+          })
+
+
 
 #####preprocess_data (novelty detector)#########################################
 # Note that keep_novelty is always false to prevent reading novelty_features
@@ -1624,9 +1647,6 @@ setMethod("select_features", signature(data="dataObject"),
               if(!all(features %in% colnames(data@data))){
                 logger.stop("Not all features were found in the data set.")
               }
-              
-            } else {
-              warning("No features were selected.")
             }
             
             # Define the selected columns
