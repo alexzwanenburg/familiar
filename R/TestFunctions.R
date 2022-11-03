@@ -99,7 +99,7 @@ test_all_learners_train_predict_vimp <- function(
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
       
       
-      #####Full dataset#########################################################
+      #### Full dataset --------------------------------------------------------
       
       # Train the model.
       model <- suppressWarnings(test_train(data=full_data,
@@ -397,7 +397,7 @@ test_all_learners_train_predict_vimp <- function(
       
       
       
-      #####Bootstrapped dataset#################################################
+      #### Bootstrapped dataset ------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(data=full_data,
                                            cluster_method="none",
@@ -3759,6 +3759,24 @@ test_plots <- function(plot_function,
                                                time_max=60,
                                                create_novelty_detector=create_novelty_detector))
     
+    # Train a naive model.
+    naive_model <- suppressWarnings(
+      train_familiar(data=full_data,
+                     experimental_design="fs+mb",
+                     cluster_method="hclust",
+                     imputation_method="simple",
+                     fs_method="no_features",
+                     learner="lasso",
+                     hyperparameter=hyperparameters,
+                     cluster_similarity_threshold=0.7,
+                     time_max=60,
+                     parallel=FALSE,
+                     verbose=FALSE)
+    )
+    
+    # Add naive model to the multi-model dataset.
+    multi_model_set <- c(multi_model_set, list("naive"=naive_model))
+    
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
                                          data=multi_data[[1]],
@@ -4625,16 +4643,40 @@ test_export <- function(export_function,
     
     
     # Ensemble from multiple datasets.
-    multi_model_set <- suppressWarnings(lapply(multi_data,
-                                               test_train,
-                                               cluster_method="hclust",
-                                               imputation_method="simple",
-                                               fs_method="mim",
-                                               hyperparameter_list=hyperparameters,
-                                               learner="lasso",
-                                               cluster_similarity_threshold=0.7,
-                                               time_max=1832,
-                                               create_novelty_detector=create_novelty_detector))
+    multi_model_set <- suppressWarnings(
+      lapply(
+        multi_data,
+        test_train,
+        cluster_method="hclust",
+        imputation_method="simple",
+        fs_method="mim",
+        hyperparameter_list=hyperparameters,
+        learner="lasso",
+        cluster_similarity_threshold=0.7,
+        time_max=1832,
+        create_novelty_detector=create_novelty_detector
+      )
+    )
+    
+    # Train a naive model.
+    naive_model <- suppressWarnings(
+      train_familiar(
+        data=full_data,
+        experimental_design="fs+mb",
+        cluster_method="hclust",
+        imputation_method="simple",
+        fs_method="no_features",
+        learner="lasso",
+        hyperparameter=hyperparameters,
+        cluster_similarity_threshold=0.7,
+        time_max=60,
+        parallel=FALSE,
+        verbose=FALSE
+      )
+    )
+    
+    # Add naive model to the multi-model dataset.
+    multi_model_set <- c(multi_model_set, list("naive"=naive_model))
     
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
