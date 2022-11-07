@@ -719,8 +719,8 @@
   data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
   
   # Update missing scores.
-  data[!is.finite(summary_score), "summary_score":=-1.0]
-  data[!is.finite(score_estimate), "score_estimate":=-1.0]
+  data[!is.finite(summary_score), "summary_score":=-99.0]
+  data[!is.finite(score_estimate), "score_estimate":=-99.0]
   
   return(data)
 }
@@ -786,10 +786,10 @@ get_best_hyperparameter_set <- function(score_table,
   
   # Extract and update summary score and score estimate
   summary_score <- data$summary_score
-  if(!is.finite(summary_score)) summary_score <- -1.0
+  if(!is.finite(summary_score)) summary_score <- -99.0
   
   score_estimate <- data$score_estimate
-  if(!is.finite(score_estimate)) score_estimate <- -1.0
+  if(!is.finite(score_estimate)) score_estimate <- -99.0
   
   if(!"optimisation_score" %in% colnames(score_table)){
     # Compute mean validation score as a summary score, as well as mean validation
