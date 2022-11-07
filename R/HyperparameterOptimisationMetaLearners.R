@@ -646,7 +646,8 @@ acquisition_bayes_upper_confidence_bound <- function(object,
 
 
 .get_available_hyperparameter_exploration_methods <- function(){
-  return(c("successive_halving",
+  return(c("single_shot",
+           "successive_halving",
            "stochastic_reject",
            "none"))
 }

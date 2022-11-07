@@ -801,6 +801,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(exploration_method == "none"){
               n_intensify_step_bootstraps <- n_intensify_step_bootstraps * n_max_intensify_steps
               n_max_intensify_steps <- 1L
+              
+            } else if(exploration_method == "single_shot"){
+              n_max_intensify_steps <- 1L
+              n_intensify_step_bootstraps <- 1L
             }
             
             # Create list with stopping criteria based on initial runs.

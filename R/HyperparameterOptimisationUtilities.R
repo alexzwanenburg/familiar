@@ -1040,6 +1040,9 @@ get_best_hyperparameter_set <- function(score_table,
   if(exploration_method == "none"){
     n_new_runs <- n_intensify_step_bootstraps
     
+  } else if(exploration_method == "single_shot"){
+    n_new_runs <- 1L
+    
   } else {
     n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 3)))
   }
@@ -1157,7 +1160,7 @@ get_best_hyperparameter_set <- function(score_table,
     # Select parameter identifiers with p-values above the thresholds.
     param_id_challenger_new <- p_value_table[p_value > intensify_stop_p_value, ]$param_id
     
-  } else if(exploration_method == "none"){
+  } else if(exploration_method %in% c("none", "single_shot")){
     # Keep the incumbent set.
     param_id_incumbent_new <- parameter_id_incumbent
     

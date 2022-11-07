@@ -752,7 +752,14 @@ smaller.
 comparing the performance of each parameter set with that of the incumbent best
 parameter set using a paired Wilcoxon test.
 
-- `none`: The set of alternative parameter sets is not pruned.
+- `single_shot`: The set of alternative parameter sets is not pruned, and each
+intensify iteration contains only a single (initial) intensification step that
+only uses a single bootstrap. This is the exploration method that under default
+settings does the least in-depth exploration, with the advantage of being fast.
+
+- `none`: The set of alternative parameter sets is not pruned. Compared to
+`single_shot`, hyperparameter sets are assessed using multiple bootstraps
+(`smbo_step_bootstraps` * `smbo_intensify_steps`).
 
 The method used to steer exploration can be set using the `exploration_method`
 parameter.

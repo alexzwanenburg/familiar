@@ -190,24 +190,28 @@ testthat::test_that("Test that \"signature_only\" feature selection keeps only s
 data <- familiar:::test.create_good_data_set(outcome_type="binomial")
 
 # Create object.
-object <- familiar:::.test_create_hyperparameter_object(data=data,
-                                                        vimp_method="mim",
-                                                        learner="elastic_net",
-                                                        is_vimp=FALSE,
-                                                        set_signature_feature=FALSE)
+object <- familiar:::.test_create_hyperparameter_object(
+  data=data,
+  vimp_method="mim",
+  learner="elastic_net",
+  is_vimp=FALSE,
+  set_signature_feature=FALSE
+)
 
 # Hyperparameter optimisation without pruning.
-new_object <- familiar:::optimise_hyperparameters(object=object,
-                                                  data=data,
-                                                  n_max_bootstraps=25L,
-                                                  n_max_optimisation_steps=1L,
-                                                  n_max_intensify_steps=4L,
-                                                  n_intensify_step_bootstraps=1L,
-                                                  n_random_sets=16L,
-                                                  n_challengers=10L,
-                                                  exploration_method="none",
-                                                  is_vimp=FALSE,
-                                                  verbose=verbose)
+new_object <- familiar:::optimise_hyperparameters(
+  object=object,
+  data=data,
+  n_max_bootstraps=25L,
+  n_max_optimisation_steps=1L,
+  n_max_intensify_steps=4L,
+  n_intensify_step_bootstraps=1L,
+  n_random_sets=16L,
+  n_challengers=10L,
+  exploration_method="none",
+  is_vimp=FALSE,
+  verbose=verbose
+)
 
 # Set expected range of rows. Upper and lower boundary are the same, as all runs
 # are executed simultaneously.
@@ -222,17 +226,19 @@ testthat::test_that("Test that \"none\" exploration method does not prune any hy
 # Hyperparameter optimisation using successive_halving for pruning. Note that
 # n_max_intensify_steps is 5, but only 4 will be steps are possible. Just as a
 # test.
-new_object <- familiar:::optimise_hyperparameters(object=object,
-                                                  data=data,
-                                                  n_max_bootstraps=25L,
-                                                  n_max_optimisation_steps=1L,
-                                                  n_max_intensify_steps=5L,
-                                                  n_intensify_step_bootstraps=1L,
-                                                  n_random_sets=16L,
-                                                  n_challengers=10L,
-                                                  exploration_method="successive_halving",
-                                                  is_vimp=FALSE,
-                                                  verbose=verbose)
+new_object <- familiar:::optimise_hyperparameters(
+  object=object,
+  data=data,
+  n_max_bootstraps=25L,
+  n_max_optimisation_steps=1L,
+  n_max_intensify_steps=5L,
+  n_intensify_step_bootstraps=1L,
+  n_random_sets=16L,
+  n_challengers=10L,
+  exploration_method="successive_halving",
+  is_vimp=FALSE,
+  verbose=verbose
+)
 
 # Set expected range of rows. 10 initial challengers decrease to 5, 2 and 1 in
 # subsequent rounds. Upper and lower boundary are the same because here
@@ -247,18 +253,20 @@ testthat::test_that("Test that \"successive_halving\" exploration method may pru
 
 
 # Hyperparameter optimisation using stochastic_reject for pruning.
-new_object <- familiar:::optimise_hyperparameters(object=object,
-                                                  data=data,
-                                                  n_max_bootstraps=25L,
-                                                  n_max_optimisation_steps=1L,
-                                                  n_max_intensify_steps=4L,
-                                                  n_initial_bootstraps=2L,
-                                                  n_intensify_step_bootstraps=5L,
-                                                  n_random_sets=16L,
-                                                  n_challengers=10L,
-                                                  exploration_method="stochastic_reject",
-                                                  is_vimp=FALSE,
-                                                  verbose=verbose)
+new_object <- familiar:::optimise_hyperparameters(
+  object=object,
+  data=data,
+  n_max_bootstraps=25L,
+  n_max_optimisation_steps=1L,
+  n_max_intensify_steps=4L,
+  n_initial_bootstraps=2L,
+  n_intensify_step_bootstraps=5L,
+  n_random_sets=16L,
+  n_challengers=10L,
+  exploration_method="stochastic_reject",
+  is_vimp=FALSE,
+  verbose=verbose
+)
 
 # Set expected range of rows. The lowest boundary occurs when all challengers
 # are rejected after one round, and only one new run is sampled. The upper
@@ -272,6 +280,31 @@ testthat::test_that("Test that \"stochastic_reject\" exploration method may prun
   testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
 
+
+# Single-shot hyperparameter optimisation. Note that n_intensify_step_bootstraps
+# and n_max_intensify_steps should be set to 1L internally.
+new_object <- familiar:::optimise_hyperparameters(
+  object=object,
+  data=data,
+  n_max_bootstraps=25L,
+  n_max_optimisation_steps=1L,
+  n_max_intensify_steps=4L,
+  n_intensify_step_bootstraps=5L,
+  n_random_sets=16L,
+  n_challengers=10L,
+  exploration_method="single_shot",
+  is_vimp=FALSE,
+  verbose=verbose
+)
+
+# Set expected range of rows. Upper and lower boundary are the same, as all runs
+# are executed simultaneously.
+expected_rows_lower <-  expected_rows_upper <- (16 + 10 * 1 + 1 * 1) * 2  # initial + challengers + incumbent
+
+testthat::test_that("Test that \"single_shot\" exploration method does not prune any hyperparameter sets during intensification",{
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
+})
 
 
 ##### Test time truncation -----------------------------------------------------

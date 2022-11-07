@@ -2512,6 +2512,11 @@
 #'   **best** parameter set using a paired Wilcoxon test based on shared
 #'   bootstraps. Parameter sets that perform significantly worse, at an alpha
 #'   level indicated by `smbo_stochastic_reject_p_value`, are pruned.
+#'   
+#'   * `single_shot`: The set of alternative parameter sets is not pruned, and
+#'   each intensification iteration contains only a single intensification step
+#'   that only uses a single bootstrap. This is the fastest exploration method,
+#'   but only superficially tests each parameter set.
 #'
 #'   * `none`: The set of alternative parameter sets is not pruned.
 #'
