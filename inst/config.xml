@@ -144,7 +144,7 @@
       <optimisation_function></optimisation_function>
       <!-- The acquisition function that is used to compute utility of hyperparameter sets and guide exploration of the hyperparameter space (optional, default: expected_improvement) -->
       <acquisition_function></acquisition_function>
-      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: successive_halving) -->
+      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: single_shot) -->
       <exploration_method></exploration_method>
       <!-- The model used to infer utility of hyperparameter sets and select them for exploration (optional, default: gaussian_process) -->
       <hyperparameter_learner></hyperparameter_learner>

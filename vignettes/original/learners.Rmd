@@ -743,19 +743,21 @@ new bootstrap data, compared, and then trained on another set of bootstraps, and
 so on. Pruning the set of challenger hyperparameters after each iteration
 reduces computational load. Familiar implements the following methods:
 
-- `successive_halving` (default): The set of alternative parameter sets is
-pruned by removing the worst performing half of the sets after each step
+- `single_shot` (default): The set of alternative parameter sets is not pruned,
+and each intensify iteration contains only a single (initial) intensification
+step that only uses a single bootstrap. This is the exploration method that
+under default settings does the least in-depth exploration, with the advantage
+of being fast. Extensive internal tests show that this exploration method yields
+similarly performant models as more extensive exploration methods.
+
+- `successive_halving`: The set of alternative parameter sets is pruned by
+removing the worst performing half of the sets after each step
 [@Jamieson2016-fq]. The set of investigated parameter sets gets progressively
 smaller.
 
 - `stochastic_reject`: The set of alternative parameter sets is pruned by
 comparing the performance of each parameter set with that of the incumbent best
 parameter set using a paired Wilcoxon test.
-
-- `single_shot`: The set of alternative parameter sets is not pruned, and each
-intensify iteration contains only a single (initial) intensification step that
-only uses a single bootstrap. This is the exploration method that under default
-settings does the least in-depth exploration, with the advantage of being fast.
 
 - `none`: The set of alternative parameter sets is not pruned. Compared to
 `single_shot`, hyperparameter sets are assessed using multiple bootstraps
@@ -813,7 +815,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
 | `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
-| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `successive_halving` |
+| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `single_shot` |
 | `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning. | `0.05` |
 | `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. | `TRUE` |
 

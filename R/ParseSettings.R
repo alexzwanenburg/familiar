@@ -2503,7 +2503,12 @@
 #'   controls how the set of alternative parameter sets is pruned after each
 #'   step in an iteration. Can be one of the following:
 #'
-#'   * `successive_halving` (default): The set of alternative parameter sets is
+#'   * `single_shot` (default): The set of alternative parameter sets is not
+#'   pruned, and each intensification iteration contains only a single
+#'   intensification step that only uses a single bootstrap. This is the fastest
+#'   exploration method, but only superficially tests each parameter set.
+#'
+#'   * `successive_halving`: The set of alternative parameter sets is
 #'   pruned by removing the worst performing half of the sets after each step
 #'   (Jamieson and Talwalkar, 2016).
 #'
@@ -2512,11 +2517,6 @@
 #'   **best** parameter set using a paired Wilcoxon test based on shared
 #'   bootstraps. Parameter sets that perform significantly worse, at an alpha
 #'   level indicated by `smbo_stochastic_reject_p_value`, are pruned.
-#'   
-#'   * `single_shot`: The set of alternative parameter sets is not pruned, and
-#'   each intensification iteration contains only a single intensification step
-#'   that only uses a single bootstrap. This is the fastest exploration method,
-#'   but only superficially tests each parameter set.
 #'
 #'   * `none`: The set of alternative parameter sets is not pruned.
 #'
@@ -2811,16 +2811,20 @@
   
   ##### exploration_method #####################################################
   # Exploration method
-  settings$hpo_exploration_method <- .parse_arg(x_config=config$exploration_method,
-                                                x_var=exploration_method,
-                                                var_name="exploration_method",
-                                                type="character",
-                                                optional=TRUE,
-                                                default="successive_halving")
+  settings$hpo_exploration_method <- .parse_arg(
+    x_config=config$exploration_method,
+    x_var=exploration_method,
+    var_name="exploration_method",
+    type="character",
+    optional=TRUE,
+    default="single_shot"
+  )
   
-  .check_parameter_value_is_valid(x=settings$hpo_exploration_method,
-                                  var_name="exploration_method",
-                                  values=.get_available_hyperparameter_exploration_methods())
+  .check_parameter_value_is_valid(
+    x=settings$hpo_exploration_method,
+    var_name="exploration_method",
+    values=.get_available_hyperparameter_exploration_methods()
+  )
   
   ##### optimisation_metric ####################################################
   # Performance metric for hyperparameter optimisation
