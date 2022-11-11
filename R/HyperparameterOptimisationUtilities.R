@@ -581,7 +581,7 @@
   .NATURAL <- NULL
   
   if(is_empty(score_table)) return(NULL)
-  
+
   # Compute optimisation score.
   optimisation_score_table <- metric.compute_optimisation_score(score_table=score_table,
                                                                 optimisation_function=optimisation_function)
@@ -719,8 +719,8 @@
   data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
   
   # Update missing scores.
-  data[!is.finite(summary_score), "summary_score":=-99.0]
-  data[!is.finite(score_estimate), "score_estimate":=-99.0]
+  data[!is.finite(summary_score), "summary_score":=..get_replacement_optimisation_score()]
+  data[!is.finite(score_estimate), "score_estimate":=..get_replacement_optimisation_score()]
   
   return(data)
 }
@@ -786,10 +786,10 @@ get_best_hyperparameter_set <- function(score_table,
   
   # Extract and update summary score and score estimate
   summary_score <- data$summary_score
-  if(!is.finite(summary_score)) summary_score <- -99.0
+  if(!is.finite(summary_score)) summary_score <- ..get_replacement_optimisation_score()
   
   score_estimate <- data$score_estimate
-  if(!is.finite(score_estimate)) score_estimate <- -99.0
+  if(!is.finite(score_estimate)) score_estimate <- ..get_replacement_optimisation_score()
   
   if(!"optimisation_score" %in% colnames(score_table)){
     # Compute mean validation score as a summary score, as well as mean validation

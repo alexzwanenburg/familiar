@@ -683,3 +683,8 @@ metric.optim_score.stronger_balance <- function(training, validation) return(val
   
   return(all_optimisation_functions)
 }
+
+
+..get_replacement_optimisation_score <- function(){
+  return(-9.0)
+}

@@ -793,7 +793,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                            verbose=verbose)
             
             # Check whether any combination yielded anything valid.
-            skip_optimisation <- incumbent_set$summary_score <= -99.0
+            skip_optimisation <- incumbent_set$summary_score <= ..get_replacement_optimisation_score()
             
             # Update n_intensify_step_bootstraps and n_max_intensify_steps when
             # exploration_method equals none. There is no reason to perform
@@ -1030,7 +1030,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimal_set_table[ ,"param_id":=NULL]
             
             # Check that a suitable set of hyperparameters was found.
-            if(incumbent_set$summary_score <= -99.0){
+            if(incumbent_set$summary_score <= ..get_replacement_optimisation_score()){
               # In this case, no suitable hyperparameters were found, for
               # whatever reason.
               
