@@ -911,9 +911,10 @@ get_best_hyperparameter_set <- function(score_table,
                                                                    stop_data=NULL,
                                                                    tolerance=1E-2){
   
-  # Store the summary score. Note that the latest score is always appended.
-  summary_scores <- c(stop_data$score,
-                      set_data$summary_score)
+  # Store the validation score of the incumbent set. Note that the latest score
+  # is always appended.
+  validation_scores <- c(stop_data$score,
+                         set_data$validation_score)
   
   # Store the parameter id of the incumbent set. Note that the most recent
   # hyperparameter set identifier is always appended.
@@ -944,9 +945,9 @@ get_best_hyperparameter_set <- function(score_table,
   
   # Assess convergence of the summary scores. This is skipped on the first
   # run-through.
-  if(length(summary_scores) >= 2){
+  if(length(validation_scores) >= 2){
     # Compute absolute deviation from the mean.
-    max_abs_deviation <- max(abs(tail(summary_scores, n=3L) - mean(tail(summary_scores, n=3L))))
+    max_abs_deviation <- max(abs(tail(validation_scores, n=3L) - mean(tail(validation_scores, n=3L))))
     
     if(is.na(max_abs_deviation)){
       convergence_counter_score <- 0L
@@ -974,7 +975,7 @@ get_best_hyperparameter_set <- function(score_table,
   }
   
   # Return list with stopping parameters.
-  return(list("score"=summary_scores,
+  return(list("score"=validation_scores,
               "parameter_id"=incumbent_parameter_id,
               "convergence_counter_score" = convergence_counter_score,
               "convergence_counter_parameter_id" = convergence_counter_parameter_id,
