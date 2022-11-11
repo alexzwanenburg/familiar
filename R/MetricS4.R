@@ -649,7 +649,7 @@ metric.summarise_optimisation_score <- function(score_table, method, replace_na=
                              by=id_columns]
   
   # Replace NA entries with the minimum optimisation score.
-  if(replace_na) score_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  if(replace_na) score_table[is.na(optimisation_score), optimisation_score:=..get_replacement_optimisation_score()]
   
   return(score_table)
 }
