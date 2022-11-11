@@ -166,7 +166,7 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
                                                                                "Model fitter ran out of iterations and did not converge.")))
             
             # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))){
+            if(any(!sapply(stats::coef(model), is.finite))){
               return(callNextMethod(object=..update_errors(object=object,
                                                            ..error_message_failed_model_coefficient_estimation())))
             }

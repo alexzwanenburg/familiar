@@ -16,11 +16,15 @@
 
 - The default familiar plotting theme is now exported as `theme_familiar`. This allows for changing tweaking the default theme, for example, setting a larger font size, or selecting a different font family. After making changing to theme, it can be provided as the `ggtheme` argument.
 
-- A new exploration method for hyperparameter optimisation was added, namely `single_shot`. As the name suggests, this performs a single pass on the challenger and incumbent models during each intensification iteration.
+- A new exploration method for hyperparameter optimisation was added, namely `single_shot`. As the name suggests, this performs a single pass on the challenger and incumbent models during each intensification iteration. This is also the new default. Extensive tests have shown that the use of single-shot selection led to comparable performance.
+
+- The `balanced` optimisation function now adds a penalty when the trained model on the training data performs worse then a naive model.
 
 ## Bug fixes
 
 - `ggtheme` is now checked for completeness, which prevents errors with unclear causes or solutions.
+
+- We previously checked that any coefficients of a regression model could be estimated. This could lead to large models being formed where all features were insufficiently converged, even if this led to a meaningless model. We now check that all (instead of any) coefficients could be estimated for GLM, Cox and survival regression models.
 
 # Version 1.3.0 (Loquacious Limpet)
 
