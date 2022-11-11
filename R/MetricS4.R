@@ -656,11 +656,51 @@ metric.summarise_optimisation_score <- function(score_table, method, replace_na=
 
 
 
-metric.optim_score.max_validation <- function(training=NULL, validation) return(validation)
+metric.optim_score.max_validation <- function(training=NULL, validation){
+  return(validation)
+} 
 
-metric.optim_score.balanced <- function(training, validation) return(validation - abs(validation - training))
 
-metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
+
+metric.optim_score.balanced <- function(training, validation){
+  # Start with the validation score.
+  value <- validation
+  
+  # Penalise by difference between training and validation.
+  value <- value - abs(validation - training)
+  
+  # Check that the value is finite.
+  if(!is.finite(value)) return(value)
+  
+  # Add penalty term to models that perform worse than naive models on the
+  # training data, i.e. have a objective score below 0.0. We could also write
+  # value + training, but I think this way its clearer that a penalty is
+  # intended.
+  if(training < 0.0) value <- value - abs(training)
+  
+  return(value) 
+}
+
+
+
+metric.optim_score.stronger_balance <- function(training, validation){
+  # Start with the validation score.
+  value <- validation
+  
+  # Penalise by difference between training and validation.
+  value <- value - 2.0 * abs(validation - training)
+  
+  # Check that the value is finite.
+  if(!is.finite(value)) return(value)
+  
+  # Add penalty term to models that perform worse than naive models on the
+  # training data, i.e. have a objective score below 0.0. We could also write
+  # value + training, but I think this way its clearer that a penalty is
+  # intended.
+  if(training < 0.0) value <- value - 5.0 * abs(training)
+  
+  return(value)
+}
 
 
 .get_available_optimisation_functions <- function(hyperparameter_learner=NULL){
