@@ -575,30 +575,36 @@ metric.compute_optimisation_score <- function(score_table,
   optimisation_score <- training <- validation <- NULL
   
   # Select the correct optimisation function.
-  optimisation_fun <- switch(optimisation_function,
-                             "max_validation" = metric.optim_score.max_validation,
-                             "validation" = metric.optim_score.max_validation,
-                             "balanced" = metric.optim_score.balanced,
-                             "stronger_balance" = metric.optim_score.stronger_balance,
-                             "validation_minus_sd" = metric.optim_score.max_validation,
-                             "validation_25th_percentile" = metric.optim_score.max_validation,
-                             "model_estimate" = metric.optim_score.max_validation,
-                             "model_estimate_minus_sd" = metric.optim_score.max_validation,
-                             "model_balanced_estimate" = metric.optim_score.balanced,
-                             "model_balanced_estimate_minus_sd" = metric.optim_score.balanced)
+  optimisation_fun <- switch(
+    optimisation_function,
+    "max_validation" = metric.optim_score.max_validation,
+    "validation" = metric.optim_score.max_validation,
+    "balanced" = metric.optim_score.balanced,
+    "stronger_balance" = metric.optim_score.stronger_balance,
+    "validation_minus_sd" = metric.optim_score.max_validation,
+    "validation_25th_percentile" = metric.optim_score.max_validation,
+    "model_estimate" = metric.optim_score.max_validation,
+    "model_estimate_minus_sd" = metric.optim_score.max_validation,
+    "model_balanced_estimate" = metric.optim_score.balanced,
+    "model_balanced_estimate_minus_sd" = metric.optim_score.balanced
+  )
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
                           c("param_id", "run_id"))
   
   # Create formula
-  formula <- stats::reformulate(termlabels="data_set",
-                                response=paste0(c(id_columns, "metric"), collapse=" + "))
+  formula <- stats::reformulate(
+    termlabels="data_set",
+    response=paste0(c(id_columns, "metric"), collapse=" + ")
+  )
   
   # Cast objective score wide by data_set.
-  optimisation_table <- data.table::dcast(data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
-                                          formula,
-                                          value.var="objective_score")
+  optimisation_table <- data.table::dcast(
+    data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
+    formula,
+    value.var="objective_score"
+  )
   
   # Compute optimisation score based on objective scores.
   optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_fun(training=training,
@@ -606,7 +612,7 @@ metric.compute_optimisation_score <- function(score_table,
                                            by=c(id_columns, "metric")]
   
   # Replace NA entries with the minimum optimisation score.
-  if(replace_na) optimisation_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  if(replace_na) optimisation_table[is.na(optimisation_score), optimisation_score:=..get_replacement_optimisation_score()]
   
   # Average optimisation score over metrics.
   optimisation_table <- optimisation_table[, list("optimisation_score"=mean(optimisation_score, na.rm=TRUE)),
