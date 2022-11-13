@@ -806,7 +806,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_n_random_sets` | Sets the number of hyperparameter sets drawn for initialisation. Ignored if `smbo_random_initialisation` is `fixed`. If `smbo_random_initialisation` is `fixed_subsample`, the number of selected hyperparameters may be lower. | `100` |
 | `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm. | `20` |
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
-| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | between `0.01` and `0.001` |
+| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | `0.1 * 1 / sqrt(n_samples)` |
 | `smbo_time_limit` | Time limit (in minutes) for the optimisation process. | `NULL` |
 | `smbo_initial_bootstraps` | Number of bootstraps assessed initially. | `1` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |

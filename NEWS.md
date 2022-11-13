@@ -12,13 +12,15 @@
 
   - `model_balanced_estimate`: seeks to maximise the estimate of the balanced IB and OOB score. This is similar to the `balanced` score, and in fact uses a hyperparameter learner to predict said score (not available for random search).
   
-  - `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the balanced IB and OOB score, minus its estimated standard deviation. This is similar to the `balanced` score, but takes into account its estimated spread.
+  - `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the balanced IB and OOB score, minus its estimated standard deviation. This is similar to the `balanced` score, but takes into account its estimated spread. Note that like `model_estimate_minus_sd`, the width of the distribution of balanced scores is more difficult to determine than its estimate.
 
-- The default familiar plotting theme is now exported as `theme_familiar`. This allows for changing tweaking the default theme, for example, setting a larger font size, or selecting a different font family. After making changing to theme, it can be provided as the `ggtheme` argument.
+- The `balanced` optimisation function now adds a penalty when the trained model on the training data performs worse then a naive model.
 
 - A new exploration method for hyperparameter optimisation was added, namely `single_shot`. As the name suggests, this performs a single pass on the challenger and incumbent models during each intensification iteration. This is also the new default. Extensive tests have shown that the use of single-shot selection led to comparable performance.
 
-- The `balanced` optimisation function now adds a penalty when the trained model on the training data performs worse then a naive model.
+- Convergence checks for hyperparameter sets now depend on the validation optimisation score, as this is more stable than the summary score for some `optimisation_function` methods, such as `model_estimate_minus_sd`. More over the tolerance has been changed to allow for values above `0.01` for sample sizes smaller than `100`. This prevents convergence issues where the expected statistical fluctuation for small sample sizes would easily break convergence checks, and hence force long searches for suitable hyperparameters.
+
+- The default familiar plotting theme is now exported as `theme_familiar`. This allows for changing tweaking the default theme, for example, setting a larger font size, or selecting a different font family. After making changing to theme, it can be provided as the `ggtheme` argument.
 
 ## Bug fixes
 

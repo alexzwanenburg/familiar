@@ -2343,8 +2343,9 @@
 #' @param smbo_stop_tolerance (*optional*) Tolerance for early stopping due to
 #'   convergent optimisation score.
 #'
-#'   The default value depends on the number of samples (at the series level),
-#'   ranging from `0.01` for 100 or fewer samples, to `0.001` for 10000 or more
+#'   The default value depends on the square root of the number of samples (at
+#'   the series level), and is `0.01` for 100 samples. This value is computed as
+#'   `0.1 * 1 / sqrt(n_samples)`. The upper limit is `0.0001` for 1M or more
 #'   samples.
 #' @param smbo_time_limit (*optional*) Time limit (in minutes) for the
 #'   optimisation process. Optimisation is stopped after this limit is exceeded.
@@ -2567,28 +2568,30 @@
 #'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 #' @md
 #' @keywords internal
-.parse_hyperparameter_optimisation_settings <- function(config=NULL,
-                                                        parallel,
-                                                        outcome_type,
-                                                        optimisation_bootstraps=waiver(),
-                                                        optimisation_determine_vimp=waiver(),
-                                                        smbo_random_initialisation=waiver(),
-                                                        smbo_n_random_sets = waiver(),
-                                                        max_smbo_iterations=waiver(),
-                                                        smbo_stop_convergent_iterations=waiver(),
-                                                        smbo_stop_tolerance=waiver(),
-                                                        smbo_time_limit=waiver(),
-                                                        smbo_initial_bootstraps=waiver(),
-                                                        smbo_step_bootstraps=waiver(),
-                                                        smbo_intensify_steps=waiver(),
-                                                        smbo_stochastic_reject_p_value=waiver(),
-                                                        optimisation_function=waiver(),
-                                                        optimisation_metric=waiver(),
-                                                        acquisition_function=waiver(),
-                                                        exploration_method=waiver(),
-                                                        hyperparameter_learner=waiver(),
-                                                        parallel_hyperparameter_optimisation=waiver(),
-                                                        ...){
+.parse_hyperparameter_optimisation_settings <- function(
+    config=NULL,
+    parallel,
+    outcome_type,
+    optimisation_bootstraps=waiver(),
+    optimisation_determine_vimp=waiver(),
+    smbo_random_initialisation=waiver(),
+    smbo_n_random_sets = waiver(),
+    max_smbo_iterations=waiver(),
+    smbo_stop_convergent_iterations=waiver(),
+    smbo_stop_tolerance=waiver(),
+    smbo_time_limit=waiver(),
+    smbo_initial_bootstraps=waiver(),
+    smbo_step_bootstraps=waiver(),
+    smbo_intensify_steps=waiver(),
+    smbo_stochastic_reject_p_value=waiver(),
+    optimisation_function=waiver(),
+    optimisation_metric=waiver(),
+    acquisition_function=waiver(),
+    exploration_method=waiver(),
+    hyperparameter_learner=waiver(),
+    parallel_hyperparameter_optimisation=waiver(),
+    ...){
+  
   settings <- list()
   
   ##### smbo_random_initialisation #############################################
@@ -2726,21 +2729,25 @@
                                var_name="smbo_stop_convergent_iterations",
                                range=c(1, Inf))
   
-  ##### smbo_stop_tolerance ####################################################
+  #### smbo_stop_tolerance -----------------------------------------------------
   # Convergence tolerance
-  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance,
-                                                   x_var=smbo_stop_tolerance,
-                                                   var_name="smbo_stop_tolerance",
-                                                   type="numeric",
-                                                   optional=TRUE,
-                                                   default=NULL)
+  settings$hpo_convergence_tolerance <- .parse_arg(
+    x_config=config$smbo_stop_tolerance,
+    x_var=smbo_stop_tolerance,
+    var_name="smbo_stop_tolerance",
+    type="numeric",
+    optional=TRUE,
+    default=NULL
+  )
   
   # Check provided settings. If NULL, convergence will be set by the 
   if(!is.null(settings$hpo_convergence_tolerance)){
-    .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
-                                 var_name="smbo_stop_tolerance",
-                                 range=c(0.0, 2.0),
-                                 closed=c(FALSE, TRUE)) 
+    .check_number_in_valid_range(
+      x=settings$hpo_convergence_tolerance,
+      var_name="smbo_stop_tolerance",
+      range=c(0.0, 1.0),
+      closed=c(FALSE, TRUE)
+    ) 
   }
   
   ##### smbo_time_limit ########################################################

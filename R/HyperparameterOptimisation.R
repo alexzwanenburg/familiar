@@ -390,14 +390,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(n_samples == 0) return(object)
               
               # Set convergence tolerance.
-              convergence_tolerance <- -2 + (-log10(n_samples) + 2) / 2
+              convergence_tolerance <- 0.1 * 1.0 / sqrt(n_samples)
               
-              # Limit between -2 and -3.
-              if(convergence_tolerance > -2) convergence_tolerance <- -2
-              if(convergence_tolerance < -3) convergence_tolerance <- -3
-              
-              # Convert to value.
-              convergence_tolerance <- 10^convergence_tolerance
+              # Limit to -4
+              if(convergence_tolerance < 1E-4) convergence_tolerance <- 1E-4
             }
             
             # Check if the metric is ok. Packed into a for loop to enable
@@ -555,7 +551,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               n_max_intensify_steps=min(c(n_max_intensify_steps, 3L)),
               n_intensify_step_bootstraps=min(c(n_intensify_step_bootstraps, 5L)),
               intensify_stop_p_value=intensify_stop_p_value,
-              convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
+              convergence_tolerance=convergence_tolerance,
               convergence_stopping=min(c(convergence_stopping, 3L)),
               time_limit=time_limit,
               verbose=verbose,
