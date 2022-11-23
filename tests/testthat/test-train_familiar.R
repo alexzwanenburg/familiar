@@ -245,5 +245,5 @@ testthat::test_that("Assert that signature features are used in the model.", {
   testthat::expect_gte(length(model@model_features), 2L)
   testthat::expect_lte(length(model@model_features), 9L)
   testthat::expect_equal(all(c("marginal_adhesion", "bland_chromatin") %in% model@model_features), TRUE)
-  testthat::expect_equal(length(model@model_features), model@hyperparameters$sign_size)
+  testthat::expect_equal(length(model@model_features) <= model@hyperparameters$sign_size, TRUE)
 })
