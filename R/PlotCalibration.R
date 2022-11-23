@@ -809,8 +809,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
     } else {
       # Add line for individual data points.
-      p <- p + ggplot2::geom_line(mapping=ggplot2::aes(colour=!!sym("color_breaks")),
-                                  size=ggtheme$line$size * 3)
+      p <- p + ggplot2::geom_line(
+        mapping=ggplot2::aes(colour=!!sym("color_breaks")),
+        size=..get_plot_theme_linewidth(ggtheme=ggtheme) * 3)
     }
     
     
@@ -839,7 +840,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
     } else {
       # Add scatter for individual data points.
-      p <- p + ggplot2::geom_line(size=ggtheme$line$size * 3)
+      p <- p + ggplot2::geom_line(
+        size=..get_plot_theme_linewidth(ggtheme=ggtheme) * 3)
     }
     
     # Add fit

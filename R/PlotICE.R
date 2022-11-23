@@ -1355,7 +1355,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   
   
   # Make pd line thicker than ice lines.
-  ice_line_size <- 0.5 * ggtheme$line$size
+  ice_line_size <- 0.5 * ..get_plot_theme_linewidth(ggtheme=ggtheme)
   pd_line_size <- 6 * ice_line_size
   
   # In case only partial dependency plots are shown, update ice_default_alpha

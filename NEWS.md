@@ -30,6 +30,8 @@
 
 - Fixed an error caused by unsuccessfully retraining an anonymous random forest for variable importance estimations.
 
+- Fixed errors due to introduction of `linewidth` elements in version 3.4.0 of `ggplot2`. Versions of `ggplot2` prior to 3.4.0 are still supported.
+
 # Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes

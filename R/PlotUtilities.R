@@ -778,6 +778,24 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
 }
 
 
+..get_plot_theme_linewidth <- function(ggtheme=NULL){
+  
+  # Import default ggtheme in case none is provided.
+  ggtheme <- .check_ggtheme(ggtheme)
+  
+  # Since ggplot 3.4.0, the width of a line is determined by linewidth instead
+  # of size.
+  if(utils::packageVersion("ggplot2") >= "3.4.0"){
+    linewidth <- ggtheme$line$linewidth
+    
+  } else {
+    linewidth <- ggtheme$line$size
+  }
+  
+  return(linewidth)
+}
+
+
 ..get_plot_element_spacing <- function(ggtheme=NULL, axis, theme_element){
   # Obtain spacing from a ggtheme element
   
