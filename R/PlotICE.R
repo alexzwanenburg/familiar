@@ -1391,7 +1391,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               alpha=!!sym("novelty"),
               colour=!!sym("color_breaks"),
               group=!!sym("color_breaks_sample")),
-            size=ice_line_size)
+            linewidth=ice_line_size)
           
         } else {
           # Create lines with alpha.
@@ -1402,7 +1402,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               y=!!sym("value"),
               group=!!sym("sample"),
               alpha=!!sym("novelty")),
-            size=ice_line_size)
+            linewidth=ice_line_size)
         }
       }
       
@@ -1417,7 +1417,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               alpha=!!sym("novelty"),
               colour=!!sym("color_breaks"),
               group=pd_group_variable),
-            size=pd_line_size)
+            linewidth=pd_line_size)
           
         } else {
           # Create lines with alpha.
@@ -1428,7 +1428,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               y=!!sym("value"),
               alpha=!!sym("novelty"),
               group=pd_group_variable),
-            size=pd_line_size)
+            linewidth=pd_line_size)
         }
       }
     } else {
