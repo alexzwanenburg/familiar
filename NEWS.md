@@ -28,6 +28,8 @@
 
 - We previously checked that any coefficients of a regression model could be estimated. This could lead to large models being formed where all features were insufficiently converged, even if this led to a meaningless model. We now check that all (instead of any) coefficients could be estimated for GLM, Cox and survival regression models.
 
+- Fixed an error caused by unsuccessfully retraining an anonymous random forest for variable importance estimations.
+
 # Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes
