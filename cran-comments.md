@@ -26,7 +26,7 @@ Windows Server 2022, R-devel, 64 bit:
 * checking HTML version of manual ... [37s] NOTE
 Skipping checking math rendering: package 'V8' unavailable
 
-**Maintainer**: This note only appeared on the Windows server test. I am not sure what the cause is, but it might be because a package was not available on rhub.
+**Maintainer**: I am not sure what the cause is, but it might be because the V8 package was not available on rhub.
     
 * checking for detritus in the temp directory ... NOTE
 Found the following files/directories:
@@ -40,12 +40,12 @@ Fedora Linux, R-devel, clang, gfortran:
 0 errors | 0 warnings | 3 notes
 
 * checking package dependencies ... NOTE
-Packages suggested but not available for checking: 'fastglm', 'qvalue'
+Packages suggested but not available for checking: 'fastglm'
 
 **Maintainer**: The package uses stats::glm as a fallback if fastglm is not available.
 
 * checking installed package size ... NOTE
-  installed size is  5.7Mb
+  installed size is  5.8Mb
   sub-directories of 1Mb or more:
     R      3.4Mb
     doc    1.0Mb
@@ -56,7 +56,7 @@ Skipping checking HTML validation: no command 'tidy' found
 Skipping checking math rendering: package 'V8' unavailable
 
 
-**Maintainer**: I am unsure what causes this note. It doesn't appear locally, or for the other builds.
+**Maintainer**: I am unsure what causes this note. It doesn't appear locally.
 
 
 
