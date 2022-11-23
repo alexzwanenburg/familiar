@@ -1,4 +1,4 @@
-Update familiar to version 1.3.0
+Update familiar to version 1.4.0
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
@@ -14,19 +14,19 @@ R CMD check was run on R-hub using rhub::check_for_cran(), producing the followi
 Windows Server 2022, R-devel, 64 bit:
 0 errors | 0 warnings | 3 notes
 
-* checking package dependencies ... NOTE
-  Package suggested but not available for checking: 'qvalue'
-  
-**Maintainer**: The current Bioconductor release does not seem to be compiled against R-devel. This note does not appear when build against R-release.
-
 * checking installed package size ... NOTE
-  installed size is  5.7Mb
+  installed size is  5.8Mb
   sub-directories of 1Mb or more:
     R      3.4Mb
     doc    1.0Mb
     help   1.1Mb
-    
+
 **Maintainer**: The size of the R-directory is due to source code. Addressing the size of the R directory would require creating a set of mutually dependent  packages. This would likely result in a larger footprint across the packages.  
+
+* checking HTML version of manual ... [37s] NOTE
+Skipping checking math rendering: package 'V8' unavailable
+
+**Maintainer**: This note only appeared on the Windows server test. I am not sure what the cause is, but it might be because a package was not available on rhub.
     
 * checking for detritus in the temp directory ... NOTE
 Found the following files/directories:
