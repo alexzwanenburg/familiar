@@ -621,20 +621,30 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- .train(object=object,
-                                                                       data=data,
-                                                                       get_additional_info=FALSE,
-                                                                       trim_model=FALSE,
-                                                                       anonymous=FALSE)
+              if(inherits(object@model, "anonymous")){
+                object <- .train(
+                  object=object,
+                  data=data,
+                  get_additional_info=FALSE,
+                  trim_model=FALSE,
+                  anonymous=FALSE
+                )
+                
+                # Check that the non-anonymous model is trained.
+                if(!model_is_trained(object)) return(callNextMethod())
+              }
               
               # Determine permutation variable importance
-              vimp_score <- randomForestSRC::vimp(object=object@model,
-                                                  importance="permute")$importance
+              vimp_score <- randomForestSRC::vimp(
+                object=object@model,
+                importance="permute"
+              )$importance
               
               # Check that the variable importance score is not empty.
               if(is_empty(vimp_score)) return(callNextMethod())
               
-              # The variable importance score for binomial and multinomial outcomes is per class
+              # The variable importance score for binomial and multinomial
+              # outcomes is per class
               if(is.matrix(vimp_score)){
                 vimp_score_names <- rownames(vimp_score)
                 vimp_score <- vimp_score[, 1]
@@ -644,10 +654,12 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               }
               
               # Create variable importance object.
-              vimp_object <- methods::new("vimpTable",
-                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
-                                          score_aggregation="max",
-                                          invert=TRUE)
+              vimp_object <- methods::new(
+                "vimpTable",
+                vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                score_aggregation="max",
+                invert=TRUE
+              )
               
               return(vimp_object)
               
@@ -655,16 +667,25 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- .train(object=object,
-                                                                       data=data,
-                                                                       get_additional_info=FALSE,
-                                                                       trim_model=FALSE,
-                                                                       anonymous=FALSE)
+              if(inherits(object@model, "anonymous")){
+                object <- .train(
+                  object=object,
+                  data=data,
+                  get_additional_info=FALSE,
+                  trim_model=FALSE,
+                  anonymous=FALSE
+                )
+                
+                # Check that the non-anonymous model is trained.
+                if(!model_is_trained(object)) return(callNextMethod())
+              }
               
               # Determine minimum depth variable importance
-              vimp_score <- randomForestSRC::var.select(object=object@model,
-                                                        method="md",
-                                                        verbose=FALSE)$md.obj$order
+              vimp_score <- randomForestSRC::var.select(
+                object=object@model,
+                method="md",
+                verbose=FALSE
+              )$md.obj$order
               
               # Check that the variable importance score is not empty.
               if(is_empty(vimp_score)) return(callNextMethod())
@@ -679,10 +700,12 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               }
               
               # Create variable importance object.
-              vimp_object <- methods::new("vimpTable",
-                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
-                                          score_aggregation="max",
-                                          invert=FALSE)
+              vimp_object <- methods::new(
+                "vimpTable",
+                vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                score_aggregation="max",
+                invert=FALSE
+              )
               
               return(vimp_object)
               
@@ -690,20 +713,29 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- .train(object=object,
-                                                                       data=data,
-                                                                       get_additional_info=FALSE,
-                                                                       trim_model=FALSE,
-                                                                       anonymous=FALSE)
+              if(inherits(object@model, "anonymous")){
+                object <- .train(
+                  object=object,
+                  data=data,
+                  get_additional_info=FALSE,
+                  trim_model=FALSE,
+                  anonymous=FALSE
+                )
+                
+                # Check that the non-anonymous model is trained.
+                if(!model_is_trained(object)) return(callNextMethod())
+              } 
               
               # Perform variable hunting
-              vimp_score <- randomForestSRC::var.select(object=object@model,
-                                                        method="vh",
-                                                        K=object@hyperparameters$fs_vh_fold,
-                                                        nstep=object@hyperparameters$fs_vh_step_size,
-                                                        nrep=object@hyperparameters$fs_vh_n_rep,
-                                                        verbose=FALSE,
-                                                        refit=FALSE)$varselect
+              vimp_score <- randomForestSRC::var.select(
+                object=object@model,
+                method="vh",
+                K=object@hyperparameters$fs_vh_fold,
+                nstep=object@hyperparameters$fs_vh_step_size,
+                nrep=object@hyperparameters$fs_vh_n_rep,
+                verbose=FALSE,
+                refit=FALSE
+              )$varselect
               
               # Check that the variable importance score is not empty.
               if(is_empty(vimp_score)) return(callNextMethod())
@@ -718,10 +750,12 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               }
               
               # Create variable importance object.
-              vimp_object <- methods::new("vimpTable",
-                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
-                                          score_aggregation="max",
-                                          invert=TRUE)
+              vimp_object <- methods::new(
+                "vimpTable",
+                vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                score_aggregation="max",
+                invert=TRUE
+              )
               
               return(vimp_object)
               
@@ -737,10 +771,12 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 warning("Variable importance using randomForestRFSRC::holdout.vimp requires more than 1 feature.")
                 
                 # Create variable importance object.
-                vimp_object <- methods::new("vimpTable",
-                                            vimp_table=data.table::data.table("score"=0.0, "name"=get_feature_columns(x=data)),
-                                            score_aggregation="max",
-                                            invert=TRUE)
+                vimp_object <- methods::new(
+                  "vimpTable",
+                  vimp_table=data.table::data.table("score"=0.0, "name"=get_feature_columns(x=data)),
+                  score_aggregation="max",
+                  invert=TRUE
+                )
                 
                 return(vimp_object)
               }
@@ -753,21 +789,27 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 # Creating a local instance of survival::Surv() prevents an
                 # error.
                 Surv <- survival::Surv
-                formula <- stats::reformulate(termlabels=feature_columns,
-                                              response=quote(Surv(outcome_time, outcome_event)))
-
+                formula <- stats::reformulate(
+                  termlabels=feature_columns,
+                  response=quote(Surv(outcome_time, outcome_event))
+                )
+                
               } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
-                formula <- stats::reformulate(termlabels=feature_columns,
-                                              response=quote(outcome))
+                formula <- stats::reformulate(
+                  termlabels=feature_columns,
+                  response=quote(outcome)
+                )
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
 
               # Get arguments for the holdout.vimp learner.
-              learner_arguments <- list(formula,
-                                        "data" = data@data,
-                                        "verbose"=FALSE)
+              learner_arguments <- list(
+                formula,
+                "data" = data@data,
+                "verbose"=FALSE
+              )
               
               # Get additional variables for the optimised learner.
               if(!is(object, "familiarRFSRCDefault")){
@@ -776,19 +818,23 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 sample_size <- ceiling(object@hyperparameters$sample_size * nrow(data@data))
                 sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
                 
-                learner_arguments <- c(learner_arguments,
-                                       list("mtry" = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
-                                            "samptype" = sample_type,
-                                            "sampsize" = sample_size,
-                                            "nodesize" = object@hyperparameters$node_size,
-                                            "nodedepth" = object@hyperparameters$tree_depth,
-                                            "nsplit" = object@hyperparameters$n_split,
-                                            "splitrule" = as.character(object@hyperparameters$split_rule)))
+                learner_arguments <- c(
+                  learner_arguments,
+                  list("mtry" = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
+                       "samptype" = sample_type,
+                       "sampsize" = sample_size,
+                       "nodesize" = object@hyperparameters$node_size,
+                       "nodedepth" = object@hyperparameters$tree_depth,
+                       "nsplit" = object@hyperparameters$n_split,
+                       "splitrule" = as.character(object@hyperparameters$split_rule))
+                )
               }
               
               # Perform holdout variable importance.
-              vimp_score <- do.call(randomForestSRC::holdout.vimp,
-                                    args=learner_arguments)$importance
+              vimp_score <- do.call(
+                randomForestSRC::holdout.vimp,
+                args=learner_arguments
+              )$importance
               
               # Check that the variable importance score is not empty.
               if(is_empty(vimp_score)) return(callNextMethod())
@@ -803,10 +849,12 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               }
               
               # Create variable importance object.
-              vimp_object <- methods::new("vimpTable",
-                                          vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
-                                          score_aggregation="max",
-                                          invert=TRUE)
+              vimp_object <- methods::new(
+                "vimpTable",
+                vimp_table=data.table::data.table("score"=vimp_score, "name"=vimp_score_names),
+                score_aggregation="max",
+                invert=TRUE
+              )
               
               return(vimp_object)
               
