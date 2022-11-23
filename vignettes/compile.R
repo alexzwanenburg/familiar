@@ -21,17 +21,3 @@ knitr::knit("vignettes/original/introduction.Rmd", output = "vignettes/introduct
 knitr::knit("vignettes/original/feature_selection.Rmd", output = "vignettes/feature_selection_precompiled.Rmd")
 knitr::knit("vignettes/original/learners.Rmd", output = "vignettes/learners_precompiled.Rmd")
 knitr::knit("vignettes/original/performance_metrics.Rmd", output = "vignettes/performance_metrics_precompiled.Rmd")
-
-# # Renders vignettes to the docs_github folder in GitHub-flavoured markdown.
-# # This is no longer necessary as README.md now points to the vignettes on CRAN.
-#
-# rmarkdown::render('vignettes/introduction_precompiled.Rmd', output_format="rmarkdown::github_document", output_file='../docs_github/github_introduction.md')
-# rmarkdown::render('vignettes/feature_selection_precompiled.Rmd', output_format="rmarkdown::github_document", output_file='../docs_github/github_feature_selection.md')
-# rmarkdown::render('vignettes/learners_precompiled.Rmd', output_format="rmarkdown::github_document", output_file='../docs_github/github_learners.md')
-# rmarkdown::render('vignettes/performance_metrics_precompiled.Rmd', output_format="rmarkdown::github_document", output_file='../docs_github/github_performance_metrics.md')
-# rmarkdown::render("vignettes/prospective_use_precompiled.Rmd", output_format="rmarkdown::github_document", output_file='../docs_github/github_prospective_use.md')
-# rmarkdown::render("vignettes/evaluation_and_explanation_precompiled.Rmd", output_format="rmarkdown::github_document", output_file='../docs_github/github_evaluation_and_explanation.md')
-# 
-# # Copy image files to docs_github
-# file.copy("vignettes/eval_and_explain", "docs_github", recursive=TRUE)
-# file.copy("vignettes/prospective_use", "docs_github", recursive=TRUE)
