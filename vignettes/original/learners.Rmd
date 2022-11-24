@@ -500,6 +500,10 @@ the exploration method.
 established by further exploring the hyperparameter space, the total number of
 iterations has been reached, or bootstraps samples have been exhausted.
 
+- If the best set of hyperparameters does not lead to a model that exceeds
+performance of a naive model, e.g. one that always predicts the majority class
+or median value, a naive model is trained instead.
+
 ## Predicting run time of model
 
 Models take a certain time to train. Familiar is actively measuring this time
@@ -597,6 +601,24 @@ hyperparameter sets]) is used to predict the expected optimisation score
 $\mu(\mathbf{x})$ and its standard deviation $\sigma(\mathbf{x})$. Then
 $s = \mu(\mathbf{x}) - \sigma(\mathbf{x})$. This penalises hyperparameter sets
 for which a large variance is expected. Not available for random search.
+
+8. `model_balanced_estimate`: The optimisation score for each bootstrap
+subsample is $s'=s''_{\textrm{OOB}} - \left| s''_{\textrm{OOB}} - s''_{\textrm{IB}} \right|$.
+The model used to infer utility of new hyperparameter sets (see the next section
+[Predicting optimisation score for new hyperparameter sets]) is used to predict
+the expected optimisation score $\mu(\mathbf{x})$. This score is used as summary
+score $s$. The method is similar to `model_estimate`, but predicts the balanced
+score instead of the validation score. Not available for random search.
+
+9. `model_balanced_estimate_minus_sd`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}} - \left| s''_{\textrm{OOB}} - s''_{\textrm{IB}} \right|$. 
+The model used to infer utility of new hyperparameter sets (see the next section
+[Predicting optimisation score for new hyperparameter sets]) is used to predict
+the expected optimisation score $\mu(\mathbf{x})$ and its standard deviation
+$\sigma(\mathbf{x})$. Then $s = \mu(\mathbf{x}) - \sigma(\mathbf{x})$. This
+penalises hyperparameter sets for which a large variance is expected. The method
+is similar to `model_estimate_minus_sd`, but predicts the balanced score and its
+variance instead. Not available for random search.
 
 The summary score is then used to select the best known hyperparameter set, i.e.
 the set that maximises the summary score. Moreover, the optimisation scores are
@@ -721,8 +743,15 @@ new bootstrap data, compared, and then trained on another set of bootstraps, and
 so on. Pruning the set of challenger hyperparameters after each iteration
 reduces computational load. Familiar implements the following methods:
 
-- `successive_halving` (default): The set of alternative parameter sets is
-pruned by removing the worst performing half of the sets after each step
+- `single_shot` (default): The set of alternative parameter sets is not pruned,
+and each intensify iteration contains only a single (initial) intensification
+step that only uses a single bootstrap. This is the exploration method that
+under default settings does the least in-depth exploration, with the advantage
+of being fast. Extensive internal tests show that this exploration method yields
+similarly performant models as more extensive exploration methods.
+
+- `successive_halving`: The set of alternative parameter sets is pruned by
+removing the worst performing half of the sets after each step
 [@Jamieson2016-fq]. The set of investigated parameter sets gets progressively
 smaller.
 
@@ -730,7 +759,9 @@ smaller.
 comparing the performance of each parameter set with that of the incumbent best
 parameter set using a paired Wilcoxon test.
 
-- `none`: The set of alternative parameter sets is not pruned.
+- `none`: The set of alternative parameter sets is not pruned. Compared to
+`single_shot`, hyperparameter sets are assessed using multiple bootstraps
+(`smbo_step_bootstraps` * `smbo_intensify_steps`).
 
 The method used to steer exploration can be set using the `exploration_method`
 parameter.
@@ -775,7 +806,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_n_random_sets` | Sets the number of hyperparameter sets drawn for initialisation. Ignored if `smbo_random_initialisation` is `fixed`. If `smbo_random_initialisation` is `fixed_subsample`, the number of selected hyperparameters may be lower. | `100` |
 | `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm. | `20` |
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
-| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | between `0.01` and `0.001` |
+| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | `0.1 * 1 / sqrt(n_samples)` |
 | `smbo_time_limit` | Time limit (in minutes) for the optimisation process. | `NULL` |
 | `smbo_initial_bootstraps` | Number of bootstraps assessed initially. | `1` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
@@ -784,7 +815,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
 | `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
-| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `successive_halving` |
+| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `single_shot` |
 | `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning. | `0.05` |
 | `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. | `TRUE` |
 

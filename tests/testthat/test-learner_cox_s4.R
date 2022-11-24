@@ -96,6 +96,8 @@ testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 
 # Test hyperparameters
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_cox_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
+familiar:::test_hyperparameter_optimisation(
+  learners=familiar:::.get_available_cox_learners(show_general=TRUE),
+  debug=FALSE,
+  parallel=FALSE
+)

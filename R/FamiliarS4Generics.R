@@ -244,6 +244,8 @@ setGeneric("get_default_hyperparameters", function(object, ...) standardGeneric(
 
 setGeneric("..train", function(object, data, ...) standardGeneric("..train"))
 
+setGeneric("..train_naive", function(object, data, ...) standardGeneric("..train_naive"))
+
 setGeneric("..predict", function(object, data, ...) standardGeneric("..predict"))
 
 setGeneric("..predict_survival_probability", function(object, data, time, ...) standardGeneric("..predict_survival_probability"))
@@ -274,6 +276,7 @@ setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
 
 setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
 
+setGeneric("requires_naive_model", function(object, ...) standardGeneric("requires_naive_model"))
 
 ##### familiarNoveltyDetector methods #####
 setGeneric("promote_detector", function(object, ...) standardGeneric("promote_detector"))

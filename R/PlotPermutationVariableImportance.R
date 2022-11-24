@@ -252,7 +252,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             }
 
             # ggtheme
-            if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+            ggtheme <- .check_ggtheme(ggtheme)
             
             # conf_int_style
             if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)

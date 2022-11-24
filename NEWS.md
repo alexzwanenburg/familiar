@@ -1,3 +1,37 @@
+# Version 1.4.0 (Misanthropic Muskrat)
+
+## Major changes
+
+- Hyperparameter optimisation now trains naive models if none of the hyperparameter sets lead to models that perform better than these models. Previously a model was trained regardless of whether such a model would actually be better than a naive model. Naive models, for example, predict the majority class or median value, depending on the problem.
+
+## Minor changes
+
+- Metrics for assessing performance of regression models, such as mean squared error, can now be computed in winsorised or trimmed (truncated) forms. These can be specified by appending `_winsor` or `_trim` as a suffix to the metric name. Winsorising clips the predicted values for 5% of the instances with the most extreme absolute errors prior to computing the performance metric, whereas trimming removes these instances. The result of either option is that for many metrics, the assessed model performance is less skewed by rare outliers.
+
+- Two additional optimisation functions were defined to assess suitability of hyperparameter sets:
+
+  - `model_balanced_estimate`: seeks to maximise the estimate of the balanced IB and OOB score. This is similar to the `balanced` score, and in fact uses a hyperparameter learner to predict said score (not available for random search).
+  
+  - `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the balanced IB and OOB score, minus its estimated standard deviation. This is similar to the `balanced` score, but takes into account its estimated spread. Note that like `model_estimate_minus_sd`, the width of the distribution of balanced scores is more difficult to determine than its estimate.
+
+- The `balanced` optimisation function now adds a penalty when the trained model on the training data performs worse then a naive model.
+
+- A new exploration method for hyperparameter optimisation was added, namely `single_shot`. As the name suggests, this performs a single pass on the challenger and incumbent models during each intensification iteration. This is also the new default. Extensive tests have shown that the use of single-shot selection led to comparable performance.
+
+- Convergence checks for hyperparameter sets now depend on the validation optimisation score, as this is more stable than the summary score for some `optimisation_function` methods, such as `model_estimate_minus_sd`. More over the tolerance has been changed to allow for values above `0.01` for sample sizes smaller than `100`. This prevents convergence issues where the expected statistical fluctuation for small sample sizes would easily break convergence checks, and hence force long searches for suitable hyperparameters.
+
+- The default familiar plotting theme is now exported as `theme_familiar`. This allows for changing tweaking the default theme, for example, setting a larger font size, or selecting a different font family. After making changing to theme, it can be provided as the `ggtheme` argument.
+
+## Bug fixes
+
+- `ggtheme` is now checked for completeness, which prevents errors with unclear causes or solutions.
+
+- We previously checked that any coefficients of a regression model could be estimated. This could lead to large models being formed where all features were insufficiently converged, even if this led to a meaningless model. We now check that all (instead of any) coefficients could be estimated for GLM, Cox and survival regression models.
+
+- Fixed an error caused by unsuccessfully retraining an anonymous random forest for variable importance estimations.
+
+- Fixed errors due to introduction of `linewidth` elements in version 3.4.0 of `ggplot2`. Versions of `ggplot2` prior to 3.4.0 are still supported.
+
 # Version 1.3.0 (Loquacious Limpet)
 
 ## Major changes

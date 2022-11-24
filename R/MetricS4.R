@@ -575,28 +575,36 @@ metric.compute_optimisation_score <- function(score_table,
   optimisation_score <- training <- validation <- NULL
   
   # Select the correct optimisation function.
-  optimisation_fun <- switch(optimisation_function,
-                             "max_validation" = metric.optim_score.max_validation,
-                             "validation" = metric.optim_score.max_validation,
-                             "balanced" = metric.optim_score.balanced,
-                             "stronger_balance" = metric.optim_score.stronger_balance,
-                             "validation_minus_sd" = metric.optim_score.max_validation,
-                             "validation_25th_percentile" = metric.optim_score.max_validation,
-                             "model_estimate" = metric.optim_score.max_validation,
-                             "model_estimate_minus_sd" = metric.optim_score.max_validation)
+  optimisation_fun <- switch(
+    optimisation_function,
+    "max_validation" = metric.optim_score.max_validation,
+    "validation" = metric.optim_score.max_validation,
+    "balanced" = metric.optim_score.balanced,
+    "stronger_balance" = metric.optim_score.stronger_balance,
+    "validation_minus_sd" = metric.optim_score.max_validation,
+    "validation_25th_percentile" = metric.optim_score.max_validation,
+    "model_estimate" = metric.optim_score.max_validation,
+    "model_estimate_minus_sd" = metric.optim_score.max_validation,
+    "model_balanced_estimate" = metric.optim_score.balanced,
+    "model_balanced_estimate_minus_sd" = metric.optim_score.balanced
+  )
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
                           c("param_id", "run_id"))
   
   # Create formula
-  formula <- stats::reformulate(termlabels="data_set",
-                                response=paste0(c(id_columns, "metric"), collapse=" + "))
+  formula <- stats::reformulate(
+    termlabels="data_set",
+    response=paste0(c(id_columns, "metric"), collapse=" + ")
+  )
   
   # Cast objective score wide by data_set.
-  optimisation_table <- data.table::dcast(data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
-                                          formula,
-                                          value.var="objective_score")
+  optimisation_table <- data.table::dcast(
+    data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
+    formula,
+    value.var="objective_score"
+  )
   
   # Compute optimisation score based on objective scores.
   optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_fun(training=training,
@@ -604,7 +612,7 @@ metric.compute_optimisation_score <- function(score_table,
                                            by=c(id_columns, "metric")]
   
   # Replace NA entries with the minimum optimisation score.
-  if(replace_na) optimisation_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  if(replace_na) optimisation_table[is.na(optimisation_score), optimisation_score:=..get_replacement_optimisation_score()]
   
   # Average optimisation score over metrics.
   optimisation_table <- optimisation_table[, list("optimisation_score"=mean(optimisation_score, na.rm=TRUE)),
@@ -647,18 +655,58 @@ metric.summarise_optimisation_score <- function(score_table, method, replace_na=
                              by=id_columns]
   
   # Replace NA entries with the minimum optimisation score.
-  if(replace_na) score_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  if(replace_na) score_table[is.na(optimisation_score), optimisation_score:=..get_replacement_optimisation_score()]
   
   return(score_table)
 }
 
 
 
-metric.optim_score.max_validation <- function(training=NULL, validation) return(validation)
+metric.optim_score.max_validation <- function(training=NULL, validation){
+  return(validation)
+} 
 
-metric.optim_score.balanced <- function(training, validation) return(validation - abs(validation - training))
 
-metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
+
+metric.optim_score.balanced <- function(training, validation){
+  # Start with the validation score.
+  value <- validation
+  
+  # Penalise by difference between training and validation.
+  value <- value - abs(validation - training)
+  
+  # Check that the value is finite.
+  if(!is.finite(value)) return(value)
+  
+  # Add penalty term to models that perform worse than naive models on the
+  # training data, i.e. have a objective score below 0.0. We could also write
+  # value + training, but I think this way its clearer that a penalty is
+  # intended.
+  if(training < 0.0) value <- value - abs(training)
+  
+  return(value) 
+}
+
+
+
+metric.optim_score.stronger_balance <- function(training, validation){
+  # Start with the validation score.
+  value <- validation
+  
+  # Penalise by difference between training and validation.
+  value <- value - 2.0 * abs(validation - training)
+  
+  # Check that the value is finite.
+  if(!is.finite(value)) return(value)
+  
+  # Add penalty term to models that perform worse than naive models on the
+  # training data, i.e. have a objective score below 0.0. We could also write
+  # value + training, but I think this way its clearer that a penalty is
+  # intended.
+  if(training < 0.0) value <- value - 5.0 * abs(training)
+  
+  return(value)
+}
 
 
 .get_available_optimisation_functions <- function(hyperparameter_learner=NULL){
@@ -666,7 +714,7 @@ metric.optim_score.stronger_balance <- function(training, validation) return(val
   # All optimisation functions.
   all_optimisation_functions <- c("validation", "max_validation", "balanced", "stronger_balance",
                                   "validation_minus_sd", "validation_25th_percentile", "model_estimate",
-                                  "model_estimate_minus_sd")
+                                  "model_estimate_minus_sd", "model_balanced_estimate", "model_balanced_estimate_minus_sd")
   
   if(is.null(hyperparameter_learner)){
     return(all_optimisation_functions)
@@ -675,8 +723,14 @@ metric.optim_score.stronger_balance <- function(training, validation) return(val
     # Random search does not return an estimate that can be used for
     # optimisation.
     return(setdiff(all_optimisation_functions,
-                   c("model_estimate", "model_estimate_minus_sd")))
+                   c("model_estimate", "model_estimate_minus_sd", 
+                     "model_balanced_estimate", "model_balanced_estimate_minus_sd")))
   }
   
   return(all_optimisation_functions)
+}
+
+
+..get_replacement_optimisation_score <- function(){
+  return(-9.0)
 }

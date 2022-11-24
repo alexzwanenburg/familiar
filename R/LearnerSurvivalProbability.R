@@ -78,7 +78,28 @@ learner.survival_probability_relative_risk <- function(object, data, time){
   # test. It avoids recalculating the baseline hazard. Following Demler,
   # Paynter and Cook. (Stat. Med. 2015), we compute the survival probability
   # at t=time_max for each sample.
-  predicted_risks <- prediction_table$predicted_outcome
+  survival_probabilities <- ..survival_probability_relative_risk(
+    object=object,
+    relative_risk=prediction_table$predicted_outcome,
+    time=time
+  )
+  
+  # Updated the prediction table
+  prediction_table[, ":="("predicted_outcome"=NULL,
+                          "survival_probability"=survival_probabilities)]
+  
+  return(prediction_table)
+}
+
+
+
+..survival_probability_relative_risk <- function(object, relative_risk, time){
+  # Survival in the group is based on proportional hazards assumption, and
+  # uses baseline cumulative hazard and the group's predicted relative risks.
+  # This evaluation comes in handy when performing, e.g. the Nam-D'Agostino
+  # test. It avoids recalculating the baseline hazard. Following Demler,
+  # Paynter and Cook. (Stat. Med. 2015), we compute the survival probability
+  # at t=time_max for each sample.
   
   # Interpolate the baseline survival function at the fitting times
   baseline_surv <- stats::approx(x=object@calibration_info$time,
@@ -88,11 +109,5 @@ learner.survival_probability_relative_risk <- function(object, data, time){
                                  rule=2)$y
   
   # Create a n_sample x n_times matrix
-  survival_probs <- sapply(predicted_risks, function(rr, s0) (s0^rr), s0=baseline_surv)
-  
-  # Updated the prediction table
-  prediction_table[, ":="("predicted_outcome"=NULL,
-                          "survival_probability"=survival_probs)]
-  
-  return(prediction_table)
+  return(sapply(relative_risk, function(rr, s0) (s0^rr), s0=baseline_surv))
 }

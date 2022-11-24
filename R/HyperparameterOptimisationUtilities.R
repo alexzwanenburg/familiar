@@ -290,7 +290,8 @@
   
   if(object@fs_method %in% .get_available_random_vimp_methods() |
      object@fs_method %in% .get_available_none_vimp_methods() | 
-     object@fs_method %in% .get_available_signature_only_vimp_methods()) return(NULL)
+     object@fs_method %in% .get_available_signature_only_vimp_methods() |
+     object@fs_method %in% .get_available_no_features_vimp_methods()) return(NULL)
   
   # Check if the code is called downstream from summon_familiar.
   is_main_process <- !inherits(tryCatch(get_file_paths(), error=identity), "error")
@@ -580,7 +581,7 @@
   .NATURAL <- NULL
   
   if(is_empty(score_table)) return(NULL)
-  
+
   # Compute optimisation score.
   optimisation_score_table <- metric.compute_optimisation_score(score_table=score_table,
                                                                 optimisation_function=optimisation_function)
@@ -631,14 +632,13 @@
                                "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
-    
   } else if(optimisation_function %in% c("validation_25th_percentile")){
     # Summary score is formed by the 25th percentile of the optimisation scores.
     data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE, na.rm=TRUE),
                                "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
-  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd")){
+  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd", "model_balanced_estimate", "model_balanced_estimate_minus_sd")){
     # Model based summary scores. The main difference with other optimisation
     # functions is that a hyperparameter model is used to both infer the summary
     # scores and the score estimate.
@@ -654,7 +654,7 @@
     # Model was successfully trained.
     prediction_table <- .predict(object=optimisation_model,
                                  data=parameter_data,
-                                 type=ifelse(optimisation_function=="model_estimate", "default", "sd"))
+                                 type=ifelse(optimisation_function %in% c("model_estimate", "model_balanced_estimate"), "default", "sd"))
     
     # Check the prediction table has returned sensible information.
     if(any(is.finite(prediction_table$mu))){
@@ -668,14 +668,14 @@
                     all.y=FALSE,
                     by="param_id")
       
-      if(optimisation_function == "model_estimate"){
+      if(optimisation_function %in% c("model_estimate", "model_balanced_estimate")){
         # Copy mu as score estimate.
         data[, "score_estimate":=mu]
         
         # Rename mu to summary_score.
         data.table::setnames(data, old="mu", new="summary_score")
         
-      } else if(optimisation_function == "model_estimate_minus_sd"){
+      } else if(optimisation_function %in% c("model_estimate_minus_sd", "model_balanced_estimate_minus_sd")){
         # Compute summary score.
         data[, "summary_score":=mu - sigma]
         
@@ -692,16 +692,17 @@
                     score_estimate=NA_real_)]
       }
       
-    } else if(optimisation_function == "model_estimate"){
+    } else if(optimisation_function %in% c("model_estimate", "model_balanced_estimate")){
       # In absence of suitable data, use the model-less equivalent of
-      # model_estimate, namely "validation".
+      # model_estimate or model_balanced_estimate, namely "validation".
       data <- score_table[, list("summary_score"=mean(optimisation_score, na.rm=TRUE),
                                  "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]
       
-    } else if(optimisation_function == "model_estimate_minus_sd"){
+    } else if(optimisation_function %in% c("model_estimate_minus_sd", "model_balanced_estimate_minus_sd")){
       # In absence of suitable data, use the model-less equivalent of
-      # model_estimate_minus_sd, namely "validation_minus_sd".
+      # model_estimate_minus_sd or model_balanced_estimate_minus_sd,
+      # namely "validation_minus_sd".
       data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
                                  "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]
@@ -718,8 +719,8 @@
   data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
   
   # Update missing scores.
-  data[!is.finite(summary_score), "summary_score":=-1.0]
-  data[!is.finite(score_estimate), "score_estimate":=-1.0]
+  data[!is.finite(summary_score), "summary_score":=..get_replacement_optimisation_score()]
+  data[!is.finite(score_estimate), "score_estimate":=..get_replacement_optimisation_score()]
   
   return(data)
 }
@@ -785,117 +786,123 @@ get_best_hyperparameter_set <- function(score_table,
   
   # Extract and update summary score and score estimate
   summary_score <- data$summary_score
-  if(!is.finite(summary_score)) summary_score <- -1.0
+  if(!is.finite(summary_score)) summary_score <- ..get_replacement_optimisation_score()
   
   score_estimate <- data$score_estimate
-  if(!is.finite(score_estimate)) score_estimate <- -1.0
+  if(!is.finite(score_estimate)) score_estimate <- ..get_replacement_optimisation_score()
   
-  # Extract the summary score, score estimate, and time taken, and return with
-  # other information.
-  return(list("param_id"=data$param_id,
-              "t"=t,
-              "time"=data$time_taken,
-              "max_time"=max_time,
-              "summary_score"=summary_score,
-              "score_estimate"=score_estimate,
-              "n"=n_max_bootstraps))
+  if(!"optimisation_score" %in% colnames(score_table)){
+    # Compute mean validation score as a summary score, as well as mean validation
+    # scores of the raw metric values.
+    additional_scores <- .compute_hyperparameter_additional_scores(score_table=score_table[param_id %in% data$param_id])
+    
+    # Merge additional scores with summary data and sort again to prevent any
+    # merge issues.
+    data <- merge(x=data,
+                  y=additional_scores,
+                  by="param_id")
+    data <- data[order(-summary_score)]
+    
+    # Find metric columns
+    metric_columns <- unique(score_table$metric)
+    
+    # Extract the summary score, score estimate, and time taken, and return with
+    # other information.
+    return(list(
+      "param_id"=data$param_id,
+      "t"=t,
+      "time"=data$time_taken,
+      "max_time"=max_time,
+      "summary_score"=summary_score,
+      "score_estimate"=score_estimate,
+      "validation_score"=data$validation_score,
+      "metric_score"=data[, mget(c(metric_columns))],
+      "n"=n_max_bootstraps)
+    )
+    
+  } else {
+    return(list(
+      "param_id"=data$param_id,
+      "t"=t,
+      "time"=data$time_taken,
+      "max_time"=max_time,
+      "summary_score"=summary_score,
+      "score_estimate"=score_estimate,
+      "n"=n_max_bootstraps)
+    )
+  }
 }
 
 
 
-# ..get_acquisition_function_parameters <- function(optimisation_score_table,
-#                                                   acquisition_function,
-#                                                   n_max_bootstraps){
-#   # Determine optimal score.
-#   best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-#                                                            acquisition_function=acquisition_function,
-#                                                            n=1L)
-#   
-#   # Determine the optimal parameter score tau.
-#   tau <- best_hyperparameter_set$optimisation_score
-#   
-#   # Determine time corresponding to the best parameter set.
-#   time <- best_hyperparameter_set$time_taken
-#   
-#   # Determine round t.
-#   t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
-#   
-#   # Determine maximum time that can be countenanced.
-#   max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
-#   
-#   # Check that the maximum time is not trivially small (i.e. less than 10
-#   # seconds).
-#   if(is.na(max_time)){
-#     max_time <- Inf
-#   } else if(max_time < 10.0) {
-#     max_time <- 10.0
-#   }
-#   
-#   return(list("t"=t,
-#               "time"=time,
-#               "max_time"=max_time,
-#               "tau"=tau,
-#               "n"=n_max_bootstraps))
-# }
+.compute_hyperparameter_additional_scores <- function(score_table){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  data_set <- optimisation_score <- value <- NULL
+  
+  # Compute mean validation score, which is the typical objective score for
+  # hyperparameter optimisation.
+  mean_validation_scores <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                                       optimisation_function="validation")
+  mean_validation_scores <- mean_validation_scores[,
+                                                   list("validation_score"=mean(optimisation_score, na.rm=TRUE)),
+                                                   by=c("param_id")]
+  
+  # Compute mean metric values.
+  mean_metric_scores <- score_table[data_set == "validation",
+                                    list("average_metric_value"=mean(value, na.rm=TRUE)),
+                                    by=c("param_id", "metric")]
+  mean_metric_scores <- data.table::dcast(mean_metric_scores, param_id ~ metric, value.var="average_metric_value")
+  
+  return(merge(x=mean_validation_scores,
+               y=mean_metric_scores,
+               by="param_id"))
+}
 
 
 
-# ..get_best_hyperparameter_set <- function(optimisation_score_table,
-#                                           acquisition_function,
-#                                           n=1L){
-#   # Find the best configurations based on the optimisation score
-#   
-#   # Suppress NOTES due to non-standard evaluation in data.table
-#   optimisation_score <- time_taken <- .NATURAL <- NULL
-#   
-#   # Compute time taken.
-#   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
-#   
-#   # Compute the summary score per parameter id.
-#   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
-#                                                        method=acquisition_function)
-#   
-#   # Join with time table.
-#   summary_table <- summary_table[time_table, on=.NATURAL]
-#   
-#   # Sort by decreasing optimisation score.
-#   summary_table <- summary_table[order(-optimisation_score)]
-#   
-#   # Average objective score over known available in the score table.
-#   best_parameter_data <- head(summary_table, n=n)
-#   
-#   return(best_parameter_data)
-# }
-
-
-
-..parse_hyperparameters_to_string <- function(id, parameter_table, parameter_list){
+..parse_optimisation_summary_to_string <- function(parameter_set,
+                                                   parameter_table,
+                                                   parameter_list){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
   
-  # Initialise an empty string
-  parameter_string <- character(0)
+  # Set up string.
+  message_str <- character(0L)
   
-  # Iterate through parameter list and identify parameters that are being optimised
+  # Add summary score.
+  message_str <- c(message_str,
+                   paste0("summary score: ", sprintf("%.4f", parameter_set$summary_score[1])))
+  
+  # Add validation optimisation score.
+  message_str <- c(message_str,
+                   paste0("validation optimisation score: ", sprintf("%.4f", parameter_set$validation_score[1])))
+  
+  
+  # Add metric scores.
+  for(metric in colnames(parameter_set$metric_score)){
+    message_str <- c(message_str,
+                     paste0(metric, ": ", sprintf("%.4f", parameter_set$metric_score[[metric]][1])))
+  }
+  
+  # Add hyperparameters. Iterate through parameter list and identify parameters
+  # that are being optimised.
   for(current_parameter in names(parameter_list)){
     
     # Check if the current parameter is randomised.
     if(parameter_list[[current_parameter]]$randomise==TRUE){
       # Determine the value of the parameter for the set identified by the id
       # variable.
-      optimal_value <- parameter_table[param_id==id, ][[current_parameter]][1]
+      optimal_value <- parameter_table[param_id==parameter_set$param_id, ][[current_parameter]][1]
       
       # Append to string.
-      parameter_string <- c(parameter_string,
-                            paste0(current_parameter, ": ", optimal_value))
+      message_str <- c(message_str,
+                       paste0(current_parameter, ": ", optimal_value))
     }
   }
   
-  # Concatenate all separate strings into one string.
-  parameter_string <- paste(parameter_string, collapse="; ")
-  
-  return(parameter_string)
+  return(paste0(message_str, collapse="; "))
 }
 
 
@@ -904,9 +911,10 @@ get_best_hyperparameter_set <- function(score_table,
                                                                    stop_data=NULL,
                                                                    tolerance=1E-2){
   
-  # Store the summary score. Note that the latest score is always appended.
-  summary_scores <- c(stop_data$score,
-                      set_data$summary_score)
+  # Store the validation score of the incumbent set. Note that the latest score
+  # is always appended.
+  validation_scores <- c(stop_data$score,
+                         set_data$validation_score)
   
   # Store the parameter id of the incumbent set. Note that the most recent
   # hyperparameter set identifier is always appended.
@@ -937,9 +945,9 @@ get_best_hyperparameter_set <- function(score_table,
   
   # Assess convergence of the summary scores. This is skipped on the first
   # run-through.
-  if(length(summary_scores) >= 2){
+  if(length(validation_scores) >= 2){
     # Compute absolute deviation from the mean.
-    max_abs_deviation <- max(abs(tail(summary_scores, n=3L) - mean(tail(summary_scores, n=3L))))
+    max_abs_deviation <- max(abs(tail(validation_scores, n=3L) - mean(tail(validation_scores, n=3L))))
     
     if(is.na(max_abs_deviation)){
       convergence_counter_score <- 0L
@@ -951,12 +959,27 @@ get_best_hyperparameter_set <- function(score_table,
       convergence_counter_score <- 0L
     }
   }
+
+  # Read the no-naive-improvement counter. Can be NULL initially. This reduces
+  # needless search for meaningless hyperparameter sets.
+  no_naive_improvement_counter <- stop_data$no_naive_improvement_counter
+  if(is.null(no_naive_improvement_counter)) no_naive_improvement_counter <- 0L
+  
+  if(set_data$validation_score <= 0){
+    # The best known model does not predict better than a naive_model.
+    no_naive_improvement_counter <- no_naive_improvement_counter + 1L
+    
+  } else {
+    # The best known model predicts better than a naive model.
+    no_naive_improvement_counter <- 0L
+  }
   
   # Return list with stopping parameters.
-  return(list("score"=summary_scores,
+  return(list("score"=validation_scores,
               "parameter_id"=incumbent_parameter_id,
               "convergence_counter_score" = convergence_counter_score,
-              "convergence_counter_parameter_id" = convergence_counter_parameter_id))
+              "convergence_counter_parameter_id" = convergence_counter_parameter_id,
+              "no_naive_improvement_counter"= no_naive_improvement_counter))
 }
 
 
@@ -1017,6 +1040,9 @@ get_best_hyperparameter_set <- function(score_table,
   # equals none, we select up to n_intensify_step_bootstraps of new runs.
   if(exploration_method == "none"){
     n_new_runs <- n_intensify_step_bootstraps
+    
+  } else if(exploration_method == "single_shot"){
+    n_new_runs <- 1L
     
   } else {
     n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 3)))
@@ -1135,7 +1161,7 @@ get_best_hyperparameter_set <- function(score_table,
     # Select parameter identifiers with p-values above the thresholds.
     param_id_challenger_new <- p_value_table[p_value > intensify_stop_p_value, ]$param_id
     
-  } else if(exploration_method == "none"){
+  } else if(exploration_method %in% c("none", "single_shot")){
     # Keep the incumbent set.
     param_id_incumbent_new <- parameter_id_incumbent
     

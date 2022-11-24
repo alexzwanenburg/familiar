@@ -632,7 +632,7 @@
 #'   analyses can be done by obtaining one or more `familiarModel` objects from
 #'   others and applying them to your own data set.
 #'
-#'   Alternatively, the `experiment_design` parameter may be used to provide a
+#'   Alternatively, the `experimental_design` parameter may be used to provide a
 #'   path to a file containing iterations, which is named `####_iterations.RDS`
 #'   by convention. This path can be relative to the directory of the current
 #'   experiment (`experiment_dir`), or an absolute path. The absolute path may
@@ -2343,8 +2343,9 @@
 #' @param smbo_stop_tolerance (*optional*) Tolerance for early stopping due to
 #'   convergent optimisation score.
 #'
-#'   The default value depends on the number of samples (at the series level),
-#'   ranging from `0.01` for 100 or fewer samples, to `0.001` for 10000 or more
+#'   The default value depends on the square root of the number of samples (at
+#'   the series level), and is `0.01` for 100 samples. This value is computed as
+#'   `0.1 * 1 / sqrt(n_samples)`. The upper limit is `0.0001` for 1M or more
 #'   samples.
 #' @param smbo_time_limit (*optional*) Time limit (in minutes) for the
 #'   optimisation process. Optimisation is stopped after this limit is exceeded.
@@ -2427,7 +2428,17 @@
 #'   * `model_estimate_minus_sd`: seeks to maximise the OOB score estimate minus
 #'   its estimated standard deviation, as predicted by the hyperparameter
 #'   learner (not available for random search).
-#'
+#'   
+#'   * `model_balanced_estimate`: seeks to maximise the estimate of the balanced
+#'   IB and OOB score. This is similar to the `balanced` score, and in fact uses
+#'   a hyperparameter learner to predict said score (not available for random
+#'   search).
+#'   
+#'   * `model_balanced_estimate_minus_sd`: seeks to maximise the estimate of the
+#'   balanced IB and OOB score, minus its estimated standard deviation. This is
+#'   similar to the `balanced` score, but takes into account its estimated
+#'   spread.
+#'   
 #'   Additional detail are provided in the *Learning algorithms and
 #'   hyperparameter optimisation* vignette.
 #'
@@ -2493,7 +2504,12 @@
 #'   controls how the set of alternative parameter sets is pruned after each
 #'   step in an iteration. Can be one of the following:
 #'
-#'   * `successive_halving` (default): The set of alternative parameter sets is
+#'   * `single_shot` (default): The set of alternative parameter sets is not
+#'   pruned, and each intensification iteration contains only a single
+#'   intensification step that only uses a single bootstrap. This is the fastest
+#'   exploration method, but only superficially tests each parameter set.
+#'
+#'   * `successive_halving`: The set of alternative parameter sets is
 #'   pruned by removing the worst performing half of the sets after each step
 #'   (Jamieson and Talwalkar, 2016).
 #'
@@ -2552,28 +2568,30 @@
 #'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 #' @md
 #' @keywords internal
-.parse_hyperparameter_optimisation_settings <- function(config=NULL,
-                                                        parallel,
-                                                        outcome_type,
-                                                        optimisation_bootstraps=waiver(),
-                                                        optimisation_determine_vimp=waiver(),
-                                                        smbo_random_initialisation=waiver(),
-                                                        smbo_n_random_sets = waiver(),
-                                                        max_smbo_iterations=waiver(),
-                                                        smbo_stop_convergent_iterations=waiver(),
-                                                        smbo_stop_tolerance=waiver(),
-                                                        smbo_time_limit=waiver(),
-                                                        smbo_initial_bootstraps=waiver(),
-                                                        smbo_step_bootstraps=waiver(),
-                                                        smbo_intensify_steps=waiver(),
-                                                        smbo_stochastic_reject_p_value=waiver(),
-                                                        optimisation_function=waiver(),
-                                                        optimisation_metric=waiver(),
-                                                        acquisition_function=waiver(),
-                                                        exploration_method=waiver(),
-                                                        hyperparameter_learner=waiver(),
-                                                        parallel_hyperparameter_optimisation=waiver(),
-                                                        ...){
+.parse_hyperparameter_optimisation_settings <- function(
+    config=NULL,
+    parallel,
+    outcome_type,
+    optimisation_bootstraps=waiver(),
+    optimisation_determine_vimp=waiver(),
+    smbo_random_initialisation=waiver(),
+    smbo_n_random_sets = waiver(),
+    max_smbo_iterations=waiver(),
+    smbo_stop_convergent_iterations=waiver(),
+    smbo_stop_tolerance=waiver(),
+    smbo_time_limit=waiver(),
+    smbo_initial_bootstraps=waiver(),
+    smbo_step_bootstraps=waiver(),
+    smbo_intensify_steps=waiver(),
+    smbo_stochastic_reject_p_value=waiver(),
+    optimisation_function=waiver(),
+    optimisation_metric=waiver(),
+    acquisition_function=waiver(),
+    exploration_method=waiver(),
+    hyperparameter_learner=waiver(),
+    parallel_hyperparameter_optimisation=waiver(),
+    ...){
+  
   settings <- list()
   
   ##### smbo_random_initialisation #############################################
@@ -2711,21 +2729,25 @@
                                var_name="smbo_stop_convergent_iterations",
                                range=c(1, Inf))
   
-  ##### smbo_stop_tolerance ####################################################
+  #### smbo_stop_tolerance -----------------------------------------------------
   # Convergence tolerance
-  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance,
-                                                   x_var=smbo_stop_tolerance,
-                                                   var_name="smbo_stop_tolerance",
-                                                   type="numeric",
-                                                   optional=TRUE,
-                                                   default=NULL)
+  settings$hpo_convergence_tolerance <- .parse_arg(
+    x_config=config$smbo_stop_tolerance,
+    x_var=smbo_stop_tolerance,
+    var_name="smbo_stop_tolerance",
+    type="numeric",
+    optional=TRUE,
+    default=NULL
+  )
   
   # Check provided settings. If NULL, convergence will be set by the 
   if(!is.null(settings$hpo_convergence_tolerance)){
-    .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
-                                 var_name="smbo_stop_tolerance",
-                                 range=c(0.0, 2.0),
-                                 closed=c(FALSE, TRUE)) 
+    .check_number_in_valid_range(
+      x=settings$hpo_convergence_tolerance,
+      var_name="smbo_stop_tolerance",
+      range=c(0.0, 1.0),
+      closed=c(FALSE, TRUE)
+    ) 
   }
   
   ##### smbo_time_limit ########################################################
@@ -2796,16 +2818,20 @@
   
   ##### exploration_method #####################################################
   # Exploration method
-  settings$hpo_exploration_method <- .parse_arg(x_config=config$exploration_method,
-                                                x_var=exploration_method,
-                                                var_name="exploration_method",
-                                                type="character",
-                                                optional=TRUE,
-                                                default="successive_halving")
+  settings$hpo_exploration_method <- .parse_arg(
+    x_config=config$exploration_method,
+    x_var=exploration_method,
+    var_name="exploration_method",
+    type="character",
+    optional=TRUE,
+    default="single_shot"
+  )
   
-  .check_parameter_value_is_valid(x=settings$hpo_exploration_method,
-                                  var_name="exploration_method",
-                                  values=.get_available_hyperparameter_exploration_methods())
+  .check_parameter_value_is_valid(
+    x=settings$hpo_exploration_method,
+    var_name="exploration_method",
+    values=.get_available_hyperparameter_exploration_methods()
+  )
   
   ##### optimisation_metric ####################################################
   # Performance metric for hyperparameter optimisation

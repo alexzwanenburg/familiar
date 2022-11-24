@@ -9,64 +9,159 @@
 }
 
 
-plotting.get_theme <- function(use_theme=NULL){
 
-  if(is.null(use_theme) & is_package_installed("cowplot")){
-    # Get cowplot theme.
-    ggtheme <- cowplot::theme_cowplot(font_size=9)
-    
-    # Update theme to reduce plot margins
-    ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
-    
-    return(ggtheme)
-    
-  } else {
-    # Get ggplot light theme
-    ggtheme <- ggplot2::theme_light(base_size=9)
-    
-    # Update theme to reduce plot margins
-    ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
-    
-    return(ggtheme)
-  }
+#' Familiar ggplot2 theme
+#'
+#' This is the default theme used for plots created by familiar. The theme uses
+#' `ggplot2::theme_light` as the base template.
+#'
+#' @param base_size Base font size in points. Size of other plot text elements
+#'   is based off this.
+#' @param base_family Font family used for text elements.
+#' @param base_line_size Base size for line elements, in points.
+#' @param base_rect_size Base size for rectangular elements, in points.
+#'
+#' @return A complete plotting theme.
+#' @export
+theme_familiar <- function(base_size = 11,
+                           base_family = "",
+                           base_line_size = 0.5,
+                           base_rect_size = 0.5){
   
-  if(use_theme == "cowplot" & is_package_installed("cowplot")){
-    return(cowplot::theme_cowplot(font_size=9))
-  }
+  # The default familiar theme is based on ggplot2::theme_light.
+  ggtheme <- ggplot2::theme_light(
+    base_size=base_size,
+    base_family=base_family,
+    base_line_size = base_line_size,
+    base_rect_size = base_rect_size
+  )
   
-  if(use_theme %in% c("theme_grey", "theme_gray")){
-    return(ggplot2::theme_grey(base_size=9))
-  }
+  # Set colour to black.
+  ggtheme$axis.text$colour <- "black"
+  ggtheme$axis.ticks$colour <- "black"
+  ggtheme$axis.line <- ggplot2::element_line(colour="black", lineend = "square")
   
-  if(use_theme == "theme_bw"){
-    return(ggplot2::theme_bw(base_size=9))
-  }
+  # Legend does not have a legend or border, and reserves less space.
+  ggtheme$legend.background <- ggplot2::element_blank()
+  ggtheme$legend.key <- ggplot2::element_blank()
+  ggtheme$legend.key.size <- grid::unit(base_size * 1.1, "pt")
+  ggtheme$legend.justification <- c("left", "center")
+  ggtheme$legend.margin <- grid::unit(c(0.0, 0.0, 0.0, 0.0), "pt")
   
-  if(use_theme == "theme_linedraw"){
-    return(ggplot2::theme_linedraw(base_size=9))
-  }
+  # Panel does not have a background, grid, or border.
+  ggtheme$panel.background <- ggplot2::element_blank()
+  ggtheme$panel.border <- ggplot2::element_blank()
+  ggtheme$panel.grid <- ggplot2::element_blank()
   
-  if(use_theme == "theme_light"){
-    return(ggplot2::theme_light(base_size=9))
-  }
+  # Avoid removing some elements altogether by directly assigning NULL.
+  ggtheme["panel.grid.major"] <- list(NULL)
+  ggtheme["panel.grid.minor"] <- list(NULL)
   
-  if(use_theme == "theme_dark"){
-    return(ggplot2::theme_dark(base_size=9))
-  }
+  # Minimal plot margins
+  ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
   
-  if(use_theme == "theme_minimal"){
-    return(ggplot2::theme_minimal(base_size=9))
-  }
+  # The plot does not have a background
+  ggtheme$plot.background <- ggplot2::element_blank()
   
-  if(use_theme == "theme_classic"){
-    return(ggplot2::theme_classic(base_size=9))
-  }
+  # Make title a bit smaller, and bold.
+  ggtheme$plot.title <- ggplot2::element_text(
+    face="bold",
+    size=ggplot2::rel(1.1),
+    hjust=0.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
   
-  stop("The requested theme could not be found.")
+  # Make subtitle a bit smaller.
+  ggtheme$plot.subtitle <- ggplot2::element_text(
+    size=ggplot2::rel(0.8),
+    hjust=0.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
+  
+  # Make caption a bit smaller.
+  ggtheme$plot.caption <- ggplot2::element_text(
+    size=ggplot2::rel(0.7),
+    hjust=1.0,
+    vjust=1.0,
+    margin=ggplot2::margin(b=base_size/2)
+  )
+  
+  # Make tag bold.
+  ggtheme$plot.tag <- ggplot2::element_text(
+    face="bold",
+    hjust=0,
+    vjust=0.7
+  )
+  
+  # Make strip text black.
+  ggtheme$strip.text <- ggplot2::element_text(
+    size=ggplot2::rel(0.8),
+    colour="black",
+    margin=grid::unit(c(base_size / 4, base_size / 4, base_size / 4, base_size / 4), "pt")
+  )
+  
+  # Make strip background a lighter shade of gray.
+  ggtheme$strip.background <- ggplot2::element_rect(
+    fill="gray90",
+    colour=NA,
+    inherit.blank=TRUE
+  )
+  
+  return(ggtheme)
 }
 
 
-#' Checks and sanitizes spliting variables for plotting.
+
+.check_ggtheme <- function(ggtheme){
+  
+  # Check if the provided theme is a suitable theme.
+  if(inherits(ggtheme, "theme")){
+    
+    # Check if the theme is complete.
+    if(!attr(ggtheme, "complete")){
+      stop(paste0("The plotting theme is not complete. The most likely cause is lack of a valid template, such as ",
+                  "theme_familiar or ggplot2::theme_light. Note that ggplot2::theme is designed to tweak existing ",
+                  "themes when creating a plot."))
+      
+    }
+    
+  } else if(is.null(ggtheme)){
+    ggtheme <- theme_familiar(base_size=9)
+    
+  } else {
+    
+    # Get the specified theme.
+    ggtheme_fun <- switch(
+      ggtheme,
+      "default"=theme_familiar,
+      "theme_familiar"=theme_familiar,
+      "theme_gray"=ggplot2::theme_gray,
+      "theme_grey"=ggplot2::theme_grey,
+      "theme_bw"=ggplot2::theme_bw,
+      "theme_linedraw"=ggplot2::theme_linedraw,
+      "theme_light"=ggplot2::theme_light,
+      "theme_dark"=ggplot2::theme_dark,
+      "theme_minimal"=ggplot2::theme_minimal,
+      "theme_classic"=ggplot2::theme_classic
+    )
+    
+    if(is.null(ggtheme_fun)){
+      stop(paste0("The selected theme is not the default theme, or a standard ggplot2 theme. Found: ", ggtheme))
+    }
+    
+    # Generate theme
+    ggtheme <- ggtheme_fun(base_size=9)
+  }
+  
+  return(ggtheme)
+}
+
+
+
+
+#' Checks and sanitizes splitting variables for plotting.
 #'
 #' @param x data.table or data.frame containing the data used for splitting.
 #' @param split_by (*optional*) Splitting variables. This refers to column names
@@ -683,11 +778,29 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
 }
 
 
+..get_plot_theme_linewidth <- function(ggtheme=NULL){
+  
+  # Import default ggtheme in case none is provided.
+  ggtheme <- .check_ggtheme(ggtheme)
+  
+  # Since ggplot 3.4.0, the width of a line is determined by linewidth instead
+  # of size.
+  if(utils::packageVersion("ggplot2") >= "3.4.0"){
+    linewidth <- ggtheme$line$linewidth
+    
+  } else {
+    linewidth <- ggtheme$line$size
+  }
+  
+  return(linewidth)
+}
+
+
 ..get_plot_element_spacing <- function(ggtheme=NULL, axis, theme_element){
   # Obtain spacing from a ggtheme element
   
   # Import default ggtheme in case none is provided.
-  if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+  ggtheme <- .check_ggtheme(ggtheme)
   
   # Get spacing for the specific axis, if present.
   spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
@@ -723,9 +836,7 @@ plotting.get_geom_text_settings <- function(ggtheme=NULL){
   # Import formatting settings from the provided ggtheme.
   
   # Import default ggtheme in case none is provided.
-  if(!is(ggtheme, "theme")) {
-    ggtheme <- plotting.get_theme(use_theme=ggtheme)
-  }
+  ggtheme <- .check_ggtheme(ggtheme)
   
   # Find the text size for the table. This is based on text sizes in the ggtheme.
   fontsize <- ggtheme$text$size

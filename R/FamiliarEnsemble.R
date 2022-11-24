@@ -4,20 +4,21 @@ NULL
 
 #####complete_familiar_ensemble#####
 setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
-          function(object, dir_path=NULL) {
+          function(object,
+                   dir_path=NULL){
             # Fills out missing data from a familiarEnsemble based on attached
             # models and internal logic.
 
             # Load models
             object <- ..update_model_list(object=object, dir_path=dir_path)
             model_list <- ..get_model(object=object)
-            
+
             # Determine which models were trained.
-            mask <- sapply(model_list, model_is_trained)
+            trained_mask <- sapply(model_list, model_is_trained)
             
             # If no models were trained, select all models, otherwise select
             # only the models that were trained.
-            if(any(mask)) model_list <- model_list[mask]
+            if(any(trained_mask)) model_list <- model_list[trained_mask]
             
             # Add outcome_type and outcome_info to object. These slots are
             # required in some of the other aggregators.
@@ -85,6 +86,8 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
           })
 
 
+
+#### show (familiarEnsemble) ---------------------------------------------------
 setMethod("show", signature(object="familiarEnsemble"),
           function(object){
             
@@ -112,20 +115,11 @@ setMethod("show", signature(object="familiarEnsemble"),
               if(length(model_trained) == 1){
                 show(object@model_list[[1]])
                 
-                # Update the flag to prevent showing too much information.
+                # Update the flag to prevent showing redundant information.
                 show_additional_information <- FALSE
                 
               } else {
-                if(all(model_trained)){
-                  cat("All models were successfully trained.\n")
-                  
-                } else if(any(model_trained)){
-                  cat(paste0(sum(model_trained), " of ", length(model_trained), " models were successfully trained.\n"))
-                  
-                } else {
-                  cat("No model was successfully trained.\n")
-                }
-                
+                cat(paste0("\n", .report_ensemble_models(object=object), "\n"))
               }
             }
             
@@ -143,6 +137,68 @@ setMethod("show", signature(object="familiarEnsemble"),
               lapply(object@model_features, function(x, object) cat(.show_simple_feature_info(object@feature_info[[x]], line_end=".\n")), object=object)
             }
           })
+
+
+
+.report_ensemble_models <- function(object){
+  # Determine how many models are trained.
+  model_trained <- sapply(object@model_list, model_is_trained)
+  
+  # Determine how many models are naive
+  model_naive <- sapply(object@model_list, is, class2="familiarNaiveModel")
+  
+  # Determine numbers of models and type.
+  n_models <- length(object@model_list)
+  n_models_naive <- sum(model_naive)
+  n_models_trained <- sum(model_trained)
+  
+  message_str <- paste0(
+    "The ensemble contains ", n_models,
+    ifelse(n_models == 1, " model", " models")
+  )
+  
+  if(n_models==1){
+    # Ensemble contains a single model.
+  
+    if(n_models_naive == 0 & n_models_trained == 1){
+      message_str <- c(message_str, paste0(" which was successfully trained."))
+      
+    } else if(n_models_naive == 1){
+      message_str <- c(message_str, paste0(" which was successfully trained as a naive model."))
+      
+    } else {
+      message_str <- c(message_str, paste0(" which failed to successfully train."))
+    }
+    
+  } else if(n_models_trained > 0){
+    # Ensemble contains multiple trained models.
+    
+    message_str <- c(message_str, paste0(
+      ". Of these models, ", n_models_trained,
+      ifelse(n_models_trained == 1, " model was", " models were"),
+      " successfully trained, of which ", n_models_naive,
+      ifelse(n_models_naive == 1, " model was", " models were"),
+      " trained as a naive model."
+    ))
+    
+    if(n_models > n_models_trained){
+      n_models_untrained <- n_models - n_models_trained
+      
+      message_str <- c(message_str, paste0(
+        " The remaining ", n_models_untrained,
+        ifelse(n_models_untrained == 1, " model", " models"),
+        " failed to successfully train."
+      ))
+      
+    }
+  } else {
+    # Ensemble contains only models that failed to train.
+    message_str <- c(message_str, ". All models failed to successfully train.")
+  }
+  
+  return(paste0(message_str, collapse=""))
+}
+
 
 
 

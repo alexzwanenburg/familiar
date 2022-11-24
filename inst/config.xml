@@ -144,7 +144,7 @@
       <optimisation_function></optimisation_function>
       <!-- The acquisition function that is used to compute utility of hyperparameter sets and guide exploration of the hyperparameter space (optional, default: expected_improvement) -->
       <acquisition_function></acquisition_function>
-      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: successive_halving) -->
+      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: single_shot) -->
       <exploration_method></exploration_method>
       <!-- The model used to infer utility of hyperparameter sets and select them for exploration (optional, default: gaussian_process) -->
       <hyperparameter_learner></hyperparameter_learner>
@@ -168,7 +168,7 @@
       <smbo_stochastic_reject_p_value></smbo_stochastic_reject_p_value>
       <!-- Number of additional SMBO iterations to perform after convergence has been reached (optional, default: 3) -->
       <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
-      <!-- Tolerance level for convergence (optional, default: between 1E-2 and 1E-3) -->
+      <!-- Tolerance level for convergence (optional, default: depends on square root of the number of samples) -->
       <smbo_stop_tolerance></smbo_stop_tolerance>
       <!-- Time limit (in seconds) for the optimisation process (optional, default: NULL) -->
       <smbo_time_limit></smbo_time_limit>

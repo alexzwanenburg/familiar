@@ -3,9 +3,9 @@
 
 
 #####is_empty-------------------------------------------------------------------
-setMethod("is_empty", signature(x="NULL"), function(x) return(TRUE))
+setMethod("is_empty", signature(x="NULL"), function(x, ...) return(TRUE))
 
-setMethod("is_empty", signature(x="data.table"), function(x){
+setMethod("is_empty", signature(x="data.table"), function(x, ...){
   if(ncol(x) > 0 & nrow(x) > 0){
     return(FALSE)
     
@@ -14,7 +14,7 @@ setMethod("is_empty", signature(x="data.table"), function(x){
   }
 })
 
-setMethod("is_empty", signature(x="character"), function(x){
+setMethod("is_empty", signature(x="character"), function(x, ...){
   if(length(x) == 0){
     return(TRUE)
     
@@ -26,7 +26,7 @@ setMethod("is_empty", signature(x="character"), function(x){
   }
 })
 
-setMethod("is_empty", signature(x="dataObject"), function(x){
+setMethod("is_empty", signature(x="dataObject"), function(x, allow_no_features=FALSE, ...){
   if(x@delay_loading){
     # Data is not empty until is has been properly loaded
     return(FALSE)
@@ -39,7 +39,7 @@ setMethod("is_empty", signature(x="dataObject"), function(x){
     # Data is empty if the data table has no rows
     return(TRUE)
     
-  } else if(!has_feature_data(x)){
+  } else if(!allow_no_features && !has_feature_data(x)){
     # Data is empty if there are no features.
     return(TRUE)
     
@@ -49,7 +49,7 @@ setMethod("is_empty", signature(x="dataObject"), function(x){
   }
 })
 
-setMethod("is_empty", signature(x="list"), function(x){
+setMethod("is_empty", signature(x="list"), function(x, ...){
   if(length(x) == 0){
     return(TRUE)
     
@@ -58,11 +58,11 @@ setMethod("is_empty", signature(x="list"), function(x){
   }
 })
 
-setMethod("is_empty", signature(x="vimpTable"), function(x) return(is_empty(x@vimp_table)))
+setMethod("is_empty", signature(x="vimpTable"), function(x, ...) return(is_empty(x@vimp_table)))
 
-setMethod("is_empty", signature(x="vector"), function(x) length(x) == 0)
+setMethod("is_empty", signature(x="vector"), function(x, ...) length(x) == 0)
 
-setMethod("is_empty", signature(x="familiarDataElement"), function(x) return(is_empty(x@data)))
+setMethod("is_empty", signature(x="familiarDataElement"), function(x, ...) return(is_empty(x@data)))
 
 #####get_outcome_class_levels---------------------------------------------------
 setMethod("get_outcome_class_levels", signature(x="outcomeInfo"), function(x){

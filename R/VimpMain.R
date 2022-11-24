@@ -158,17 +158,22 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- ..set_vimp_parameters(object, method=method)
               
             } else if(method %in% .get_available_random_vimp_methods()){
-              # Random, none and signature only methods.
+              # Random feature selection..
               object <- methods::new("familiarRandomVimp", object)
               
             } else if(method %in% .get_available_none_vimp_methods()){
-              # Random, none and signature only methods.
+              # None feature selection methods - all features are equally
+              # important.
               object <- methods::new("familiarNoneVimp", object)
               
             } else if(method %in% .get_available_signature_only_vimp_methods()){
-              # Random, none and signature only methods.
+              # Signature only methods.
               object <- methods::new("familiarSignatureVimp", object)
               
+            } else if(method %in% .get_available_no_features_vimp_methods()){
+              # No feature selection methods - no features are selected, leading
+              # to naive models.
+              object <- methods::new("familiarNoFeaturesVimp", object)
             }
             
             return(object)

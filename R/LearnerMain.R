@@ -290,6 +290,12 @@ setMethod("promote_learner", signature(object="familiarModel"),
   sign_size_default <- sign_size_default[sign_size_default >= sign_size_range[1] &
                                            sign_size_default <= sign_size_range[2]]
   
-  return(.set_hyperparameter(default=sign_size_default, type="integer", range=sign_size_range,
-                             valid_range=c(1, Inf), randomise=TRUE, distribution="log"))
+  return(.set_hyperparameter(
+    default=sign_size_default,
+    type="integer",
+    range=sign_size_range,
+    valid_range=c(0, Inf),
+    randomise=TRUE,
+    distribution="log")
+  )
 }

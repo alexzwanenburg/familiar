@@ -360,6 +360,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    intensify_stop_p_value=0.05,
                    convergence_tolerance=NULL,
                    convergence_stopping=3,
+                   no_decent_model_stopping=4,
                    time_limit=NULL,
                    verbose=TRUE,
                    message_indent=0L,
@@ -389,14 +390,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(n_samples == 0) return(object)
               
               # Set convergence tolerance.
-              convergence_tolerance <- -2 + (-log10(n_samples) + 2) / 2
+              convergence_tolerance <- 0.1 * 1.0 / sqrt(n_samples)
               
-              # Limit between -2 and -3.
-              if(convergence_tolerance > -2) convergence_tolerance <- -2
-              if(convergence_tolerance < -3) convergence_tolerance <- -3
-              
-              # Convert to value.
-              convergence_tolerance <- 10^convergence_tolerance
+              # Limit to -4
+              if(convergence_tolerance < 1E-4) convergence_tolerance <- 1E-4
             }
             
             # Check if the metric is ok. Packed into a for loop to enable
@@ -424,40 +421,48 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                             values=.get_available_hyperparameter_exploration_methods())
             
             # Report on methodology used.
-            optimisation_description <- switch(optimisation_function,
-                                               "max_validation"="maximising out-of-bag performance",
-                                               "validation"="maximising out-of-bag performance",
-                                               "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
-                                               "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
-                                               "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
-                                               "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
-                                               "model_estimate"="maximising performance estimates from the hyperparameter model",
-                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model")
+            optimisation_description <- switch(
+              optimisation_function,
+              "max_validation"="maximising out-of-bag performance",
+              "validation"="maximising out-of-bag performance",
+              "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
+              "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
+              "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
+              "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
+              "model_estimate"="maximising performance estimates from the hyperparameter model",
+              "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model",
+              "model_balanced_estimate"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data",
+              "model_balanced_estimate_minus_sd"="maximising performance under estimates of the performance differences between in-bag and out-of-bag data while penalising estimated variance in performance differences"
+            )
             
             logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                   " by ", optimisation_description, "."),
                            indent=message_indent+1L,
                            verbose=verbose)
             
-            inference_description <- switch(hyperparameter_learner,
-                                            "random_forest"="selected after inferring utility using a Random Forest",
-                                            "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
-                                            "bayesian_additive_regression_trees"="selected after inferring utility using Bayesian Additive Regression Trees",
-                                            "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
-                                            "random"="drawn randomly",
-                                            "random_search"="drawn randomly")
+            inference_description <- switch(
+              hyperparameter_learner,
+              "random_forest"="selected after inferring utility using a Random Forest",
+              "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
+              "bayesian_additive_regression_trees"="selected after inferring utility using Bayesian Additive Regression Trees",
+              "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
+              "random"="drawn randomly",
+              "random_search"="drawn randomly"
+            )
             
             logger.message(paste0("Candidate hyperparameter sets after the initial run are ", inference_description, "."),
                            indent=message_indent+1L,
                            verbose=verbose)
             
             if(!hyperparameter_learner %in% c("random", "random_search")){
-              utility_description <- switch(acquisition_function,
-                                            "improvement_probability"="probability of improvement over the best known hyperparameter set",
-                                            "improvement_empirical_probability"="empirical probability of improvement over the best known hyperparameter set",
-                                            "expected_improvement"="expected improvement",
-                                            "upper_confidence_bound"="the upper regret bound",
-                                            "bayes_upper_confidence_bound"="the Bayesian upper confidence bound")
+              utility_description <- switch(
+                acquisition_function,
+                "improvement_probability"="probability of improvement over the best known hyperparameter set",
+                "improvement_empirical_probability"="empirical probability of improvement over the best known hyperparameter set",
+                "expected_improvement"="expected improvement",
+                "upper_confidence_bound"="the upper regret bound",
+                "bayes_upper_confidence_bound"="the Bayesian upper confidence bound"
+              )
               
               logger.message(paste0("Utility is measured as ", utility_description, "."),
                              indent=message_indent+1L,
@@ -486,9 +491,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(is_empty(parameter_list)) return(object)
             
             # Update the parameter list With user-defined variables.
-            parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
-                                                      user_list=user_list,
-                                                      n_features=get_n_features(data))
+            parameter_list <- .update_hyperparameters(
+              parameter_list=parameter_list,
+              user_list=user_list,
+              n_features=ifelse(object@fs_method %in% .get_available_no_features_vimp_methods(),
+                                0L,
+                                get_n_features(data))
+            )
             
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
@@ -542,7 +551,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               n_max_intensify_steps=min(c(n_max_intensify_steps, 3L)),
               n_intensify_step_bootstraps=min(c(n_intensify_step_bootstraps, 5L)),
               intensify_stop_p_value=intensify_stop_p_value,
-              convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
+              convergence_tolerance=convergence_tolerance,
               convergence_stopping=min(c(convergence_stopping, 3L)),
               time_limit=time_limit,
               verbose=verbose,
@@ -772,15 +781,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Message the user concerning the initial optimisation score.
             logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
-                                  incumbent_set$summary_score, "; ",
-                                  ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                    parameter_table=parameter_table,
-                                                                    parameter_list=parameter_list)),
+                                  ..parse_optimisation_summary_to_string(
+                                    parameter_set=incumbent_set,
+                                    parameter_table=parameter_table,
+                                    parameter_list=parameter_list)),
                            indent=message_indent+1L,
                            verbose=verbose)
             
             # Check whether any combination yielded anything valid.
-            skip_optimisation <- incumbent_set$summary_score <= -1.0
+            skip_optimisation <- incumbent_set$summary_score <= ..get_replacement_optimisation_score()
             
             # Update n_intensify_step_bootstraps and n_max_intensify_steps when
             # exploration_method equals none. There is no reason to perform
@@ -788,6 +797,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(exploration_method == "none"){
               n_intensify_step_bootstraps <- n_intensify_step_bootstraps * n_max_intensify_steps
               n_max_intensify_steps <- 1L
+              
+            } else if(exploration_method == "single_shot"){
+              n_max_intensify_steps <- 1L
+              n_intensify_step_bootstraps <- 1L
             }
             
             # Create list with stopping criteria based on initial runs.
@@ -928,9 +941,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Update the model that predicts the time a process takes to
                 # complete training.
-                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
-                                                                                          parameter_table=parameter_table,
-                                                                                          optimisation_function=optimisation_function)
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(
+                  score_table=score_table,
+                  parameter_table=parameter_table,
+                  optimisation_function=optimisation_function
+                )
               }
               
               ##### SMBO - Evaluate --------------------------------------------
@@ -938,22 +953,26 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # incumbents.
               
               # Get all runs and compute details for the incumbent set.
-              incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
-                                                           parameter_table=parameter_table,
-                                                           optimisation_model=optimisation_model_prototype,
-                                                           n_max_bootstraps=n_max_bootstraps)
+              incumbent_set <- get_best_hyperparameter_set(
+                score_table=score_table,
+                parameter_table=parameter_table,
+                optimisation_model=optimisation_model_prototype,
+                n_max_bootstraps=n_max_bootstraps
+              )
               
               # Update list with stopping criteria
-              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
-                                                                                  stop_data=stop_list,
-                                                                                  tolerance=convergence_tolerance)
+              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
+                set_data=incumbent_set,
+                stop_data=stop_list,
+                tolerance=convergence_tolerance
+              )
               
               # Message progress.
-              logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
-                                    incumbent_set$summary_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                      parameter_table=parameter_table,
-                                                                      parameter_list=parameter_list)),
+              logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": ",
+                                    ..parse_optimisation_summary_to_string(
+                                      parameter_set=incumbent_set,
+                                      parameter_table=parameter_table,
+                                      parameter_list=parameter_list)),
                              indent=message_indent+1L,
                              verbose=verbose)
               
@@ -979,6 +998,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 break()
               }
               
+              # Break if no model better than the naive model was found.
+              if(stop_list$no_naive_improvement_counter >= no_decent_model_stopping){
+                
+                # Message early stopping.
+                logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early because no models were found to perform better than naive models."),
+                               indent=message_indent,
+                               verbose=verbose)
+                
+                # Stop SMBO.
+                break()
+              }
+              
               # Update main iterator
               optimisation_step <- optimisation_step + 1L
             }
@@ -995,18 +1026,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimal_set_table[ ,"param_id":=NULL]
             
             # Check that a suitable set of hyperparameters was found.
-            if(incumbent_set$summary_score > -1){
-              object@hyperparameters <- as.list(optimal_set_table)
+            if(incumbent_set$summary_score <= ..get_replacement_optimisation_score()){
+              # In this case, no suitable hyperparameters were found, for
+              # whatever reason.
               
-              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: score ",
-                                    incumbent_set$summary_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
-                                                                      parameter_table=parameter_table,
-                                                                      parameter_list=parameter_list)),
-                             indent=message_indent,
-                             verbose=verbose)
-              
-            } else {
               logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
                              indent=message_indent,
                              verbose=verbose)
@@ -1029,21 +1052,48 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Set NULL.
               object@hyperparameters <- NULL
+              
+            } else if(incumbent_set$validation_score < 0.0 & !object@fs_method %in% c("none", "signature_only")){
+              # In this case, no set of hyperparameters found that led to a
+              # model that was better than the naive model. We then train a
+              # naive model instead, by forcing sign_size to 0.
+              
+              object@hyperparameters <- as.list(optimal_set_table)
+              object@hyperparameters$sign_size <- 0
+              
+              logger.message(paste0("Hyperparameter optimisation: No set of hyperparameters was identified that ",
+                                    "leads to a model that performs better than a naive model."),
+                             indent=message_indent,
+                             verbose=verbose)
+              
+            } else {
+              # In this case the model trained properly.
+              object@hyperparameters <- as.list(optimal_set_table)
+              
+              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: ",
+                                    ..parse_optimisation_summary_to_string(
+                                      parameter_set=incumbent_set,
+                                      parameter_table=parameter_table,
+                                      parameter_list=parameter_list)),
+                             indent=message_indent,
+                             verbose=verbose)
             }
             
             time_taken <- NULL
             if(is(process_clock, "processClock")) time_taken <- process_clock$time(units="mins")
             
             # Update attributes of object.
-            object@hyperparameter_data <- list("score_table"=score_table,
-                                               "parameter_table"=parameter_table,
-                                               "time_taken"=time_taken,
-                                               "metric"=metric,
-                                               "metric_object"=metric_object_list,
-                                               "hyperparameter_learner"=hyperparameter_learner,
-                                               "optimisation_function"=optimisation_function,
-                                               "n_samples"=get_n_samples(data),
-                                               "n_features"=get_n_features(data))
+            object@hyperparameter_data <- list(
+              "score_table"=score_table,
+              "parameter_table"=parameter_table,
+              "time_taken"=time_taken,
+              "metric"=metric,
+              "metric_object"=metric_object_list,
+              "hyperparameter_learner"=hyperparameter_learner,
+              "optimisation_function"=optimisation_function,
+              "n_samples"=get_n_samples(data),
+              "n_features"=get_n_features(data)
+            )
             
             return(object)
           })

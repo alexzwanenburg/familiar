@@ -615,6 +615,22 @@ setMethod(".predict_risk_stratification", signature(object="familiarModel"),
           })
 
 
+#### .predict_risk_stratification (familiarNaiveModel) -------------------------
+setMethod(".predict_risk_stratification", signature(object="familiarNaiveModel"),
+          function(object, data, time, stratification_threshold=NULL, stratification_method=NULL, ...){
+            # Only assess stratification for survival outcomes.
+            if(!object@outcome_type %in% c("survival")) return(NULL)
+            
+            # Generate an empty prediction table.
+            prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                 data=data,
+                                                                 type="risk_stratification")
+            
+            return(prediction_table)
+          })
+
+
+
 #####.predict_risk_stratification (character)#####
 setMethod(".predict_risk_stratification", signature(object="character"),
           function(object, ...){

@@ -165,8 +165,14 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             if(model$iter >= 100) return(callNextMethod(object=..update_errors(object=object,
                                                                                "Model fitter ran out of iterations and did not converge.")))
             
-            # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))){
+            # Check if all coefficients could not be estimated. Sometimes models
+            # could be trained with a large number of features whose
+            # coefficients fail to converge. This would sometimes lead to overly
+            # large signature sizes being selected during hyperparameter
+            # optimisation, especially in situations where there is not a lot of
+            # signal. Checking for non-finite coefficients is an easy way to
+            # figure out if the model is not properly trained.
+            if(any(!sapply(stats::coef(model), is.finite))){
               return(callNextMethod(object=..update_errors(object=object,
                                                            ..error_message_failed_model_coefficient_estimation())))
             }
@@ -181,6 +187,21 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             object <- set_package_version(object)
             
             return(object)
+          })
+
+
+
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarSurvRegr", data="dataObject"),
+          function(object, data, ...){
+            
+            # Turn into a Naive model.
+            object <- methods::new("familiarNaiveSurvivalTimeModel", object)
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
           })
 
 

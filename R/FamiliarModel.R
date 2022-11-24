@@ -19,26 +19,29 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
             # Process data, if required.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed = is_pre_processed,
-                                       stop_at="clustering")
+            data <- process_input_data(
+              object=object,
+              data=data,
+              is_pre_processed = is_pre_processed,
+              stop_at="clustering"
+            )
             
             # Work only with data that has known outcomes when training.
             data <- filter_missing_outcome(data=data)
             
-            # Set the training flag
-            can_train <- TRUE
+            # Set the training flags
+            can_train <- can_train_naive <- TRUE
             
             # Check if there are any data entries. The familiar model cannot be
-            # trained otherwise
-            if(is_empty(x=data)){
-              can_train <- FALSE
+            # trained otherwise. We do allow for no features being present.
+            if(is_empty(x=data, allow_no_features=TRUE)){
+              can_train <- can_train_naive <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_training_data_available())
             } 
             
-            # Check the number of features in data; if it has no features, the
-            # familiar model can not be trained
+            # Check the number of features in data; if it has no features, a
+            # standard familiar model can not be trained. However, it might be
+            # possible to train a naive model.
             if(!has_feature_data(x=data)){
               can_train <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_features_selected_for_training())
@@ -46,15 +49,31 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             
             # Check if the hyperparameters are plausible.
             if(!has_optimised_hyperparameters(object=object)){
-              can_train <- FALSE
+              can_train <- can_train_naive <- FALSE
               object <- ..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())
             } 
             
-            # Train a new model based on data.
-            if(can_train) object <- ..train(object=object,
-                                            data=data,
-                                            approximate=approximate,
-                                            ...)
+            # Check if a naive model should be trained.
+            if(!requires_naive_model(object)){
+              can_train_naive <- FALSE
+            }
+            
+            # Add outcome distribution data.
+            object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
+            
+            # Train a new model based on data. If a normal model cannot be
+            # trained, attempt to train a naive model.
+            if(can_train){
+              object <- ..train(object=object,
+                                data=data,
+                                approximate=approximate,
+                                ...)
+              
+            } else if(can_train_naive){
+              object <- ..train_naive(object=object,
+                                      data=data,
+                                      ...)
+            }
             
             # Extract information required for assessing model performance,
             # calibration (e.g. baseline survival) etc.
@@ -72,7 +91,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # types require calibration info. Currently calibration
               # information is only retrieved for survival outcomes, in the form
               # of baseline survival curves.
-              if(can_train) object <- ..set_calibration_info(object=object, data=data)
+              if(can_train | can_train_naive) object <- ..set_calibration_info(object=object, data=data)
               
               # Set stratification thresholds. This is currently only done for
               # survival outcomes.
@@ -84,9 +103,6 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             }
             
             if(trim_model) object <- trim_model(object=object, timeout=timeout)
-            
-            # Add outcome distribution data
-            object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
             
             # Empty slots if a model can not be trained.
             if(!can_train){
@@ -739,6 +755,27 @@ setMethod("..train", signature(object="familiarModel", data="NULL"),
 
 
 
+#### ..train_naive (familiarModel, dataObject) ---------------------------------
+setMethod("..train_naive", signature(object="familiarModel", data="dataObject"),
+          function(object, data, ...){
+            
+            # Set a NULL model
+            object@model <- NULL
+            
+            return(object)
+          })
+
+#### ..train_naive (familiarModel, NULL) ---------------------------------------
+setMethod("..train_naive", signature(object="familiarModel", data="NULL"),
+          function(object, data, ...){
+            
+            # Set a NULL model.
+            object@model <- NULL
+            
+            return(object)
+          })
+
+
 
 #####..predict (familiarModel, dataObject)#####
 setMethod("..predict", signature(object="familiarModel", data="dataObject"),
@@ -842,6 +879,26 @@ setMethod(".trim_model", signature(object="familiarModel"),
           function(object, ...){
             # Default method for models that lack a more specific method.
             return(object)
+          })
+
+
+#### requires_naive_model ------------------------------------------------------
+setMethod("requires_naive_model", signature(object="familiarModel"),
+          function(object, ...){
+            # Determine if the model hyperparameters specify that a naive model
+            # should be trained.
+            if(!has_optimised_hyperparameters(object=object)){
+              ..error_reached_unreachable_code("optimised hyperparameters are expected")
+            }
+            
+            # Check if the signature size hyperparameter exists.
+            if(is.null(object@hyperparameters$sign_size)) return(FALSE)
+            
+            # Check if the no-features variable importance.
+            if(object@fs_method %in% .get_available_no_features_vimp_methods()) return(TRUE)
+            
+            # Check if the signature size is 0.
+            return(all(object@hyperparameters$sign_size == 0))
           })
 
 
@@ -954,13 +1011,13 @@ setMethod("get_signature", signature(object="list"),
             # Find features that are pre-assigned to the signature.
             signature_features <- names(object)[sapply(object, is_in_signature)]
             
-            if(vimp_method == "signature_only"){
+            if(vimp_method %in% .get_available_signature_only_vimp_methods()){
               # Only select signature
               if(length(signature_features) == 0) stop("No signature was provided.")
               
               selected_features <- signature_features
               
-            } else if(vimp_method == "none"){
+            } else if(vimp_method %in% .get_available_none_vimp_methods()){
               # Select all features
               selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
                                                              feature_info_list=object)
@@ -971,7 +1028,7 @@ setMethod("get_signature", signature(object="list"),
                                               size=length(selected_features),
                                               replace=FALSE)
               
-            } else if(vimp_method == "random"){
+            } else if(vimp_method %in% .get_available_random_vimp_methods()){
               # Select all features.
               selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
                                                              feature_info_list=object)
@@ -983,6 +1040,10 @@ setMethod("get_signature", signature(object="list"),
               selected_features <- fam_sample(x=selected_features,
                                               size=signature_size,
                                               replace=FALSE)
+              
+            } else if(vimp_method %in% .get_available_no_features_vimp_methods()){
+              # No features are selected.
+              selected_features <- NULL
               
             } else {
               # Select signature and any additional features according to rank.

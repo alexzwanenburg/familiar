@@ -482,6 +482,35 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
           })
 
 
+
+#### ..train_naive -------------------------------------------------------------
+setMethod("..train_naive", signature(object="familiarMBoost", data="dataObject"),
+          function(object, data, ...){
+            
+            if(object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")){
+              # Turn into a Naive model.
+              object <- methods::new("familiarNaiveModel", object)
+              
+            } else if(object@outcome_type %in% c("survival")){
+              
+              if(as.character(object@hyperparameters$family) %in% c("cox", "cindex", "gehan")){
+                # Turn into a Naive Cox model.
+                object <- methods::new("familiarNaiveCoxModel", object)
+                
+              } else if(as.character(object@hyperparameters$family) %in% c("weibull", "lognormal", "surv_loglog")){
+                # Turn into a Naive survival regression time.
+                object <- methods::new("familiarNaiveSurvivalTimeModel", object)
+              }
+            }
+            
+            return(..train(
+              object=object,
+              data=data,
+              ...))
+          })
+
+
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
           function(object, data, type="default", ...){

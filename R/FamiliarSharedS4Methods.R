@@ -96,7 +96,7 @@
 
 #####has_bad_training_data######################################################
 setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
-          function(object, data, ...){
+          function(object, data, allow_no_features=FALSE, ...){
             # Checks the data for consistency and usability. Any errors are passed as attributes
             
             if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarNoveltyDetector"))){
@@ -104,12 +104,13 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
             }
             
             # One cannot train without data or on a single sample.
-            if(is_empty(data)){
+            if(is_empty(data, allow_no_features=allow_no_features)){
               return_value <- TRUE
               attr(return_value, "error") <- ..error_message_no_training_data_available()
               
               return(return_value)
             } 
+            
             if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2){
               return_value <- TRUE
               attr(return_value, "error") <- "Only one sample was available to train the model."

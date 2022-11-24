@@ -36,14 +36,16 @@ test_all_learners_available <- function(learners){
 
 
 
-test_all_learners_train_predict_vimp <- function(learners,
-                                                 hyperparameter_list=NULL,
-                                                 except_train=NULL,
-                                                 except_predict=NULL,
-                                                 except_predict_survival=NULL,
-                                                 has_vimp=TRUE,
-                                                 can_trim=TRUE,
-                                                 debug=FALSE){
+test_all_learners_train_predict_vimp <- function(
+    learners,
+    hyperparameter_list=NULL,
+    except_train=NULL,
+    except_naive=NULL,
+    except_predict=NULL,
+    except_predict_survival=NULL,
+    has_vimp=TRUE,
+    can_trim=TRUE,
+    debug=FALSE){
   
   if(debug){
     test_fun <- debug_test_that
@@ -96,7 +98,8 @@ test_all_learners_train_predict_vimp <- function(learners,
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
       
-      #####Full dataset#########################################################
+      
+      #### Full dataset --------------------------------------------------------
       
       # Train the model.
       model <- suppressWarnings(test_train(data=full_data,
@@ -394,7 +397,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       
       
-      #####Bootstrapped dataset#################################################
+      #### Bootstrapped dataset ------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(data=full_data,
                                            cluster_method="none",
@@ -420,7 +423,63 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       
       
-      #####One-feature dataset##################################################
+      #### Naive model ---------------------------------------------------------
+      
+      # Train a naive model.
+      model <- suppressWarnings(
+        train_familiar(data=full_data,
+                       experimental_design="fs+mb",
+                       cluster_method="none",
+                       imputation_method="simple",
+                       fs_method="no_features",
+                       learner=learner,
+                       hyperparameter=hyperparameters,
+                       parallel=FALSE,
+                       verbose=debug)
+      )
+      
+      test_fun(paste0("Naive predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(model, data=full_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, outcome_type),
+          ifelse(learner %in% c(except_train, except_naive), FALSE, TRUE)
+        )
+        
+        if(outcome_type %in% c("binomial", "multinomial")){
+          # Expect that the predicted_class column is a factor.
+          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+          
+          # Expect that the class levels are the same as those in the model.
+          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+          
+        } else if(outcome_type %in% c("count", "continuous", "survival", "competing_risk")){
+          # Expect that the predicted outcome is valid.
+          testthat::expect_equal(is.numeric(prediction_table$predicted_outcome), TRUE)
+        }
+        
+        if(outcome_type %in% c("survival", "competing_risk")){
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(
+            .predict(model,
+                     data=full_data,
+                     type="survival_probability",
+                     time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            ifelse(learner %in% c(except_train, except_naive), FALSE, TRUE)
+          )
+        }
+      })
+      
+      
+      
+      #### One-feature dataset -------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(data=one_feature_data,
                                            cluster_method="none",
@@ -2961,12 +3020,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
@@ -3015,12 +3078,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
@@ -3070,12 +3137,16 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
                               testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
                               
-                              if(vimp_method == "signature_only"){
+                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
                               }
                               
-                              if(vimp_method == "none"){
+                              if(vimp_method %in% .get_available_none_vimp_methods()){
                                 testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                              
+                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
                               }
                             }
                           }
@@ -3687,6 +3758,27 @@ test_plots <- function(plot_function,
                                                cluster_similarity_threshold=0.7,
                                                time_max=60,
                                                create_novelty_detector=create_novelty_detector))
+    
+    # Train a naive model.
+    naive_model <- suppressWarnings(
+      train_familiar(data=multi_data[[1]],
+                     experimental_design="fs+mb",
+                     cluster_method="hclust",
+                     imputation_method="simple",
+                     fs_method="no_features",
+                     learner="lasso",
+                     hyperparameter=hyperparameters,
+                     cluster_similarity_threshold=0.7,
+                     time_max=60,
+                     parallel=FALSE,
+                     verbose=FALSE)
+    )
+    
+    # Replace fs_method attribute
+    naive_model@fs_method <- "none"
+    
+    # Add naive model to the multi-model dataset.
+    multi_model_set <- c(multi_model_set, list("naive"=naive_model))
     
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
@@ -4554,16 +4646,43 @@ test_export <- function(export_function,
     
     
     # Ensemble from multiple datasets.
-    multi_model_set <- suppressWarnings(lapply(multi_data,
-                                               test_train,
-                                               cluster_method="hclust",
-                                               imputation_method="simple",
-                                               fs_method="mim",
-                                               hyperparameter_list=hyperparameters,
-                                               learner="lasso",
-                                               cluster_similarity_threshold=0.7,
-                                               time_max=1832,
-                                               create_novelty_detector=create_novelty_detector))
+    multi_model_set <- suppressWarnings(
+      lapply(
+        multi_data,
+        test_train,
+        cluster_method="hclust",
+        imputation_method="simple",
+        fs_method="mim",
+        hyperparameter_list=hyperparameters,
+        learner="lasso",
+        cluster_similarity_threshold=0.7,
+        time_max=1832,
+        create_novelty_detector=create_novelty_detector
+      )
+    )
+    
+    # Train a naive model.
+    naive_model <- suppressWarnings(
+      train_familiar(
+        data=multi_data[[1]],
+        experimental_design="fs+mb",
+        cluster_method="hclust",
+        imputation_method="simple",
+        fs_method="no_features",
+        learner="lasso",
+        hyperparameter=hyperparameters,
+        cluster_similarity_threshold=0.7,
+        time_max=60,
+        parallel=FALSE,
+        verbose=FALSE
+      )
+    )
+    
+    # Replace fs_method attribute
+    naive_model@fs_method <- "none"
+    
+    # Add naive model to the multi-model dataset.
+    multi_model_set <- c(multi_model_set, list("naive"=naive_model))
     
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,

@@ -320,7 +320,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             x@data[, "log_value":=-log10(value)]
             
             # ggtheme
-            if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+            ggtheme <- .check_ggtheme(ggtheme)
 
             # significance_level_shown
             if(!is.null(significance_level_shown)){
