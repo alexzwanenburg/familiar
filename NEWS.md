@@ -10,6 +10,8 @@
 
 - Fixed an issue that would prevent a `familiarCollection` object from being returned if an experiment was run using a temporary folder.
 
+- Fixed an issue with apply functions in familiar taking long to aggregate their results.
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes
