@@ -1,3 +1,10 @@
+# Version 1.4.1
+
+## Bug fixes
+
+- Fixed an error that would occur when attempting to create risk group labels for a `familiarCollection` object that is composed of externally provided `familiarData` objects.
+
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes
