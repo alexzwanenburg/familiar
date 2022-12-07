@@ -1172,165 +1172,191 @@ setMethod("..compute_data_element_estimates", signature(x="list"),
 
 
 ##### ..compute_data_elements_estimates (familiarDataElement)###################
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElement"),
-          function(x, x_list=NULL, ...){
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            if(any(sapply(x, is_empty))){
-              # Don't aggregate empty elements.
-              y <- x[[1]]
-              
-            } else if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 2L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly two data elements are required for bootstrap confidence intervals.")
-              if(!any(estimation_type %in% c("point"))) ..error_reached_unreachable_code(".compute_data_element_estimates: a point estimate is required for bootstrap confidence intervals.")
-              
-              # Select point estimate.
-              point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
-              point_values[, "estimation_type":="point"]
-              
-              # Select bootstrap values
-              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
-              bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
-              
-              # Combine to single table.
-              data <- data.table::rbindlist(list(point_values, bootstrap_values),
-                                            use.names=TRUE,
-                                            fill=TRUE)
-              
-              if(length(x[[1]]@grouping_column > 0)){
-                
-                # Split table by grouping column and compute estimate and confidence intervals.
-                data <- lapply(split(data, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bootstrap_confidence_estimate,
-                               confidence_level = x[[1]]@confidence_level,
-                               bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bootstrap_confidence_estimate(x = data,
-                                                                confidence_level = x[[1]]@confidence_level,
-                                                                bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
-                                                                value_column = x[[1]]@value_column)
-              }
-              
-              # Update the data attribute.
-              y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else if(any(estimation_type %in% c("bc", "bias_correction"))){
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
-              
-              # Select values.
-              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bc", "bias_correction")][[1]]@data)
-              
-              if(length(x[[1]]@grouping_column > 0)){
-                # Split table by grouping column and compute bias corrected estimate.
-                data <- lapply(split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bias_corrected_estimate,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
-                                                          value_column = x[[1]]@value_column)
-              }
-              
-              # Update the data attribute.
-              y <- x[[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else if(any(estimation_type %in% c("point"))){
-              # This follows the same procedure as for bias-corrected estimates. For
-              # ensemble and hybrid detail levels a single value needs to be generated.
-              # However, in the case of hybrid detail level, a point estimate is created
-              # for each model, and requires aggregation.
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
-              
-              # Select values.
-              bootstrap_values <- data.table::as.data.table(
-                x[estimation_type %in% c("point")][[1]]@data)
-              
-              # Refine a bit so that only those entries with multiple values for
-              # the same grouping columns are aggregated. This can save a lot of
-              # time, because the point estimate typically is determined only on
-              # a single run.
-              has_multiple_entries <- duplicated(bootstrap_values, by=x[[1]]@grouping_column)
-              
-              unique_values <- bootstrap_values[!has_multiple_entries, ]
-              bootstrap_values <- bootstrap_values[has_multiple_entries, ]
-              
-              if(is_empty(bootstrap_values)){
-                # Data are unique values.
-                data <- unique_values
-                
-              } else if(length(x[[1]]@grouping_column > 0)){
-                # Split table by grouping column and compute bias corrected estimate.
-                data <- lapply(split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bias_corrected_estimate,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(
-                  c(list(unique_values), data),
-                  use.names=TRUE,
-                  fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
-                                                          value_column = x[[1]]@value_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(
-                  c(list(unique_values), list(data)),
-                  use.names=TRUE,
-                  fill=TRUE)
-              }
-              
-              # Update the data attribute.
-              y <- x[[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else {
-              ..error_reached_unreachable_code(paste0(".compute_data_element_estimates: unknown estimation type: ", paste_s(estimation_type)))
-            }
-            
-            return(y)
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElement"),
+  function(x, x_list=NULL, ...){
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    if(any(sapply(x, is_empty))){
+      # Don't aggregate empty elements.
+      y <- x[[1]]
+      
+    } else if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 2L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly two data elements are required for bootstrap confidence intervals.")
+      if(!any(estimation_type %in% c("point"))) ..error_reached_unreachable_code(".compute_data_element_estimates: a point estimate is required for bootstrap confidence intervals.")
+      
+      # Select point estimate.
+      point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
+      point_values[, "estimation_type":="point"]
+      
+      # Select bootstrap values
+      bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
+      bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
+      
+      # Combine to single table.
+      data <- data.table::rbindlist(
+        list(point_values, bootstrap_values),
+        use.names=TRUE,
+        fill=TRUE)
+      
+      if(length(x[[1]]@grouping_column > 0)){
+        
+        # Split table by grouping column and compute estimate and confidence intervals.
+        data <- lapply(
+          split(data, by=x[[1]]@grouping_column, drop=TRUE),
+          ..compute_bootstrap_confidence_estimate,
+          confidence_level = x[[1]]@confidence_level,
+          bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
+          value_column = x[[1]]@value_column,
+          grouping_column = x[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          data,
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bootstrap_confidence_estimate(
+          x = data,
+          confidence_level = x[[1]]@confidence_level,
+          bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
+          value_column = x[[1]]@value_column)
+      }
+      
+      # Update the data attribute.
+      y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else if(any(estimation_type %in% c("bc", "bias_correction"))){
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
+      
+      # Select values.
+      bootstrap_values <- data.table::as.data.table(
+        x[estimation_type %in% c("bc", "bias_correction")][[1]]@data)
+      
+      if(length(x[[1]]@grouping_column > 0)){
+        # Split table by grouping column and compute bias corrected estimate.
+        data <- lapply(
+          split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
+          ..compute_bias_corrected_estimate,
+          value_column = x[[1]]@value_column,
+          grouping_column = x[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          data,
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bias_corrected_estimate(
+          x = bootstrap_values,
+          value_column = x[[1]]@value_column)
+      }
+      
+      # Update the data attribute.
+      y <- x[[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else if(any(estimation_type %in% c("point"))){
+      # This follows the same procedure as for bias-corrected estimates.
+      # For ensemble and hybrid detail levels a single value needs to be
+      # generated. However, in the case of hybrid detail level, a point
+      # estimate is created for each model, and requires aggregation.
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
+      
+      # Select values.
+      bootstrap_values <- data.table::as.data.table(
+        x[estimation_type %in% c("point")][[1]]@data)
+      
+      # Refine a bit so that only those entries with multiple values for
+      # the same grouping columns are aggregated. This can save a lot of
+      # time, because the point estimate typically is determined only on
+      # a single run.
+      has_multiple_entries <- duplicated(bootstrap_values, by=x[[1]]@grouping_column)
+      
+      # Select data based on single/multiple entries. Keep only relevant
+      # columns, namely grouping and value columns, to ensure that both
+      # unique_values and bootstrap_values will be processed the same
+      # way.
+      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(x[[1]]@grouping_column, x[[1]]@value_column))]
+      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(x[[1]]@grouping_column, x[[1]]@value_column))]
+      
+      if(is_empty(bootstrap_values)){
+        # Data are unique values.
+        data <- unique_values
+        
+      } else if(length(x[[1]]@grouping_column > 0)){
+        # Split table by grouping column and compute bias corrected
+        # estimate.
+        data <- lapply(
+          split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
+          ..compute_bias_corrected_estimate,
+          value_column = x[[1]]@value_column,
+          grouping_column = x[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          c(list(unique_values), data),
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bias_corrected_estimate(
+          x = bootstrap_values,
+          value_column = x[[1]]@value_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          c(list(unique_values), list(data)),
+          use.names=TRUE,
+          fill=TRUE)
+      }
+      
+      # Update the data attribute.
+      y <- x[[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(
+        ".compute_data_element_estimates: unknown estimation type: ",
+        paste_s(estimation_type)))
+    }
+    
+    return(y)
+  })
 
 
 ##### ..compute_data_element_estimates (NULL) ##################################
