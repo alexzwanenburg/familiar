@@ -440,9 +440,22 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                 plot_title <- "Kaplan-Meier survival curve"
               }
               
+              # Declare subtitle components.
+              additional_subtitle <- NULL
+              
+              # Add evaluation time as subtitle component if it is not used
+              # otherwise.
+              if(!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)){
+                additional_subtitle <- c(
+                  additional_subtitle,
+                  plotting.add_subtitle_time_point(x_split@time))
+              }
+              
               if(autogenerate_plot_subtitle){
-                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           x=current_split)
+                plot_sub_title <- plotting.create_subtitle(
+                  split_by=split_by,
+                  additional=additional_subtitle,
+                  x=current_split)
               }
               
               # Create plot
