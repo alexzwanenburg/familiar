@@ -4,6 +4,7 @@
 
 - Fixed an error that would occur when attempting to create risk group labels for a `familiarCollection` object that is composed of externally provided `familiarData` objects.
 
+- Fixed an issue that would prevent a `familiarCollection` object from being returned if an experiment was run using a temporary folder.
 
 # Version 1.4.0 (Misanthropic Muskrat)
 

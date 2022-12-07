@@ -1,9 +1,10 @@
-run_evaluation <- function(cl,
-                           proj_list,
-                           settings,
-                           file_paths,
-                           message_indent=0L,
-                           verbose=TRUE){
+run_evaluation <- function(
+    cl,
+    proj_list,
+    settings,
+    file_paths,
+    message_indent=0L,
+    verbose=TRUE){
   # performs evaluation of the data
   
   if(settings$eval$do_parallel == "FALSE") cl <- NULL
@@ -12,21 +13,32 @@ run_evaluation <- function(cl,
   if(length(settings$eval$evaluation_data_elements) == 0) verbose <- FALSE
   
   # Extract data from ensembles
-  data_set_list <- .prepare_familiar_data_sets(cl=cl,
-                                               only_pooling=settings$eval$pool_only,
-                                               message_indent=message_indent,
-                                               verbose=verbose)
-
+  data_set_list <- .prepare_familiar_data_sets(
+    cl=cl,
+    only_pooling=settings$eval$pool_only,
+    message_indent=message_indent,
+    verbose=verbose)
+  
   # Form collections (all individual ensembles with train and validation data combined)
   collection_list <- .prepare_familiar_collections(data_set_list=data_set_list)
   
-  # Create and save collections and export data
+  # Create and save collections and export data. For temporary files we do not
+  # export the plots and tables, as that does not make sense.
   if(!file_paths$is_temporary){
-    lapply(collection_list,
-           .process_collections,
-           file_paths=file_paths,
-           message_indent=message_indent,
-           verbose=verbose)
+    lapply(
+      collection_list,
+      .process_collections,
+      file_paths = file_paths,
+      message_indent = message_indent,
+      verbose = verbose)
+    
+  } else {
+    lapply(
+      collection_list,
+      .create_familiar_collection_runtime,
+      file_paths = file_paths,
+      message_indent = message_indent,
+      verbose = verbose)
   }
 }
 
@@ -556,40 +568,70 @@ run_evaluation <- function(cl,
 
 
 
-.process_collections <- function(collection_info,
-                                 file_paths,
-                                 message_indent=0L,
-                                 verbose=TRUE){
-
+.create_familiar_collection_runtime <- function(
+    collection_info,
+    file_paths,
+    message_indent=0L,
+    verbose=TRUE){
+  
   # Create the expected file path to the familiarCollection object.
-  fam_collection_file <- file.path(file_paths$fam_coll_dir, paste0(collection_info$collection_name, ".RDS"))
-
+  fam_collection_file <- file.path(
+    file_paths$fam_coll_dir,
+    paste0(collection_info$collection_name, ".RDS"))
+  
   # Check if the familiarCollection already exists.
   if(!file.exists(fam_collection_file)){
-    logger.message(paste0("\nEvaluation: Creating collection ", collection_info$collection_name),
-                   indent=message_indent,
-                   verbose=verbose)
+    logger.message(
+      paste0("\nEvaluation: Creating collection ", collection_info$collection_name),
+      indent=message_indent,
+      verbose=verbose)
     
     # Create a collection using the available input data
-    fam_collection <- as_familiar_collection(object=collection_info$fam_data,
-                                             familiar_data_names=collection_info$fam_data_names,
-                                             collection_name=collection_info$collection_name)
+    fam_collection <- as_familiar_collection(
+      object = collection_info$fam_data,
+      familiar_data_names = collection_info$fam_data_names,
+      collection_name = collection_info$collection_name)
     
     # Save to drive.
-    save(list=fam_collection, file=file_paths$fam_coll_dir)
+    save(
+      list=fam_collection,
+      file=file_paths$fam_coll_dir)
     
   } else {
     # Read from drive.
     fam_collection <- load_familiar_object(fam_collection_file)
   }
   
-  logger.message(paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name),
-                 indent=message_indent,
-                 verbose=verbose)
+  return(fam_collection)
+}
+  
+
+
+.process_collections <- function(collection_info,
+                                 file_paths,
+                                 message_indent=0L,
+                                 verbose=TRUE){
+
+  # Create or load familiarCollection object.
+  fam_collection <- .create_familiar_collection_runtime(
+    collection_info = collection_info,
+    file_paths = file_paths,
+    message_indent = message_indent,
+    verbose = verbose
+  )
+  
+  logger.message(
+    paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name),
+    indent=message_indent,
+    verbose=verbose)
   
   # Export to csv
-  export_all(object=fam_collection, dir_path=file_paths$results_dir)
+  export_all(
+    object=fam_collection,
+    dir_path=file_paths$results_dir)
   
   # Export to plot
-  plot_all(object=fam_collection, dir_path=file_paths$results_dir)
+  plot_all(
+    object=fam_collection,
+    dir_path=file_paths$results_dir)
 }
