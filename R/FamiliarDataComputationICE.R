@@ -1128,7 +1128,7 @@ setMethod("export_partial_dependence_data", signature(object="ANY"),
           })
 
 
-#####.export (familiarDataElementIndividualConditionalExpectation)--------------
+#####.export (familiarDataElementPartialDependence)-----------------------------
 setMethod(".export", signature(x="familiarDataElementPartialDependence"),
           function(x, x_list, aggregate_results=FALSE, ...){
             
