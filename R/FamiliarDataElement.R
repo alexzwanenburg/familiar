@@ -1066,35 +1066,39 @@ setMethod(".add_point_estimate_from_elements", signature(x="NULL"),
 
 
 ##### .compute_data_element_estimates (list) ###################################
-setMethod(".compute_data_element_estimates", signature(x="list"),
-          function(x, ...){
-            
-            # Create return list for data elements.
-            data_element <- list()
-            
-            # Determine class of all elements
-            element_classes <- sapply(x, class)
-            
-            # Iterate over unique classes.
-            for(element_class in unique(element_classes)){
-              
-              # Create a proto data element to avoid having to pass larger objects
-              # than required.
-              proto_data_element <- x[which(element_classes == element_class)][[1]]
-              proto_data_element@data <- NULL
-              
-              # Run familiarDataElement-specific analysis. This means that we pass
-              # the prototype data element as x with the list of elements.
-              data_element <- c(data_element,
-                                .compute_data_element_estimates(x=proto_data_element,
-                                                                x_list=x[which(element_classes == element_class)],
-                                                                ...))
-            }
-            
-            if(is_empty(data_element)) return(NULL)
-            
-            return(data_element)
-          })
+setMethod(
+  ".compute_data_element_estimates",
+  signature(x="list"),
+  function(x, ...){
+    
+    # Create return list for data elements.
+    data_element <- list()
+    
+    # Determine class of all elements
+    element_classes <- sapply(x, class)
+    
+    # Iterate over unique classes.
+    for(element_class in unique(element_classes)){
+      
+      # Create a proto data element to avoid having to pass larger objects than
+      # required.
+      proto_data_element <- x[which(element_classes == element_class)][[1]]
+      proto_data_element@data <- NULL
+      
+      # Run familiarDataElement-specific analysis. This means that we pass the
+      # prototype data element as x with the list of elements.
+      data_element <- c(
+        data_element,
+        .compute_data_element_estimates(
+          x=proto_data_element,
+          x_list=x[which(element_classes == element_class)],
+          ...))
+    }
+    
+    if(is_empty(data_element)) return(NULL)
+    
+    return(data_element)
+  })
 
 
 ##### .compute_data_element_estimates (familiarDataElement) ####################
@@ -1291,6 +1295,10 @@ setMethod(
       # Check the number of elements.
       if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
       
+      # Find grouping columns.
+      grouping_columns <- x[[1]]@grouping_column
+      if(length(grouping_columns) == 0) grouping_columns <- NULL
+      
       # Select values.
       bootstrap_values <- data.table::as.data.table(
         x[estimation_type %in% c("point")][[1]]@data)
@@ -1299,27 +1307,27 @@ setMethod(
       # the same grouping columns are aggregated. This can save a lot of
       # time, because the point estimate typically is determined only on
       # a single run.
-      has_multiple_entries <- duplicated(bootstrap_values, by=x[[1]]@grouping_column)
+      has_multiple_entries <- duplicated(bootstrap_values, by=grouping_columns)
       
       # Select data based on single/multiple entries. Keep only relevant
       # columns, namely grouping and value columns, to ensure that both
       # unique_values and bootstrap_values will be processed the same
       # way.
-      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(x[[1]]@grouping_column, x[[1]]@value_column))]
-      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(x[[1]]@grouping_column, x[[1]]@value_column))]
+      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(grouping_columns, x[[1]]@value_column))]
+      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(grouping_columns, x[[1]]@value_column))]
       
       if(is_empty(bootstrap_values)){
         # Data are unique values.
         data <- unique_values
         
-      } else if(length(x[[1]]@grouping_column > 0)){
+      } else if(length(grouping_columns) > 0){
         # Split table by grouping column and compute bias corrected
         # estimate.
         data <- lapply(
-          split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
+          split(bootstrap_values, by=grouping_columns, drop=TRUE),
           ..compute_bias_corrected_estimate,
           value_column = x[[1]]@value_column,
-          grouping_column = x[[1]]@grouping_column)
+          grouping_column = grouping_columns)
         
         # Combine to single table
         data <- data.table::rbindlist(
