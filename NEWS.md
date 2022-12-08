@@ -4,6 +4,8 @@
 
 - Improved efficiency of aggregating and computing point estimates for evaluation steps. It may occur that for each grouping (e.g. samples for pairwise sample similarity), multiple values are available that should be aggregated to a point estimate. Previously we split on all unique combinations of grouping column, and process each split separately. This is a valid approach, but can occur significant overhead when this forms a large number (>100k) splits. We now first determine which data (if any) require computation of a (bias-corrected) point estimate because of grouping. Often, each split would only contain a single instance which forms a point estimate on its own. Extra computation is avoided for these cases.
 
+- Plots now always show the evaluation time point. This is relevant for, for example, calibration plots, where both the observed and expected (predicted) probabilities are time-dependent, and will change depending on the time point.
+
 ## Bug fixes
 
 - Fixed an error that would occur when attempting to create risk group labels for a `familiarCollection` object that is composed of externally provided `familiarData` objects.
