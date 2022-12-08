@@ -2210,8 +2210,7 @@ plotting.save_plot_to_file <- function(
     # Combine type and subtype as the filename.
     filename <- paste0(
       type,
-      ifelse(is.null(subtype), "", paste0("_", subtype)),
-    )
+      ifelse(is.null(subtype), "", paste0("_", subtype)))
   }
   
   for(current_device in device){
