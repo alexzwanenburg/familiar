@@ -537,10 +537,22 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               if(is.waive(plot_title)) plot_title <- "Permutation variable importance"
               
+              # Declare subtitle components. The similarity metric is always shown.
+              additional_subtitle <- list("similarity metric"=x@similarity_metric)
+              
+              # Add evaluation time as subtitle component if it is not used
+              # otherwise.
+              if(!"evaluation_time" %in% c(split_by, color_by, facet_by) && object@outcome_type %in% c("survival")){
+                additional_subtitle <- c(
+                  additional_subtitle,
+                  plotting.add_subtitle_time_point(x_sub$evaluation_time[1]))
+              }
+              
               if(autogenerate_plot_subtitle){
-                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           additional=list("similarity metric"=x@similarity_metric),
-                                                           x=x_sub)
+                plot_sub_title <- plotting.create_subtitle(
+                  split_by=split_by,
+                  additional=additional_subtitle,
+                  x=x_sub)
               }
               
               # Generate plot
