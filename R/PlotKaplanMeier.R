@@ -494,27 +494,28 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               
               # Save and export
               if(!is.null(dir_path)){
-                
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=current_split,
-                                                   split_by=split_by)
                 # Obtain default plot dimensions
-                def_plot_dims <- .determine_km_plot_default_dimensions(x=x_split@data,
-                                                                       facet_by=facet_by,
-                                                                       facet_wrap_cols=facet_wrap_cols,
-                                                                       show_survival_table=show_survival_table)
+                def_plot_dims <- .determine_km_plot_default_dimensions(
+                  x=x_split@data,
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols,
+                  show_survival_table=show_survival_table)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="stratification",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="stratification",
+                      "x"=current_split,
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list

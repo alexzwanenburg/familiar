@@ -515,22 +515,6 @@ plot_model_signature_variable_importance <- function(...){
     # Join cluster and univariate data.
     if(show_cluster){
       
-      # Remove redundant data.
-      # if(type == "feature_selection"){
-      #   
-      #   # Merge to introduce
-      #   x_temporary <- merge(x=x_sub,
-      #                        y=feature_similarity@data,
-      #                        by.x=c("feature", available_splitting),
-      #                        by.y=c("feature", available_splitting),
-      #                        allow.cartesian=TRUE)
-      #   
-      #   # Feature selection-based ranking do not aggregate along data-set and
-      #   # learners.
-      #   x_temporary <- x_temporary[learner %in% c(unique(x_temporary$learner)[1])]
-      #   x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
-      #   
-      # } else if(type == "model"){
       if(type == "model"){
         x_temporary <- merge(x=x_sub,
                              y=feature_similarity@data,
@@ -595,31 +579,31 @@ plot_model_signature_variable_importance <- function(...){
     
     # Save and export
     if(!is.null(dir_path)){
-      # Set subtype.
-      subtype <- plotting.create_subtype(x=x_sub,
-                                         subtype=ifelse(type == "feature_selection",
-                                                        "feature_selection",
-                                                        "learner"),
-                                         additional=list("aggregation_method"=x@rank_aggregation_method),
-                                         split_by=split_by)
       
       # Obtain decent default values for the plot.
-      def_plot_dims <- .determine_feature_ranking_plot_dimensions(x=x_sub,
-                                                                  facet_by=facet_by,
-                                                                  facet_wrap_cols=facet_wrap_cols,
-                                                                  rotate_x_tick_labels=rotate_x_tick_labels)
+      def_plot_dims <- .determine_feature_ranking_plot_dimensions(
+        x=x_sub,
+        facet_by=facet_by,
+        facet_wrap_cols=facet_wrap_cols,
+        rotate_x_tick_labels=rotate_x_tick_labels)
       
       # Save to file.
-      do.call(plotting.save_plot_to_file,
-              args=c(list("plot_obj"=p,
-                          "object"=object,
-                          "dir_path"=dir_path,
-                          "type"="variable_importance",
-                          "subtype"=subtype,
-                          "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                          "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                          "units"=ifelse(is.waive(units), "cm", units)),
-                     list(...)))
+      do.call(
+        plotting.save_plot_to_file,
+        args=c(
+          list(
+            "plot_obj"=p,
+            "object"=object,
+            "dir_path"=dir_path,
+            "type"="variable_importance",
+            "subtype"=ifelse(type == "feature_selection", "feature_selection", "learner"),
+            "x"=x_sub,
+            "split_by"=split_by,
+            "additional"=list("aggregation_method"=x@rank_aggregation_method),
+            "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+            "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+            "units"=ifelse(is.waive(units), "cm", units)),
+          list(...)))
       
     } else {
       # Store as list and export

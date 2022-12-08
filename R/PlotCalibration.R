@@ -606,11 +606,6 @@ setMethod(
       # Save and export
       if(!is.null(dir_path)){
         
-        # Set subtype.
-        subtype <- plotting.create_subtype(
-          x=current_split,
-          split_by=split_by)
-        
         # Obtain decent default values for the plot.
         def_plot_dims <- .determine_calibration_plot_dimensions(
           x=calibration_data_split,
@@ -627,7 +622,8 @@ setMethod(
               "object"=object,
               "dir_path"=dir_path,
               "type"="calibration",
-              "subtype"=subtype,
+              "x"=current_split,
+              "split_by"=split_by,
               "height"=ifelse(is.waive(height), def_plot_dims[1], height),
               "width"=ifelse(is.waive(width), def_plot_dims[2], width),
               "units"=ifelse(is.waive(units), "cm", units)),

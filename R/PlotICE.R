@@ -933,27 +933,28 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                 subtype <- ifelse(show_ice, "ice", "pd")
                 if(show_2d) subtype <- c(subtype, "2d")
                 
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_split[[ii]],
-                                                   subtype=subtype,
-                                                   split_by=split_by)
-                
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_ice_plot_dimensions(x=x_split[[ii]],
-                                                                facet_by=facet_by,
-                                                                facet_wrap_cols=facet_wrap_cols)
+                def_plot_dims <- .determine_ice_plot_dimensions(
+                  x=x_split[[ii]],
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="explanation",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="explanation",
+                      "subtype"=subtype,
+                      "x"=x_split[[ii]],
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list for export.

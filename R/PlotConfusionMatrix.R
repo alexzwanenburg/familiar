@@ -364,34 +364,34 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_split[[ii]],
-                                                   subtype="confusion_matrix",
-                                                   split_by=split_by)
-                
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_confusion_matrix_plot_dimensions(x=x_split[[ii]],
-                                                                             class_levels=get_outcome_class_levels(object),
-                                                                             facet_by=facet_by,
-                                                                             facet_wrap_cols=facet_wrap_cols,
-                                                                             rotate_x_tick_labels=rotate_x_tick_labels)
+                def_plot_dims <- .determine_confusion_matrix_plot_dimensions(
+                  x=x_split[[ii]],
+                  class_levels=get_outcome_class_levels(object),
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols,
+                  rotate_x_tick_labels=rotate_x_tick_labels)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="performance",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="performance",
+                      "subtype"="confusion_matrix",
+                      "x"=x_split[[ii]],
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- c(plot_list,
-                               list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             

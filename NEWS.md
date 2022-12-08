@@ -6,6 +6,8 @@
 
 - Plots now always show the evaluation time point. This is relevant for, for example, calibration plots, where both the observed and expected (predicted) probabilities are time-dependent, and will change depending on the time point.
 
+- Improved support for providing a file name for storing a plot. The plotting device is now changed based on the file name, if it has an extension. In case multiple plots would be created, e.g. due to splitting on some grouping variable, such as the underlying dataset, the provided file name is used as a base.
+
 ## Bug fixes
 
 - Fixed an error that would occur when attempting to create risk group labels for a `familiarCollection` object that is composed of externally provided `familiarData` objects.
