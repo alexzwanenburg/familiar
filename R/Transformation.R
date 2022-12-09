@@ -385,10 +385,26 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             }
             
             # Optimise lambda for Box-Cox transformations.
-            optimal_lambda <- suppressWarnings(stats::optimise(..box_cox_loglik,
-                                                               interval=c(-10, 10),
-                                                               x=data,
-                                                               maximum=TRUE))
+            if(object@method %in% c("box_cox_robust")){
+              # Robust method based on Raymaekers J, Rousseeuw PJ. Transforming
+              # variables to central normality. Mach Learn. 2021.
+              # doi:10.1007/s10994-021-05960-5
+              optimal_lambda <- .transformation_robust_optimisation(
+                x=data,
+                type="box_cox")
+              
+            } else {
+              # Standard method based on optimising log-likelihood of the normal
+              # distribution.
+              optimal_lambda <- suppressWarnings(
+                stats::optimise(
+                  ..box_cox_loglik,
+                  interval=c(-10, 10),
+                  x=data,
+                  maximum=TRUE))
+              
+              optimal_lambda <- optimal_lambda$maximum
+            }
             
             # Select optimal lambda that maximises log-likelihood score.
             if(is.finite(optimal_lambda$objective)){
@@ -435,21 +451,32 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             }
             
             # Optimise lambda for Box-Cox transformations.
-            optimal_lambda <- suppressWarnings(stats::optimise(..yeo_johnson_loglik,
-                                                               interval=c(-10, 10),
-                                                               x=data,
-                                                               maximum=TRUE))
-            
-            # Select optimal lambda that maximises log-likelihood score.
-            if(is.finite(optimal_lambda$objective)){
-              lambda <- round(optimal_lambda$maximum, digits=1)
+            if(object@method %in% c("yeo_johnson_robust")){
+              # Robust method based on Raymaekers J, Rousseeuw PJ. Transforming
+              # variables to central normality. Mach Learn. 2021.
+              # doi:10.1007/s10994-021-05960-5
+              lambda <- .transformation_robust_optimisation(
+                x=data,
+                type="yeo_johnson")
               
             } else {
-              lambda <- 1.0
+              # Standard method based on optimising log-likelihood of the normal
+              # distribution.
+              optimal_lambda <- suppressWarnings(
+                stats::optimise(
+                  ..yeo_johnson_loglik,
+                  interval=c(-10, 10),
+                  x=data,
+                  maximum=TRUE))
+              
+              lambda <- ifelse(
+                is.finite(optimal_lambda$objective),
+                optimal_lambda$maximum,
+                1.0)
             }
             
             # Set lambda parameter.
-            object@lambda <- lambda
+            object@lambda <- round(lambda, digits = 1)
             object@complete <- TRUE
             
             return(object)
@@ -520,6 +547,93 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 
 
+..box_cox_dev <- function(lambda, x){
+  # First order derivative of the Yeo-Johnson transformation with respect to x.
+  return(x^(lambda - 1))
+}
+
+
+
+..box_cox_loglik <- function(lambda, x, w=NULL){
+  
+  # Set w
+  if(is.null(w)) w <- numeric(length(x)) + 1.0
+  
+  # Transform x under the provided lambda.
+  y <- ..box_cox_transform(lambda=lambda, x=x)
+  
+  # Compute the sum of the weights.
+  sum_w <- sum(w)
+  if(sum_w == 0) return(NA_real_)
+  
+  # Compute the weighted estimates of the mean mu and variance sigma squared for
+  # y.
+  mu_hat <- sum(w * y) / sum_w
+  sigma_hat_squared <- sum(w * (y - mu_hat)^2) / sum_w
+  
+  # Log-likelihood cannot be determined if the sigma estimate equals 0.0
+  if(sigma_hat_squared == 0) return(NA_real_)
+  
+  # Compute the log likelihood under the assumption that the transformed
+  # variable y follows the normal distribution.
+  llf <- (lambda - 1.0) * sum(w * log(x)) - sum_w / 2.0 * log(sigma_hat_squared)
+  
+  return(llf)
+}
+
+
+
+..box_cox_transform_rectified <- function(lambda, x){
+  # The rectified transform replaces part of the transformed values by a first
+  # order (linear) approximation. Linear approximation of a function f(x) at
+  # point a is defined as y = f(a) + (x - a) * f'(a), with f'(a) being the
+  # derivative of f(x=a). Here function f is the Box-Cox transformation, and
+  # point a is the first or third quartile, depending on lambda.
+  
+  # Find first and third quartiles.
+  cut_off <- stats::quantile(x, probs=c(0.25, 0.75), names=FALSE)
+  
+  y <- numeric(length(x))
+  
+  # Perform rectified transformation
+  if(lambda == 1.0){
+    # For lambda equal to 1, the mapping is linear, and no elements are
+    # out-of-range and require rectification.
+    out_of_range <- logical(length(x))
+    
+  } else if(lambda > 1.0){
+    # Select the cut-off value, i.e. the first quartile.
+    cut_off <- cut_off[1]
+    
+    # Elements that have value below Cl (1st quartile) are rectified.
+    out_of_range <- x < cut_off
+    
+  } else {
+    # Lambda < 1.0.
+    
+    # Select the cut-off value, i.e. the third quartile.
+    cut_off <- cut_off[2]
+    
+    # Elements that have value above Cu (3rd quartile) are rectified.
+    out_of_range <- x > cut_off
+  }
+  
+  if(any(out_of_range)){
+    # Linear approximation to out-of-range elements.
+    y[out_of_range] <- ..box_cox_transform(lambda=lambda, x=cut_off) + (x[out_of_range]-cut_off) * ..box_cox_dev(lambda=lambda, x=cut_off)
+  }
+  
+  # Map elements that do not require rectification using the normal Box-Cox
+  # transformation.
+  if(any(!out_of_range)){
+    y[!out_of_range] <- ..box_cox_transform(lambda=lambda, x=x[!out_of_range])
+  }
+  
+  return(y)
+}
+
+
+
 ..yeo_johnson_transform <- function(lambda, x, invert=FALSE){
   # After Yeo, I. K., & Johnson, R. A. (2000). A new family of power
   # transformations to improve normality or symmetry. Biometrika, 87(4),
@@ -578,50 +692,249 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 }
 
 
-..box_cox_loglik <- function(lambda, x){
-  # Determine length.
-  n <- length(x)
-  
-  # Transform x under the provided lambda.
-  y <- ..box_cox_transform(lambda=lambda, x=x)
-  
-  # Compute the estimates of the mean mu and variance sigma squared for y.
-  mu_hat <- mean(y)
-  sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
-  
-  # Log-likelihood cannot be determined if the sigma estimate equals 0.0
-  if(sigma_hat_squared == 0) return(NA_real_)
-  
-  # Compute the log likelihood under the assumption that the transformed
-  # variable y follows the normal distribution.
-  llf <- (lambda - 1.0) * sum(log(x)) - n / 2.0 * log(sigma_hat_squared)
-  
-  return(llf)
+
+..yeo_johnson_dev <- function(lambda, x){
+  # First order derivative of the Yeo-Johnson transformation with respect to x.
+  return((1 + abs(x))^(sgn(x) * (lambda - 1)))
 }
 
 
-..yeo_johnson_loglik <- function(lambda, x){
+
+..yeo_johnson_loglik <- function(lambda, x, w=NULL){
   
-  # Determine length.
-  n <- length(x)
+  # Set w
+  if(is.null(w)) w <- numeric(length(x)) + 1.0
   
   # Transform x under the provided lambda.
   y <- ..yeo_johnson_transform(lambda=lambda, x=x)
   
-  # Compute the estimates of the mean mu and variance sigma squared for y.
-  mu_hat <- mean(y)
-  sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
+  # Compute the sum of the weights.
+  sum_w <- sum(w)
+  if(sum_w == 0) return(NA_real_)
+  
+  # Compute the weighted estimates of the mean mu and variance sigma squared for
+  # y.
+  mu_hat <- sum(w * y) / sum_w
+  sigma_hat_squared <- sum(w * (y - mu_hat)^2) / sum_w
   
   # Log-likelihood cannot be determined if the sigma estimate equals 0.0
   if(sigma_hat_squared == 0) return(NA_real_)
   
   # Compute the log likelihood under the assumption that the transformed
   # variable y follows the normal distribution.
-  llf <- (lambda - 1.0) * sum(sign(x) * log1p(abs(x))) - n /2.0 * log(sigma_hat_squared)
+  llf <- (lambda - 1.0) * sum(w * sign(x) * log1p(abs(x))) - sum_w/2.0 * log(sigma_hat_squared)
   
   return(llf)
 }
 
+
+
+..yeo_johnson_transform_rectified <- function(lambda, x){
+  # The rectified transform replaces part of the transformed values by a first
+  # order (linear) approximation. Linear approximation of a function f(x) at
+  # point a is defined as y = f(a) + (x - a) * f'(a), with f'(a) being the
+  # derivative of f(x=a). Here function f is the Yeo-Johnson transformation, and
+  # point a is the first or third quartile, depending on lambda.
+  
+  # Find first and third quartiles.
+  cut_off <- stats::quantile(x, probs=c(0.25, 0.75), names=FALSE)
+  
+  y <- numeric(length(x))
+  
+  # Perform rectified transformation
+  if(lambda == 1.0){
+    # For lambda equal to 1, the mapping is linear, and no elements are
+    # out-of-range and require rectification.
+    out_of_range <- logical(length(x))
+    
+  } else if(lambda > 1.0){
+    # Select the cut-off value, i.e. the first quartile.
+    cut_off <- cut_off[1]
+    
+    # Elements that have value below Cl (1st quartile) are rectified.
+    out_of_range <- x < cut_off
+    
+  } else {
+    # Lambda < 1.0.
+    
+    # Select the cut-off value, i.e. the third quartile.
+    cut_off <- cut_off[2]
+    
+    # Elements that have value above Cu (3rd quartile) are rectified.
+    out_of_range <- x > cut_off
+  }
+  
+  if(any(out_of_range)){
+    # Linear approximation to out-of-range elements.
+    y[out_of_range] <- ..yeo_johnson_transform(lambda=lambda, x=cut_off) + (x[out_of_range]-cut_off) * ..yeo_johnson_dev(lambda=lambda, x=cut_off)
+  }
+  
+  # Map elements that do not require rectification using the normal Box-Cox
+  # transformation.
+  if(any(!out_of_range)){
+    y[!out_of_range] <- ..yeo_johnson_transform(lambda=lambda, x=x[!out_of_range])
+  }
+  
+  return(y)
+}
+
+
+
+
+
+.transformation_robust_optimisation <- function(x, type){
+  # This follows the algorithm from Raymaekers J, Rousseeuw PJ. Transforming
+  # variables to central normality. Mach Learn. 2021.
+  # doi:10.1007/s10994-021-05960-5
+  
+  # Sort x.
+  x <- order(x)
+  
+  # Compute z-values according to the inverse cumulative density function.
+  z_expected <- stats::qnorm(p=(seq_along(x) - 1/3) / (length(x) + 1/3))
+  
+  # Step 1: Compute initial estimate for lambda.
+  # Standard method based on optimising log-likelihood of the normal
+  # distribution.
+  
+  optimal_lambda <- suppressWarnings(
+    stats::optimise(
+      ..transformation_rectified_optimisation,
+      interval=c(-10, 10),
+      x=x,
+      z=z_expected,
+      type=type,
+      maximum=FALSE))
+  
+  optimal_lambda <- ifelse(
+    is.finite(optimal_lambda$objective),
+    optimal_lambda$maximum,
+    1.0)
+  
+  # Step 2: Compute lambda from reweighted maximum likelihood.
+  optimal_lambda <- ..transformation_rectified_optimisation(
+    lambda_0=optimal_lambda,
+    x=x,
+    type=type,
+    ii=1L)
+  
+  # Step 3: Compute lambda from reweighted maximum likelihood again.
+  optimal_lambda <- ..transformation_rectified_optimisation(
+    lambda_0=optimal_lambda,
+    x=x,
+    type=type,
+    ii=2L)
+  
+  if(!is.finite(optimal_lambda)) return(1.0)
+  
+  return(optimal_lambda)
+}
+
+
+
+
+..transformation_rectified_optimisation <- function(lambda, x, z, type){
+  
+  rectifier_FUN <- switch(
+    type,
+    "box_cox"=..box_cox_transform_rectified,
+    "yeo_johnson"=..yeo_johnson_transform_rectified
+  )
+  
+  # Compute values after power transformation with the appropriate lambda value.
+  y <- do.call(
+    rectifier_FUN,
+    args=list(
+      "lambda"=lambda,
+      "x"=x))
+  
+  # Compute M-estimates for locality and scale
+  robust_estimates <- huber_estimate(y)
+  
+  # Check problematic values.
+  if(is.null(robust_estimates)) return(NA_real_)
+  if(robust_estimates$sigma == 0.0) return(NA_real_)
+  
+  # Compute residuals.
+  residual <- (y - robust_estimates$mu) / robust_estimates$sigma - z
+  
+  # Compute Tukey bisquare function to truncate weights of outlier residuals.
+  truncated_weights <- numeric(length(residual)) + 1.0
+  valid_residuals <- which(residual <= 0.5)
+  
+  if(length(valid_residuals) > 0){
+    truncated_weights[valid_residuals] <- 1.0 - (1.0 - (residual[valid_residuals] / 0.5)^2)^3
+  }
+  
+  return(sum(truncated_weights))
+}
+
+
+
+..transformation_reweighted_optimisation <- function(lambda_0, x, type, ii){
+
+  if(!is.finite(lambda_0)) return(NA_real_)
+  
+  # Set transformation function.
+  if(ii == 1){
+    # For the initial step, use the rectified transformations
+    transform_FUN <- switch(
+      type,
+      "box_cox"=..box_cox_transform_rectified,
+      "yeo_johnson"=..yeo_johnson_transform_rectified
+    )
+    
+  } else {
+    transform_FUN <- switch(
+      type,
+      "box_cox"=..box_cox_transform,
+      "yeo_johnson"=..yeo_johnson_transform
+    )
+  }
+  
+  # Set log-likelihood function.
+  loglik_FUN <- switch(
+    type,
+    "box_cox"=..box_cox_loglik,
+    "yeo_johnson"=..yeo_johnson_loglik
+  )
+  
+  # Perform transformation for lambda_0
+  y <- do.call(
+    transform_FUN,
+    args=list(
+      "lambda"=lambda_0,
+      "x"=x
+    )
+  )
+  
+  # Compute M-estimates for locality and scale
+  robust_estimates <- huber_estimate(y)
+  
+  # Check problematic values.
+  if(is.null(robust_estimates)) return(NA_real_)
+  if(robust_estimates$sigma == 0.0) return(NA_real_)
+  
+  # Compute weights.
+  weights <- as.numeric(abs(y - robust_estimates$mu) / robust_estimates$sigma <= stats::qnorm(0.995))
+  if(sum(weights) == 0.0) return(NA_real_)
+  
+  # Compute optimal lambda.
+  optimal_lambda <- suppressWarnings(
+    stats::optimise(
+      loglik_FUN,
+      interval=c(-10, 10),
+      x=x,
+      w=weights,
+      maximum=TRUE))
+  
+  lambda <- ifelse(
+    is.finite(optimal_lambda$objective),
+    optimal_lambda$maximum,
+    1.0)
+  
+  return(lambda)
+}
 
 
 
