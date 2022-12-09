@@ -265,7 +265,10 @@
 #'
 #'   1. Box, G. E. P. & Cox, D. R. An analysis of transformations. J. R. Stat.
 #'   Soc. Series B Stat. Methodol. 26, 211–252 (1964).
-#'
+#'   
+#'   1. Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
+#'   normality. Mach Learn. (2021).
+#'   
 #'   1. Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 #'   regression. Biostatistics 8, 212–227 (2007).
 #'
@@ -1156,9 +1159,8 @@
 #'
 #'   * `yeo_johnson` (default): Transformation using the Yeo-Johnson
 #'   transformation (Yeo and Johnson, 2000). The algorithm tests various lambda
-#'   values (-2.0, -1.0, -0.5, 0.0, 0.33333, 0.5, 1.0, 1.5, 2.0) and selects the
-#'   lambda that maximises the log-likelihood.
-#'
+#'   values and selects the lambda that maximises the log-likelihood.
+#'   
 #'   * `yeo_johnson_trim`: As `yeo_johnson`, but based on the set of feature
 #'   values where the 5% lowest and 5% highest values are discarded. This
 #'   reduces the effect of outliers.
@@ -1166,14 +1168,17 @@
 #'   * `yeo_johnson_winsor`: As `yeo_johnson`, but based on the set of feature
 #'   values where the 5% lowest and 5% highest values are winsorised. This
 #'   reduces the effect of outliers.
-#'
+#'   
+#'   * `yeo_johnson_robust`: A robust version of `yeo_johnson` after Raymaekers
+#'   and Rousseeuw (2021). This method is less sensitive to outliers.
+#'   
 #'   * `box_cox`: Transformation using the Box-Cox transformation (Box and Cox,
 #'   1964). Unlike the Yeo-Johnson transformation, the Box-Cox transformation
 #'   requires that all data are positive. Features that contain zero or negative
 #'   values cannot be transformed using this transformation. The algorithm tests
-#'   various lambda values (-2.0, -1.0, -0.5, 0.0, 0.3333, 0.5, 1.0, 1.5, 2.0)
-#'   and selects the lambda that maximises the log-likelihood.
-#'
+#'   various lambda values and selects the lambda that maximises the
+#'   log-likelihood.
+#'   
 #'   * `box_cox_trim`: As `box_cox`, but based on the set of feature values
 #'   where the 5% lowest and 5% highest values are discarded. This reduces the
 #'   effect of outliers.
@@ -1181,6 +1186,9 @@
 #'   * `box_cox_winsor`: As `box_cox`, but based on the set of feature values
 #'   where the 5% lowest and 5% highest values are winsorised. This reduces the
 #'   effect of outliers.
+#'   
+#'   * `box_cox_robust`: A robust verson of `box_cox` after Raymaekers and
+#'   Rousseew (2021). This method is less sensitive to outliers.
 #'
 #'   Only features that contain numerical data are transformed. Transformation
 #'   parameters obtained in development data are stored within `featureInfo`
@@ -1477,7 +1485,10 @@
 #'
 #'   1. Box, G. E. P. & Cox, D. R. An analysis of transformations. J. R. Stat.
 #'   Soc. Series B Stat. Methodol. 26, 211–252 (1964).
-#'
+#'   
+#'   1. Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
+#'   normality. Mach Learn. (2021).
+#'   
 #'   1. Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 #'   regression. Biostatistics 8, 212–227 (2007).
 #'
@@ -1746,16 +1757,18 @@
   
   ##### transformation_method ##################################################
   # Transformation method
-  settings$transform_method <- .parse_arg(x_config=config$transformation_method,
-                                          x_var=transformation_method,
-                                          var_name="transformation_method",
-                                          type="character",
-                                          optional=TRUE,
-                                          default="yeo_johnson")
+  settings$transform_method <- .parse_arg(
+    x_config=config$transformation_method,
+    x_var=transformation_method,
+    var_name="transformation_method",
+    type="character",
+    optional=TRUE,
+    default="yeo_johnson_robust")
   
-  .check_parameter_value_is_valid(x=settings$transform_method,
-                                  var_name="transformation_method",
-                                  values=.get_available_transformation_methods())
+  .check_parameter_value_is_valid(
+    x=settings$transform_method,
+    var_name="transformation_method",
+    values=.get_available_transformation_methods())
   
   ##### normalisation_method ###################################################
   # Normalisation method
