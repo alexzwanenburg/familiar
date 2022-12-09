@@ -389,7 +389,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
               # Robust method based on Raymaekers J, Rousseeuw PJ. Transforming
               # variables to central normality. Mach Learn. 2021.
               # doi:10.1007/s10994-021-05960-5
-              optimal_lambda <- .transformation_robust_optimisation(
+              lambda <- .transformation_robust_optimisation(
                 x=data,
                 type="box_cox")
               
@@ -403,19 +403,14 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                   x=data,
                   maximum=TRUE))
               
-              optimal_lambda <- optimal_lambda$maximum
-            }
-            
-            # Select optimal lambda that maximises log-likelihood score.
-            if(is.finite(optimal_lambda$objective)){
-              lambda <- round(optimal_lambda$maximum, digits=1)
-              
-            } else {
-              lambda <- 1.0
+              lambda <- ifelse(
+                is.finite(optimal_lambda$objective),
+                optimal_lambda$maximum,
+                1.0)
             }
             
             # Set lambda parameter.
-            object@lambda <- lambda
+            object@lambda <- round(lambda, digits = 1)
             object@complete <- TRUE
             
             return(object)
@@ -695,7 +690,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 ..yeo_johnson_dev <- function(lambda, x){
   # First order derivative of the Yeo-Johnson transformation with respect to x.
-  return((1 + abs(x))^(sgn(x) * (lambda - 1)))
+  return((1 + abs(x))^(sign(x) * (lambda - 1)))
 }
 
 
@@ -788,7 +783,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   # doi:10.1007/s10994-021-05960-5
   
   # Sort x.
-  x <- order(x)
+  x <- x[order(x)]
   
   # Compute z-values according to the inverse cumulative density function.
   z_expected <- stats::qnorm(p=(seq_along(x) - 1/3) / (length(x) + 1/3))
@@ -808,18 +803,18 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   
   optimal_lambda <- ifelse(
     is.finite(optimal_lambda$objective),
-    optimal_lambda$maximum,
+    optimal_lambda$minimum,
     1.0)
   
   # Step 2: Compute lambda from reweighted maximum likelihood.
-  optimal_lambda <- ..transformation_rectified_optimisation(
+  optimal_lambda <- ..transformation_reweighted_optimisation(
     lambda_0=optimal_lambda,
     x=x,
     type=type,
     ii=1L)
   
   # Step 3: Compute lambda from reweighted maximum likelihood again.
-  optimal_lambda <- ..transformation_rectified_optimisation(
+  optimal_lambda <- ..transformation_reweighted_optimisation(
     lambda_0=optimal_lambda,
     x=x,
     type=type,
@@ -860,7 +855,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   
   # Compute Tukey bisquare function to truncate weights of outlier residuals.
   truncated_weights <- numeric(length(residual)) + 1.0
-  valid_residuals <- which(residual <= 0.5)
+  valid_residuals <- which(abs(residual) <= 0.5)
   
   if(length(valid_residuals) > 0){
     truncated_weights[valid_residuals] <- 1.0 - (1.0 - (residual[valid_residuals] / 0.5)^2)^3
@@ -916,7 +911,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   if(robust_estimates$sigma == 0.0) return(NA_real_)
   
   # Compute weights.
-  weights <- as.numeric(abs(y - robust_estimates$mu) / robust_estimates$sigma <= stats::qnorm(0.995))
+  weights <- as.numeric(abs(y - robust_estimates$mu) / robust_estimates$sigma <= stats::qnorm(0.99))
   if(sum(weights) == 0.0) return(NA_real_)
   
   # Compute optimal lambda.

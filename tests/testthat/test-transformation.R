@@ -3,95 +3,112 @@ outcome_type <- "survival"
 
 for(n_numeric_features in c(4, 3, 2, 1, 0)){
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
-                                                       n_numeric=n_numeric_features)
+  data <- familiar:::test_create_synthetic_series_data(
+    outcome_type=outcome_type,
+    n_numeric=n_numeric_features)
   
   for(transformation_method in familiar:::.get_available_transformation_methods()){
     
-    testthat::test_that(paste0("Transformation is correctly performed using the ", transformation_method,
-                               " method and ", n_numeric_features, " numeric features."), {
-      # Make a copy of the data.
-      data_copy <- data.table::copy(data)
-      
-      # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
-                                                             file_paths=NULL,
-                                                             project_id=character(),
-                                                             outcome_type=outcome_type)[[1]]
-      
-      # Add skeletons.
-      feature_info_list <- familiar:::create_transformation_parameter_skeleton(feature_info_list=feature_info_list,
-                                                                               transformation_method=transformation_method)
-      
-      # Update the feature info list.
-      feature_info_list <- familiar:::add_transformation_parameters(feature_info_list=feature_info_list,
-                                                                    data=data_copy)
-      
-      # Perform the transformation.
-      data_copy <- familiar:::transform_features(data=data_copy,
-                                                 feature_info_list=feature_info_list)
-      
-      # Test whether the features are transformed (unless none).
-      if(transformation_method == "none"){
-        # Check that the data is not altered.
-        testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
+    testthat::test_that(
+      paste0(
+        "Transformation is correctly performed using the ", transformation_method,
+        " method and ", n_numeric_features, " numeric features."),
+      {
+        # Make a copy of the data.
+        data_copy <- data.table::copy(data)
         
-      } else {
-        for(feature in familiar:::get_feature_columns(data_copy)){
+        # Create a list of featureInfo objects.
+        feature_info_list <- familiar:::.get_feature_info_data(
+          data=data_copy@data,
+          file_paths=NULL,
+          project_id=character(),
+          outcome_type=outcome_type)[[1]]
+        
+        # Add skeletons.
+        feature_info_list <- familiar:::create_transformation_parameter_skeleton(
+          feature_info_list=feature_info_list,
+          transformation_method=transformation_method)
+        
+        # Update the feature info list.
+        feature_info_list <- familiar:::add_transformation_parameters(
+          feature_info_list=feature_info_list,
+          data=data_copy)
+        
+        # Perform the transformation.
+        data_copy <- familiar:::transform_features(
+          data=data_copy,
+          feature_info_list=feature_info_list)
+        
+        # Test whether the features are transformed (unless none).
+        if(transformation_method == "none"){
+          # Check that the data is not altered.
+          testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
           
-          # Determine if the feature is numeric.
-          if(feature_info_list[[feature]]@feature_type == "numeric"){
+        } else {
+          for(feature in familiar:::get_feature_columns(data_copy)){
             
-            # Expect that values are finite.
-            testthat::expect_equal(is.finite(feature_info_list[[feature]]@transformation_parameters@lambda),
-                                   TRUE)
-            
-          } else {
-            # For categorical features test that the object class is
-            # featureInfoParametersTransformationNone.
-            testthat::expect_equal(is(feature_info_list[[feature]]@transformation_parameters,
-                                      "featureInfoParametersTransformationNone"),
-                                   TRUE)
+            # Determine if the feature is numeric.
+            if(feature_info_list[[feature]]@feature_type == "numeric"){
+              
+              # Expect that values are finite.
+              testthat::expect_equal(
+                is.finite(feature_info_list[[feature]]@transformation_parameters@lambda),
+                TRUE)
+              
+            } else {
+              # For categorical features test that the object class is
+              # featureInfoParametersTransformationNone.
+              testthat::expect_equal(
+                is(feature_info_list[[feature]]@transformation_parameters, "featureInfoParametersTransformationNone"),
+                TRUE)
+            }
           }
         }
-      }
-      
-      # Assert that inverting the transformation produces the original dataset.
-      data_restored <- familiar:::transform_features(data=data_copy,
-                                                     feature_info_list=feature_info_list,
-                                                     invert=TRUE)
-      
-      # Iterate over features and compare. They should be equal
-      for(feature in familiar:::get_feature_columns(data_restored)){
-        # Expect that values are similar to a tolerance.
-        testthat::expect_equal(data_restored@data[[feature]], data@data[[feature]])
-      }
-      
-      # Assert that aggregating the transformation parameters works as expected.
-      aggr_transform_parameters <- familiar:::..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list,
-                                                                                          instance_mask=rep_len(TRUE, length(feature_info_list)),
-                                                                                          feature_name="test")
-      if(n_numeric_features > 0 & transformation_method != "none"){
-        # Expect that the selected transformation method matches the selected
-        # method.
-        testthat::expect_equal(aggr_transform_parameters$parameters@method, transformation_method, ignore_attr=TRUE)
         
-        # Expect that the lambda is finite.
-        testthat::expect_equal(is.finite(aggr_transform_parameters$parameters@lambda), TRUE)
+        # Assert that inverting the transformation produces the original dataset.
+        data_restored <- familiar:::transform_features(
+          data=data_copy,
+          feature_info_list=feature_info_list,
+          invert=TRUE)
         
-        # Expect that instance mask is equal to the number of numeric features.
-        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) > 0, TRUE)
-        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) <= n_numeric_features, TRUE)
+        # Iterate over features and compare. They should be equal
+        for(feature in familiar:::get_feature_columns(data_restored)){
+          # Expect that values are similar to a tolerance.
+          testthat::expect_equal(data_restored@data[[feature]], data@data[[feature]])
+        }
         
-      } else {
-        # Expect that the selected transformation method matches the selected
-        # method.
-        testthat::expect_equal(aggr_transform_parameters$parameters@method, "none")
+        # Assert that aggregating the transformation parameters works as expected.
+        aggr_transform_parameters <- familiar:::..collect_and_aggregate_transformation_info(
+          feature_info_list=feature_info_list,
+          instance_mask=rep_len(TRUE, length(feature_info_list)),
+          feature_name="test")
         
-        # Expect that instance mask is equal to the number of numeric features.
-        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) == familiar:::get_n_features(data_copy), TRUE)
-      }
-    })
+        if(n_numeric_features > 0 & transformation_method != "none"){
+          # Expect that the selected transformation method matches the selected
+          # method.
+          testthat::expect_equal(
+            aggr_transform_parameters$parameters@method,
+            transformation_method,
+            ignore_attr=TRUE)
+          
+          # Expect that the lambda is finite.
+          testthat::expect_equal(is.finite(aggr_transform_parameters$parameters@lambda), TRUE)
+          
+          # Expect that instance mask is equal to the number of numeric features.
+          testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) > 0, TRUE)
+          testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) <= n_numeric_features, TRUE)
+          
+        } else {
+          # Expect that the selected transformation method matches the selected
+          # method.
+          testthat::expect_equal(aggr_transform_parameters$parameters@method, "none")
+          
+          # Expect that instance mask is equal to the number of numeric features.
+          testthat::expect_equal(
+            sum(aggr_transform_parameters$instance_mask) == familiar:::get_n_features(data_copy),
+            TRUE)
+        }
+      })
   }
 }
 
