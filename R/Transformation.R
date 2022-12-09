@@ -31,11 +31,11 @@ setClass("featureInfoParametersTransformationYeoJohnson",
 }
 
 .get_available_box_cox_transformation_methods <- function(){
-  return(c("box_cox", "box_cox_trim", "box_cox_winsor"))
+  return(c("box_cox", "box_cox_trim", "box_cox_winsor", "box_cox_robust"))
 }
 
 .get_available_yeo_johnson_transformation_methods <- function(){
-  return(c("yeo_johnson", "yeo_johnson_trim", "yeo_johnson_winsor"))
+  return(c("yeo_johnson", "yeo_johnson_trim", "yeo_johnson_winsor", "yeo_johnson_robust"))
 }
 
 .get_available_transformation_methods <- function(type="all"){
