@@ -1778,16 +1778,18 @@
   
   ##### normalisation_method ###################################################
   # Normalisation method
-  settings$normalisation_method <- .parse_arg(x_config=config$normalisation_method,
-                                              x_var=normalisation_method,
-                                              var_name="normalisation_method",
-                                              type="character",
-                                              optional=TRUE,
-                                              default="standardisation")
+  settings$normalisation_method <- .parse_arg(
+    x_config=config$normalisation_method,
+    x_var=normalisation_method,
+    var_name="normalisation_method",
+    type="character",
+    optional=TRUE,
+    default="standardisation_robust")
   
-  .check_parameter_value_is_valid(x=settings$normalisation_method,
-                                  var_name="normalisation_method",
-                                  values=.get_available_normalisation_methods())
+  .check_parameter_value_is_valid(
+    x=settings$normalisation_method,
+    var_name="normalisation_method",
+    values=.get_available_normalisation_methods())
   
   ##### batch_normalisation_method #############################################
   # Batch normalisation method
