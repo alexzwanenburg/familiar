@@ -1531,82 +1531,90 @@
 #'
 #' @md
 #' @keywords internal
-.parse_preprocessing_settings <- function(config=NULL,
-                                          data,
-                                          parallel,
-                                          outcome_type,
-                                          feature_max_fraction_missing=waiver(),
-                                          sample_max_fraction_missing=waiver(),
-                                          filter_method=waiver(),
-                                          univariate_test_threshold=waiver(),
-                                          univariate_test_threshold_metric=waiver(),
-                                          univariate_test_max_feature_set_size=waiver(),
-                                          low_var_minimum_variance_threshold=waiver(),
-                                          low_var_max_feature_set_size=waiver(),
-                                          robustness_icc_type=waiver(),
-                                          robustness_threshold_metric=waiver(),
-                                          robustness_threshold_value=waiver(),
-                                          transformation_method=waiver(),
-                                          normalisation_method=waiver(),
-                                          batch_normalisation_method=waiver(),
-                                          imputation_method=waiver(),
-                                          cluster_method=waiver(),
-                                          cluster_linkage_method=waiver(),
-                                          cluster_cut_method=waiver(),
-                                          cluster_similarity_metric=waiver(),
-                                          cluster_similarity_threshold=waiver(),
-                                          cluster_representation_method=waiver(),
-                                          parallel_preprocessing=waiver(),
-                                          ...){
-  
+.parse_preprocessing_settings <- function(
+    config=NULL,
+    data,
+    parallel,
+    outcome_type,
+    feature_max_fraction_missing=waiver(),
+    sample_max_fraction_missing=waiver(),
+    filter_method=waiver(),
+    univariate_test_threshold=waiver(),
+    univariate_test_threshold_metric=waiver(),
+    univariate_test_max_feature_set_size=waiver(),
+    low_var_minimum_variance_threshold=waiver(),
+    low_var_max_feature_set_size=waiver(),
+    robustness_icc_type=waiver(),
+    robustness_threshold_metric=waiver(),
+    robustness_threshold_value=waiver(),
+    transformation_method=waiver(),
+    normalisation_method=waiver(),
+    batch_normalisation_method=waiver(),
+    imputation_method=waiver(),
+    cluster_method=waiver(),
+    cluster_linkage_method=waiver(),
+    cluster_cut_method=waiver(),
+    cluster_similarity_metric=waiver(),
+    cluster_similarity_threshold=waiver(),
+    cluster_representation_method=waiver(),
+    parallel_preprocessing=waiver(),
+    ...)
+{
   settings <- list()
   
   ##### feature_max_fraction_missing ###########################################
   # Maximum fraction of data points missing for inclusion of a feature
-  settings$feature_max_fraction_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
-                                                      x_var=feature_max_fraction_missing,
-                                                      var_name="feature_max_fraction_missing",
-                                                      type="numeric",
-                                                      optional=TRUE,
-                                                      default=0.30)
+  settings$feature_max_fraction_missing <- .parse_arg(
+    x_config=config$feature_max_fraction_missing,
+    x_var=feature_max_fraction_missing,
+    var_name="feature_max_fraction_missing",
+    type="numeric",
+    optional=TRUE,
+    default=0.30)
   
-  .check_number_in_valid_range(x=settings$feature_max_fraction_missing,
-                               var_name="feature_max_fraction_missing",
-                               range=c(0.0, 0.95))
+  .check_number_in_valid_range(
+    x=settings$feature_max_fraction_missing,
+    var_name="feature_max_fraction_missing",
+    range=c(0.0, 0.95))
   
   
   ##### sample_max_fraction_missing ############################################
   # Maximum fraction of features missing for inclusion of a subject
-  settings$sample_max_fraction_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
-                                                     x_var=sample_max_fraction_missing,
-                                                     var_name="sample_max_fraction_missing",
-                                                     type="numeric",
-                                                     optional=TRUE,
-                                                     default=0.30)
+  settings$sample_max_fraction_missing <- .parse_arg(
+    x_config=config$sample_max_fraction_missing,
+    x_var=sample_max_fraction_missing,
+    var_name="sample_max_fraction_missing",
+    type="numeric",
+    optional=TRUE,
+    default=0.30)
   
-  .check_number_in_valid_range(x=settings$sample_max_fraction_missing,
-                               var_name="sample_max_fraction_missing",
-                               range=c(0.0, 0.95))
+  .check_number_in_valid_range(
+    x=settings$sample_max_fraction_missing,
+    var_name="sample_max_fraction_missing",
+    range=c(0.0, 0.95))
   
   ##### filter_method ##########################################################
   # Univariate filter methods
-  settings$filter_method <- .parse_arg(x_config=config$filter_method,
-                                       x_var=filter_method,
-                                       var_name="filter_method",
-                                       type="character_list",
-                                       optional=TRUE,
-                                       default="none")
+  settings$filter_method <- .parse_arg(
+    x_config=config$filter_method,
+    x_var=filter_method,
+    var_name="filter_method",
+    type="character_list",
+    optional=TRUE,
+    default="none")
   
-  .check_parameter_value_is_valid(x=settings$filter_method,
-                                  var_name="filter_method",
-                                  values=c("none", "low_variance", "univariate_test", "robustness"))
+  .check_parameter_value_is_valid(
+    x=settings$filter_method,
+    var_name="filter_method",
+    values=c("none", "low_variance", "univariate_test", "robustness"))
   
   if(outcome_type == "multinomial" & "univariate_test" %in% settings$filter_method){
     # The nnet package is required for univariate tests with multinomial
     # endpoints.
-    if(!require_package(x="nnet",
-                        purpose="to filter features using univariate tests",
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="nnet",
+      purpose="to filter features using univariate tests",
+      message_type="backend_warning")){
       
       # If the nnet package is not present, avoid the univariate test.
       settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
@@ -1616,147 +1624,171 @@
   
   ##### univariate_test_threshold ##############################################
   # Univariate model filter threshold value
-  settings$univar_threshold <- .parse_arg(x_config=config$univariate_test_threshold,
-                                          x_var=univariate_test_threshold,
-                                          var_name="univariate_test_threshold",
-                                          type="numeric",
-                                          optional=TRUE,
-                                          default=0.20)
+  settings$univar_threshold <- .parse_arg(
+    x_config=config$univariate_test_threshold,
+    x_var=univariate_test_threshold,
+    var_name="univariate_test_threshold",
+    type="numeric",
+    optional=TRUE,
+    default=0.20)
   
-  .check_number_in_valid_range(x=settings$univar_threshold,
-                               var_name="univariate_test_threshold",
-                               range=c(0.0, 1.0),
-                               closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(
+    x=settings$univar_threshold,
+    var_name="univariate_test_threshold",
+    range=c(0.0, 1.0),
+    closed=c(FALSE, TRUE))
   
   ##### univariate_test_threshold_metric #######################################
   # Univariate model threshold metric
-  settings$univar_metric <- .parse_arg(x_config=config$univariate_test_threshold_metric,
-                                       x_var=univariate_test_threshold_metric,
-                                       var_name="univariate_test_threshold_metric",
-                                       type="character",
-                                       optional=TRUE,
-                                       default="p_value")
+  settings$univar_metric <- .parse_arg(
+    x_config=config$univariate_test_threshold_metric,
+    x_var=univariate_test_threshold_metric,
+    var_name="univariate_test_threshold_metric",
+    type="character",
+    optional=TRUE,
+    default="p_value")
   
-  .check_parameter_value_is_valid(x=settings$univar_metric,
-                                  var_name="univariate_test_threshold_metric",
-                                  values=c("p_value", "q_value"))
+  .check_parameter_value_is_valid(
+    x=settings$univar_metric,
+    var_name="univariate_test_threshold_metric",
+    values=c("p_value", "q_value"))
   
   # If the qvalue package is not installed, use p-values instead.
   if(settings$univar_metric == "q_value"){
-    if(!require_package(x="qvalue",
-                        purpose="to use q-values as a metric for univariate feature tests",
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="qvalue",
+      purpose="to use q-values as a metric for univariate feature tests",
+      message_type="backend_warning")){
       settings$univar_metric <- "p_value"
     }
   }
   
   ##### univariate_test_max_feature_set_size ###################################
   # Maximum feature set size after univariate regression models.
-  settings$univar_feat_set_size <- .parse_arg(x_config=config$univariate_test_max_feature_set_size,
-                                              x_var=univariate_test_max_feature_set_size,
-                                              var_name="univariate_test_max_feature_set_size",
-                                              type="integer",
-                                              optional=TRUE,
-                                              default=NULL)
+  settings$univar_feat_set_size <- .parse_arg(
+    x_config=config$univariate_test_max_feature_set_size,
+    x_var=univariate_test_max_feature_set_size,
+    var_name="univariate_test_max_feature_set_size",
+    type="integer",
+    optional=TRUE,
+    default=NULL)
   
   if(!is.null(settings$univar_feat_set_size)){
-    .check_number_in_valid_range(x=settings$univar_feat_set_size,
-                                 var_name="univariate_test_max_feature_set_size",
-                                 range=c(1, Inf))
+    .check_number_in_valid_range(
+      x=settings$univar_feat_set_size,
+      var_name="univariate_test_max_feature_set_size",
+      range=c(1, Inf))
   }
   
   ##### low_var_minimum_variance_threshold #####################################
   # Minimum amount of variance for inclusion of feature.
   if("low_variance" %in% settings$filter_method){
-    settings$low_var_threshold <- .parse_arg(x_config=config$low_var_minimum_variance_threshold,
-                                             x_var=low_var_minimum_variance_threshold,
-                                             var_name="low_var_minimum_variance_threshold",
-                                             type="numeric",
-                                             optional=FALSE)
+    settings$low_var_threshold <- .parse_arg(
+      x_config=config$low_var_minimum_variance_threshold,
+      x_var=low_var_minimum_variance_threshold,
+      var_name="low_var_minimum_variance_threshold",
+      type="numeric",
+      optional=FALSE)
     
-    .check_number_in_valid_range(x=settings$low_var_threshold,
-                                 var_name="low_var_minimum_variance_threshold",
-                                 range=c(0.0, Inf))
+    .check_number_in_valid_range(
+      x=settings$low_var_threshold,
+      var_name="low_var_minimum_variance_threshold",
+      range=c(0.0, Inf))
   }
   
   ##### low_var_max_feature_set_size ###########################################
   # Maximum feature set size after variance thresholding
-  settings$low_var_max_feature_set_size <- .parse_arg(x_config=config$low_var_max_feature_set_size,
-                                                      x_var=low_var_max_feature_set_size,
-                                                      var_name="low_var_max_feature_set_size",
-                                                      type="integer",
-                                                      optional=TRUE,
-                                                      default=NULL)
+  settings$low_var_max_feature_set_size <- .parse_arg(
+    x_config=config$low_var_max_feature_set_size,
+    x_var=low_var_max_feature_set_size,
+    var_name="low_var_max_feature_set_size",
+    type="integer",
+    optional=TRUE,
+    default=NULL)
   
   if(!is.null(settings$low_var_max_feature_set_size)){
-    .check_number_in_valid_range(x=settings$low_var_max_feature_set_size,
-                                 var_name="low_var_max_feature_set_size",
-                                 range=c(1, Inf))
+    .check_number_in_valid_range(
+      x=settings$low_var_max_feature_set_size,
+      var_name="low_var_max_feature_set_size",
+      range=c(1, Inf))
   }
   
   ##### robustness_icc_type ####################################################
   # Intraclass correlation coefficient (ICC) type for robustness analysis
-  settings$robustness_icc_type <- .parse_arg(x_config=config$robustness_icc_type,
-                                             x_var=robustness_icc_type,
-                                             var_name="robustness_icc_type",
-                                             type="character",
-                                             optional=TRUE,
-                                             default="1")
+  settings$robustness_icc_type <- .parse_arg(
+    x_config=config$robustness_icc_type,
+    x_var=robustness_icc_type,
+    var_name="robustness_icc_type",
+    type="character",
+    optional=TRUE,
+    default="1")
   
-  .check_parameter_value_is_valid(x=settings$robustness_icc_type,
-                                  var_name="robustness_icc_type",
-                                  values=.get_available_icc_types())
+  .check_parameter_value_is_valid(
+    x=settings$robustness_icc_type,
+    var_name="robustness_icc_type",
+    values=.get_available_icc_types())
   
   ##### robustness_threshold_metric ############################################
   # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low
   # (lower edge of the icc confidence interval), icc_panel (estimated panel
   # icc), icc_panel_low (lower edge of the panel icc confidence interval)
-  settings$robustness_threshold_param <- .parse_arg(x_config=config$robustness_threshold_metric,
-                                                    x_var=robustness_threshold_metric,
-                                                    var_name="robustness_threshold_metric",
-                                                    type="character",
-                                                    optional=TRUE,
-                                                    default="icc_low")
+  settings$robustness_threshold_param <- .parse_arg(
+    x_config=config$robustness_threshold_metric,
+    x_var=robustness_threshold_metric,
+    var_name="robustness_threshold_metric",
+    type="character",
+    optional=TRUE,
+    default="icc_low")
   
-  .check_parameter_value_is_valid(x=settings$robustness_threshold_param,
-                                  var_name="robustness_threshold_metric",
-                                  values=c("icc", "icc_low", "icc_panel", "icc_panel_low"))
+  .check_parameter_value_is_valid(
+    x=settings$robustness_threshold_param,
+    var_name="robustness_threshold_metric",
+    values=c("icc", "icc_low", "icc_panel", "icc_panel_low"))
   
   
   ##### robustness_threshold_value #############################################
   # ICC value for thresholding.
-  settings$robustness_threshold_value <- .parse_arg(x_config=config$robustness_threshold_value,
-                                                    x_var=robustness_threshold_value,
-                                                    var_name="robustness_threshold_value",
-                                                    type="numeric",
-                                                    optional=TRUE,
-                                                    default=0.70)
+  settings$robustness_threshold_value <- .parse_arg(
+    x_config=config$robustness_threshold_value,
+    x_var=robustness_threshold_value,
+    var_name="robustness_threshold_value",
+    type="numeric",
+    optional=TRUE,
+    default=0.70)
   
-  .check_number_in_valid_range(x=settings$robustness_threshold_value,
-                               var_name="robustness_threshold_value",
-                               range=c(-Inf, 1.0))
+  .check_number_in_valid_range(
+    x=settings$robustness_threshold_value,
+    var_name="robustness_threshold_value",
+    range=c(-Inf, 1.0))
   
   
   ##### imputation_method ######################################################
   # Data imputation method. For datasets smaller than 100 features we use lasso,
   # and simple imputation is used otherwise.
-  default_imputation_method <- ifelse(get_n_features(data, outcome_type=outcome_type) < 100, "lasso", "simple")
+  default_imputation_method <- ifelse(
+    get_n_features(data, outcome_type=outcome_type) < 100,
+    "lasso",
+    "simple")
   
-  settings$imputation_method <- .parse_arg(x_config=config$imputation_method,
-                                           x_var=imputation_method,
-                                           var_name="imputation_method",
-                                           type="character", optional=TRUE,
-                                           default=default_imputation_method)
+  settings$imputation_method <- .parse_arg(
+    x_config=config$imputation_method,
+    x_var=imputation_method,
+    var_name="imputation_method",
+    type="character", optional=TRUE,
+    default=default_imputation_method)
   
-  .check_parameter_value_is_valid(x=settings$imputation_method,
-                                  var_name="imputation_method",
-                                  values=.get_available_imputation_methods())
+  .check_parameter_value_is_valid(
+    x=settings$imputation_method,
+    var_name="imputation_method",
+    values=.get_available_imputation_methods())
   
   if(settings$imputation_method == "lasso"){
     # If glmnet is not installed, use simple imputation.
-    if(!require_package(x="glmnet",
-                        purpose="to impute data using lasso regression",
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="glmnet",
+      purpose="to impute data using lasso regression",
+      message_type="backend_warning")){
+      
       settings$imputation_method <- "simple"
     }
   }
@@ -1793,38 +1825,43 @@
   
   ##### batch_normalisation_method #############################################
   # Batch normalisation method
-  settings$batch_normalisation_method <- .parse_arg(x_config=config$batch_normalisation_method,
-                                                    x_var=batch_normalisation_method,
-                                                    var_name="batch_normalisation_method",
-                                                    type="character",
-                                                    optional=TRUE,
-                                                    default="none")
+  settings$batch_normalisation_method <- .parse_arg(
+    x_config=config$batch_normalisation_method,
+    x_var=batch_normalisation_method,
+    var_name="batch_normalisation_method",
+    type="character",
+    optional=TRUE,
+    default="none")
   
-  .check_parameter_value_is_valid(x=settings$batch_normalisation_method,
-                                  var_name="batch_normalisation_method",
-                                  values=.get_available_batch_normalisation_methods())
+  .check_parameter_value_is_valid(
+    x=settings$batch_normalisation_method,
+    var_name="batch_normalisation_method",
+    values=.get_available_batch_normalisation_methods())
   
   # If the batch normalisation method is combat, pre-normalisation of the
   # entire data is required.
   if(settings$batch_normalisation_method %in% .get_available_batch_normalisation_methods(type="combat") &
      settings$normalisation_method %in% c("none", "mean_centering")){
+    
     settings$normalisation_method <- "standardisation"
   }
   
   ##### cluster_method #########################################################
   # Feature clustering
-  settings$cluster_method <- .parse_arg(x_config=config$cluster_method,
-                                        x_var=cluster_method,
-                                        var_name="cluster_method",
-                                        type="character",
-                                        optional=TRUE,
-                                        default="hclust")
+  settings$cluster_method <- .parse_arg(
+    x_config=config$cluster_method,
+    x_var=cluster_method,
+    var_name="cluster_method",
+    type="character",
+    optional=TRUE,
+    default="hclust")
   
   # Check that the cluster package is installed, and revert to if none.
   if(!settings$cluster_method %in% c("none", "hclust")){
-    if(!require_package(x="cluster",
-                        purpose="to cluster similar features together",
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="cluster",
+      purpose="to cluster similar features together",
+      message_type="backend_warning")){
       
       settings$cluster_method <- "hclust"
     }
@@ -1832,34 +1869,42 @@
   
   # Advise to install the fastcluster package.
   if(settings$cluster_method == "hclust"){
-    require_package(x="fastcluster",
-                    purpose="to create clusters faster",
-                    message_type="backend_warning")
+    require_package(
+      x="fastcluster",
+      purpose="to create clusters faster",
+      message_type="backend_warning")
   }
   
   ##### cluster_linkage ########################################################
   # Feature cluster linkage method
-  settings$cluster_linkage <- .parse_arg(x_config=config$cluster_linkage_method,
-                                         x_var=cluster_linkage_method,
-                                         var_name="cluster_linkage_method",
-                                         type="character",
-                                         optional=TRUE,
-                                         default="average")
+  settings$cluster_linkage <- .parse_arg(
+    x_config=config$cluster_linkage_method,
+    x_var=cluster_linkage_method,
+    var_name="cluster_linkage_method",
+    type="character",
+    optional=TRUE,
+    default="average")
   
   ##### cluster_cut_method #####################################################
   # Feature cluster cut method
-  default_cluster_cut_method <- ifelse(settings$cluster_method == "pam", "silhouette", "fixed_cut")
-  settings$cluster_cut_method <- .parse_arg(x_config=config$cluster_cut_method,
-                                            x_var=cluster_cut_method,
-                                            var_name="cluster_cut_method",
-                                            type="character",
-                                            optional=TRUE,
-                                            default=default_cluster_cut_method)
+  default_cluster_cut_method <- ifelse(
+    settings$cluster_method == "pam", 
+    "silhouette",
+    "fixed_cut")
+  
+  settings$cluster_cut_method <- .parse_arg(
+    x_config=config$cluster_cut_method,
+    x_var=cluster_cut_method,
+    var_name="cluster_cut_method",
+    type="character",
+    optional=TRUE,
+    default=default_cluster_cut_method)
   
   if(settings$cluster_cut_method == "dynamic_cut"){
-    if(!require_package(x="dynamicTreeCut",
-                        purpose="to cut dendrograms dynamically",
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="dynamicTreeCut",
+      purpose="to cut dendrograms dynamically",
+      message_type="backend_warning")){
       
       settings$cluster_cut_method <- "fixed_cut"
     }
@@ -1868,25 +1913,28 @@
   ##### cluster_similarity_metric ##############################################
   #Feature similarity metric which expresses some sort of correlation between a
   #pair of features.
-  settings$cluster_similarity_metric <- .parse_arg(x_config=config$cluster_similarity_metric,
-                                                   x_var=cluster_similarity_metric,
-                                                   var_name="cluster_similarity_metric",
-                                                   type="character",
-                                                   optional=TRUE,
-                                                   default="mutual_information")
+  settings$cluster_similarity_metric <- .parse_arg(
+    x_config=config$cluster_similarity_metric,
+    x_var=cluster_similarity_metric,
+    var_name="cluster_similarity_metric",
+    type="character",
+    optional=TRUE,
+    default="mutual_information")
   
   if(settings$cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
-    if(!require_package(x="nnet",
-                        purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$cluster_similarity_metric, " metric"),
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="nnet",
+      purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$cluster_similarity_metric, " metric"),
+      message_type="backend_warning")){
       
       settings$cluster_similarity_metric <- "spearman"
     }
     
   } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
-    if(!require_package(x="praznik",
-                        purpose=paste0("to compute similarity using the ", settings$cluster_similarity_metric, " metric"),
-                        message_type="backend_warning")){
+    if(!require_package(
+      x="praznik",
+      purpose=paste0("to compute similarity using the ", settings$cluster_similarity_metric, " metric"),
+      message_type="backend_warning")){
       
       settings$cluster_similarity_metric <- "spearman"
     }
@@ -1897,12 +1945,13 @@
   #features to be considered part of one cluster. Should be expressed in terms
   #of the similarity metric, e.g. 0.8 for spearman would consider all features
   #that have a pairwise correlation of 0.8 and over to belong to a cluster.
-  settings$cluster_similarity_threshold <- .parse_arg(x_config=config$cluster_similarity_threshold,
-                                                      x_var=cluster_similarity_threshold,
-                                                      var_name="cluster_similarity_threshold",
-                                                      type="numeric",
-                                                      optional=TRUE,
-                                                      default=NULL)
+  settings$cluster_similarity_threshold <- .parse_arg(
+    x_config=config$cluster_similarity_threshold,
+    x_var=cluster_similarity_threshold,
+    var_name="cluster_similarity_threshold",
+    type="numeric",
+    optional=TRUE,
+    default=NULL)
   
   if(is.null(settings$cluster_similarity_threshold)){
     if(settings$cluster_cut_method %in% c("fixed_cut")){
@@ -1910,7 +1959,7 @@
       # be produced.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
         settings$cluster_similarity_threshold <- 0.30
-      
+        
       } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
         settings$cluster_similarity_threshold <- 0.30
         
@@ -1927,7 +1976,7 @@
       # can be explored.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
         settings$cluster_similarity_threshold <- 0.25
-      
+        
       } else if(settings$cluster_similarity_metric %in% c("mutual_information")){
         settings$cluster_similarity_threshold <- 0.25
         
@@ -1942,12 +1991,13 @@
   
   ##### cluster_representation_method ##########################################
   # Method to select the feature that represents the cluster
-  settings$cluster_representation_method <- .parse_arg(x_config=config$cluster_representation_method,
-                                                       x_var=cluster_representation_method,
-                                                       var_name="cluster_representation_method",
-                                                       type="character",
-                                                       optional=TRUE,
-                                                       default="best_predictor")
+  settings$cluster_representation_method <- .parse_arg(
+    x_config=config$cluster_representation_method,
+    x_var=cluster_representation_method,
+    var_name="cluster_representation_method",
+    type="character",
+    optional=TRUE,
+    default="best_predictor")
   
   # Partioning around medioids only allows the use of medioids for
   # representation.
@@ -1974,27 +2024,29 @@
   }
   
   # Perform a check on all methods.
-  .check_cluster_parameters(cluster_method=settings$cluster_method,
-                            cluster_cut_method=settings$cluster_cut_method,
-                            cluster_linkage=settings$cluster_linkage,
-                            cluster_similarity_threshold=settings$cluster_similarity_threshold,
-                            cluster_similarity_metric=settings$cluster_similarity_metric,
-                            cluster_representation_method=settings$cluster_representation_method,
-                            data_type="cluster",
-                            message_type="backend_error")
+  .check_cluster_parameters(
+    cluster_method=settings$cluster_method,
+    cluster_cut_method=settings$cluster_cut_method,
+    cluster_linkage=settings$cluster_linkage,
+    cluster_similarity_threshold=settings$cluster_similarity_threshold,
+    cluster_similarity_metric=settings$cluster_similarity_metric,
+    cluster_representation_method=settings$cluster_representation_method,
+    data_type="cluster",
+    message_type="backend_error")
   
   ##### parallel_preprocessing #################################################
   # Parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_preprocessing,
-                                     x_var=parallel_preprocessing,
-                                     var_name="parallel_preprocessing",
-                                     type="logical",
-                                     optional=TRUE,
-                                     default=TRUE)
-
+  settings$do_parallel <- .parse_arg(
+    x_config=config$parallel_preprocessing,
+    x_var=parallel_preprocessing,
+    var_name="parallel_preprocessing",
+    type="logical",
+    optional=TRUE,
+    default=TRUE)
+  
   # Disable if parallel is FALSE.
   if(!parallel) settings$do_parallel <- FALSE
-
+  
   return(settings)
 }
 
