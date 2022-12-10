@@ -594,10 +594,13 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 ##### add_feature_info_parameters (standardisation, ANY) -----------------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object="featureInfoParametersNormalisationStandardisation", data="ANY"),
-  function(object, 
-           data,
-           ...)
+  signature(
+    object="featureInfoParametersNormalisationStandardisation",
+    data="ANY"),
+  function(
+    object, 
+    data,
+    ...)
   {
     # Check if all required parameters have been set.
     if(feature_info_complete(object)) return(object)
