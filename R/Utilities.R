@@ -1479,7 +1479,7 @@ huber_estimate <- function(x, k=1.28, tol=1E-4){
   # Filter missing values
   x <- x[is.finite(x)]
   
-  if(length(x) == 0) return(NULL)
+  if(length(x) == 0) return(list("mu"=NA_real_, "sigma"=NA_real_))
   
   # Initial estimates for the estimate mu and scale sigma
   mu_0 <- stats::median(x)

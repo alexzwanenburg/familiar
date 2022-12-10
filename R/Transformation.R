@@ -847,7 +847,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   robust_estimates <- huber_estimate(y)
   
   # Check problematic values.
-  if(is.null(robust_estimates)) return(NA_real_)
+  if(!is.finite(robust_estimates$sigma)) return(NA_real_)
   if(robust_estimates$sigma == 0.0) return(NA_real_)
   
   # Compute residuals.
@@ -907,7 +907,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   robust_estimates <- huber_estimate(y)
   
   # Check problematic values.
-  if(is.null(robust_estimates)) return(NA_real_)
+  if(!is.finite(robust_estimates$sigma)) return(NA_real_)
   if(robust_estimates$sigma == 0.0) return(NA_real_)
   
   # Compute weights.
