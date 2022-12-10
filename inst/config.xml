@@ -92,7 +92,7 @@
       <robustness_threshold_value></robustness_threshold_value>
       <!-- Feature transformation method (optional, default: yeo_johnson_robust; otherwise one of none, box_cox, box_cox_trim, box_cox_winsor, box_cox_robust, yeo_johnson, yeo_johnson_trim, yeo_johnson_winsor) -->
       <transformation_method></transformation_method>
-      <!-- Feature normalisation method (optional, default: standardise; check documentation for other options) -->
+      <!-- Feature normalisation method (optional, default: standardisation_robust; check documentation for other options) -->
       <normalisation_method></normalisation_method>
       <!-- Batch normalisation method (optional, default: none; check documentation for other options) -->
       <batch_normalisation_method></batch_normalisation_method>

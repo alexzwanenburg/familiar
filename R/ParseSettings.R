@@ -1160,7 +1160,7 @@
 #'   * `yeo_johnson` (default): Transformation using the Yeo-Johnson
 #'   transformation (Yeo and Johnson, 2000). The algorithm tests various lambda
 #'   values and selects the lambda that maximises the log-likelihood.
-#'   
+#'
 #'   * `yeo_johnson_trim`: As `yeo_johnson`, but based on the set of feature
 #'   values where the 5% lowest and 5% highest values are discarded. This
 #'   reduces the effect of outliers.
@@ -1168,17 +1168,17 @@
 #'   * `yeo_johnson_winsor`: As `yeo_johnson`, but based on the set of feature
 #'   values where the 5% lowest and 5% highest values are winsorised. This
 #'   reduces the effect of outliers.
-#'   
+#'
 #'   * `yeo_johnson_robust`: A robust version of `yeo_johnson` after Raymaekers
 #'   and Rousseeuw (2021). This method is less sensitive to outliers.
-#'   
+#'
 #'   * `box_cox`: Transformation using the Box-Cox transformation (Box and Cox,
 #'   1964). Unlike the Yeo-Johnson transformation, the Box-Cox transformation
 #'   requires that all data are positive. Features that contain zero or negative
 #'   values cannot be transformed using this transformation. The algorithm tests
 #'   various lambda values and selects the lambda that maximises the
 #'   log-likelihood.
-#'   
+#'
 #'   * `box_cox_trim`: As `box_cox`, but based on the set of feature values
 #'   where the 5% lowest and 5% highest values are discarded. This reduces the
 #'   effect of outliers.
@@ -1186,7 +1186,7 @@
 #'   * `box_cox_winsor`: As `box_cox`, but based on the set of feature values
 #'   where the 5% lowest and 5% highest values are winsorised. This reduces the
 #'   effect of outliers.
-#'   
+#'
 #'   * `box_cox_robust`: A robust verson of `box_cox` after Raymaekers and
 #'   Rousseew (2021). This method is less sensitive to outliers.
 #'
@@ -1199,10 +1199,9 @@
 #'
 #'   * `none`: This disables feature normalisation.
 #'
-#'   * `standardisation` (default): Features are normalised by subtraction of
-#'   their mean values and division by their standard deviations. This causes
-#'   every feature to be have a center value of 0.0 and standard deviation of
-#'   1.0.
+#'   * `standardisation`: Features are normalised by subtraction of their mean
+#'   values and division by their standard deviations. This causes every feature
+#'   to be have a center value of 0.0 and standard deviation of 1.0.
 #'
 #'   * `standardisation_trim`: As `standardisation`, but based on the set of
 #'   feature values where the 5% lowest and 5% highest values are discarded.
@@ -1211,6 +1210,9 @@
 #'   * `standardisation_winsor`: As `standardisation`, but based on the set of
 #'   feature values where the 5% lowest and 5% highest values are winsorised.
 #'   This reduces the effect of outliers.
+#'
+#'   * `standardisation_robust` (default): A robust version of `standardisation`
+#'   that relies on computing Huber's M-estimators for location and scale.
 #'
 #'   * `normalisation`: Features are normalised by subtraction of their minimum
 #'   values and division by their ranges. This maps all feature values to a
@@ -1249,6 +1251,10 @@
 #'   * `standardisation_winsor`: As `standardisation`, but based on the set of
 #'   feature values where the 5% lowest and 5% highest values are winsorised.
 #'   This reduces the effect of outliers.
+#'
+#'   * `standardisation_robust`: A robust version of `standardisation` that
+#'   relies on computing Huber's M-estimators for location and scale within each
+#'   batch.
 #'
 #'   * `normalisation`: Features within each batch are normalised by subtraction
 #'   of their minimum values and division by their range in each batch. This
@@ -1485,10 +1491,10 @@
 #'
 #'   1. Box, G. E. P. & Cox, D. R. An analysis of transformations. J. R. Stat.
 #'   Soc. Series B Stat. Methodol. 26, 211–252 (1964).
-#'   
+#'
 #'   1. Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 #'   normality. Mach Learn. (2021).
-#'   
+#'
 #'   1. Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 #'   regression. Biostatistics 8, 212–227 (2007).
 #'
