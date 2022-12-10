@@ -974,7 +974,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   } else if(norm_method == "quantile"){
     return(c(-1.5, 0.0, 1.5))
     
-  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor")){
+  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "standardisation_robust")){
     return(c(-3.0, 0.0, 3.0))
     
   } else if(norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){

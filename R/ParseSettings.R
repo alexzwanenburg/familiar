@@ -1956,14 +1956,20 @@
   # If mean is used, this requires the data to have some kind of standardisation
   # with centering at 0.
   if(settings$cluster_representation_method %in% c("mean")){
-    if(!settings$normalisation_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "quantile")){
-      warning(paste0("When computing the meta-feature for a cluster using the mean value of co-clustered features, ",
-                     "each feature is expected to be centered at 0.0 and to have a standard scale. ",
-                     "The provided normalisation method (", settings$normalisation_method, ") does not allow this, ",
-                     "and has been replaced by the standardisation method."))
+    
+    if(!settings$normalisation_method %in% c(
+      "standardisation", "standardisation_trim", "standardisation_winsor",
+      "standardisation_robust", "quantile")){
+      
+      warning(
+        paste0(
+          "When computing the meta-feature for a cluster using the mean value of co-clustered features, ",
+          "each feature is expected to be centered at 0.0 and to have a standard scale. ",
+          "The provided normalisation method (", settings$normalisation_method, ") does not allow this, ",
+          "and has been replaced by the standardisation method."))
       
       # Replace by standardisation_winsor
-      settings$normalisation_method <- "standardisation"
+      settings$normalisation_method <- "standardisation_robust"
     }
   }
   

@@ -41,9 +41,10 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
             # Generate a replacement object that uses univariate
             # standardisation.
-            replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
-                                                                            method="standardisation",
-                                                                            batch=object@batch)
+            replacement_object <- ..create_normalisation_parameter_skeleton(
+              feature_name=object@name,
+              method="standardisation",
+              batch=object@batch)
             
             # Select the current feature and batch from batch_parameter_data.
             batch_parameter_data <- batch_parameter_data[feature==object@name & batch_id==object@batch, ]
@@ -90,9 +91,10 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             
             # Generate a replacement object that uses univariate
             # standardisation.
-            replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
-                                                                            method="standardisation",
-                                                                            batch=object@batch)
+            replacement_object <- ..create_normalisation_parameter_skeleton(
+              feature_name=object@name,
+              method="standardisation",
+              batch=object@batch)
             
             # Select the current feature and batch from batch_parameter_data.
             batch_parameter_data <- batch_parameter_data[feature==object@name & batch_id==object@batch, ]
