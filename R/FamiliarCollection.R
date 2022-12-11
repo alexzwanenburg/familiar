@@ -3,7 +3,7 @@
 NULL
 
 
-#####.set_labels#####
+####.set_labels#####
 setMethod(".set_labels", signature(x="familiarCollection"),
           function(x, old_label, new_label, new_order, upd_slot){
 
@@ -223,7 +223,7 @@ setMethod(".get_labels", signature(x="familiarCollection"),
 #' currently assigned labels.
 #' @md
 setMethod("set_data_set_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="data_set_labels")
             return(x)
           })
@@ -231,24 +231,28 @@ setMethod("set_data_set_names", signature(x="familiarCollection"),
 
 
 #####set_learner_names#####
+
 #' @title Rename learners for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for the learners.
-#' 
-#' @details Labels convert the internal naming for learners to the requested label at export or when plotting. This enables the use of
-#'  more specific naming, e.g. changing \code{random_forest_rfsrc} to \code{Random Forest}. Currently assigned labels
-#'  can be found using the \code{get_learner_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by providing names for the learners.
+#'
+#' @details Labels convert the internal naming for learners to the requested
+#'   label at export or when plotting. This enables the use of more specific
+#'   naming, e.g. changing \code{random_forest_rfsrc} to \code{Random Forest}.
+#'   Currently assigned labels can be found using the \code{get_learner_names}
+#'   method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with custom labels for the learners.
 #' @export
 #' @aliases set_learner_names
-#' @seealso 
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_learner_names}} for obtaining currently assigned labels.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_learner_names}} for obtaining
+#' currently assigned labels.
 #' @md
 setMethod("set_learner_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="learner_labels")
             return(x)
           })
@@ -256,24 +260,29 @@ setMethod("set_learner_names", signature(x="familiarCollection"),
 
 
 #####set_fs_method_names#####
+
 #' @title Rename feature selection methods for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for the feature selection methods.
-#' 
-#' @details Labels convert the internal naming for feature selection methods to the requested label at export or when plotting. This enables the use of
-#'   more specific naming, e.g. changing \code{mim} to \code{Mutual Information Maximisation}. Currently assigned labels
-#'  can be found using the \code{get_fs_method_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by providing names for the feature selection
+#'   methods.
+#'
+#' @details Labels convert the internal naming for feature selection methods to
+#'   the requested label at export or when plotting. This enables the use of
+#'   more specific naming, e.g. changing \code{mim} to \code{Mutual Information
+#'   Maximisation}. Currently assigned labels can be found using the
+#'   \code{get_fs_method_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
 #' @aliases set_fs_method_names
-#' @seealso 
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_fs_method_names}} for obtaining currently assigned labels.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_fs_method_names}} for obtaining
+#' currently assigned labels.
 #' @md
 setMethod("set_fs_method_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x  <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="fs_method_labels")
             return(x)
           })
@@ -281,24 +290,27 @@ setMethod("set_fs_method_names", signature(x="familiarCollection"),
 
 
 #####set_feature_names#####
+
 #' @title Rename features for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for features.
-#' 
-#' @details Labels convert the internal naming for features to the requested label at export or when plotting. This enables customisation
-#'   without redoing the analysis with renamed input data. Currently assigned labels
-#'  can be found using the \code{get_feature_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by providing names for features.
+#'
+#' @details Labels convert the internal naming for features to the requested
+#'   label at export or when plotting. This enables customisation without
+#'   redoing the analysis with renamed input data. Currently assigned labels can
+#'   be found using the \code{get_feature_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
 #' @aliases set_feature_names
-#' @seealso
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_feature_names}} for obtaining currently assigned feature names.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_feature_names}} for obtaining
+#' currently assigned feature names.
 #' @md
 setMethod("set_feature_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="feature_labels")
             return(x)
           })
@@ -306,23 +318,28 @@ setMethod("set_feature_names", signature(x="familiarCollection"),
 
 
 #####set_risk_group_names#####
+
 #' @title Rename risk groups for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for risk groups in survival analysis.
-#' 
-#' @details Labels convert the internal naming for risk groups to the requested label at export or when plotting. This enables customisation of risk group names.
-#'   Currently assigned labels can be found using the \code{get_risk_group_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by providing names for risk groups in survival
+#'   analysis.
+#'
+#' @details Labels convert the internal naming for risk groups to the requested
+#'   label at export or when plotting. This enables customisation of risk group
+#'   names. Currently assigned labels can be found using the
+#'   \code{get_risk_group_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
 #' @aliases set_risk_group_names
-#' @seealso
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_risk_group_names}} for obtaining currently assigned risk group labels.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_risk_group_names}} for obtaining
+#' currently assigned risk group labels.
 #' @md
 setMethod("set_risk_group_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="km_group_labels")
             return(x)
           })
@@ -330,23 +347,27 @@ setMethod("set_risk_group_names", signature(x="familiarCollection"),
 
 
 #####set_class_names#####
+
 #' @title Rename outcome classes for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for outcome classes.
-#' 
-#' @details Labels convert the internal naming for class levels to the requested label at export or when plotting. This enables customisation of class names.
-#'   Currently assigned labels can be found using the \code{get_class_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by providing names for outcome classes.
+#'
+#' @details Labels convert the internal naming for class levels to the requested
+#'   label at export or when plotting. This enables customisation of class
+#'   names. Currently assigned labels can be found using the
+#'   \code{get_class_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
 #' @aliases set_class_names
-#' @seealso
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_class_names}} for obtaining currently assigned class names.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_class_names}} for obtaining
+#' currently assigned class names.
 #' @md
 setMethod("set_class_names", signature(x="familiarCollection"),
-          function(x, old=NULL, new, order=NULL){
+          function(x, old=NULL, new=NULL, order=NULL){
             x <- .set_labels(x=x, old_label=old, new_label=new, new_order=order, upd_slot="class_labels")
             return(x)
           })
