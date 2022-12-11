@@ -24,7 +24,6 @@ setMethod(".set_labels", signature(x="familiarCollection"),
               label_table <- slot(x, upd_slot)
             }
             
-            
             ##### Label update ##################################################
             if(!is.null(new_label)){
               
@@ -83,19 +82,7 @@ setMethod(".set_labels", signature(x="familiarCollection"),
             }
             
             ##### Label order update ##################################################
-            if(is.null(new_order)){
-              # If new_order is not provided explicitly, we can still update the order if and only if new_label is as long as the table
-              if(!is.null(new_label)){
-                if(length(new_label) == nrow(label_table)){
-                  
-                  # Find the order by matching the label column in the label table with the provided new labels
-                  new_label_order <- match(label_table$label, new_label)
-                  
-                  # Update the label order
-                  label_table[, "label_order":=new_label_order]
-                }
-              }
-            } else {
+            if(!is.null(new_order)){
               # Update label order based on new_order
 
               # Check that new_order has the same length as the label_table
@@ -207,27 +194,33 @@ setMethod(".get_labels", signature(x="familiarCollection"),
 
 
 #####set_data_set_names#####
+
 #' @title Name datasets for plotting and export
-#'  
-#' @description Tabular exports and figures created from a familiarCollection object can be customised by setting data labels.
-#' 
-#' @details Labels convert internal naming of data sets to the requested label at export or when plotting. Currently assigned labels
-#'  can be found using the \code{get_data_set_names} method.
+#'
+#' @description Tabular exports and figures created from a familiarCollection
+#'   object can be customised by setting data labels.
+#'
+#' @details Labels convert internal naming of data sets to the requested label
+#'   at export or when plotting. Currently assigned labels can be found using
+#'   the \code{get_data_set_names} method.
 #'
 #' @param x A familiarCollection object.
 #' @param old (optional) Set of old labels to replace.
-#' @param new Set of replacement labels. The number of replacement labels should be equal to the number of provided old labels or the full number of labels.
-#'   If a subset of labels is to be replaced, both \code{old} and \code{new} should be provided.
-#' @param order (optional) Ordered set of replacement labels. This is used to provide the order 
-#'   in which the labels should be placed, which affects e.g. levels in a plot. If the ordering is not explicitly provided,
-#'   and \code{new} matches the total number of labels in length, the ordering of \code{new} is used to order the table.
+#' @param new Set of replacement labels. The number of replacement labels should
+#'   be equal to the number of provided old labels or the full number of labels.
+#'   If a subset of labels is to be replaced, both \code{old} and \code{new}
+#'   should be provided.
+#' @param order (optional) Ordered set of replacement labels. This is used to
+#'   provide the order in which the labels should be placed, which affects e.g.
+#'   levels in a plot. If the ordering is not explicitly provided, the old
+#'   ordering is used.
 #'
 #' @return A familiarCollection object with custom names for the data sets.
 #' @export
 #' @aliases set_data_set_names
-#' @seealso
-#' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{get_data_set_names}} for obtaining currently assigned labels.
+#' @seealso * \linkS4class{familiarCollection} for information concerning the
+#' familiarCollection class. * \code{\link{get_data_set_names}} for obtaining
+#' currently assigned labels.
 #' @md
 setMethod("set_data_set_names", signature(x="familiarCollection"),
           function(x, old=NULL, new, order=NULL){
