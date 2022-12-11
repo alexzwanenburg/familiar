@@ -66,7 +66,7 @@ for(outcome_type in c("continuous", "multinomial",  "survival")){
           # Reorder levels.
           collection <- familiar::set_class_names(
             collection,
-            order=rev(seq_along(new_class_names))
+            order=rev(new_class_names)
           )
           
           # Expect that the labels are now re-ordered.
