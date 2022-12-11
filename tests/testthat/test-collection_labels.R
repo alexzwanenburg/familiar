@@ -1,4 +1,4 @@
-outcome_type <- "survival"
+outcome_type <- "multinomial"
 
 for(outcome_type in c("continuous", "multinomial",  "survival")){
   
@@ -43,10 +43,37 @@ for(outcome_type in c("continuous", "multinomial",  "survival")){
     class_names <- familiar::get_class_names(collection)
     
     testthat::test_that(
-      "Class names are correct",
+      "Class names are correctly read and updated.",
       {
         if(outcome_type %in% c("binomial", "multinomial")){
+          # Test equality of the set.
           testthat::expect_setequal(class_names, levels(data@data$outcome))
+          
+          # Replace class names.
+          new_class_names <- paste0("class_", seq_along(class_names))
+          collection <- familiar::set_class_names(
+            collection,
+            old=rev(class_names),
+            new=rev(new_class_names))
+          
+          # Expect that the labels are the same and have the same order as the
+          # original labels.
+          testthat::expect_equal(
+            familiar::get_class_names(collection),
+            new_class_names
+          )
+          
+          # Reorder levels.
+          collection <- familiar::set_class_names(
+            collection,
+            order=rev(seq_along(new_class_names))
+          )
+          
+          # Expect that the labels are now re-ordered.
+          testthat::expect_equal(
+            familiar::get_class_names(collection),
+            rev(new_class_names)
+          )
           
         } else {
           testthat::expect_equal(class_names, character(0L))
