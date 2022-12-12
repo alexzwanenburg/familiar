@@ -226,7 +226,7 @@ for(outcome_type in c("continuous", "multinomial",  "survival")){
             rev(new_risk_group_names))
           
         } else {
-          testthat::expect_equal(risk_group_names, character(0L))
+          testthat::expect_equal(risk_group_names, c("low", "moderate", "high"))
         }
       }
     )
