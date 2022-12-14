@@ -587,10 +587,11 @@ run_evaluation <- function(
       verbose=verbose)
     
     # Create a collection using the available input data
-    fam_collection <- as_familiar_collection(
-      object = collection_info$fam_data,
-      familiar_data_names = collection_info$fam_data_names,
-      collection_name = collection_info$collection_name)
+    fam_collection <- suppressWarnings(
+      as_familiar_collection(
+        object = collection_info$fam_data,
+        familiar_data_names = collection_info$fam_data_names,
+        collection_name = collection_info$collection_name))
     
     # Save to drive.
     save(
