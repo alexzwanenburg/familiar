@@ -237,134 +237,173 @@ setMethod("identify_element_sets", signature(x="NULL"),
 
 
 
-#####merge_data_elements (list)-------------------------------------------------
-setMethod("merge_data_elements", signature(x="list"),
-          function(x, ...){
-            
-            # Check that the list is not empty.
-            if(is_empty(x)) return(NULL)
-            
-            # Flatten (nested) lists.
-            x <- unlist(x)
-            if(!is.list(x)) x <- list(x)
-            
-            # Check that at least one of the data elements in the list is not
-            # empty.
-            if(all(sapply(x, is_empty))) return(NULL)
-            
-            # Create return list for data elements.
-            data_element <- list()
-            
-            # Determine class of all elements
-            element_classes <- sapply(x, class)
-            
-            # Iterate over unique classes.
-            for(element_class in unique(element_classes)){
-              
-              if(all(sapply(x[which(element_classes == element_class)], is_empty))) next()
-              
-              # Create a proto data element to avoid having to pass larger objects
-              # than required.
-              proto_data_element <- x[which(element_classes == element_class)][[1]]
-              proto_data_element@data <- NULL
-              
-              # Run familiarDataElement-specific analysis. This means that we pass
-              # the prototype data element as x with the list of elements.
-              data_element <- c(data_element,
-                                merge_data_elements(x=proto_data_element,
-                                                    x_list=x[which(element_classes == element_class)],
-                                                    ...))
-            }
-            
-            # Assign a NULL to empty data
-            if(is_empty(data_element)) data_element <- NULL
-            
-            return(data_element)
-          })
+#### merge_data_elements (list) ------------------------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="list"),
+  function(
+    x,
+    ...){
+    
+    # Check that the list is not empty.
+    if(is_empty(x)) return(NULL)
+    
+    # Flatten (nested) lists.
+    x <- unlist(x)
+    if(!is.list(x)) x <- list(x)
+    
+    # Check that at least one of the data elements in the list is not
+    # empty.
+    if(all(sapply(x, is_empty))) return(NULL)
+    
+    # Create return list for data elements.
+    data_element <- list()
+    
+    # Determine class of all elements
+    element_classes <- sapply(x, class)
+    
+    # Iterate over unique classes.
+    for(element_class in unique(element_classes)){
+      
+      if(all(sapply(
+        x[which(element_classes == element_class)],
+        is_empty))) next()
+      
+      # Create a proto data element to avoid having to pass larger objects
+      # than required.
+      proto_data_element <- x[which(element_classes == element_class)][[1]]
+      proto_data_element@data <- NULL
+      
+      # Run familiarDataElement-specific analysis. This means that we pass
+      # the prototype data element as x with the list of elements.
+      data_element <- c(
+        data_element,
+        merge_data_elements(
+          x=proto_data_element,
+          x_list=x[which(element_classes == element_class)],
+          ...))
+    }
+    
+    # Assign a NULL to empty data
+    if(is_empty(data_element)) data_element <- NULL
+    
+    return(data_element)
+  })
 
 
-#####merge_data_elements (familiarDataElement)----------------------------------
-setMethod("merge_data_elements", signature(x="familiarDataElement"),
-          function(x, x_list, as_data=NULL, as_grouping_column=TRUE, force_data_table=FALSE,...){
+#### merge_data_elements (familiarDataElement) ---------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="familiarDataElement"),
+  function(
+    x,
+    x_list,
+    as_data=NULL,
+    as_grouping_column=TRUE,
+    force_data_table=FALSE,
+    ...){
+    
+    # Move identifiers from the identifiers attribute to the data
+    # attribute. The primary reason for doing so is to group and merge
+    # similar elements, byt e.g. from different models.
+    if(!is.null(as_data)) x_list <- lapply(
+      x_list,
+      .identifier_as_data_attribute,
+      identifier=as_data,
+      as_grouping_column=as_grouping_column)
+    
+    # Identify items that can be joined.
+    id_table <- identify_element_sets(x=x_list, ...)
+    
+    # Identify the element identifiers that should be grouped.
+    grouped_data_element_ids <- lapply(
+      split(id_table[, c("element_id", "group_id")], by="group_id"),
+      function(id_table) (id_table$element_id))
+    
+    # List of data elements.
+    data_elements <- list()
+    
+    for(current_group_data_element_ids in grouped_data_element_ids){
+      # Copy the first data element in the group and use it as a
+      # prototype.
+      prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
+      
+      if(any(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (data.table::is.data.table(x@data))))){
+        
+        # Data attribute contains data.table.
+        data_attribute <- lapply(
+          x_list[current_group_data_element_ids],
+          function(x) (x@data))
+        
+        # Combine data attributes.
+        data_attribute <- suppressWarnings(
+          data.table::rbindlist(
+            data_attribute,
+            use.names=TRUE,
+            fill=TRUE))
+        
+        # Set data attribute.
+        prototype_data_element@data <- data_attribute
+        
+      } else if(any(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (is.list(x@data))))) {
+        
+        # Data attribute contains data.table.
+        element_names <- unique(unlist(lapply(
+          x_list[current_group_data_element_ids],
+          function(x) (names(x@data)))))
+        
+        # Iterate over different names in the list.
+        data_attribute <- lapply(
+          element_names,
+          function(ii, x){
+            # Find values for the element.
+            element_values <- unlist(lapply(
+              x,
+              function(x, ii) (x@data[[ii]]),
+              ii=ii))
             
-            # Move identifiers from the identifiers attribute to the data
-            # attribute. The primary reason for doing so is to group and merge
-            # similar elements, byt e.g. from different models.
-            if(!is.null(as_data)) x_list <- lapply(x_list,
-                                                   .identifier_as_data_attribute,
-                                                   identifier=as_data,
-                                                   as_grouping_column=as_grouping_column)
-            
-            # Identify items that can be joined.
-            id_table <- identify_element_sets(x=x_list, ...)
-            
-            # Identify the element identifiers that should be grouped.
-            grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
-            
-            # List of data elements.
-            data_elements <- list()
-            
-            for(current_group_data_element_ids in grouped_data_element_ids){
-              # Copy the first data element in the group and use it as a
-              # prototype.
-              prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
-              
-              if(any(sapply(x_list[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
-                # Data attribute contains data.table.
-                data_attribute <- lapply(x_list[current_group_data_element_ids], function(x) (x@data))
-                
-                # Combine data attributes.
-                data_attribute <- data.table::rbindlist(data_attribute,
-                                                        use.names=TRUE,
-                                                        fill=TRUE)
-                
-                # Set data attribute.
-                prototype_data_element@data <- data_attribute
-                
-              } else if(any(sapply(x_list[current_group_data_element_ids], function(x) (is.list(x@data))))) {
-                # Data attribute contains data.table.
-                element_names <- unique(unlist(lapply(x_list[current_group_data_element_ids], function(x) (names(x@data)))))
-                
-                # Iterate over different names in the list.
-                data_attribute <- lapply(element_names, function(ii, x){
-                  # Find values for the element.
-                  element_values <- unlist(lapply(x,
-                                                  function(x, ii) (x@data[[ii]]),
-                                                  ii=ii))
-                  
-                  return(element_values)
-                },
-                x=x_list[current_group_data_element_ids])
-                
-                # Set names.
-                names(data_attribute) <- element_names
-                
-                # Force to data attribute.
-                if(force_data_table) data_attribute <- data.table::as.data.table(data_attribute)
-                
-                # Set data attribute.
-                prototype_data_element@data <- data_attribute
-              
-              } else if(all(sapply(x_list[current_group_data_element_ids], function(x) (is_empty(x@data))))) {
-                # All data attributes are unset. We don't need to do anything.
-                
-              } else {
-                # Unknown data type.
-                ..error_reached_unreachable_code("merge_data_elements,familiarDataElement: data attribute is neither data.table, list, or empty.")
-              }
-              
-              # Add merged data element to the list.
-              data_elements <- c(data_elements, list(prototype_data_element))
-            }
-            
-            return(data_elements)
-          })
+            return(element_values)
+          },
+          x=x_list[current_group_data_element_ids])
+        
+        # Set names.
+        names(data_attribute) <- element_names
+        
+        # Force to data attribute.
+        if(force_data_table) data_attribute <- data.table::as.data.table(data_attribute)
+        
+        # Set data attribute.
+        prototype_data_element@data <- data_attribute
+        
+      } else if(all(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (is_empty(x@data))))) {
+        # All data attributes are unset. We don't need to do anything.
+        
+      } else {
+        # Unknown data type.
+        ..error_reached_unreachable_code("merge_data_elements,familiarDataElement: data attribute is neither data.table, list, or empty.")
+      }
+      
+      # Add merged data element to the list.
+      data_elements <- c(data_elements, list(prototype_data_element))
+    }
+    
+    return(data_elements)
+  })
 
 
-setMethod("merge_data_elements", signature(x="NULL"),
-          function(x, ...){
-            return(NULL)
-          })
+#### merge_data_elements (NULL) ------------------------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="NULL"),
+  function(x, ...){
+    return(NULL)
+  })
 
 
 
