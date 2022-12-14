@@ -101,9 +101,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
   
-  # Expect that avg_rooms has rank 1 and lower_status_percentage has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "avg_rooms")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "lower_status_percentage")
+  # Expect that ranks 1 and 2 to be occupied by avg_rooms and lower_status_percentage.
+  testthat::expect_setequal(vimp_table[rank %in% c(1, 2), ]$name, c("avg_rooms", "lower_status_percentage"))
 })
 
 
@@ -255,9 +254,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
-  # Expect that cell_shape_uniformity has rank 1 and bare_nuclei has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "cell_shape_uniformity")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "bare_nuclei")
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("normal_nucleoli", "cell_shape_uniformity", "epithelial_cell_size", "bare_nuclei"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("normal_nucleoli", "cell_shape_uniformity", "epithelial_cell_size", "bare_nuclei"), TRUE)
 })
 
 
