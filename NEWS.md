@@ -22,6 +22,8 @@
 
 - Fixed an issue with apply functions in familiar taking long to aggregate their results.
 
+- Fixed an issue that would prevent Kaplan-Meier curves to be plotted when more than three risk strata where present.
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes
