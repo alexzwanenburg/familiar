@@ -453,7 +453,7 @@ setMethod(
     
     # Iterate over splits
     for(current_split in data_split){
-      browser()
+      
       # Generate split.
       if(!is.null(current_split)){
         x_split <- methods::new(
@@ -463,6 +463,11 @@ setMethod(
         
       } else {
         x_split <- x
+      }
+      
+      if("stratification_method" %in% split_by){
+        # Check that only relevant risk groups are present.
+        x_split@data$risk_group <- droplevels(x_split@data$risk_group)
       }
       
       if(is_empty(x_split)) next()

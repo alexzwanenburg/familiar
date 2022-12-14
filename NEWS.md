@@ -24,6 +24,8 @@
 
 - Fixed an issue that would prevent Kaplan-Meier curves to be plotted when more than three risk strata where present.
 
+- Fixed an error that would occur if Kaplan-Meier curves were plotted for more than one stratification method and different risk groups.
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes

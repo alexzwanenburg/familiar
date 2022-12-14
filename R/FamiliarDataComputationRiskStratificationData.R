@@ -479,24 +479,28 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   p_value <- NULL
   
   # Create new element with strata based on x.
-  data_element <- methods::new("familiarDataElementRiskHazardRatio",
-                               x,
-                               grouping_column=c(setdiff(x@grouping_column, c(get_non_feature_columns(x="survival")))),
-                               value_column=c("p_value", "p_value_adjusted"))
+  data_element <- methods::new(
+    "familiarDataElementRiskHazardRatio",
+    x,
+    grouping_column=c(setdiff(x@grouping_column, c(get_non_feature_columns(x="survival")))),
+    value_column=c("p_value", "p_value_adjusted"))
   
-  # Determine the number of groups.
-  reference_groups <- unique(x@data$risk_group)
+  # Isolate data.
+  data <- x@data
+  data$risk_group <- droplevels(data$risk_group)
   
   # Use the first group as reference for ordinal variables.
-  if(is.ordered(reference_groups)) reference_groups <- levels(reference_groups)[1]
+  reference_groups <- levels(data$risk_group)[1]
   
   # Compute hazard test results over all risk groups.
-  hr_results <- x@data[, dmapply(..compute_risk_stratification_hazard_ratio_test,
-                                 reference_group=reference_groups,
-                                 MoreArgs=list("x"=.SD,
-                                               "confidence_level"=confidence_level)),
-                       by=c(data_element@grouping_column),
-                       .SDcols=c("outcome_time", "outcome_event", "risk_group")]
+  hr_results <- data[, dmapply(
+    ..compute_risk_stratification_hazard_ratio_test,
+    reference_group=reference_groups,
+    MoreArgs=list(
+      "x"=.SD,
+      "confidence_level"=confidence_level)),
+    by=c(data_element@grouping_column),
+    .SDcols=c("outcome_time", "outcome_event", "risk_group")]
   
   # Compute multiple-testing corrected p-value.
   hr_results[, "p_value_adjusted":=stats::p.adjust(p_value, method="holm"),
