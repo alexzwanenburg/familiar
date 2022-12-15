@@ -2,17 +2,21 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-setClass("familiarDataElementCalibrationData",
-         contains="familiarDataElement")
+setClass(
+  "familiarDataElementCalibrationData",
+  contains="familiarDataElement")
 
-setClass("familiarDataElementCalibrationLinearFit",
-         contains="familiarDataElement")
+setClass(
+  "familiarDataElementCalibrationLinearFit",
+  contains="familiarDataElement")
 
-setClass("familiarDataElementCalibrationGoodnessOfFit",
-         contains="familiarDataElement")
+setClass(
+  "familiarDataElementCalibrationGoodnessOfFit",
+  contains="familiarDataElement")
 
-setClass("familiarDataElementCalibrationDensity",
-         contains="familiarDataElement")
+setClass(
+  "familiarDataElementCalibrationDensity",
+  contains="familiarDataElement")
 
 #'@title Internal function to extract calibration data.
 #'
@@ -30,190 +34,216 @@ setClass("familiarDataElementCalibrationDensity",
 #'  the ensemble model.
 #'@md
 #'@keywords internal
-setGeneric("extract_calibration_data",
-           function(object,
-                    data,
-                    cl=NULL,
-                    ensemble_method=waiver(),
-                    evaluation_times=waiver(),
-                    detail_level=waiver(),
-                    estimation_type=waiver(),
-                    aggregate_results=waiver(),
-                    confidence_level=waiver(),
-                    bootstrap_ci_method=waiver(),
-                    is_pre_processed=FALSE,
-                    message_indent=0L,
-                    verbose=FALSE,
-                    ...) standardGeneric("extract_calibration_data"))
+setGeneric(
+  "extract_calibration_data",
+  function(
+    object,
+    data,
+    cl=NULL,
+    ensemble_method=waiver(),
+    evaluation_times=waiver(),
+    detail_level=waiver(),
+    estimation_type=waiver(),
+    aggregate_results=waiver(),
+    confidence_level=waiver(),
+    bootstrap_ci_method=waiver(),
+    is_pre_processed=FALSE,
+    message_indent=0L,
+    verbose=FALSE,
+    ...) standardGeneric("extract_calibration_data"))
 
 
-#####extract_calibration_data#####
-setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
-          function(object,
-                   data,
-                   cl=NULL,
-                   ensemble_method=waiver(),
-                   evaluation_times=waiver(),
-                   detail_level=waiver(),
-                   estimation_type=waiver(),
-                   aggregate_results=waiver(),
-                   confidence_level=waiver(),
-                   bootstrap_ci_method=waiver(),
-                   is_pre_processed=FALSE,
-                   message_indent=0L,
-                   verbose=FALSE,
-                   ...){
-            
-            # Message extraction start
-            logger.message(paste0("Assessing model calibration."),
-                           indent=message_indent,
-                           verbose=verbose)
-            
-            # Load evaluation_times from the object settings attribute, if it is not provided.
-            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
-            
-            # Check evaluation_times argument
-            if(object@outcome_type %in% c("survival")){
-              sapply(evaluation_times,
-                     .check_number_in_valid_range,
-                     var_name="evaluation_times",
-                     range=c(0.0, Inf),
-                     closed=c(FALSE, TRUE))
-            }
-            
-            # Obtain ensemble method from stored settings, if required.
-            if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-            
-            # Check ensemble_method argument
-            .check_parameter_value_is_valid(x=ensemble_method,
-                                            var_name="ensemble_method",
-                                            values=.get_available_ensemble_prediction_methods())
-            
-            # Load confidence alpha from object settings attribute if not
-            # provided externally.
-            if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-            
-            # Check confidence_level input argument
-            .check_number_in_valid_range(x=confidence_level,
-                                         var_name="confidence_level",
-                                         range=c(0.0, 1.0), closed=c(FALSE, FALSE))
-            
-            # Load the bootstrap method
-            if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
-            
-            .check_parameter_value_is_valid(x=bootstrap_ci_method,
-                                            var_name="bootstrap_ci_method",
-                                            values=.get_available_bootstrap_confidence_interval_methods())
-            
-            # Check the level detail.
-            detail_level <- .parse_detail_level(x = detail_level,
-                                                object = object,
-                                                default = "hybrid",
-                                                data_element = "calibration_data")
-            
-            # Check the estimation type.
-            estimation_type <- .parse_estimation_type(x = estimation_type,
-                                                      object = object,
-                                                      default = "bootstrap_confidence_interval",
-                                                      data_element = "calibration_data",
-                                                      detail_level = detail_level,
-                                                      has_internal_bootstrap = TRUE)
-            
-            # Check whether results should be aggregated.
-            aggregate_results <- .parse_aggregate_results(x = aggregate_results,
-                                                          object = object,
-                                                          default = TRUE,
-                                                          data_element = "calibration_data")
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-            
-            # Test if any model in the ensemble was successfully trained.
-            if(!model_is_trained(object=object)) return(NULL)
-            
-            require_package(x="harmonicmeanp",
-                            purpose="to compute p-values for model calibration tests",
-                            message_type="warning")
-            
-            # Generate a prototype data element.
-            proto_data_element <- new("familiarDataElementCalibrationData",
-                                      detail_level = detail_level,
-                                      estimation_type = estimation_type,
-                                      confidence_level = confidence_level,
-                                      bootstrap_ci_method = bootstrap_ci_method)
-            
-            # Generate elements to send to dispatch.
-            calibration_data <- extract_dispatcher(FUN=.extract_calibration_data,
-                                                   has_internal_bootstrap=TRUE,
-                                                   cl=cl,
-                                                   object=object,
-                                                   data=data,
-                                                   proto_data_element=proto_data_element,
-                                                   is_pre_processed=is_pre_processed,
-                                                   ensemble_method=ensemble_method,
-                                                   evaluation_times=evaluation_times,
-                                                   aggregate_results=aggregate_results,
-                                                   message_indent=message_indent + 1L,
-                                                   verbose=verbose)
-            
-            return(calibration_data)
-          })
+#### extract_calibration_data --------------------------------------------------
+setMethod(
+  "extract_calibration_data",
+  signature(object="familiarEnsemble"),
+  function(
+    object,
+    data,
+    cl=NULL,
+    ensemble_method=waiver(),
+    evaluation_times=waiver(),
+    detail_level=waiver(),
+    estimation_type=waiver(),
+    aggregate_results=waiver(),
+    confidence_level=waiver(),
+    bootstrap_ci_method=waiver(),
+    is_pre_processed=FALSE,
+    message_indent=0L,
+    verbose=FALSE,
+    ...){
+    
+    # Message extraction start
+    logger.message(
+      paste0("Assessing model calibration."),
+      indent=message_indent,
+      verbose=verbose)
+    
+    # Load evaluation_times from the object settings attribute, if it is not provided.
+    if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
+    
+    # Check evaluation_times argument
+    if(object@outcome_type %in% c("survival")){
+      sapply(
+        evaluation_times,
+        .check_number_in_valid_range,
+        var_name="evaluation_times",
+        range=c(0.0, Inf),
+        closed=c(FALSE, TRUE))
+    }
+    
+    # Obtain ensemble method from stored settings, if required.
+    if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
+    
+    # Check ensemble_method argument
+    .check_parameter_value_is_valid(
+      x=ensemble_method,
+      var_name="ensemble_method",
+      values=.get_available_ensemble_prediction_methods())
+    
+    # Load confidence alpha from object settings attribute if not
+    # provided externally.
+    if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
+    
+    # Check confidence_level input argument
+    .check_number_in_valid_range(
+      x=confidence_level,
+      var_name="confidence_level",
+      range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+    
+    # Load the bootstrap method
+    if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
+    
+    .check_parameter_value_is_valid(
+      x=bootstrap_ci_method,
+      var_name="bootstrap_ci_method",
+      values=.get_available_bootstrap_confidence_interval_methods())
+    
+    # Check the level detail.
+    detail_level <- .parse_detail_level(
+      x = detail_level,
+      object = object,
+      default = "hybrid",
+      data_element = "calibration_data")
+    
+    # Check the estimation type.
+    estimation_type <- .parse_estimation_type(
+      x = estimation_type,
+      object = object,
+      default = "bootstrap_confidence_interval",
+      data_element = "calibration_data",
+      detail_level = detail_level,
+      has_internal_bootstrap = TRUE)
+    
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = TRUE,
+      data_element = "calibration_data")
+    
+    # Test if models are properly loaded
+    if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+    
+    # Test if any model in the ensemble was successfully trained.
+    if(!model_is_trained(object=object)) return(NULL)
+    
+    require_package(
+      x="harmonicmeanp",
+      purpose="to compute p-values for model calibration tests",
+      message_type="warning")
+    
+    # Generate a prototype data element.
+    proto_data_element <- new(
+      "familiarDataElementCalibrationData",
+      detail_level = detail_level,
+      estimation_type = estimation_type,
+      confidence_level = confidence_level,
+      bootstrap_ci_method = bootstrap_ci_method)
+    
+    # Generate elements to send to dispatch.
+    calibration_data <- extract_dispatcher(
+      FUN=.extract_calibration_data,
+      has_internal_bootstrap=TRUE,
+      cl=cl,
+      object=object,
+      data=data,
+      proto_data_element=proto_data_element,
+      is_pre_processed=is_pre_processed,
+      ensemble_method=ensemble_method,
+      evaluation_times=evaluation_times,
+      aggregate_results=aggregate_results,
+      message_indent=message_indent + 1L,
+      verbose=verbose)
+    
+    return(calibration_data)
+  })
 
 
 
-.extract_calibration_data <- function(object,
-                                      proto_data_element,
-                                      evaluation_times=NULL,
-                                      aggregate_results,
-                                      cl,
-                                      ...){
+.extract_calibration_data <- function(
+    object,
+    proto_data_element,
+    evaluation_times=NULL,
+    aggregate_results,
+    cl,
+    ...){
   
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
   # Add model name.
-  proto_data_element <- add_model_name(proto_data_element, object=object)
+  proto_data_element <- add_model_name(
+    proto_data_element,
+    object=object)
   
   # Add evaluation time as a identifier to the data element.
   if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
-    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=evaluation_times)
+    data_elements <- add_data_element_identifier(
+      x=proto_data_element,
+      evaluation_time=evaluation_times)
     
   } else {
     data_elements <- list(proto_data_element)
   }
   
   # Iterate over data elements.
-  calibration_data <- lapply(data_elements,
-                             ..extract_calibration_data,
-                             object=object,
-                             aggregate_results=aggregate_results,
-                             cl=cl,
-                             ...)
+  calibration_data <- lapply(
+    data_elements,
+    ..extract_calibration_data,
+    object=object,
+    aggregate_results=aggregate_results,
+    cl=cl,
+    ...)
   
   return(calibration_data)
 }
 
 
 
-..extract_calibration_data <- function(data_element,
-                                       object,
-                                       data,
-                                       cl=NULL,
-                                       is_pre_processed,
-                                       ensemble_method,
-                                       metric,
-                                       aggregate_results,
-                                       progress_bar=FALSE,
-                                       verbose=FALSE,
-                                       message_indent,
-                                       ...){
+..extract_calibration_data <- function(
+    data_element,
+    object,
+    data,
+    cl=NULL,
+    is_pre_processed,
+    ensemble_method,
+    metric,
+    aggregate_results,
+    progress_bar=FALSE,
+    verbose=FALSE,
+    message_indent,
+    ...){
   
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
   if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
-    logger.message(paste0("Assessing model calibration at time ", data_element@identifiers$evaluation_time, "."),
-                   indent=message_indent,
-                   verbose=verbose)
+    logger.message(
+      paste0(
+        "Assessing model calibration at time ",
+        data_element@identifiers$evaluation_time, "."),
+      indent=message_indent,
+      verbose=verbose)
   }
   
   # Aggregate data.
@@ -221,63 +251,72 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   
   if(object@outcome_type %in% c("survival", "competing_risk")){
     # Predict class probabilities or regression values.
-    prediction_data <- .predict(object=object,
-                                data=data,
-                                type="survival_probability",
-                                time=data_element@identifiers$evaluation_time,
-                                ensemble_method=ensemble_method,
-                                is_pre_processed=is_pre_processed)
+    prediction_data <- .predict(
+      object=object,
+      data=data,
+      type="survival_probability",
+      time=data_element@identifiers$evaluation_time,
+      ensemble_method=ensemble_method,
+      is_pre_processed=is_pre_processed)
     
   } else {
     # Predict class probabilities or regression values.
-    prediction_data <- .predict(object=object,
-                                data=data,
-                                ensemble_method=ensemble_method,
-                                is_pre_processed=is_pre_processed)
+    prediction_data <- .predict(
+      object=object,
+      data=data,
+      ensemble_method=ensemble_method,
+      is_pre_processed=is_pre_processed)
   }
   
   # Check if any predictions are valid.
   if(!all_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
   # Remove data with missing outcomes.
-  prediction_data <- remove_missing_outcomes(data=prediction_data,
-                                             outcome_type=object@outcome_type)
+  prediction_data <- remove_missing_outcomes(
+    data=prediction_data,
+    outcome_type=object@outcome_type)
   
   # Check that any prediction data remain.
   if(is_empty(prediction_data)) return(NULL)
   
   # Add positive class as an identifier.
   if(object@outcome_type %in% c("binomial")){
-    data_element <- add_data_element_identifier(x=data_element,
-                                                positive_class= get_outcome_class_levels(object)[2])
+    data_element <- add_data_element_identifier(
+      x=data_element,
+      positive_class= get_outcome_class_levels(object)[2])
     
   } else if(object@outcome_type %in% c("multinomial")){
-    data_element <- add_data_element_identifier(x=data_element,
-                                                positive_class= get_outcome_class_levels(object))
+    data_element <- add_data_element_identifier(
+      x=data_element,
+      positive_class= get_outcome_class_levels(object))
   }
   
   # Add bootstrap data.
-  bootstrap_data <- add_data_element_bootstrap(x=data_element,
-                                               ...)
+  bootstrap_data <- add_data_element_bootstrap(
+    x=data_element,
+    ...)
   
   # Add distribution data.
   if(!is.list(data_element)) data_element <- list(data_element)
-  density_data <- lapply(data_element,
-                         .compute_calibration_data_density,
-                         data=prediction_data,
-                         object=object)
+  density_data <- lapply(
+    data_element,
+    .compute_calibration_data_density,
+    data=prediction_data,
+    object=object)
   
   # Iterate over elements.
-  data_elements <- fam_mapply(cl=cl,
-                              assign=NULL,
-                              FUN=.compute_calibration_data,
-                              data_element=bootstrap_data$data_element,
-                              bootstrap=bootstrap_data$bootstrap,
-                              bootstrap_seed = bootstrap_data$seed,
-                              MoreArgs=list("object"=object,
-                                            "data"=prediction_data),
-                              progress_bar=progress_bar,
-                              chopchop=TRUE)
+  data_elements <- fam_mapply(
+    cl=cl,
+    assign=NULL,
+    FUN=.compute_calibration_data,
+    data_element=bootstrap_data$data_element,
+    bootstrap=bootstrap_data$bootstrap,
+    bootstrap_seed = bootstrap_data$seed,
+    MoreArgs=list(
+      "object"=object,
+      "data"=prediction_data),
+    progress_bar=progress_bar,
+    chopchop=TRUE)
   
   # Flatten list of data elements.
   data_elements <- unlist(data_elements)
@@ -296,55 +335,63 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 
 
-.compute_calibration_data <- function(data_element,
-                                      object,
-                                      data,
-                                      bootstrap,
-                                      bootstrap_seed){
+.compute_calibration_data <- function(
+    data_element,
+    object,
+    data,
+    bootstrap,
+    bootstrap_seed){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   observed <- NULL
   
   # Bootstrap the data.
-  if(bootstrap) data <- get_bootstrap_sample(data=data,
-                                             seed=bootstrap_seed)
+  if(bootstrap) data <- get_bootstrap_sample(
+    data=data,
+    seed=bootstrap_seed)
   
   # Extract data
   if(object@outcome_type %in% c("survival")){
     # Calibration grouping data for survival outcomes.
-    calibration_data <- .compute_calibration_data_survival(data=data,
-                                                           time=data_element@identifiers$evaluation_time,
-                                                           n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
+    calibration_data <- .compute_calibration_data_survival(
+      data=data,
+      time=data_element@identifiers$evaluation_time,
+      n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
     
     # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(calibration_data=calibration_data,
-                                                            outcome_type=object@outcome_type)
+    calibration_at_large <- .compute_calibration_linear_fit(
+      calibration_data=calibration_data,
+      outcome_type=object@outcome_type)
     
     # Nam-D'Agostino tests
     calibration_gof_test <- .compute_calibration_nam_dagostino(calibration_data=calibration_data)
     
   } else if(object@outcome_type %in% c("binomial", "multinomial")){
     # Calibration grouping data for categorical outcomes.
-    calibration_data <- .compute_calibration_data_categorical(data=data,
-                                                              positive_class=data_element@identifiers$positive_class,
-                                                              n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
+    calibration_data <- .compute_calibration_data_categorical(
+      data=data,
+      positive_class=data_element@identifiers$positive_class,
+      n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
     
     # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(calibration_data=calibration_data,
-                                                            outcome_type=object@outcome_type)
+    calibration_at_large <- .compute_calibration_linear_fit(
+      calibration_data=calibration_data,
+      outcome_type=object@outcome_type)
     
     # Hosmer-Lemeshow tests
     calibration_gof_test <- .compute_calibration_hosmer_lemeshow(calibration_data=calibration_data)
     
   } else if(object@outcome_type %in% c("count", "continuous")){
     # Calibration grouping data for numerical outcomes.
-    calibration_data <- .compute_calibration_data_regression(object=object,
-                                                             data=data,
-                                                             n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
+    calibration_data <- .compute_calibration_data_regression(
+      object=object,
+      data=data,
+      n_groups=ifelse(data_element@estimation_type == "point", 20L, 1L))
     
     # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(calibration_data=calibration_data,
-                                                            outcome_type=object@outcome_type)
+    calibration_at_large <- .compute_calibration_linear_fit(
+      calibration_data=calibration_data,
+      outcome_type=object@outcome_type)
     
     # Hosmer-Lemeshow tests
     calibration_gof_test <- .compute_calibration_hosmer_lemeshow(calibration_data=calibration_data)
@@ -355,9 +402,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   
   if(!is_empty(calibration_data) & data_element@estimation_type != "point"){
     # Interpolate data to regular expected values, unless point data is used.
-    calibration_data <- calibration_data[, ..compute_calibration_data_interpolated(.SD),
-                                         by=c("rep_id"),
-                                         .SDcols=c("expected", "observed")]
+    calibration_data <- calibration_data[
+      , ..compute_calibration_data_interpolated(.SD),
+      by=c("rep_id"),
+      .SDcols=c("expected", "observed")]
     
     # Keep only finite predictions,
     calibration_data <- calibration_data[is.finite(observed)]
@@ -383,38 +431,43 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   gof_data_element@value_column <- "p_value"
   gof_data_element@grouping_column <- "type"
   
-  return(list(data_element,
-              linear_fit_data_element,
-              gof_data_element))
+  return(list(
+    data_element,
+    linear_fit_data_element,
+    gof_data_element))
 }
 
 
 
-.compute_calibration_data_density <- function(data_element,
-                                              data,
-                                              object){
+.compute_calibration_data_density <- function(
+    data_element,
+    data,
+    object){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   predicted_outcome <- NULL
   
   # Copy data element.
-  data_element <- methods::new("familiarDataElementCalibrationDensity",
-                               data_element)
+  data_element <- methods::new(
+    "familiarDataElementCalibrationDensity",
+    data_element)
   
   # Copy data
   data <- data.table::copy(data)
   
   if(object@outcome_type %in% c("survival", "competing_risk")){
     # Rename the survival column to standard name.
-    data.table::setnames(data,
-                         old="survival_probability",
-                         new="expected")
+    data.table::setnames(
+      data,
+      old="survival_probability",
+      new="expected")
     
   } else if(object@outcome_type %in% c("binomial", "multinomial")) {
     # Rename class probability columns to standard names.
-    data.table::setnames(data,
-                         old=get_class_probability_name(x=data_element@identifiers$positive_class),
-                         new="expected")
+    data.table::setnames(
+      data,
+      old=get_class_probability_name(x=data_element@identifiers$positive_class),
+      new="expected")
     
   } else if(object@outcome_type %in% c("count", "continuous")){
     # Determine the outcome range
@@ -464,7 +517,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 
 
-.compute_calibration_data_survival <- function(data, time, n_groups=1L){
+.compute_calibration_data_survival <- function(
+    data,
+    time,
+    n_groups=1L){
   # Generate baseline calibration data for survival models from an input table
   # (data) containing survival probabilities for each sample and
   # corresponding time and event status.
@@ -473,40 +529,46 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   exp_prob <- NULL
   
   # Rename the survival column to standard name.
-  data.table::setnames(data,
-                       old=c("outcome_time", "outcome_event", "survival_probability"),
-                       new=c("time", "event", "exp_prob"))
+  data.table::setnames(
+    data,
+    old=c("outcome_time", "outcome_event", "survival_probability"),
+    new=c("time", "event", "exp_prob"))
   
   # Sort by survival probability.
   data <- data[order(exp_prob)]
   
   # Repeatedly split into groups. The number of groups is determined using
   # sturges rule.
-  repeated_groups <- lapply(seq_len(n_groups), function(ii, x, y, sample_identifiers){
-    return(create_randomised_groups(x=x,
-                                    y=y,
-                                    sample_identifiers=sample_identifiers,
-                                    n_min_y_in_group=4))
-    
-  },
-  x=data$exp_prob,
-  y=data$event,
-  sample_identifiers=data[, mget(get_id_columns(id_depth="series"))])
+  repeated_groups <- lapply(
+    seq_len(n_groups),
+    function(ii, x, y, sample_identifiers){
+      
+      return(create_randomised_groups(
+        x=x,
+        y=y,
+        sample_identifiers=sample_identifiers,
+        n_min_y_in_group=4))
+    },
+    x=data$exp_prob,
+    y=data$event,
+    sample_identifiers=data[, mget(get_id_columns(id_depth="series"))])
   
   # Iterate over groups and add details by comparing the kaplan-meier survival
   # curve within each group at time with the mean survival probability in
   # the group.
-  calibration_table <- lapply(seq_along(repeated_groups),
-                              function(ii, groups, data, time){
-                                return(..compute_calibration_data_survival(data=data,
-                                                                           groups=groups[[ii]],
-                                                                           time=time,
-                                                                           ii=ii))
-                                
-                              },
-                              groups=repeated_groups,
-                              data=data,
-                              time=time)
+  calibration_table <- lapply(
+    seq_along(repeated_groups),
+    function(ii, groups, data, time){
+      
+      return(..compute_calibration_data_survival(
+        data=data,
+        groups=groups[[ii]],
+        time=time,
+        ii=ii))
+    },
+    groups=repeated_groups,
+    data=data,
+    time=time)
   
   # Concatenate to table.
   calibration_table <- data.table::rbindlist(calibration_table, use.names=TRUE)
@@ -515,14 +577,20 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(calibration_table)) return(NULL)
   
   # Set column order.
-  data.table::setcolorder(calibration_table, c("expected", "observed", "km_var", "n_g", "rep_id"))
+  data.table::setcolorder(
+    calibration_table,
+    c("expected", "observed", "km_var", "n_g", "rep_id"))
   
   return(calibration_table)
 }
 
 
 
-..compute_calibration_data_survival <- function(groups, data, time, ii){
+..compute_calibration_data_survival <- function(
+    groups,
+    data,
+    time, 
+    ii){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
@@ -547,11 +615,12 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
       if(length(km_fit$time) >= 2){
         
         # Get observed probability
-        obs_prob[jj] <- stats::approx(x=km_fit$time,
-                                      y=km_fit$surv,
-                                      xout=time,
-                                      method="linear",
-                                      rule=2)$y
+        obs_prob[jj] <- stats::approx(
+          x=km_fit$time,
+          y=km_fit$surv,
+          xout=time,
+          method="linear",
+          rule=2)$y
         
         # Get expected probability
         exp_prob[jj] <- mean(group_data$exp_prob)
@@ -560,11 +629,12 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
         n_g[jj] <- length(groups[[jj]])
         
         # Get greenwood variance estimate.
-        km_var[jj] <- stats::approx(x=km_fit$time,
-                                    y=km_fit$std.err,
-                                    xout=time,
-                                    method="linear",
-                                    rule=2)$y^2
+        km_var[jj] <- stats::approx(
+          x=km_fit$time,
+          y=km_fit$std.err,
+          xout=time,
+          method="linear",
+          rule=2)$y^2
       } else {
         # Set NA values.
         obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
@@ -579,18 +649,22 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   }
   
   # Create table.
-  calibration_table <- data.table::data.table("expected"=exp_prob,
-                                              "observed"=obs_prob,
-                                              "n_g"=n_g,
-                                              "km_var"=km_var,
-                                              "rep_id"=ii)
+  calibration_table <- data.table::data.table(
+    "expected"=exp_prob,
+    "observed"=obs_prob,
+    "n_g"=n_g,
+    "km_var"=km_var,
+    "rep_id"=ii)
   
   return(calibration_table)
 }
 
 
 
-.compute_calibration_data_categorical<- function(data, positive_class, n_groups=1L){
+.compute_calibration_data_categorical<- function(
+    data,
+    positive_class,
+    n_groups=1L){
   # For assessing the calibration of categorical outcomes, we require expected
   # and observed probabilities for 1 (binomial) or all classes (multinomial).
   # Expected probabilities are easy, as the model predicts them. Observed
@@ -624,9 +698,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(data)) return(NULL)
   
   # Rename columns to standard names
-  data.table::setnames(data,
-                       old=c(outcome_column, positive_class_column_name),
-                       new=c("observed_class", "exp_prob"))
+  data.table::setnames(
+    data,
+    old=c(outcome_column, positive_class_column_name),
+    new=c("observed_class", "exp_prob"))
   
   # Mask class so that positive outcomes are TRUE and the rest FALSE
   data[, "observed_class":=observed_class==positive_class]
@@ -635,32 +710,40 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   data <- data[order(exp_prob)]
   
   # Repeatedly split into groups. The number of groups is determined using sturges rule
-  repeated_groups <- lapply(seq_len(n_groups), function(ii, x, sample_identifiers){
-    return(create_randomised_groups(x=x, sample_identifiers=sample_identifiers))
-    
-  },
-  x=data$exp_prob,
-  sample_identifiers=data[, mget(sample_identifiers)])
+  repeated_groups <- lapply(
+    seq_len(n_groups), function(ii, x, sample_identifiers){
+      
+      return(create_randomised_groups(
+        x=x,
+        sample_identifiers=sample_identifiers))
+      
+    },
+    x=data$exp_prob,
+    sample_identifiers=data[, mget(sample_identifiers)])
   
   # Iterate over groups
-  calibration_table <- lapply(seq_len(length(repeated_groups)),
-                              function(ii, groups, data){
-                                return(..compute_calibration_data_categorical(data=data,
-                                                                              groups=groups[[ii]],
-                                                                              ii=ii))
-                                
-                              },
-                              data=data,
-                              groups=repeated_groups)
+  calibration_table <- lapply(
+    seq_len(length(repeated_groups)),
+    function(ii, groups, data){
+      
+      return(..compute_calibration_data_categorical(
+        data=data,
+        groups=groups[[ii]],
+        ii=ii))
+    },
+    data=data,
+    groups=repeated_groups)
   
   # Combine to a single list.
   calibration_table <- data.table::rbindlist(calibration_table, use.names=TRUE)
   
   # Check that any calibration data was generated.
   if(is_empty(calibration_table)) return(NULL)
-
+  
   # Set column order
-  data.table::setcolorder(calibration_table, c("expected", "observed", "n_g", "n_pos", "n_neg", "rep_id"))
+  data.table::setcolorder(
+    calibration_table,
+    c("expected", "observed", "n_g", "n_pos", "n_neg", "rep_id"))
   
   return(calibration_table)
 }
@@ -668,7 +751,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 
 
-..compute_calibration_data_categorical <- function(groups, data, ii){
+..compute_calibration_data_categorical <- function(
+    groups,
+    data,
+    ii){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
@@ -701,19 +787,23 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   }
   
   # Create table
-  calibration_table <- data.table::data.table("expected"=exp_prob,
-                                              "observed"=obs_prob,
-                                              "n_g"=n_g,
-                                              "n_pos"=n_pos,
-                                              "n_neg"=n_neg,
-                                              "rep_id"=ii)
+  calibration_table <- data.table::data.table(
+    "expected"=exp_prob,
+    "observed"=obs_prob,
+    "n_g"=n_g,
+    "n_pos"=n_pos,
+    "n_neg"=n_neg,
+    "rep_id"=ii)
   
   return(calibration_table)
 }
 
 
 
-.compute_calibration_data_regression <- function(object, data, n_groups=1L){
+.compute_calibration_data_regression <- function(
+    object,
+    data,
+    n_groups=1L){
   # Calibration for regression problems is pretty straightforward. However, for
   # goodness-of-fit tests, we need to constrain expected and observed value
   # ranges to [0, 1]. To do so, we use the range of outcome values from the
@@ -741,28 +831,36 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(norm_scale == 0.0) norm_scale <- 1.0
   
   # Apply normalisation.
-  data[, ":="("expected"=(predicted_outcome - norm_shift) / norm_scale,
-              "observed"=(outcome - norm_shift) / norm_scale)]
+  data[, ":="(
+    "expected"=(predicted_outcome - norm_shift) / norm_scale,
+    "observed"=(outcome - norm_shift) / norm_scale)]
   
   # Repeatedly split into groups. The number of groups is determined using
   # sturges rule.
-  repeated_groups <- lapply(seq_len(n_groups), function(ii, x, sample_identifiers){
-    return(create_randomised_groups(x=x, sample_identifiers=sample_identifiers))
-    
-  },
-  x=data$expected,
-  sample_identifiers=data[, mget(get_id_columns(id_depth="series"))])
+  repeated_groups <- lapply(
+    seq_len(n_groups),
+    function(ii, x, sample_identifiers){
+      
+      return(create_randomised_groups(
+        x=x,
+        sample_identifiers=sample_identifiers))
+      
+    },
+    x=data$expected,
+    sample_identifiers=data[, mget(get_id_columns(id_depth="series"))])
   
   # Iterate over groups
-  calibration_table <- lapply(seq_len(length(repeated_groups)),
-                              function(ii, groups, data){
-                                return(..compute_calibration_data_regression(data=data,
-                                                                             groups=groups[[ii]],
-                                                                             ii=ii))
-                                
-                              },
-                              data=data,
-                              groups=repeated_groups)
+  calibration_table <- lapply(
+    seq_len(length(repeated_groups)),
+    function(ii, groups, data){
+      
+      return(..compute_calibration_data_regression(
+        data=data,
+        groups=groups[[ii]],
+        ii=ii))
+    },
+    data=data,
+    groups=repeated_groups)
   
   # Concatenate to a single table
   calibration_table <- data.table::rbindlist(calibration_table, use.names=TRUE)
@@ -771,14 +869,19 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(calibration_table)) return(NULL)
   
   # Make columns match the expected order
-  data.table::setcolorder(calibration_table, c("expected", "observed", "n_g", "rep_id"))
+  data.table::setcolorder(
+    calibration_table,
+    c("expected", "observed", "n_g", "rep_id"))
   
   return(calibration_table)
 }
 
 
 
-..compute_calibration_data_regression <- function(groups, data, ii){
+..compute_calibration_data_regression <- function(
+    groups,
+    data,
+    ii){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
@@ -805,17 +908,20 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   }
   
   # Create table
-  calibration_table <- data.table::data.table("expected"=exp_prob,
-                                              "observed"=obs_prob,
-                                              "n_g"=n_g,
-                                              "rep_id"=ii)
+  calibration_table <- data.table::data.table(
+    "expected"=exp_prob,
+    "observed"=obs_prob,
+    "n_g"=n_g,
+    "rep_id"=ii)
   
   return(calibration_table)
 }
 
 
 
-.compute_calibration_linear_fit <- function(calibration_data, outcome_type){
+.compute_calibration_linear_fit <- function(
+    calibration_data, 
+    outcome_type){
   # Tests calibration-at-the-large and calibration slope
   
   # Suppress NOTES due to non-standard evaluation in data.table.
@@ -831,9 +937,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(nrow(calibration_data) < 2) return(NULL)
   
   # Fit per repeated measurement.
-  fit_data <- lapply(split(calibration_data, by="rep_id"),
-                     ..compute_calibration_fit,
-                     outcome_type=outcome_type)
+  fit_data <- lapply(
+    split(calibration_data, by="rep_id"),
+    ..compute_calibration_fit,
+    outcome_type=outcome_type)
   
   # Concatenate to a single table.
   fit_data <- data.table::rbindlist(fit_data, use.names=TRUE)
@@ -848,15 +955,18 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 
 
-..compute_calibration_fit <- function(calibration_data, outcome_type){
+..compute_calibration_fit <- function(
+    calibration_data,
+    outcome_type){
   
   # Suppress NOTES due to non-standard evaluation in data.table.
   type <- value <- ci_low <- ci_up <- NULL
   
   # Perform a linear fit. Note that the slope is offset by 1*expected to
   # directly compare with the expected slope of 1.
-  fit <- stats::lm(observed~expected+1+offset(expected),
-                   data=calibration_data)
+  fit <- stats::lm(
+    observed~expected+1+offset(expected),
+    data=calibration_data)
   
   # Get coefficients for intercept and slope
   fit_coef <- stats::coef(fit)
@@ -889,16 +999,20 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   }
   
   # Construct data table
-  calibration_at_large <- data.table::data.table("type"=c("offset", "slope"),
-                                                 "value"=fit_coef,
-                                                 "ci_low"=fit_conf_int[,1],
-                                                 "ci_up"=fit_conf_int[,2],
-                                                 "p_value"=fit_summary[, 4])
+  calibration_at_large <- data.table::data.table(
+    "type"=c("offset", "slope"),
+    "value"=fit_coef,
+    "ci_low"=fit_conf_int[,1],
+    "ci_up"=fit_conf_int[,2],
+    "p_value"=fit_summary[, 4])
   
   # Update the slope so that the expected slope (slope+1) is shown instead
-  calibration_at_large[type=="slope", ":="("value"=value+1,
-                                           "ci_low"=ci_low+1,
-                                           "ci_up"=ci_up+1)]
+  calibration_at_large[
+    type=="slope",
+    ":="(
+      "value"=value+1,
+      "ci_low"=ci_low+1,
+      "ci_up"=ci_up+1)]
   
   return(calibration_at_large)
 }
@@ -948,7 +1062,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   
   # Reorder columns
   data.table::setcolorder(gof_table, c("type", "p_value"))
-
+  
   return(gof_table)
 }
 
@@ -978,7 +1092,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
       
       # Use Taylor series for 1/(x * (1-x)) to second order at 0.05.
       value <- n_g * (expected-observed)^2 * 400 *
-               (1/19 - 360/361 * (expected - 1/20))
+        (1/19 - 360/361 * (expected - 1/20))
       
       if(exact_value < value) value <- exact_value
       if(value < 0.0) value <- 0.0
@@ -987,7 +1101,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
       
       # Use Taylor series for 1/(x * (1-x)) to first order at 0.95.
       value <- n_g * (expected-observed)^2 * 400 *
-               (1/19 + 360/361 * (expected - 19/20))
+        (1/19 + 360/361 * (expected - 19/20))
       
       if(exact_value < value) value <- exact_value
       if(value < 0.0) value <- 0.0
@@ -1022,8 +1136,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each group.
-  calibration_data[, ":="("nd_group"=..compute_calibration_test_statistic(observed, expected, n_g),
-                          "gnd_group"=(observed-expected)^2 / km_var),
+  calibration_data[,
+                   ":="(
+                     "nd_group"=..compute_calibration_test_statistic(observed, expected, n_g),
+                     "gnd_group"=(observed-expected)^2 / km_var),
                    by=seq_len(nrow(calibration_data))]
   
   # Remove NA values in hm_group
@@ -1031,30 +1147,34 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each time point
-  gof_table <- calibration_data[, list("nam_dagostino"=sum(nd_group, na.rm=TRUE),
-                                       "greenwood_nam_dagostino"=sum(gnd_group, na.rm=TRUE),
-                                       "n_groups"=.N),
+  gof_table <- calibration_data[,
+                                list(
+                                  "nam_dagostino"=sum(nd_group, na.rm=TRUE),
+                                  "greenwood_nam_dagostino"=sum(gnd_group, na.rm=TRUE),
+                                  "n_groups"=.N),
                                 by="rep_id"]
   
   # Compute test score for both test tests.
   gof_table <- gof_table[n_groups > 1,
-                         list("nam_dagostino"=stats::pchisq(q=nam_dagostino, df=n_groups-1, lower.tail=FALSE),
-                              "greenwood_nam_dagostino"=stats::pchisq(q=greenwood_nam_dagostino, df=n_groups-1, lower.tail=FALSE)),
+                         list(
+                           "nam_dagostino"=stats::pchisq(q=nam_dagostino, df=n_groups-1, lower.tail=FALSE),
+                           "greenwood_nam_dagostino"=stats::pchisq(q=greenwood_nam_dagostino, df=n_groups-1, lower.tail=FALSE)),
                          by="rep_id"]
   
   # Check for an empty goodness-of-fit table.
   if(is_empty(gof_table)) return(NULL)
   
   # Melt so that each test is on a separate row
-  gof_table <- data.table::melt(gof_table,
-                                id.vars="rep_id",
-                                variable.name="type",
-                                value.name="p_value",
-                                variable.factor=FALSE)
+  gof_table <- data.table::melt(
+    gof_table,
+    id.vars="rep_id",
+    variable.name="type",
+    value.name="p_value",
+    variable.factor=FALSE)
   
   # Drop rep_id.
   gof_table[, "rep_id":=NULL]
-
+  
   # Reorder columns
   data.table::setcolorder(gof_table, c("type", "p_value"))
   
@@ -1063,7 +1183,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 
 
-..compute_calibration_data_interpolated <- function(data, method="loess"){
+..compute_calibration_data_interpolated <- function(
+    data,
+    method="loess"){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   observed <- expected <- NULL
@@ -1093,15 +1215,17 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
       method <- "linear"
       
     } else {
-      return(list("expected"=NA_real_,
-                  "observed"=NA_real_))
+      return(list(
+        "expected"=NA_real_,
+        "observed"=NA_real_))
     }
     
   } else if(method == "linear"){
     
     if(n_instances < 2){
-      return(list("expected"=NA_real_,
-                  "observed"=NA_real_))
+      return(list(
+        "expected"=NA_real_,
+        "observed"=NA_real_))
     }
     
   } else {
@@ -1111,192 +1235,209 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(method == "linear"){
     # Interpolate observed values. Return NA values outside the known expected
     # range.
-    observed_interpolated <- stats::approx(x=data$expected,
-                                           y=data$observed,
-                                           xout=expected_interpolated,
-                                           method="linear",
-                                           rule=1)$y
+    observed_interpolated <- stats::approx(
+      x=data$expected,
+      y=data$observed,
+      xout=expected_interpolated,
+      method="linear",
+      rule=1)$y
     
   } else if(method == "loess"){
     # Set up the loess model.
-    loess_predictor <- suppressWarnings(stats::loess(observed ~ expected,
-                                                     data=data,
-                                                     span=1.0,
-                                                     degree=degree,
-                                                     normalize=FALSE,
-                                                     control=stats::loess.control(surface="direct")))
+    loess_predictor <- suppressWarnings(
+      stats::loess(observed ~ expected,
+                   data=data,
+                   span=1.0,
+                   degree=degree,
+                   normalize=FALSE,
+                   control=stats::loess.control(surface="direct")))
     
     # Predicted interpolated values.
-    observed_interpolated <- suppressWarnings(predict(loess_predictor,
-                                                      newdata=expected_interpolated))
+    observed_interpolated <- suppressWarnings(predict(
+      loess_predictor,
+      newdata=expected_interpolated))
   }
   
   # Set expected values and the corresponding interpolated observed values.
-  return(list("expected"=expected_interpolated,
-              "observed"=observed_interpolated))
+  return(list(
+    "expected"=expected_interpolated,
+    "observed"=observed_interpolated))
 }
 
 
 
 ##### ..compute_data_element_estimates (familiarDataElementCalibrationData) #####
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCalibrationData"),
-          function(x, x_list=NULL, ...){
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            # Determine the bootstrap_ci_method and the aggregation function
-            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Point estimates need to be for all expected probability values,
-              # which means that we have to compute it from the data.
-              x <- .add_point_estimate_from_elements(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")])
-            }
-            
-            # Check that x is not empty.
-            if(is_empty(x)) return(NULL)
-            
-            return(callNextMethod(x_list=x))
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElementCalibrationData"),
+  function(x, x_list=NULL, ...){
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    # Determine the bootstrap_ci_method and the aggregation function
+    if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Point estimates need to be for all expected probability values,
+      # which means that we have to compute it from the data.
+      x <- .add_point_estimate_from_elements(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")])
+    }
+    
+    # Check that x is not empty.
+    if(is_empty(x)) return(NULL)
+    
+    return(callNextMethod(x_list=x))
+  })
 
 ##### ..compute_data_element_estimates (familiarDataElementCalibrationLinearFit) #####
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCalibrationLinearFit"),
-          function(x, x_list=NULL, ...){
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            p_value <- NULL
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Process data normally.
-            y <- callNextMethod()
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            # Determine the bootstrap_ci_method and the aggregation function
-            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Obtain data from bootstrapped data.
-              data <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data
-              
-            } else {
-              data <- x[[1]]@data
-            }
-            
-            # Get the grouping column.
-            grouping_column <- x[[1]]@grouping_column
-            
-            # Compute p-value by grouping column.
-            p_value <- data[, list("p_value"=harmonic_p_value(p_value)),
-                            by=c(grouping_column)]
-            
-            # Merge data into 
-            y@data <- merge(x=y@data,
-                            y=p_value,
-                            by=grouping_column)
-            
-            # Update value column
-            y@value_column <- setdiff(names(y@data),
-                                      y@grouping_column)
-            
-            return(y)
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElementCalibrationLinearFit"),
+  function(x, x_list=NULL, ...){
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    p_value <- NULL
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Process data normally.
+    y <- callNextMethod()
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    # Determine the bootstrap_ci_method and the aggregation function
+    if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Obtain data from bootstrapped data.
+      data <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data
+      
+    } else {
+      data <- x[[1]]@data
+    }
+    
+    # Get the grouping column.
+    grouping_column <- x[[1]]@grouping_column
+    
+    # Compute p-value by grouping column.
+    p_value <- data[,
+                    list("p_value"=harmonic_p_value(p_value)),
+                    by=c(grouping_column)]
+    
+    # Merge data into 
+    y@data <- merge(
+      x=y@data,
+      y=p_value,
+      by=grouping_column)
+    
+    # Update value column
+    y@value_column <- setdiff(
+      names(y@data),
+      y@grouping_column)
+    
+    return(y)
+  })
 
 
 ##### ..compute_data_element_estimates (familiarDataElementCalibrationGoodnessOfFit) #####
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCalibrationGoodnessOfFit"),
-          function(x, x_list=NULL, ...){
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            p_value <- NULL
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            # Determine the bootstrap_ci_method and the aggregation function
-            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Obtain data from bootstrapped data.
-              x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
-              
-            } else {
-              x <- x[[1]]
-            }
-            
-            # Get the grouping column.
-            grouping_column <- x@grouping_column
-            
-            # Since samples overlap, combination methods that assume independence cannot
-            # be used (e.g. Fisher's method). Hence we calculate a harmonic mean p value
-            # according to Wilson (2019), 10.1073/pnas.1814092116.
-            x@data <- x@data[, list("p_value"=harmonic_p_value(p_value)),
-                             by=c(grouping_column)]
-            
-            # Update value column
-            x@value_column <- setdiff(names(x@data),
-                                      x@grouping_column)
-            
-            return(x)
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElementCalibrationGoodnessOfFit"),
+  function(x, x_list=NULL, ...){
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    p_value <- NULL
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    # Determine the bootstrap_ci_method and the aggregation function
+    if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Obtain data from bootstrapped data.
+      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      
+    } else {
+      x <- x[[1]]
+    }
+    
+    # Get the grouping column.
+    grouping_column <- x@grouping_column
+    
+    # Since samples overlap, combination methods that assume independence cannot
+    # be used (e.g. Fisher's method). Hence we calculate a harmonic mean p value
+    # according to Wilson (2019), 10.1073/pnas.1814092116.
+    x@data <- x@data[, list("p_value"=harmonic_p_value(p_value)),
+                     by=c(grouping_column)]
+    
+    # Update value column
+    x@value_column <- setdiff(names(x@data),
+                              x@grouping_column)
+    
+    return(x)
+  })
 
 
 ##### ..compute_data_element_estimates (familiarDataElementCalibrationDensity) #####
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCalibrationDensity"),
-          function(x, x_list=NULL, ...){
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            frequency <- expected <- NULL
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            # Determine the bootstrap_ci_method and the aggregation function
-            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Obtain data from bootstrapped data.
-              x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
-              
-            } else {
-              x <- x[[1]]
-            }
-            
-            # Get the grouping column.
-            grouping_column <- x@grouping_column
-            
-            # Compute frequency by grouping column.
-            x@data <- x@data[, list("frequency"=sum(frequency)),
-                             by=c(grouping_column)]
-            
-            # Normalise frequency by all grouping columns minus expected.
-            grouping_column <- setdiff(grouping_column, "expected")
-            
-            if(length(grouping_column) > 0){
-              x@data <- x@data[, "frequency":=frequency / sum(frequency), by=c(grouping_column)][order(expected)]
-            } else {
-              x@data <- x@data[, "frequency":=frequency / sum(frequency)][order(expected)]
-            }
-            
-            # Update value column
-            x@value_column <- setdiff(names(x@data),
-                                      x@grouping_column)
-            
-            return(x)
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElementCalibrationDensity"),
+  function(x, x_list=NULL, ...){
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    frequency <- expected <- NULL
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    # Determine the bootstrap_ci_method and the aggregation function
+    if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Obtain data from bootstrapped data.
+      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      
+    } else {
+      x <- x[[1]]
+    }
+    
+    # Get the grouping column.
+    grouping_column <- x@grouping_column
+    
+    # Compute frequency by grouping column.
+    x@data <- x@data[, 
+                     list("frequency"=sum(frequency)),
+                     by=c(grouping_column)]
+    
+    # Normalise frequency by all grouping columns minus expected.
+    grouping_column <- setdiff(grouping_column, "expected")
+    
+    if(length(grouping_column) > 0){
+      x@data <- x@data[, "frequency":=frequency / sum(frequency), by=c(grouping_column)][order(expected)]
+    } else {
+      x@data <- x@data[, "frequency":=frequency / sum(frequency)][order(expected)]
+    }
+    
+    # Update value column
+    x@value_column <- setdiff(
+      names(x@data),
+      x@grouping_column)
+    
+    return(x)
+  })
 
 
 
@@ -1335,95 +1476,113 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
 #'@exportMethod export_calibration_data
 #'@md
 #'@rdname export_calibration_data-methods
-setGeneric("export_calibration_data",
-           function(object,
-                    dir_path=NULL,
-                    aggregate_results=TRUE,
-                    export_collection=FALSE,
-                    ...) standardGeneric("export_calibration_data"))
+setGeneric(
+  "export_calibration_data",
+  function(
+    object,
+    dir_path=NULL,
+    aggregate_results=TRUE,
+    export_collection=FALSE,
+    ...) standardGeneric("export_calibration_data"))
 
 #####export_calibration_data (collection)#####
 
 #'@rdname export_calibration_data-methods
-setMethod("export_calibration_data", signature(object="familiarCollection"),
-          function(object,
-                   dir_path=NULL,
-                   aggregate_results=TRUE,
-                   export_collection=FALSE,
-                   ...){
-            
-            # Make sure the collection object is updated.
-            object <- update_object(object=object)
-            
-            # Obtain calibration data.
-            calibration_data <- .export(x=object,
-                                        data_slot="calibration_data",
-                                        dir_path=dir_path,
-                                        aggregate_results=aggregate_results,
-                                        type="calibration",
-                                        subtype="data",
-                                        object_class="familiarDataElementCalibrationData")
-            
-            # Obtain linear fit data
-            linear_fit_data <- .export(x=object,
-                                       data_slot="calibration_data",
-                                       dir_path=dir_path,
-                                       aggregate_results=aggregate_results,
-                                       type="calibration",
-                                       subtype="at_large",
-                                       object_class="familiarDataElementCalibrationLinearFit")
-            
-            # Obtain goodness of fit data
-            gof_data <- .export(x=object,
-                                data_slot="calibration_data",
-                                dir_path=dir_path,
-                                aggregate_results=aggregate_results,
-                                type="calibration",
-                                subtype="gof_test",
-                                object_class="familiarDataElementCalibrationGoodnessOfFit")
-            
-            # Obtain density data
-            density_data <- .export(x=object,
-                                    data_slot="calibration_data",
-                                    dir_path=dir_path,
-                                    aggregate_results=aggregate_results,
-                                    type="calibration",
-                                    subtype="density",
-                                    object_class="familiarDataElementCalibrationDensity")
-            
-            # Set data list.
-            data_list <- list("data"=calibration_data,
-                              "density"=density_data,
-                              "linear_test"=linear_fit_data,
-                              "gof_test"=gof_data)
-            
-            if(!is.null(dir_path)) data_list <- NULL
-            if(export_collection) data_list <- c(data_list, list("collection"=object))
-            
-            return(data_list)
-          })
+setMethod(
+  "export_calibration_data",
+  signature(object="familiarCollection"),
+  function(object,
+           dir_path=NULL,
+           aggregate_results=TRUE,
+           export_collection=FALSE,
+           ...){
+    
+    # Make sure the collection object is updated.
+    object <- update_object(object=object)
+    
+    # Obtain calibration data.
+    calibration_data <- .export(
+      x=object,
+      data_slot="calibration_data",
+      dir_path=dir_path,
+      aggregate_results=aggregate_results,
+      type="calibration",
+      subtype="data",
+      object_class="familiarDataElementCalibrationData")
+    
+    # Obtain linear fit data
+    linear_fit_data <- .export(
+      x=object,
+      data_slot="calibration_data",
+      dir_path=dir_path,
+      aggregate_results=aggregate_results,
+      type="calibration",
+      subtype="at_large",
+      object_class="familiarDataElementCalibrationLinearFit")
+    
+    # Obtain goodness of fit data
+    gof_data <- .export(
+      x=object,
+      data_slot="calibration_data",
+      dir_path=dir_path,
+      aggregate_results=aggregate_results,
+      type="calibration",
+      subtype="gof_test",
+      object_class="familiarDataElementCalibrationGoodnessOfFit")
+    
+    # Obtain density data
+    density_data <- .export(
+      x=object,
+      data_slot="calibration_data",
+      dir_path=dir_path,
+      aggregate_results=aggregate_results,
+      type="calibration",
+      subtype="density",
+      object_class="familiarDataElementCalibrationDensity")
+    
+    # Set data list.
+    data_list <- list(
+      "data"=calibration_data,
+      "density"=density_data,
+      "linear_test"=linear_fit_data,
+      "gof_test"=gof_data)
+    
+    if(!is.null(dir_path)) data_list <- NULL
+    if(export_collection) data_list <- c(data_list, list("collection"=object))
+    
+    return(data_list)
+  })
 
 #####export_calibration_data (generic)#####
 
 #'@rdname export_calibration_data-methods
-setMethod("export_calibration_data", signature(object="ANY"),
-          function(object,
-                   dir_path=NULL,
-                   aggregate_results=TRUE,
-                   export_collection=FALSE,
-                   ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=c(list("object"=object,
-                                          "data_element"="calibration_data",
-                                          "aggregate_results"=aggregate_results),
-                                     list(...)))
-            
-            return(do.call(export_calibration_data,
-                           args=c(list("object"=object,
-                                       "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results,
-                                       "export_collection"=export_collection),
-                                  list(...))))
-          })
+setMethod(
+  "export_calibration_data",
+  signature(object="ANY"),
+  function(
+    object,
+    dir_path=NULL,
+    aggregate_results=TRUE,
+    export_collection=FALSE,
+    ...){
+    
+    # Attempt conversion to familiarCollection object.
+    object <- do.call(
+      as_familiar_collection,
+      args=c(
+        list(
+          "object"=object,
+          "data_element"="calibration_data",
+          "aggregate_results"=aggregate_results),
+        list(...)))
+    
+    return(do.call(
+      export_calibration_data,
+      args=c(
+        list(
+          "object"=object,
+          "dir_path"=dir_path,
+          "aggregate_results"=aggregate_results,
+          "export_collection"=export_collection),
+        list(...))))
+  })
