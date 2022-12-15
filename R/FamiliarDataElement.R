@@ -1338,6 +1338,9 @@ setMethod(
       grouping_columns <- x[[1]]@grouping_column
       if(length(grouping_columns) == 0) grouping_columns <- NULL
       
+      # Find value columns.
+      value_columns <- x[[1]]@value_column
+      
       # Select values.
       bootstrap_values <- data.table::as.data.table(
         x[estimation_type %in% c("point")][[1]]@data)
@@ -1352,8 +1355,8 @@ setMethod(
       # columns, namely grouping and value columns, to ensure that both
       # unique_values and bootstrap_values will be processed the same
       # way.
-      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(grouping_columns, x[[1]]@value_column))]
-      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(grouping_columns, x[[1]]@value_column))]
+      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(grouping_columns, value_columns))]
+      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(grouping_columns, value_columns))]
       
       if(is_empty(bootstrap_values)){
         # Data are unique values.
@@ -1365,7 +1368,7 @@ setMethod(
         data <- lapply(
           split(bootstrap_values, by=grouping_columns, drop=TRUE),
           ..compute_bias_corrected_estimate,
-          value_column = x[[1]]@value_column,
+          value_column = value_columns,
           grouping_column = grouping_columns)
         
         # Combine to single table
@@ -1378,7 +1381,7 @@ setMethod(
         # Compute in absence of grouping columns.
         data <- ..compute_bias_corrected_estimate(
           x = bootstrap_values,
-          value_column = x[[1]]@value_column)
+          value_column = value_columns)
         
         # Combine to single table
         data <- data.table::rbindlist(
