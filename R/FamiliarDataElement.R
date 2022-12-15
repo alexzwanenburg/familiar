@@ -1220,6 +1220,9 @@ setMethod(
   signature(x="familiarDataElement"),
   function(x, x_list=NULL, ...){
     
+    # Suppress NOTES due to non-standard evaluation in data.table
+    n_group <- NULL
+    
     # It might be that x was only used to direct to this method.
     if(!is.null(x_list)) x <- x_list
     if(!is.list(x)) x <- list(x)
@@ -1343,20 +1346,20 @@ setMethod(
       
       # Select values.
       bootstrap_values <- data.table::as.data.table(
-        x[estimation_type %in% c("point")][[1]]@data)
+        x[estimation_type %in% c("point")][[1]]@data)[, mget(c(grouping_columns, value_columns))]
       
       # Refine a bit so that only those entries with multiple values for
       # the same grouping columns are aggregated. This can save a lot of
       # time, because the point estimate typically is determined only on
       # a single run.
-      has_multiple_entries <- duplicated(bootstrap_values, by=grouping_columns)
+      bootstrap_values[, "n_group":=.N, by=grouping_columns]
       
       # Select data based on single/multiple entries. Keep only relevant
       # columns, namely grouping and value columns, to ensure that both
       # unique_values and bootstrap_values will be processed the same
       # way.
-      unique_values <- bootstrap_values[!has_multiple_entries, mget(c(grouping_columns, value_columns))]
-      bootstrap_values <- bootstrap_values[has_multiple_entries, mget(c(grouping_columns, value_columns))]
+      unique_values <- bootstrap_values[n_group == 1, mget(c(grouping_columns, value_columns))]
+      bootstrap_values <- bootstrap_values[n_group > 1, mget(c(grouping_columns, value_columns))]
       
       if(is_empty(bootstrap_values)){
         # Data are unique values.
