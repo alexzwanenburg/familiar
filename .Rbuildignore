@@ -15,3 +15,4 @@
 ^vignettes/original$
 ^tests/testthat/Rplots\.pdf$
 ^tests/old_experiments$
+^Rplots\.pdf$
