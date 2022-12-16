@@ -64,6 +64,8 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 
 ..univariate_test_variable_encoding <- function(x, insert_intercept=FALSE){
   
+  n <- length(x)
+  
   if(is.factor(x)){
     # Categorical variables are encoded as numeric levels (ordinal), or using
     # one-hot-encoding (nominal).
@@ -90,8 +92,9 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   names(x) <- paste0("name_", seq_along(x))
   
   if(insert_intercept){
-    x <- c(x,
-           list("intercept__"=numeric(length(x)) + 1.0))
+    x <- c(
+      x,
+      list("intercept__"=numeric(n) + 1.0))
   }
   
   return(data.table::as.data.table(x))
