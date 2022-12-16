@@ -273,7 +273,7 @@ hyperparameter optimisation.
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | elastic net penalty | `alpha` | $\mathbb{R} \in \left[0,1\right]$ | elastic net | This penalty is fixed for ridge regression (`alpha = 0`) and lasso (`alpha = 1`). |
-| optimal lambda | `lambda_min` | `lambda.1se`, `lambda.min` | no | Default is `lambda.min`.|
+| optimal lambda | `lambda_min` | `lambda.1se`, `lambda.min` | no | Default is `lambda.1se`.|
 | number of CV folds | `n_folds` | $\mathbb{Z} \in \left[3,n\right]$ | no | Default is $3$ if $n<30$, $\lfloor n/10\rfloor$ if $30\leq n \leq 200$ and $20$ if $n>200$.|
 | sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
 | beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
