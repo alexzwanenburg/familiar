@@ -988,40 +988,46 @@ trim_unused_features_from_list <- function(feature_info_list){
   instance_mask <- sapply(feature_info_list, is_available)
   
   # Extract transformation parameter data.
-  transformation_parameter_data <- ..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list,
-                                                                               instance_mask=instance_mask,
-                                                                               feature_name=feature)
+  transformation_parameter_data <- ..collect_and_aggregate_transformation_info(
+    feature_info_list=feature_info_list,
+    instance_mask=instance_mask,
+    feature_name=feature)
   
   # Set the aggregated transformation parameters.
   feature_info@transformation_parameters <- transformation_parameter_data$parameters
-  
+  instance_mask <- instance_mask & transformation_parameter_data$instance_mask
   
   if(stop_at == "transformation") return(feature_info)
   
   # Extract normalisation parameter data.
-  normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(feature_info_list=feature_info_list,
-                                                                             instance_mask=instance_mask,
-                                                                             feature_name=feature)
+  normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(
+    feature_info_list=feature_info_list,
+    instance_mask=instance_mask,
+    feature_name=feature)
   
   # Set the aggregated normalisation methods.
   feature_info@normalisation_parameters <- normalisation_parameter_data$parameters
+  instance_mask <- instance_mask & transformation_parameter_data$instance_mask
   
   if(stop_at == "normalisation") return(feature_info)
   
   # Extract batch normalisation parameter data.
-  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list,
-                                                                                         instance_mask=instance_mask,
-                                                                                         feature_name=feature)
+  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(
+    feature_info_list=feature_info_list,
+    instance_mask=instance_mask,
+    feature_name=feature)
   
   # Update batch normalisation parameter data.
   feature_info@batch_normalisation_parameters <- batch_normalisation_parameter_data$parameters
+  instance_mask <- instance_mask & transformation_parameter_data$instance_mask
   
   if(stop_at == "batch_normalisation") return(feature_info)
   
   # Extract imputation data
-  imputation_parameter_data <- ..collect_and_aggregate_imputation_info(feature_info_list=feature_info_list,
-                                                                       feature_name=feature,
-                                                                       feature_type=feature_info@feature_type)
+  imputation_parameter_data <- ..collect_and_aggregate_imputation_info(
+    feature_info_list=feature_info_list,
+    feature_name=feature,
+    feature_type=feature_info@feature_type)
   
   # Add to slot.
   feature_info@imputation_parameters <- imputation_parameter_data$parameters

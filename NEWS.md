@@ -26,6 +26,8 @@
 
 - Fixed an error that would occur if Kaplan-Meier curves were plotted for more than one stratification method and different risk groups.
 
+- Fixed an issue that could potentially cause matching wrong transformation and normalisation parameter values when forming ensemble models. This may have affect sample cluster plots, which uses this information.
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes
