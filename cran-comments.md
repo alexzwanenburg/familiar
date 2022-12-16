@@ -1,4 +1,4 @@
-Update familiar to version 1.4.0
+Update familiar to version 1.4.1
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
@@ -17,7 +17,7 @@ Windows Server 2022, R-devel, 64 bit:
 * checking installed package size ... NOTE
   installed size is  5.8Mb
   sub-directories of 1Mb or more:
-    R      3.4Mb
+    R      3.5Mb
     doc    1.0Mb
     help   1.1Mb
 
@@ -47,7 +47,7 @@ Packages suggested but not available for checking: 'fastglm'
 * checking installed package size ... NOTE
   installed size is  5.8Mb
   sub-directories of 1Mb or more:
-    R      3.4Mb
+    R      3.5Mb
     doc    1.0Mb
     help   1.1Mb
     
@@ -65,11 +65,11 @@ Ubuntu Linux 20.04.1 LTS, R-release, GCC:
 0 errors | 0 warnings | 1 note
 
 * checking installed package size ... NOTE
-  installed size is  5.8Mb
+  installed size is  5.9Mb
   sub-directories of 1Mb or more:
     R      3.5Mb
     doc    1.0Mb
-    help   1.1Mb
+    help   1.2Mb
 
 
 
