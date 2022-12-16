@@ -202,7 +202,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             
             
             ##### Lambda indicating the optimal model complexity ###############
-            param$lambda_min <- .set_hyperparameter(default="lambda.1se",
+            param$lambda_min <- .set_hyperparameter(default="lambda.min",
                                                     type="factor",
                                                     range=c("lambda.1se", "lambda.min"),
                                                     randomise=FALSE)
