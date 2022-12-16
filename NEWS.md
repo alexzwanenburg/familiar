@@ -1,3 +1,33 @@
+# Version 1.4.1 (Nefarious Newt)
+
+## Minor changes
+
+- Robust methods for power transformations were added, based on the work of Raymaekers and Rousseeuw (Transforming variables to central normality. Mach Learn. 2021. doi:10.1007/s10994-021-05960-5). These methods are `yeo_johnson_robust` and `box_cox_robust`.
+
+- A robust normalisation method, based on Huber's M-estimators for location and scale, was added: `standardisation_robust`.
+
+- Improved efficiency of aggregating and computing point estimates for evaluation steps. It may occur that for each grouping (e.g. samples for pairwise sample similarity), multiple values are available that should be aggregated to a point estimate. Previously we split on all unique combinations of grouping column, and process each split separately. This is a valid approach, but can occur significant overhead when this forms a large number (>100k) splits. We now first determine which data (if any) require computation of a (bias-corrected) point estimate because of grouping. Often, each split would only contain a single instance which forms a point estimate on its own. Extra computation is avoided for these cases.
+
+- Plots now always show the evaluation time point. This is relevant for, for example, calibration plots, where both the observed and expected (predicted) probabilities are time-dependent, and will change depending on the time point.
+
+- Improved support for providing a file name for storing a plot. The plotting device is now changed based on the file name, if it has an extension. In case multiple plots would be created, e.g. due to splitting on some grouping variable, such as the underlying dataset, the provided file name is used as a base.
+
+- Methods for setting labels previously could update the ordering of the labels for `familiarCollection` objects, which could produce unexpected changes. Setting new labels now does not change the label order. Use the `order` argument to update the order of the labels.
+
+## Bug fixes
+
+- Fixed an error that would occur when attempting to create risk group labels for a `familiarCollection` object that is composed of externally provided `familiarData` objects.
+
+- Fixed an issue that would prevent a `familiarCollection` object from being returned if an experiment was run using a temporary folder.
+
+- Fixed an issue with apply functions in familiar taking long to aggregate their results.
+
+- Fixed an issue that would prevent Kaplan-Meier curves to be plotted when more than three risk strata where present.
+
+- Fixed an error that would occur if Kaplan-Meier curves were plotted for more than one stratification method and different risk groups.
+
+- Fixed an issue that could potentially cause matching wrong transformation and normalisation parameter values when forming ensemble models. This may have affect sample cluster plots, which uses this information.
+
 # Version 1.4.0 (Misanthropic Muskrat)
 
 ## Major changes

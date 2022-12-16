@@ -407,33 +407,34 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_sub,
-                                                   subtype="similarity",
-                                                   split_by=split_by)
-                
                 # Identify unique features:
                 features <- unique(c(x_sub$feature_name_1, x_sub$feature_name_2))
                 
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_feature_similarity_plot_dimensions(x=x_sub,
-                                                                              facet_by=facet_by,
-                                                                              facet_wrap_cols=facet_wrap_cols,
-                                                                              features=as.character(features),
-                                                                              show_dendrogram=show_dendrogram,
-                                                                              rotate_x_tick_labels=rotate_x_tick_labels)
+                def_plot_dims <- .determine_feature_similarity_plot_dimensions(
+                  x=x_sub,
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols,
+                  features=as.character(features),
+                  show_dendrogram=show_dendrogram,
+                  rotate_x_tick_labels=rotate_x_tick_labels)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="feature_similarity",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="feature_similarity",
+                      "subtype"="similarity",
+                      "x"=x_sub,
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list for export.

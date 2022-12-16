@@ -237,134 +237,173 @@ setMethod("identify_element_sets", signature(x="NULL"),
 
 
 
-#####merge_data_elements (list)-------------------------------------------------
-setMethod("merge_data_elements", signature(x="list"),
-          function(x, ...){
-            
-            # Check that the list is not empty.
-            if(is_empty(x)) return(NULL)
-            
-            # Flatten (nested) lists.
-            x <- unlist(x)
-            if(!is.list(x)) x <- list(x)
-            
-            # Check that at least one of the data elements in the list is not
-            # empty.
-            if(all(sapply(x, is_empty))) return(NULL)
-            
-            # Create return list for data elements.
-            data_element <- list()
-            
-            # Determine class of all elements
-            element_classes <- sapply(x, class)
-            
-            # Iterate over unique classes.
-            for(element_class in unique(element_classes)){
-              
-              if(all(sapply(x[which(element_classes == element_class)], is_empty))) next()
-              
-              # Create a proto data element to avoid having to pass larger objects
-              # than required.
-              proto_data_element <- x[which(element_classes == element_class)][[1]]
-              proto_data_element@data <- NULL
-              
-              # Run familiarDataElement-specific analysis. This means that we pass
-              # the prototype data element as x with the list of elements.
-              data_element <- c(data_element,
-                                merge_data_elements(x=proto_data_element,
-                                                    x_list=x[which(element_classes == element_class)],
-                                                    ...))
-            }
-            
-            # Assign a NULL to empty data
-            if(is_empty(data_element)) data_element <- NULL
-            
-            return(data_element)
-          })
+#### merge_data_elements (list) ------------------------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="list"),
+  function(
+    x,
+    ...){
+    
+    # Check that the list is not empty.
+    if(is_empty(x)) return(NULL)
+    
+    # Flatten (nested) lists.
+    x <- unlist(x)
+    if(!is.list(x)) x <- list(x)
+    
+    # Check that at least one of the data elements in the list is not
+    # empty.
+    if(all(sapply(x, is_empty))) return(NULL)
+    
+    # Create return list for data elements.
+    data_element <- list()
+    
+    # Determine class of all elements
+    element_classes <- sapply(x, class)
+    
+    # Iterate over unique classes.
+    for(element_class in unique(element_classes)){
+      
+      if(all(sapply(
+        x[which(element_classes == element_class)],
+        is_empty))) next()
+      
+      # Create a proto data element to avoid having to pass larger objects
+      # than required.
+      proto_data_element <- x[which(element_classes == element_class)][[1]]
+      proto_data_element@data <- NULL
+      
+      # Run familiarDataElement-specific analysis. This means that we pass
+      # the prototype data element as x with the list of elements.
+      data_element <- c(
+        data_element,
+        merge_data_elements(
+          x=proto_data_element,
+          x_list=x[which(element_classes == element_class)],
+          ...))
+    }
+    
+    # Assign a NULL to empty data
+    if(is_empty(data_element)) data_element <- NULL
+    
+    return(data_element)
+  })
 
 
-#####merge_data_elements (familiarDataElement)----------------------------------
-setMethod("merge_data_elements", signature(x="familiarDataElement"),
-          function(x, x_list, as_data=NULL, as_grouping_column=TRUE, force_data_table=FALSE,...){
+#### merge_data_elements (familiarDataElement) ---------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="familiarDataElement"),
+  function(
+    x,
+    x_list,
+    as_data=NULL,
+    as_grouping_column=TRUE,
+    force_data_table=FALSE,
+    ...){
+    
+    # Move identifiers from the identifiers attribute to the data
+    # attribute. The primary reason for doing so is to group and merge
+    # similar elements, byt e.g. from different models.
+    if(!is.null(as_data)) x_list <- lapply(
+      x_list,
+      .identifier_as_data_attribute,
+      identifier=as_data,
+      as_grouping_column=as_grouping_column)
+    
+    # Identify items that can be joined.
+    id_table <- identify_element_sets(x=x_list, ...)
+    
+    # Identify the element identifiers that should be grouped.
+    grouped_data_element_ids <- lapply(
+      split(id_table[, c("element_id", "group_id")], by="group_id"),
+      function(id_table) (id_table$element_id))
+    
+    # List of data elements.
+    data_elements <- list()
+    
+    for(current_group_data_element_ids in grouped_data_element_ids){
+      # Copy the first data element in the group and use it as a
+      # prototype.
+      prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
+      
+      if(any(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (data.table::is.data.table(x@data))))){
+        
+        # Data attribute contains data.table.
+        data_attribute <- lapply(
+          x_list[current_group_data_element_ids],
+          function(x) (x@data))
+        
+        # Combine data attributes.
+        data_attribute <- suppressWarnings(
+          data.table::rbindlist(
+            data_attribute,
+            use.names=TRUE,
+            fill=TRUE))
+        
+        # Set data attribute.
+        prototype_data_element@data <- data_attribute
+        
+      } else if(any(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (is.list(x@data))))) {
+        
+        # Data attribute contains data.table.
+        element_names <- unique(unlist(lapply(
+          x_list[current_group_data_element_ids],
+          function(x) (names(x@data)))))
+        
+        # Iterate over different names in the list.
+        data_attribute <- lapply(
+          element_names,
+          function(ii, x){
+            # Find values for the element.
+            element_values <- unlist(lapply(
+              x,
+              function(x, ii) (x@data[[ii]]),
+              ii=ii))
             
-            # Move identifiers from the identifiers attribute to the data
-            # attribute. The primary reason for doing so is to group and merge
-            # similar elements, byt e.g. from different models.
-            if(!is.null(as_data)) x_list <- lapply(x_list,
-                                                   .identifier_as_data_attribute,
-                                                   identifier=as_data,
-                                                   as_grouping_column=as_grouping_column)
-            
-            # Identify items that can be joined.
-            id_table <- identify_element_sets(x=x_list, ...)
-            
-            # Identify the element identifiers that should be grouped.
-            grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
-            
-            # List of data elements.
-            data_elements <- list()
-            
-            for(current_group_data_element_ids in grouped_data_element_ids){
-              # Copy the first data element in the group and use it as a
-              # prototype.
-              prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
-              
-              if(any(sapply(x_list[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
-                # Data attribute contains data.table.
-                data_attribute <- lapply(x_list[current_group_data_element_ids], function(x) (x@data))
-                
-                # Combine data attributes.
-                data_attribute <- data.table::rbindlist(data_attribute,
-                                                        use.names=TRUE,
-                                                        fill=TRUE)
-                
-                # Set data attribute.
-                prototype_data_element@data <- data_attribute
-                
-              } else if(any(sapply(x_list[current_group_data_element_ids], function(x) (is.list(x@data))))) {
-                # Data attribute contains data.table.
-                element_names <- unique(unlist(lapply(x_list[current_group_data_element_ids], function(x) (names(x@data)))))
-                
-                # Iterate over different names in the list.
-                data_attribute <- lapply(element_names, function(ii, x){
-                  # Find values for the element.
-                  element_values <- unlist(lapply(x,
-                                                  function(x, ii) (x@data[[ii]]),
-                                                  ii=ii))
-                  
-                  return(element_values)
-                },
-                x=x_list[current_group_data_element_ids])
-                
-                # Set names.
-                names(data_attribute) <- element_names
-                
-                # Force to data attribute.
-                if(force_data_table) data_attribute <- data.table::as.data.table(data_attribute)
-                
-                # Set data attribute.
-                prototype_data_element@data <- data_attribute
-              
-              } else if(all(sapply(x_list[current_group_data_element_ids], function(x) (is_empty(x@data))))) {
-                # All data attributes are unset. We don't need to do anything.
-                
-              } else {
-                # Unknown data type.
-                ..error_reached_unreachable_code("merge_data_elements,familiarDataElement: data attribute is neither data.table, list, or empty.")
-              }
-              
-              # Add merged data element to the list.
-              data_elements <- c(data_elements, list(prototype_data_element))
-            }
-            
-            return(data_elements)
-          })
+            return(element_values)
+          },
+          x=x_list[current_group_data_element_ids])
+        
+        # Set names.
+        names(data_attribute) <- element_names
+        
+        # Force to data attribute.
+        if(force_data_table) data_attribute <- data.table::as.data.table(data_attribute)
+        
+        # Set data attribute.
+        prototype_data_element@data <- data_attribute
+        
+      } else if(all(sapply(
+        x_list[current_group_data_element_ids],
+        function(x) (is_empty(x@data))))) {
+        # All data attributes are unset. We don't need to do anything.
+        
+      } else {
+        # Unknown data type.
+        ..error_reached_unreachable_code("merge_data_elements,familiarDataElement: data attribute is neither data.table, list, or empty.")
+      }
+      
+      # Add merged data element to the list.
+      data_elements <- c(data_elements, list(prototype_data_element))
+    }
+    
+    return(data_elements)
+  })
 
 
-setMethod("merge_data_elements", signature(x="NULL"),
-          function(x, ...){
-            return(NULL)
-          })
+#### merge_data_elements (NULL) ------------------------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x="NULL"),
+  function(x, ...){
+    return(NULL)
+  })
 
 
 
@@ -1066,35 +1105,39 @@ setMethod(".add_point_estimate_from_elements", signature(x="NULL"),
 
 
 ##### .compute_data_element_estimates (list) ###################################
-setMethod(".compute_data_element_estimates", signature(x="list"),
-          function(x, ...){
-            
-            # Create return list for data elements.
-            data_element <- list()
-            
-            # Determine class of all elements
-            element_classes <- sapply(x, class)
-            
-            # Iterate over unique classes.
-            for(element_class in unique(element_classes)){
-              
-              # Create a proto data element to avoid having to pass larger objects
-              # than required.
-              proto_data_element <- x[which(element_classes == element_class)][[1]]
-              proto_data_element@data <- NULL
-              
-              # Run familiarDataElement-specific analysis. This means that we pass
-              # the prototype data element as x with the list of elements.
-              data_element <- c(data_element,
-                                .compute_data_element_estimates(x=proto_data_element,
-                                                                x_list=x[which(element_classes == element_class)],
-                                                                ...))
-            }
-            
-            if(is_empty(data_element)) return(NULL)
-            
-            return(data_element)
-          })
+setMethod(
+  ".compute_data_element_estimates",
+  signature(x="list"),
+  function(x, ...){
+    
+    # Create return list for data elements.
+    data_element <- list()
+    
+    # Determine class of all elements
+    element_classes <- sapply(x, class)
+    
+    # Iterate over unique classes.
+    for(element_class in unique(element_classes)){
+      
+      # Create a proto data element to avoid having to pass larger objects than
+      # required.
+      proto_data_element <- x[which(element_classes == element_class)][[1]]
+      proto_data_element@data <- NULL
+      
+      # Run familiarDataElement-specific analysis. This means that we pass the
+      # prototype data element as x with the list of elements.
+      data_element <- c(
+        data_element,
+        .compute_data_element_estimates(
+          x=proto_data_element,
+          x_list=x[which(element_classes == element_class)],
+          ...))
+    }
+    
+    if(is_empty(data_element)) return(NULL)
+    
+    return(data_element)
+  })
 
 
 ##### .compute_data_element_estimates (familiarDataElement) ####################
@@ -1172,142 +1215,201 @@ setMethod("..compute_data_element_estimates", signature(x="list"),
 
 
 ##### ..compute_data_elements_estimates (familiarDataElement)###################
-setMethod("..compute_data_element_estimates", signature(x="familiarDataElement"),
-          function(x, x_list=NULL, ...){
-            
-            # It might be that x was only used to direct to this method.
-            if(!is.null(x_list)) x <- x_list
-            if(!is.list(x)) x <- list(x)
-            
-            # Identify the estimation types of the current data elements.
-            estimation_type <- sapply(x, function(x) (x@estimation_type))
-            
-            if(any(sapply(x, is_empty))){
-              # Don't aggregate empty elements.
-              y <- x[[1]]
-              
-            } else if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 2L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly two data elements are required for bootstrap confidence intervals.")
-              if(!any(estimation_type %in% c("point"))) ..error_reached_unreachable_code(".compute_data_element_estimates: a point estimate is required for bootstrap confidence intervals.")
-              
-              # Select point estimate.
-              point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
-              point_values[, "estimation_type":="point"]
-              
-              # Select bootstrap values
-              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
-              bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
-              
-              # Combine to single table.
-              data <- data.table::rbindlist(list(point_values, bootstrap_values),
-                                            use.names=TRUE,
-                                            fill=TRUE)
-              
-              if(length(x[[1]]@grouping_column > 0)){
-                
-                # Split table by grouping column and compute estimate and confidence intervals.
-                data <- lapply(split(data, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bootstrap_confidence_estimate,
-                               confidence_level = x[[1]]@confidence_level,
-                               bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bootstrap_confidence_estimate(x = data,
-                                                                confidence_level = x[[1]]@confidence_level,
-                                                                bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
-                                                                value_column = x[[1]]@value_column)
-              }
-              
-              # Update the data attribute.
-              y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else if(any(estimation_type %in% c("bc", "bias_correction"))){
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
-              
-              # Select values.
-              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bc", "bias_correction")][[1]]@data)
-              
-              if(length(x[[1]]@grouping_column > 0)){
-                # Split table by grouping column and compute bias corrected estimate.
-                data <- lapply(split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bias_corrected_estimate,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
-                                                          value_column = x[[1]]@value_column)
-              }
-              
-              # Update the data attribute.
-              y <- x[[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else if(any(estimation_type %in% c("point"))){
-              # This follows the same procedure as for bias-corrected estimates. For
-              # ensemble and hybrid detail levels a single value needs to be generated.
-              # However, in the case of hybrid detail level, a point estimate is created
-              # for each model, and requires aggregation.
-              
-              # Check the number of elements.
-              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
-              
-              # Select values.
-              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("point")][[1]]@data)
-              
-              if(length(x[[1]]@grouping_column > 0)){
-                # Split table by grouping column and compute bias corrected estimate.
-                data <- lapply(split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
-                               ..compute_bias_corrected_estimate,
-                               value_column = x[[1]]@value_column,
-                               grouping_column = x[[1]]@grouping_column)
-                
-                # Combine to single table
-                data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
-                
-              } else {
-                # Compute in absence of grouping columns.
-                data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
-                                                          value_column = x[[1]]@value_column)
-              }
-              
-              # Update the data attribute.
-              y <- x[[1]]
-              y@data <- data
-              
-              # Update value column
-              y@value_column <- setdiff(names(y@data),
-                                        y@grouping_column)
-              
-            } else {
-              ..error_reached_unreachable_code(paste0(".compute_data_element_estimates: unknown estimation type: ", paste_s(estimation_type)))
-            }
-            
-            return(y)
-          })
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x="familiarDataElement"),
+  function(x, x_list=NULL, ...){
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    n_group <- NULL
+    
+    # It might be that x was only used to direct to this method.
+    if(!is.null(x_list)) x <- x_list
+    if(!is.list(x)) x <- list(x)
+    
+    # Identify the estimation types of the current data elements.
+    estimation_type <- sapply(x, function(x) (x@estimation_type))
+    
+    if(any(sapply(x, is_empty))){
+      # Don't aggregate empty elements.
+      y <- x[[1]]
+      
+    } else if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 2L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly two data elements are required for bootstrap confidence intervals.")
+      if(!any(estimation_type %in% c("point"))) ..error_reached_unreachable_code(".compute_data_element_estimates: a point estimate is required for bootstrap confidence intervals.")
+      
+      # Select point estimate.
+      point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
+      point_values[, "estimation_type":="point"]
+      
+      # Select bootstrap values
+      bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
+      bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
+      
+      # Combine to single table.
+      data <- data.table::rbindlist(
+        list(point_values, bootstrap_values),
+        use.names=TRUE,
+        fill=TRUE)
+      
+      if(length(x[[1]]@grouping_column > 0)){
+        
+        # Split table by grouping column and compute estimate and confidence intervals.
+        data <- lapply(
+          split(data, by=x[[1]]@grouping_column, drop=TRUE),
+          ..compute_bootstrap_confidence_estimate,
+          confidence_level = x[[1]]@confidence_level,
+          bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
+          value_column = x[[1]]@value_column,
+          grouping_column = x[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          data,
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bootstrap_confidence_estimate(
+          x = data,
+          confidence_level = x[[1]]@confidence_level,
+          bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
+          value_column = x[[1]]@value_column)
+      }
+      
+      # Update the data attribute.
+      y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else if(any(estimation_type %in% c("bc", "bias_correction"))){
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
+      
+      # Select values.
+      bootstrap_values <- data.table::as.data.table(
+        x[estimation_type %in% c("bc", "bias_correction")][[1]]@data)
+      
+      if(length(x[[1]]@grouping_column > 0)){
+        # Split table by grouping column and compute bias corrected estimate.
+        data <- lapply(
+          split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
+          ..compute_bias_corrected_estimate,
+          value_column = x[[1]]@value_column,
+          grouping_column = x[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          data,
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bias_corrected_estimate(
+          x = bootstrap_values,
+          value_column = x[[1]]@value_column)
+      }
+      
+      # Update the data attribute.
+      y <- x[[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else if(any(estimation_type %in% c("point"))){
+      # This follows the same procedure as for bias-corrected estimates.
+      # For ensemble and hybrid detail levels a single value needs to be
+      # generated. However, in the case of hybrid detail level, a point
+      # estimate is created for each model, and requires aggregation.
+      
+      # Check the number of elements.
+      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
+      
+      # Find grouping columns.
+      grouping_columns <- x[[1]]@grouping_column
+      if(length(grouping_columns) == 0) grouping_columns <- NULL
+      
+      # Find value columns.
+      value_columns <- x[[1]]@value_column
+      
+      # Select values.
+      bootstrap_values <- data.table::as.data.table(
+        x[estimation_type %in% c("point")][[1]]@data)[, mget(c(grouping_columns, value_columns))]
+      
+      # Refine a bit so that only those entries with multiple values for
+      # the same grouping columns are aggregated. This can save a lot of
+      # time, because the point estimate typically is determined only on
+      # a single run.
+      bootstrap_values[, "n_group":=.N, by=grouping_columns]
+      
+      # Select data based on single/multiple entries. Keep only relevant
+      # columns, namely grouping and value columns, to ensure that both
+      # unique_values and bootstrap_values will be processed the same
+      # way.
+      unique_values <- bootstrap_values[n_group == 1, mget(c(grouping_columns, value_columns))]
+      bootstrap_values <- bootstrap_values[n_group > 1, mget(c(grouping_columns, value_columns))]
+      
+      if(is_empty(bootstrap_values)){
+        # Data are unique values.
+        data <- unique_values
+        
+      } else if(length(grouping_columns) > 0){
+        # Split table by grouping column and compute bias corrected
+        # estimate.
+        data <- lapply(
+          split(bootstrap_values, by=grouping_columns, drop=TRUE),
+          ..compute_bias_corrected_estimate,
+          value_column = value_columns,
+          grouping_column = grouping_columns)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          c(list(unique_values), data),
+          use.names=TRUE,
+          fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bias_corrected_estimate(
+          x = bootstrap_values,
+          value_column = value_columns)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(
+          c(list(unique_values), list(data)),
+          use.names=TRUE,
+          fill=TRUE)
+      }
+      
+      # Update the data attribute.
+      y <- x[[1]]
+      y@data <- data
+      
+      # Update value column
+      y@value_column <- setdiff(
+        names(y@data),
+        y@grouping_column)
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(
+        ".compute_data_element_estimates: unknown estimation type: ",
+        paste_s(estimation_type)))
+    }
+    
+    return(y)
+  })
 
 
 ##### ..compute_data_element_estimates (NULL) ##################################

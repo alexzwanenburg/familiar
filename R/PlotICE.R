@@ -865,9 +865,22 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                      "Partial dependence")
               }
               
+              # Declare subtitle components.
+              additional_subtitle <- NULL
+              
+              # Add evaluation time as subtitle component if it is not used
+              # otherwise.
+              if(!"evaluation_time" %in% c(split_by, color_by, facet_by) && object@outcome_type %in% c("survival")){
+                additional_subtitle <- c(
+                  additional_subtitle,
+                  plotting.add_subtitle_time_point(x_split[[ii]]$evaluation_time[1]))
+              }
+              
               if(autogenerate_plot_subtitle){
-                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           x=x_split[[ii]])
+                plot_sub_title <- plotting.create_subtitle(
+                  split_by = split_by,
+                  additional = additional_subtitle,
+                  x = x_split[[ii]])
               }
               
               # Generate plot
@@ -920,27 +933,28 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                 subtype <- ifelse(show_ice, "ice", "pd")
                 if(show_2d) subtype <- c(subtype, "2d")
                 
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_split[[ii]],
-                                                   subtype=subtype,
-                                                   split_by=split_by)
-                
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_ice_plot_dimensions(x=x_split[[ii]],
-                                                                facet_by=facet_by,
-                                                                facet_wrap_cols=facet_wrap_cols)
+                def_plot_dims <- .determine_ice_plot_dimensions(
+                  x=x_split[[ii]],
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="explanation",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="explanation",
+                      "subtype"=subtype,
+                      "x"=x_split[[ii]],
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list for export.

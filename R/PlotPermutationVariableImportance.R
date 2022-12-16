@@ -537,10 +537,22 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               if(is.waive(plot_title)) plot_title <- "Permutation variable importance"
               
+              # Declare subtitle components. The similarity metric is always shown.
+              additional_subtitle <- list("similarity metric"=x@similarity_metric)
+              
+              # Add evaluation time as subtitle component if it is not used
+              # otherwise.
+              if(!"evaluation_time" %in% c(split_by, color_by, facet_by) && object@outcome_type %in% c("survival")){
+                additional_subtitle <- c(
+                  additional_subtitle,
+                  plotting.add_subtitle_time_point(x_sub$evaluation_time[1]))
+              }
+              
               if(autogenerate_plot_subtitle){
-                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           additional=list("similarity metric"=x@similarity_metric),
-                                                           x=x_sub)
+                plot_sub_title <- plotting.create_subtitle(
+                  split_by=split_by,
+                  additional=additional_subtitle,
+                  x=x_sub)
               }
               
               # Generate plot
@@ -569,27 +581,28 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Save and export
               if(!is.null(dir_path)){
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_sub,
-                                                   subtype="permutation",
-                                                   split_by=split_by)
-                
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_permutation_importance_plot_dimensions(x=x_sub,
-                                                                                   facet_by=facet_by,
-                                                                                   facet_wrap_cols=facet_wrap_cols)
+                def_plot_dims <- .determine_permutation_importance_plot_dimensions(
+                  x=x_sub,
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="variable_importance",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="variable_importance",
+                      "subtype"="permutation",
+                      "x"=x_sub,
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list and export

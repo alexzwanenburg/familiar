@@ -601,6 +601,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   
   # Select grouping columns.
   grouping_columns <- setdiff(ice_data_element@grouping_column, "sample")
+  if(length(grouping_columns) == 0) grouping_columns <- NULL
   pd_data_element@grouping_column <- grouping_columns
   
   # Average data.
@@ -1128,7 +1129,7 @@ setMethod("export_partial_dependence_data", signature(object="ANY"),
           })
 
 
-#####.export (familiarDataElementIndividualConditionalExpectation)--------------
+#####.export (familiarDataElementPartialDependence)-----------------------------
 setMethod(".export", signature(x="familiarDataElementPartialDependence"),
           function(x, x_list, aggregate_results=FALSE, ...){
             

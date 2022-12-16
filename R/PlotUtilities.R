@@ -380,43 +380,50 @@ plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
   
   # Generate subtitle from splitting variables and data.
   if(!is.null(split_by)){
-    subtitle <- c(subtitle,
-                  sapply(split_by, function(name, x){
-                    split_variable_name <- name
-                    
-                    if(split_variable_name == "fs_method"){
-                      split_variable_name <- "VIMP method"
-                      
-                    } else if(split_variable_name == "data_set"){
-                      split_variable_name <- "data set"
-                      
-                    } else if(split_variable_name == "evaluation_time"){
-                      split_variable_name <- "time point"
-                    }
-                    
-                    # Remove all underscores.
-                    split_variable_name <- gsub(x=split_variable_name, pattern="_", replacement=" ", fixed=TRUE)
-                    
-                    # Parse to an elementary string.
-                    split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
-                    
-                    return(split_variable_name)
-                  },
-                  x=x))
+    subtitle <- c(
+      subtitle,
+      sapply(
+        split_by,
+        function(name, x){
+          split_variable_name <- name
+          
+          if(split_variable_name == "fs_method"){
+            split_variable_name <- "VIMP method"
+            
+          } else if(split_variable_name == "data_set"){
+            split_variable_name <- "data set"
+            
+          } else if(split_variable_name == "evaluation_time"){
+            split_variable_name <- "time point"
+          }
+          
+          # Remove all underscores.
+          split_variable_name <- gsub(x=split_variable_name, pattern="_", replacement=" ", fixed=TRUE)
+          
+          # Parse to an elementary string.
+          split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
+          
+          return(split_variable_name)
+        },
+        x=x)
+    )
   }
   
   # Generate additional strings from additional.
   if(!is.null(additional)){
-    subtitle <- c(subtitle,
-                  mapply(function(name, value){
-                    # Remove all underscores.
-                    split_variable_name <- gsub(x=name, pattern="_", replacement=" ", fixed=TRUE)
-                    
-                    # Parse to an elementary string.
-                    split_variable_name <- paste0(split_variable_name, ": ", value)
-                  },
-                  name=names(additional),
-                  value=additional))
+    subtitle <- c(
+      subtitle,
+      mapply(
+        function(name, value){
+          # Remove all underscores.
+          split_variable_name <- gsub(x=name, pattern="_", replacement=" ", fixed=TRUE)
+          
+          # Parse to an elementary string.
+          split_variable_name <- paste0(split_variable_name, ": ", value)
+        },
+        name=names(additional),
+        value=additional)
+    )
   }
   
   # Check if any subtitle was generated.
@@ -427,6 +434,13 @@ plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
   
   return(subtitle)
 }
+
+
+
+plotting.add_subtitle_time_point <- function(value){
+  return(list("time point"=value))
+}
+
 
 
 plotting.create_subtype <- function(x, subtype=NULL, split_by=NULL, additional=NULL){
@@ -2132,11 +2146,22 @@ plotting.draw <- function(plot_or_grob){
 }
 
 
-plotting.save_plot_to_file <- function(plot_obj, object, dir_path, type, subtype=NULL, filename=NULL, device="png", ...){
+plotting.save_plot_to_file <- function(
+    plot_obj,
+    object,
+    dir_path,
+    type,
+    x,
+    subtype=NULL,
+    split_by=NULL,
+    additional=NULL,
+    filename=NULL,
+    device="png",
+    ...){
   ### ... are passed to ggplot2::ggsave
   
   # Check if the plot object exists
-  if(is.null(plot_obj)) { return(NULL) }
+  if(is.null(plot_obj)) return(NULL)
 
   # Check if directory exists
   if(is.encapsulated_path(dir_path)){
@@ -2146,19 +2171,76 @@ plotting.save_plot_to_file <- function(plot_obj, object, dir_path, type, subtype
     file_dir <- normalizePath(dir_path, mustWork=FALSE)
   }
   
-  if(!dir.exists(file_dir)) { dir.create(file_dir, recursive=TRUE) }
+  if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
 
-  for(current_device in device){
-    if(is.null(filename)){
-      filename <- paste0(type, ifelse(is.null(subtype), "", paste0("_", subtype)), ".", current_device)
+  if(!is.null(filename)){
+    # These are the file extensions supported by ggsave (v3.4.0).
+    file_extensions <- c("eps", "ps", "tex", "pdf", "svg", "emf", "wmf",
+                         "png", "jpg", "jpeg", "bmp", "tiff")
+    
+    # Test if a file extension is present.
+    device_present <- endswith_any(filename, suffix=paste0(".", file_extensions))
+    if(any(device_present)){
+      # Update device indicated by the filename.
+      device <- head(file_extensions[device_present], n=1)
+      
+      # Remove device from filename.
+      filename <- sub_last(
+        pattern=paste0(".", device),
+        replacement="",
+        x=filename)
     }
     
-    # There may be an issue with a cold RStudio where the plotting devices have not started.
+    # Extend the filename if multiple plots are created from the same data.
+    if(!is.null(split_by)){
+      subtype <- paste0(
+        as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x)),
+        collapse="_")
+      
+      filename <- paste0(filename, subtype, collapse="_")
+    }
+  } else {
+    # Set subtype.
+    subtype <- plotting.create_subtype(
+      x=x,
+      subtype=subtype,
+      split_by=split_by,
+      additional=additional)
+    
+    # Combine type and subtype as the filename.
+    filename <- paste0(
+      type,
+      ifelse(is.null(subtype), "", paste0("_", subtype)))
+  }
+  
+  for(current_device in device){
+    # Add in extension again.
+    filename <- paste0(
+      filename,
+      ".",
+      current_device)
+      
+    # There may be an issue with a cold RStudio where the plotting devices have
+    # not started.
     tryCatch({
       # Call ggsave to save the data
-      suppressMessages(do.call(ggplot2::ggsave, args=append(list("filename"=filename, "plot"=plot_obj, "device"=device, "path"=file_dir), list(...))))
+      suppressMessages(
+        do.call(
+          ggplot2::ggsave,
+          args=c(
+            list(
+              "filename"=filename,
+              "plot"=plot_obj,
+              "device"=current_device,
+              "path"=file_dir),
+            list(...))))
+      
     }, error = function(err){
-      logger.warning(paste0("Could not create plot ", filename, ". The OS may not allow long file names."))
+      logger.warning(
+        paste0(
+          "Could not create plot ",
+          filename,
+          ". The OS may not allow long file names."))
     })
     
   }

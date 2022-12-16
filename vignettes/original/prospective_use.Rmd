@@ -88,11 +88,12 @@ data$ht <- factor(data$ht, levels=c(0, 1), labels=c("no", "yes"))
 data$ui <- factor(data$ui, levels=c(0, 1), labels=c("no", "yes"))
 
 # Rename columns to make them clearer.
-data.table::setnames(data,
-                     old=c("low", "age", "lwt", "race", "smoke", "ptl", "ht", "ui", "ftv"),
-                     new=c("birth_weight", "age_mother", "weight_mother_before_pregnancy",
-                           "ethnicity", "smoking_during_pregnancy", "previous_premature_labours",
-                           "hypertension_history", "uterine_irritability", "physician_visits_first_trimester"))
+data.table::setnames(
+  data,
+  old=c("low", "age", "lwt", "race", "smoke", "ptl", "ht", "ui", "ftv"),
+  new=c("birth_weight", "age_mother", "weight_mother_before_pregnancy",
+        "ethnicity", "smoking_during_pregnancy", "previous_premature_labours",
+        "hypertension_history", "uterine_irritability", "physician_visits_first_trimester"))
 
 ```
 
@@ -106,19 +107,20 @@ will also only compute point estimates during evaluation (see the
 *evaluation and explanation* vignette for other options).
 
 ```{r, results="hide", message=FALSE, warning=FALSE, label="birthweight-data-experiment-run"}
-familiar::summon_familiar(data=data,
-                          project_dir=tempdir(),
-                          sample_id_column="sample_id",
-                          batch_id_column="batch_id",
-                          development_batch_id="development",
-                          outcome_type="binomial",
-                          outcome_column="birth_weight",
-                          experimental_design="bs(fs+mb,5) + ev",
-                          cluster_method="none",
-                          fs_method="none",
-                          learner="lasso",
-                          parallel=FALSE,
-                          estimation_type="point")
+familiar::summon_familiar(
+  data=data,
+  project_dir=tempdir(),
+  sample_id_column="sample_id",
+  batch_id_column="batch_id",
+  development_batch_id="development",
+  outcome_type="binomial",
+  outcome_column="birth_weight",
+  experimental_design="bs(fs+mb,5) + ev",
+  cluster_method="none",
+  fs_method="none",
+  learner="lasso",
+  parallel=FALSE,
+  estimation_type="point")
 ```
 
 # Using models prospectively
@@ -182,11 +184,12 @@ computed.
 Let us for example compute and plot model performance AUC-ROC and accuracy for the model.
 
 ```{r, fig.align='center', fig.width=14}
-plots <- familiar::plot_model_performance(object=model,
-                                          draw=TRUE,
-                                          facet_by="metric",
-                                          data=data[batch_id=="validation"],
-                                          metric=c("auc", "accuracy"))
+plots <- familiar::plot_model_performance(
+  object=model,
+  draw=TRUE,
+  facet_by="metric",
+  data=data[batch_id=="validation"],
+  metric=c("auc", "accuracy"))
 ```
 
 You may notice that no plot is produced. This is because the type of plot
@@ -198,26 +201,28 @@ bootstrap confidence intervals `bci`.
 # Draw model performance plots with bootstrap confidence intervals.
 # familiar_data_names argument specifies the name that appears below the plot.
 # The default is rather long.
-plots <- familiar::plot_model_performance(object=model,
-                                          draw=TRUE,
-                                          facet_by="metric",
-                                          data=data[batch_id=="validation"],
-                                          estimation_type="bci",
-                                          metric=c("auc", "accuracy"),
-                                          familiar_data_names="lasso")
+plots <- familiar::plot_model_performance(
+  object=model,
+  draw=TRUE,
+  facet_by="metric",
+  data=data[batch_id=="validation"],
+  estimation_type="bci",
+  metric=c("auc", "accuracy"),
+  familiar_data_names="lasso")
 ```
 
 Note that we can achieve the same result without explicitly importing the model.
 Providing the path to the model as the `object` argument suffices:
 
 ```{r, label="prospective-model-performance-plot-implicit"}
-plots <- familiar::plot_model_performance(object=model_path,
-                                          draw=TRUE,
-                                          facet_by="metric",
-                                          data=data[batch_id=="validation"],
-                                          estimation_type="bci",
-                                          metric=c("auc", "accuracy"),
-                                          familiar_data_names="lasso")
+plots <- familiar::plot_model_performance(
+  object=model_path,
+  draw=TRUE,
+  facet_by="metric",
+  data=data[batch_id=="validation"],
+  estimation_type="bci",
+  metric=c("auc", "accuracy"),
+  familiar_data_names="lasso")
 ```
 
 # Using ensembles of models prospectively
@@ -239,7 +244,9 @@ being formed. We can inspect the ensemble in the directory.
 
 ```{r}
 # Create path to the model.
-ensemble_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="ensemble")[1])
+ensemble_path <- file.path(
+  model_directory_path,
+  list.files(model_directory_path, pattern="ensemble")[1])
 
 # Load the model.
 ensemble <- readRDS(ensemble_path)
@@ -255,13 +262,14 @@ predict(object=ensemble, newdata=data)
 Ensembles behave similarly to models during evaluation and explanation steps:
 
 ```{r, label="prospective-model-performance-plot-ensemble"}
-plots <- familiar::plot_model_performance(object=ensemble,
-                                          draw=TRUE,
-                                          facet_by="metric",
-                                          data=data[batch_id=="validation"],
-                                          estimation_type="bci",
-                                          metric=c("auc", "accuracy"),
-                                          familiar_data_names="lasso")
+plots <- familiar::plot_model_performance(
+  object=ensemble,
+  draw=TRUE,
+  facet_by="metric",
+  data=data[batch_id=="validation"],
+  estimation_type="bci",
+  metric=c("auc", "accuracy"),
+  familiar_data_names="lasso")
 ```
 
 There is one important limitation to using ensembles. Normally, when loading an
@@ -281,13 +289,14 @@ tabular export methods.
 model_paths <- sapply(list.files(model_directory_path, pattern="model"), function(x) (file.path(model_directory_path, x)))
 
 # Generate plot using an ad-hoc ensemble.
-plots <- familiar::plot_model_performance(object=model_paths,
-                                          draw=TRUE,
-                                          facet_by="metric",
-                                          data=data[batch_id=="validation"],
-                                          estimation_type="bci",
-                                          metric=c("auc", "accuracy"),
-                                          familiar_data_names="lasso")
+plots <- familiar::plot_model_performance(
+  object=model_paths,
+  draw=TRUE,
+  facet_by="metric",
+  data=data[batch_id=="validation"],
+  estimation_type="bci",
+  metric=c("auc", "accuracy"),
+  familiar_data_names="lasso")
 ```
 
 # Customising exports and plots
@@ -353,13 +362,16 @@ and created more quickly. To do so, we can call an export or plot method with
 
 ```{r}
 # Generate paths to the model objects.
-model_paths <- sapply(list.files(model_directory_path, pattern="model"), function(x) (file.path(model_directory_path, x)))
+model_paths <- sapply(
+  list.files(model_directory_path, pattern="model"),
+  function(x) (file.path(model_directory_path, x)))
 
 # Generate plot data (plots + collection) using an ad-hoc ensemble.
-plot_data <- familiar::plot_auc_roc_curve(object=model_paths,
-                                          draw=FALSE,
-                                          data=data[batch_id=="validation"],
-                                          export_collection=TRUE)
+plot_data <- familiar::plot_auc_roc_curve(
+  object=model_paths,
+  draw=FALSE,
+  data=data[batch_id=="validation"],
+  export_collection=TRUE)
 ```
 
 The `plot_data` variable is a list that contains (here) two items: `collection`
@@ -367,8 +379,9 @@ and `plot_list`. The collection object can be used to alter plot elements, such
 as the theme and palette.
 
 ```{r, label="prospective-auc_roc-plot-from-exported-collection"}
-plots <- familiar::plot_auc_roc_curve(object=plot_data$collection,
-                                      ggtheme=ggplot2::theme_dark(),
-                                      discrete_palette="R4",
-                                      draw=TRUE)
+plots <- familiar::plot_auc_roc_curve(
+  object=plot_data$collection,
+  ggtheme=ggplot2::theme_dark(),
+  discrete_palette="R4",
+  draw=TRUE)
 ```

@@ -723,10 +723,6 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Set subtype.
-                subtype <- plotting.create_subtype(x=x_sub,
-                                                   split_by=split_by)
-                
                 # Find unique features
                 features <- lapply(feature_expression_split, function(x) (x@value_column))
                 features <- unique(unlist(features))
@@ -736,33 +732,37 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 samples <- unique(unlist(samples))
                 
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_sample_clustering_plot_dimensions(x=x_sub,
-                                                                              x_axis_by=x_axis_by,
-                                                                              y_axis_by=y_axis_by,
-                                                                              facet_by=facet_by,
-                                                                              facet_wrap_cols=facet_wrap_cols,
-                                                                              features=features,
-                                                                              samples=samples,
-                                                                              show_feature_dendrogram=show_feature_dendrogram,
-                                                                              show_sample_dendrogram=show_sample_dendrogram,
-                                                                              rotate_x_tick_labels=rotate_x_tick_labels)
+                def_plot_dims <- .determine_sample_clustering_plot_dimensions(
+                  x=x_sub,
+                  x_axis_by=x_axis_by,
+                  y_axis_by=y_axis_by,
+                  facet_by=facet_by,
+                  facet_wrap_cols=facet_wrap_cols,
+                  features=features,
+                  samples=samples,
+                  show_feature_dendrogram=show_feature_dendrogram,
+                  show_sample_dendrogram=show_sample_dendrogram,
+                  rotate_x_tick_labels=rotate_x_tick_labels)
                 
                 # Save to file.
-                do.call(plotting.save_plot_to_file,
-                        args=c(list("plot_obj"=p,
-                                    "object"=object,
-                                    "dir_path"=dir_path,
-                                    "type"="sample_clustering",
-                                    "subtype"=subtype,
-                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                    "units"=ifelse(is.waive(units), "cm", units)),
-                               list(...)))
+                do.call(
+                  plotting.save_plot_to_file,
+                  args=c(
+                    list(
+                      "plot_obj"=p,
+                      "object"=object,
+                      "dir_path"=dir_path,
+                      "type"="sample_clustering",
+                      "x"=x_sub,
+                      "split_by"=split_by,
+                      "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                      "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                      "units"=ifelse(is.waive(units), "cm", units)),
+                    list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- c(plot_list,
-                               list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             

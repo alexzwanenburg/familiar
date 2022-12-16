@@ -64,6 +64,8 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 
 ..univariate_test_variable_encoding <- function(x, insert_intercept=FALSE){
   
+  n <- length(x)
+  
   if(is.factor(x)){
     # Categorical variables are encoded as numeric levels (ordinal), or using
     # one-hot-encoding (nominal).
@@ -90,8 +92,9 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   names(x) <- paste0("name_", seq_along(x))
   
   if(insert_intercept){
-    x <- c(x,
-           list("intercept__"=numeric(length(x)) + 1.0))
+    x <- c(
+      x,
+      list("intercept__"=numeric(n) + 1.0))
   }
   
   return(data.table::as.data.table(x))
@@ -1350,35 +1353,54 @@ is_subclass <- function(class_1, class_2){
   # Identify names of elements.
   element_names <- unique(unlist(lapply(x, names)))
   
-  # Create a flattened list.
   flattened_list <- lapply(element_names, function(element_name, x, flatten){
-    
-    # Obtain content stored in each element.
-    element_content <- NULL
-    
-    # Iterate over nested lists, and contents of the element.
-    for(ii in seq_along(x)){
-      if(flatten){
-        element_content <- c(element_content, x[[ii]][[element_name]])
-        
-      } else {
-        # Treat data.table differently, because c() casts data.tables to a list.
-        element_content <- c(element_content, list(x[[ii]][[element_name]]))
-      }
-    }
+    element_content <- lapply(x, function(x) (x[[element_name]]))
     
     # Set names of elements
     if(!is.null(names(x))){
       if(length(names(x)) == length(element_content)){
         names(element_content) <- names(x)
       }
-    } 
+    }
+    
+    if(flatten){
+      element_content <- unlist(element_content, recursive=FALSE)
+    }
     
     return(element_content)
   },
-  x = x,
-  flatten = flatten)
+  x=x,
+  flatten=flatten)
   
+  # # Create a flattened list.
+  # flattened_list <- lapply(element_names, function(element_name, x, flatten){
+  #   
+  #   # Obtain content stored in each element.
+  #   element_content <- NULL
+  #   
+  #   # Iterate over nested lists, and contents of the element.
+  #   for(ii in seq_along(x)){
+  #     if(flatten){
+  #       element_content <- c(element_content, x[[ii]][[element_name]])
+  #       
+  #     } else {
+  #       # Treat data.table differently, because c() casts data.tables to a list.
+  #       element_content <- c(element_content, list(x[[ii]][[element_name]]))
+  #     }
+  #   }
+  #   
+  #   # Set names of elements
+  #   if(!is.null(names(x))){
+  #     if(length(names(x)) == length(element_content)){
+  #       names(element_content) <- names(x)
+  #     }
+  #   } 
+  #   
+  #   return(element_content)
+  # },
+  # x = x,
+  # flatten = flatten)
+  # 
   # Set names of the list elements.
   names(flattened_list) <- element_names
   
@@ -1449,4 +1471,46 @@ approximately <- function(x, y, tol=sqrt(.Machine$double.eps)){
               y=y,
               df=1.0,
               tol=tol))
+}
+
+
+
+huber_estimate <- function(x, k=1.28, tol=1E-4){
+  # k=1.28 is based on Wilcox RR. Introduction to Robust Estimation and
+  # Hypothesis Testing. Academic Press; 2011.
+  
+  # Filter missing values
+  x <- x[is.finite(x)]
+  
+  if(length(x) == 0) return(list("mu"=NA_real_, "sigma"=NA_real_))
+  
+  # Initial estimates for the estimate mu and scale sigma
+  mu_0 <- stats::median(x)
+  sigma_0 <- stats::mad(x)
+  
+  # Check that there is an initial estimate for scale.
+  if(sigma_0 == 0.0) return(list("mu"=mu_0, "sigma"=0.0))
+  
+  # Determine theta, i.e. the probability corresponding to k, according to a
+  # Gaussian distribution.
+  theta <- 2.0 * stats::pnorm(k) - 1.0
+  beta <- theta + k^2 * (1 - theta) - 2.0 * k * stats::dnorm(k)
+  
+  for(ii in seq_len(50)){
+    # Apply Huber's rho, that basically winsorizes values |x| >= k * sigma_0
+    xx <- pmin(pmax(mu_0 - k * sigma_0, x), mu_0 + k * sigma_0)
+    
+    # Compute updated mean and scale estimate.
+    mu_1 <- sum(xx) / length(xx)
+    sigma_1 <- sqrt(sum((xx - mu_1)^2) / (beta * (length(xx) - 1)))
+    
+    # Check convergence.
+    if(abs(mu_0 - mu_1) < tol * mu_0 && abs(sigma_0 - sigma_1) < tol * sigma_0) break
+    
+    # Values for next iteration
+    mu_0 <- mu_1
+    sigma_0 <- sigma_1
+  }
+  
+  return(list("mu"=mu_0, "sigma"=sigma_0))
 }

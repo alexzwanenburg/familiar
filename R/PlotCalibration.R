@@ -546,9 +546,21 @@ setMethod(
       
       if(is.waive(plot_title)) plot_title <- "Calibration plot"
       
+      # Declare subtitle components.
+      additional_subtitle <- NULL
+      
+      # Add evaluation time as subtitle component if it is not used
+      # otherwise.
+      if(!"evaluation_time" %in% c(split_by, color_by, facet_by) && object@outcome_type %in% c("survival")){
+        additional_subtitle <- c(
+          additional_subtitle,
+          plotting.add_subtitle_time_point(calibration_data_split$evaluation_time[1]))
+      }
+      
       if(autogenerate_plot_subtitle){
         plot_sub_title <- plotting.create_subtitle(
           split_by=split_by,
+          additional = additional_subtitle,
           x=current_split)
       }
       
@@ -594,11 +606,6 @@ setMethod(
       # Save and export
       if(!is.null(dir_path)){
         
-        # Set subtype.
-        subtype <- plotting.create_subtype(
-          x=current_split,
-          split_by=split_by)
-        
         # Obtain decent default values for the plot.
         def_plot_dims <- .determine_calibration_plot_dimensions(
           x=calibration_data_split,
@@ -615,7 +622,8 @@ setMethod(
               "object"=object,
               "dir_path"=dir_path,
               "type"="calibration",
-              "subtype"=subtype,
+              "x"=current_split,
+              "split_by"=split_by,
               "height"=ifelse(is.waive(height), def_plot_dims[1], height),
               "width"=ifelse(is.waive(width), def_plot_dims[2], width),
               "units"=ifelse(is.waive(units), "cm", units)),

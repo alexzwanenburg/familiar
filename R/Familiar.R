@@ -1103,9 +1103,8 @@ get_project_list <- function(){
   # Load familiarData files and add to list
   familiar_list$familiarData <- load_familiar_object(data_files)
   
-  
   # Find familiarCollection files
-  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="ensemble.RDS|pooled_data.RDS")
+  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="ensemble_data_|pooled_data.RDS")
   coll_files <- sapply(coll_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_coll_dir)
   
   # Load familiarCollection files and add to list

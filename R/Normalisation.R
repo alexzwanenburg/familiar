@@ -54,7 +54,7 @@ setClass("featureInfoParametersNormalisationMeanCentering",
 }
 
 .get_available_standardisation_normalisation_methods <- function(){
-  return(c("standardisation", "standardisation_trim", "standardisation_winsor"))
+  return(c("standardisation", "standardisation_trim", "standardisation_winsor", "standardisation_robust"))
 }
 
 .get_available_quantile_normalisation_methods <- function(){
@@ -592,57 +592,74 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 ##### add_feature_info_parameters (standardisation, ANY) -----------------------
-setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationStandardisation", data="ANY"),
-          function(object, 
-                   data,
-                   ...) {
-
-            # Check if all required parameters have been set.
-            if(feature_info_complete(object)) return(object)
-            
-            # Run general checks for shift and scale transforms. This may yield
-            # none-transforms which are complete by default.
-            object <- callNextMethod()
-            
-            # Check if all required parameters have been set now.
-            if(feature_info_complete(object)) return(object)
-            
-            # Remove any non-finite values.
-            data <- data[is.finite(data)]
-            
-            # Check if data is not empty after removing non-finite data and
-            # return none-class normalisation object, if it is. This is done by
-            # calling the method with signature data=NULL to handle setting the
-            # data.
-            if(is_empty(data)){
-              object <- add_feature_info_parameters(object=object, data=NULL)
-              object@reason <- "no finite values left for normalisation"
-              
-              return(object)
-            }
-            
-            # Trimming and winsoring of input data.
-            if(object@method %in% c("standardisation_trim")){
-              data <- trim(data, fraction=0.05)
-              
-            } else if(object@method %in% c("standardisation_winsor")){
-              data <- winsor(data, fraction=0.05)
-            }
-            
-            # Determine mean (shift) and standard deviation (scale)
-            shift <- mean(data)
-            scale <- sqrt(sum((data-shift)^2) / length(data))
-            
-            # Check for scales which are close to 0
-            if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
-            
-            # Set shift and scale parameters.
-            object@shift <- shift
-            object@scale <- scale
-            object@complete <- TRUE
-            
-            return(object)
-          })
+setMethod(
+  "add_feature_info_parameters",
+  signature(
+    object="featureInfoParametersNormalisationStandardisation",
+    data="ANY"),
+  function(
+    object, 
+    data,
+    ...)
+  {
+    # Check if all required parameters have been set.
+    if(feature_info_complete(object)) return(object)
+    
+    # Run general checks for shift and scale transforms. This may yield
+    # none-transforms which are complete by default.
+    object <- callNextMethod()
+    
+    # Check if all required parameters have been set now.
+    if(feature_info_complete(object)) return(object)
+    
+    # Remove any non-finite values.
+    data <- data[is.finite(data)]
+    
+    # Check if data is not empty after removing non-finite data and
+    # return none-class normalisation object, if it is. This is done by
+    # calling the method with signature data=NULL to handle setting the
+    # data.
+    if(is_empty(data)){
+      object <- add_feature_info_parameters(object=object, data=NULL)
+      object@reason <- "no finite values left for normalisation"
+      
+      return(object)
+    }
+    
+    # Trimming and winsoring of input data.
+    if(object@method %in% c("standardisation_trim")){
+      data <- trim(data, fraction=0.05)
+      
+    } else if(object@method %in% c("standardisation_winsor")){
+      data <- winsor(data, fraction=0.05)
+    }
+    
+    # Determine mean (shift) and standard deviation (scale)
+    if(object@method %in% c("standardisation_robust")){
+      # Using Huber's M-estimators for location and scale.
+      robust_estimates <- huber_estimate(data)
+      
+      shift <- robust_estimates$mu
+      scale <- robust_estimates$sigma
+      
+    } else {
+      # Using conventional estimators.
+      shift <- mean(data)
+      scale <- sqrt(sum((data-shift)^2) / length(data))
+    }
+    
+    # Check for scales which are close to 0, or could not be computed.
+    if(!is.finite(scale)) scale <- 1.0
+    if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
+    
+    # Set shift and scale parameters.
+    object@shift <- shift
+    object@scale <- scale
+    object@complete <- TRUE
+    
+    return(object)
+  }
+)
 
 
 
@@ -957,7 +974,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   } else if(norm_method == "quantile"){
     return(c(-1.5, 0.0, 1.5))
     
-  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor")){
+  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "standardisation_robust")){
     return(c(-3.0, 0.0, 3.0))
     
   } else if(norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
