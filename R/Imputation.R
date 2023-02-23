@@ -397,174 +397,202 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 
-##### add_feature_info_parameters (lasso imputation, data object) --------------
-setMethod("add_feature_info_parameters", signature(object="featureInfoParametersImputationLasso", data="dataObject"),
-          function(object, 
-                   data,
-                   mask_data,
-                   ...) {
-            
-            # Suppress NOTES due to non-standard evaluation in data.table
-            name <- NULL
-            
-            # Check if all required parameters have been set.
-            if(feature_info_complete(object)) return(object)
-            
-            # Run general checks for imputation. This may yield none-class
-            # objects which are complete by default.
-            object <- callNextMethod()
-            
-            # Check if all required parameters have been set now.
-            if(feature_info_complete(object)) return(object)
-            
-            # Check if simple inference values have been set. For multivariate
-            # inference methods, an initial univariate step is used to fill any
-            # holes in the data, prior to prediction. This method is therefore
-            # first called to set parameters of the univariate, prior to
-            # determining the LASSO model.
-            if(!feature_info_complete(object@simple)){
-              object@simple <- ..create_imputation_parameter_skeleton(feature_name=object@name,
-                                                                      feature_type=object@type,
-                                                                      method="simple")
-              
-              # Determine parameters.
-              object@simple <- add_feature_info_parameters(object=object@simple,
-                                                           data=data,
-                                                           mask_data=mask_data)
-              
-              return(object)
-            }
-            
-            # Determine if more than one feature is present.
-            if(get_n_features(data) == 1){
-              # Switch to simple  univariate inference only, in case only one
-              # feature is present.
-              return(object@simple)
-            }
-            
-            # Find uncensored data.
-            mask_data <- .mask_data_to_mask(mask_data = mask_data, type=object@type)
-            
-            # Select finite data.
-            distribution <- ifelse(object@type == "numeric", "gaussian", "multinomial")
-            
-            # Check that the glmnet package is installed.
-            require_package(x="glmnet",
-                            purpose="to impute data using lasso regression")
-            
-            # Select known data as response variable.
-            y <- data@data[[object@name]][mask_data]
-            
-            # Select features.
-            x <- filter_features(data, remove_features=object@name)
-
-            # Use effect coding to convert categorical data into encoded data.
-            encoded_data <- encode_categorical_variables(data=x,
-                                                         object=NULL,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Extract data table with contrasts.
-            x <- encoded_data$encoded_data
-            
-            # Perform a cross-validation to derive a optimal lambda. This may
-            # rarely fail if y is numeric but does not change in a particular
-            # fold. In that case, skip.
-            lasso_model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x=as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
-                                                                       y=y,
-                                                                       family=distribution,
-                                                                       alpha=1,
-                                                                       standardize=FALSE,
-                                                                       nfolds=min(sum(mask_data), 20),
-                                                                       parallel=FALSE),
-                                                     error=identity))
-            
-            if(inherits(lasso_model, "error") )return(object@simple)
-            
-            # Determine the features with non-zero coefficients. We want to have
-            # the minimal required support for the model to minimise the effort
-            # that is required for external model validation. GLMNET by
-            # definition wants to have the exact same complete input space, even
-            # though but a few features are used. That is a bad idea for
-            # portability. Therefore we will be jumping through some hoops to
-            # make a model with minimum support.
-            if(distribution=="multinomial"){
-              # Read coefficient lists
-              coef_list <- coef(lasso_model, s="lambda.1se")
-              
-              # Parse into matrix and retrieve row names
-              coef_mat <- sapply(coef_list, as.matrix)
-              rownames(coef_mat) <- dimnames(coef_list[[1]])[[1]]
-              
-              # Calculate score
-              score <- apply(abs(coef_mat), 1, max)
-              
-            } else {
-              # Read coefficient matrix
-              coef_mat <- as.matrix(coef(lasso_model, s="lambda.1se"))
-              
-              # Calculate score
-              score <- abs(coef_mat)[,1]
-            }
-            
-            # Parse score to data.table
-            vimp_table <- data.table::data.table("score"=score, "name"=names(score))
-            
-            # Throw out the intercept and elements with 0.0 coefficients
-            vimp_table <- vimp_table[name!="(Intercept)" & score!=0.0]
-            
-            # Create variable importance object.
-            vimp_object <- methods::new("vimpTable",
-                                        vimp_table=vimp_table,
-                                        encoding_table=encoded_data$reference_table,
-                                        score_aggregation="max",
-                                        invert=TRUE)
-            
-            # Find the original names
-            vimp_table <- get_vimp_table(vimp_object, "decoded")
-            
-            # Check that the optimal model complexity lambda is connected to at least
-            # one feature. If not, we have to use the simple estimate.
-            if(is_empty(vimp_table)) return(object@simple)
-            
-            # Derive required features
-            required_features <- vimp_table$name
-            
-            # Select features.
-            x <- filter_features(data, available_features=required_features)
-            
-            # Use effect coding to convert categorical data into encoded data.
-            encoded_data <- encode_categorical_variables(data=x,
-                                                         object=NULL,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-
-            # Extract data table with contrasts.
-            x <- encoded_data$encoded_data@data[mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
-            
-            # Check the number of columns in train_data. glmnet wants at least
-            # two columns.
-            if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
-            
-            # Train a small model at this lambda.1se.
-            lasso_model <- suppressWarnings(glmnet::glmnet(x = as.matrix(x),
-                                          y = y,
-                                          family = distribution,
-                                          lambda = lasso_model$lambda.1se,
-                                          standardize = FALSE))
-            
-            # Remove extraneous information from the model.
-            lasso_model <- ..trim_glmnet(lasso_model)
-            
-            # Add LASSO regression model to object.
-            object@model <- lasso_model
-            object@required_features <- required_features
-            
-            # Set complete
-            object@complete <- TRUE
-            
-            return(object)
-          })
+# add_feature_info_parameters (lasso imputation, data object) ------------------
+setMethod(
+  "add_feature_info_parameters",
+  signature(object="featureInfoParametersImputationLasso", data="dataObject"),
+  function(
+    object, 
+    data,
+    mask_data,
+    ...){
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    name <- NULL
+    
+    # Check if all required parameters have been set.
+    if(feature_info_complete(object)) return(object)
+    
+    # Run general checks for imputation. This may yield none-class
+    # objects which are complete by default.
+    object <- callNextMethod()
+    
+    # Check if all required parameters have been set now.
+    if(feature_info_complete(object)) return(object)
+    
+    # Check if simple inference values have been set. For multivariate inference
+    # methods, an initial univariate step is used to fill any holes in the data,
+    # prior to prediction. This method is therefore first called to set
+    # parameters of the univariate, prior to determining the LASSO model.
+    if(!feature_info_complete(object@simple)){
+      object@simple <- ..create_imputation_parameter_skeleton(
+        feature_name=object@name,
+        feature_type=object@type,
+        method="simple")
+      
+      # Determine parameters.
+      object@simple <- add_feature_info_parameters(
+        object=object@simple,
+        data=data,
+        mask_data=mask_data)
+      
+      return(object)
+    }
+    
+    # Determine if more than one feature is present.
+    if(get_n_features(data) == 1){
+      # Switch to simple  univariate inference only, in case only one feature is
+      # present.
+      return(object@simple)
+    }
+    
+    # Find uncensored data.
+    mask_data <- .mask_data_to_mask(
+      mask_data = mask_data,
+      type=object@type)
+    
+    # Select finite data.
+    distribution <- ifelse(object@type == "numeric", "gaussian", "multinomial")
+    
+    # Check that the glmnet package is installed.
+    require_package(
+      x="glmnet",
+      purpose="to impute data using lasso regression")
+    
+    # Select known data as response variable.
+    y <- data@data[[object@name]][mask_data]
+    if(distribution == "multinomial") y <- droplevels(y)
+    
+    # Select features.
+    x <- filter_features(data, remove_features=object@name)
+    
+    # Use effect coding to convert categorical data into encoded data.
+    encoded_data <- encode_categorical_variables(
+      data=x,
+      object=NULL,
+      encoding_method="dummy",
+      drop_levels=FALSE)
+    
+    # Extract data table with contrasts.
+    x <- encoded_data$encoded_data
+    
+    # Perform a cross-validation to derive a optimal lambda. This may rarely
+    # fail if y is numeric but does not change in a particular fold. In that
+    # case, skip.
+    lasso_model <- suppressWarnings(tryCatch(
+      glmnet::cv.glmnet(
+        x = as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
+        y = y,
+        family = distribution,
+        alpha = 1,
+        standardize = FALSE,
+        nfolds = min(sum(mask_data), 20),
+        parallel = FALSE),
+      error = identity))
+    
+    if(inherits(lasso_model, "error")) return(object@simple)
+    
+    # Determine the features with non-zero coefficients. We want to have the
+    # minimal required support for the model to minimise the effort that is
+    # required for external model validation. GLMNET by definition wants to have
+    # the exact same complete input space, even though but a few features are
+    # used. That is a bad idea for portability. Therefore we will be jumping
+    # through some hoops to make a model with minimum support.
+    if(distribution=="multinomial"){
+      # Read coefficient lists
+      coef_list <- tryCatch(
+        coef(lasso_model, s="lambda.1se"),
+        error = identity)
+      
+      if(inherits(coef_list, "error")) return(object@simple)
+      
+      # Parse into matrix and retrieve row names
+      coef_mat <- sapply(coef_list, as.matrix)
+      rownames(coef_mat) <- dimnames(coef_list[[1]])[[1]]
+      
+      # Calculate score
+      score <- apply(abs(coef_mat), 1, max)
+      
+    } else {
+      # Read coefficient lists
+      coef_list <- tryCatch(
+        coef(lasso_model, s="lambda.1se"),
+        error = identity)
+      
+      if(inherits(coef_list, "error")) return(object@simple)
+      
+      # Read coefficient matrix
+      coef_mat <- as.matrix(coef_list)
+      
+      # Calculate score
+      score <- abs(coef_mat)[,1]
+    }
+    
+    # Parse score to data.table
+    vimp_table <- data.table::data.table("score"=score, "name"=names(score))
+    
+    # Throw out the intercept and elements with 0.0 coefficients
+    vimp_table <- vimp_table[name!="(Intercept)" & score!=0.0]
+    
+    # Create variable importance object.
+    vimp_object <- methods::new(
+      "vimpTable",
+      vimp_table=vimp_table,
+      encoding_table=encoded_data$reference_table,
+      score_aggregation="max",
+      invert=TRUE)
+    
+    # Find the original names
+    vimp_table <- get_vimp_table(vimp_object, "decoded")
+    
+    # Check that the optimal model complexity lambda is connected to at least
+    # one feature. If not, we have to use the simple estimate.
+    if(is_empty(vimp_table)) return(object@simple)
+    
+    # Derive required features
+    required_features <- vimp_table$name
+    
+    # Select features.
+    x <- filter_features(data, available_features=required_features)
+    
+    # Use effect coding to convert categorical data into encoded data.
+    encoded_data <- encode_categorical_variables(
+      data=x,
+      object=NULL,
+      encoding_method="dummy",
+      drop_levels=FALSE)
+    
+    # Extract data table with contrasts.
+    x <- encoded_data$encoded_data@data[mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
+    
+    # Check the number of columns in train_data. glmnet wants at least
+    # two columns.
+    if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
+    
+    # Train a small model at this lambda.1se.
+    lasso_model <- suppressWarnings(tryCatch(
+      glmnet::glmnet(
+        x = as.matrix(x),
+        y = y,
+        family = distribution,
+        lambda = lasso_model$lambda.1se,
+        standardize = FALSE),
+      error = identity))
+    
+    if(inherits(coef_list, "error")) return(object@simple)
+    
+    # Remove extraneous information from the model.
+    lasso_model <- ..trim_glmnet(lasso_model)
+    
+    # Add LASSO regression model to object.
+    object@model <- lasso_model
+    object@required_features <- required_features
+    
+    # Set complete
+    object@complete <- TRUE
+    
+    return(object)
+  })
 
 
 
