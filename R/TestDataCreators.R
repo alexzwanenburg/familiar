@@ -1492,3 +1492,27 @@ test_create_synthetic_correlated_bad_outcome_data <- function(...,
   
   return(data)
 }
+
+
+
+test_data_drop_rare_feature_levels <- function(data){
+  # Replace rare levels in feature data.
+  
+  # Prevent NOTE by non-standard use in data.table.
+  n <- NULL
+  
+  for(ii in get_feature_columns(data)){
+    
+    # Skip numeric data.
+    if(is.numeric(data@data[[ii]])) next
+    
+    # Find the rarest level of the categorical feature, and set replacement
+    # level.
+    level_data <- data@data[, list("n"=.N), by=c(ii)][order(n)]
+    rare_level <- head(level_data[[ii]], n=1L)
+    replacement_level <- tail(level_data[[ii]], n=1L)
+    data@data[get(ii) == rare_level, (ii):=replacement_level]
+  }
+  
+  return(data)
+}
