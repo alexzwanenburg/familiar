@@ -628,6 +628,9 @@ setMethod(
     # columns.
     if (ncol(x) == 1) x[, "bogus__variable__" := 0.0]
     
+    # Force x locally, otherwise an error may occur.
+    x <- as.matrix(x)
+    
     # Train a small model at this lambda.1se.
     lasso_model <- suppressWarnings(tryCatch(
       glmnet::glmnet(
@@ -761,6 +764,9 @@ setMethod(
     
     # Check if the validation data has two or more columns
     if (ncol(x) == 1) x[, "bogus__variable__" := 0.0]
+    
+    # Force x locally, otherwise an error may occur.
+    x <- as.matrix(x)
     
     # Get the type of response for glmnet predict
     response_type <- ifelse(object@type == "numeric", "response", "class")

@@ -1,3 +1,9 @@
+# Version 1.4.2
+
+## Bug fixes
+
+- Fixed an error that could occur when creating a lasso model for imputation using just a single feature.
+
 # Version 1.4.1 (Nefarious Newt)
 
 ## Minor changes
