@@ -900,15 +900,16 @@ test.create_mostly_prospective_data_set <- function(outcome_type){
 
 
 
-test_create_synthetic_series_data <- function(outcome_type,
-                                              n_batch=3,
-                                              n_samples=10,
-                                              n_series=3,
-                                              n_rep=3,
-                                              n_numeric=4L,
-                                              rare_outcome=FALSE,
-                                              seed=1844,
-                                              rstream_object=NULL){
+test_create_synthetic_series_data <- function(
+    outcome_type,
+    n_batch=3,
+    n_samples=10,
+    n_series=3,
+    n_rep=3,
+    n_numeric=4L,
+    rare_outcome=FALSE,
+    seed=1844,
+    rstream_object=NULL){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
@@ -937,9 +938,10 @@ test_create_synthetic_series_data <- function(outcome_type,
   if(outcome_type == "binomial"){
     # Convert to 0, 1
     outcome_value <- outcome_raw > 3.0
-    outcome_value <- factor(x=outcome_value,
-                            levels=c(FALSE, TRUE),
-                            labels=c("0", "1"))
+    outcome_value <- factor(
+      x=outcome_value,
+      levels=c(FALSE, TRUE),
+      labels=c("0", "1"))
     
   } else if(outcome_type == "multinomial"){
     outcome_value <- numeric(n_series_instances)
@@ -951,14 +953,16 @@ test_create_synthetic_series_data <- function(outcome_type,
     
     if(rare_outcome){
       outcome_value[length(outcome_value)] <- 3.0
-      outcome_value <- factor(x=outcome_value,
-                              levels=c(0.0, 1.0, 2.0, 3.0),
-                              labels=c("0", "1", "2", "3"))
+      outcome_value <- factor(
+        x=outcome_value,
+        levels=c(0.0, 1.0, 2.0, 3.0),
+        labels=c("0", "1", "2", "3"))
       
     } else {
-      outcome_value <- factor(x=outcome_value,
-                              levels=c(0.0, 1.0, 2.0),
-                              labels=c("0", "1", "2"))
+      outcome_value <- factor(
+        x=outcome_value,
+        levels=c(0.0, 1.0, 2.0),
+        labels=c("0", "1", "2"))
     }
     
   } else if(outcome_type == "continuous"){
@@ -978,13 +982,14 @@ test_create_synthetic_series_data <- function(outcome_type,
   
   # Create basic table. Sample identifiers are explicitly repeated for different
   # batches.
-  data <- data.table::data.table("batch_id"=rep(seq_len(n_batch), each=n_samples * n_series),
-                                 "sample_id"=rep(seq_len(n_samples), each=n_series, times=n_batch),
-                                 "series_id"=rep(seq_len(n_series), times=n_batch * n_samples),
-                                 "feature_1"=feature_1,
-                                 "feature_2"=feature_2,
-                                 "feature_3"=feature_3,
-                                 "feature_4"=feature_4)
+  data <- data.table::data.table(
+    "batch_id"=rep(seq_len(n_batch), each=n_samples * n_series),
+    "sample_id"=rep(seq_len(n_samples), each=n_series, times=n_batch),
+    "series_id"=rep(seq_len(n_series), times=n_batch * n_samples),
+    "feature_1"=feature_1,
+    "feature_2"=feature_2,
+    "feature_3"=feature_3,
+    "feature_4"=feature_4)
   
   # Add outcome.
   if(outcome_type %in% "survival"){
@@ -997,10 +1002,11 @@ test_create_synthetic_series_data <- function(outcome_type,
   }
   
   # Create batch-offsets
-  data[,":="("feature_1"=feature_1 + batch_id - 1.0,
-             "feature_2"=feature_2 + batch_id - 1.0,
-             "feature_3"=feature_3 + batch_id - 1.0,
-             "feature_4"=feature_4 + batch_id - 1.0)]
+  data[,":="(
+    "feature_1"=feature_1 + batch_id - 1.0,
+    "feature_2"=feature_2 + batch_id - 1.0,
+    "feature_3"=feature_3 + batch_id - 1.0,
+    "feature_4"=feature_4 + batch_id - 1.0)]
   
   # Create repetitions.
   if(n_rep > 1){
@@ -1008,11 +1014,11 @@ test_create_synthetic_series_data <- function(outcome_type,
     data <- data[repeated_rows, ]
     
     # Add some noise to features.
-    data[,":="("feature_1"=feature_1 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
-               "feature_2"=feature_2 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
-               "feature_3"=feature_3 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
-               "feature_4"=feature_4 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r))]
-    
+    data[,":="(
+      "feature_1"=feature_1 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
+      "feature_2"=feature_2 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
+      "feature_3"=feature_3 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r),
+      "feature_4"=feature_4 + fam_rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125, rstream_object=r))]
     
     data[feature_1 <= 0.0, "feature_1":=0.01]
     data[feature_2 <= 0.0, "feature_2":=0.01]
@@ -1026,12 +1032,13 @@ test_create_synthetic_series_data <- function(outcome_type,
   if(n_numeric < 1) data$feature_4 <- factor(floor(data$feature_4))
   
   # Convert to a data object.
-  data <- as_data_object(data=data,
-                         batch_id_column="batch_id",
-                         sample_id_column="sample_id",
-                         series_id_column="series_id",
-                         outcome_column=outcome_column,
-                         outcome_type=outcome_type)
+  data <- as_data_object(
+    data=data,
+    batch_id_column="batch_id",
+    sample_id_column="sample_id",
+    series_id_column="series_id",
+    outcome_column=outcome_column,
+    outcome_type=outcome_type)
   
   return(data)
 }
@@ -1488,6 +1495,30 @@ test_create_synthetic_correlated_bad_outcome_data <- function(...,
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  return(data)
+}
+
+
+
+test_data_drop_rare_feature_levels <- function(data){
+  # Replace rare levels in feature data.
+  
+  # Prevent NOTE by non-standard use in data.table.
+  n <- NULL
+  
+  for(ii in get_feature_columns(data)){
+    
+    # Skip numeric data.
+    if(is.numeric(data@data[[ii]])) next
+    
+    # Find the rarest level of the categorical feature, and set replacement
+    # level.
+    level_data <- data@data[, list("n"=.N), by=c(ii)][order(n)]
+    rare_level <- head(level_data[[ii]], n=1L)
+    replacement_level <- tail(level_data[[ii]], n=1L)
+    data@data[get(ii) == rare_level, (ii):=replacement_level]
   }
   
   return(data)
