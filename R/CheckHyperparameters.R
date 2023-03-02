@@ -218,11 +218,6 @@ NULL
       values = valid_range)
   }
   
-  # For parameters that are not randomised only a single value is allowed
-  # if(!preset_list$randomise & length(x) > 1){
-  #   ..error_variable_has_too_many_values(x, var_name=parameter_name, req_length=1, allow_fewer=FALSE)
-  # }
-  
   return(x)
 }
 
