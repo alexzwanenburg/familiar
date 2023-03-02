@@ -153,6 +153,8 @@ setMethod(
   
   # Show as warning.
   warning(paste(message_str, sep = "\n"))
+  
+  return(invisible(TRUE))
 }
 
 
@@ -287,6 +289,8 @@ is_package_newer <- function(name, version) {
     "missing_package_message_type",
     value = missing_package_message_type,
     envir = familiar_global_env)
+  
+  return(invisible(TRUE))
 }
 
 
@@ -350,6 +354,8 @@ is_package_newer <- function(name, version) {
     "missing_package_message_type",
     "missing_package_messages",
     envir = familiar_global_env)
+  
+  return(invisible(TRUE))
 }
 
 
