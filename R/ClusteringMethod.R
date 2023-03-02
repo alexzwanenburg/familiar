@@ -110,68 +110,6 @@ setClass(
 
 
 
-create_cluster_method_object <- function(
-    cluster_method,
-    data_type,
-    cluster_linkage = NULL,
-    cluster_cut_method = NULL,
-    cluster_similarity_threshold = NULL,
-    cluster_similarity_metric = NULL,
-    cluster_representation_method = NULL) {
-  
-  # Check that method is applicable.
-  .check_parameter_value_is_valid(
-    x = cluster_method,
-    var_name = ifelse(
-      data_type == "cluster",
-      "cluster_method",
-      paste0(data_type, "_cluster_method")),
-    values = .get_available_cluster_methods())
-  
-  # Check that data_type is valid.
-  .check_parameter_value_is_valid(
-    x = data_type,
-    var_name = "data_type",
-    values = c("feature", "cluster", "sample"))
-  
-  if (cluster_method == "none") {
-    object <- methods::new("clusterMethodNone")
-    
-  } else if (cluster_method == "pam") {
-    object <- methods::new("clusterMethodPAM")
-    
-  } else if (cluster_method == "hclust") {
-    object <- methods::new("clusterMethodHClust")
-    
-  } else if (cluster_method == "agnes") {
-    object <- methods::new("clusterMethodAgnes")
-    
-  } else if (cluster_method == "diana") {
-    object <- methods::new("clusterMethodDiana")
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(
-      "create_cluster_method_object: encountered an unknown cluster method: ",
-      cluster_method))
-  }
-  
-  # Cluster method and data type are always set.
-  object@method <- cluster_method
-  object@data_type <- data_type
-  
-  # Set cluster object method parameters as required.
-  object <- set_object_parameters(
-    object = object,
-    cluster_linkage = cluster_linkage,
-    cluster_cut_method = cluster_cut_method,
-    cluster_similarity_threshold = cluster_similarity_threshold,
-    cluster_similarity_metric = cluster_similarity_metric,
-    cluster_representation_method = cluster_representation_method)
-  
-  return(object)
-}
-
-
 # set_object_parameters methods ------------------------------------------------
 
 ## set_object_parameters (none) ------------------------------------------------
@@ -1462,6 +1400,224 @@ setMethod(
 
 
 
+# .cluster_by_fixed_cut methods ------------------------------------------------
+
+## .cluster_by_fixed_cut (generic hierarchical) --------------------------------
+setMethod(
+  ".cluster_by_fixed_cut",
+  signature(object = "clusterMethodHierarchical"),
+  function(object, ...) {
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    .NATURAL <- NULL
+    
+    # Attempt to create the dendrogram.
+    if (is.null(object@object)) object <- apply_cluster_method(object)
+    
+    # Check if a dendrogram could be created.
+    if (is.null(object@object)) return(NULL)
+    
+    # Compute the height at which the dendrogram should be cut.
+    cut_height <- similarity.to_distance(
+      x = object@similarity_threshold,
+      similarity_metric = object@similarity_metric)
+    
+    # Cut the dendrogram at the given height.
+    cluster_object <- stats::cutree(
+      tree = stats::as.hclust(object@object),
+      h = cut_height)
+    
+    # Set initial cluster table.
+    cluster_table <- data.table::data.table(
+      "name" = names(cluster_object),
+      "cluster_id" = cluster_object)
+    
+    # Get an ordering table.
+    order_table <- data.table::data.table(
+      "name" = object@object$labels[object@object$order],
+      "label_order" = seq_along(object@object$labels))
+    
+    # Insert label order into the cluster table.
+    cluster_table <- cluster_table[order_table, on = .NATURAL]
+    
+    return(cluster_table)
+  }
+)
+
+# .cluster_by_dynamic_cut methods ----------------------------------------------
+
+## .cluster_by_dynamic_cut (hclust) --------------------------------------------
+setMethod(
+  ".cluster_by_dynamic_cut",
+  signature(object = "clusterMethodHClust"),
+  function(object, ...) {
+    
+    # Attempt to create the dendrogram.
+    if (is.null(object@object)) object <- apply_cluster_method(object)
+    
+    # Check if a dendrogram could be created.
+    if (is.null(object@object)) return(NULL)
+    
+    require_package(
+      x = "dynamicTreeCut",
+      purpose = "to cluster similar features together through dynamic dendrogram cutting")
+    
+    # Compute the height at which the dendrogram should be cut anyway.
+    cut_height <- similarity.to_distance(
+      x = object@similarity_threshold,
+      similarity_metric = object@similarity_metric)
+    
+    if (length(get_similarity_names(object@similarity_table)) == 2) {
+      # For two features, dynamicTreeCut seems to ignore maxTreeHeight.
+      if (similarity.to_distance(
+        x = object@similarity_table@data$value,
+        similarity_metric = object@similarity_metric) <= cut_height) {
+        
+        cluster_ids <- c(1L, 1L)
+        
+      } else {
+        cluster_ids <- c(1L, 2L)
+      }
+      
+    } else {
+      # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters from a
+      # hierarchical cluster tree: the Dynamic Tree Cut package for R.
+      # Bioinformatics 2008 24(5):719-720
+      cluster_ids <- tryCatch(
+        dynamicTreeCut::cutreeDynamicTree(
+          dendro = object@object,
+          maxTreeHeight = cut_height,
+          deepSplit = TRUE,
+          minModuleSize = 1),
+        error = identity)
+      
+      # Check that dynamic cutting does not produce an error.
+      if (inherits(cluster_ids, "error")) return(.cluster_by_fixed_cut(object, ...))
+      
+      # Order the cluster identifiers correctly.
+      cluster_ids <- cluster_ids[object@object$order]
+    }
+    
+    # Create a clustering table.
+    cluster_table <- data.table::data.table(
+      "name" = object@object$labels[object@object$order],
+      "cluster_id" = cluster_ids,
+      "label_order" = seq_along(object@object$labels))
+    
+    return(cluster_table)
+  }
+)
+
+
+
+create_cluster_method_object <- function(
+    cluster_method,
+    data_type,
+    cluster_linkage = NULL,
+    cluster_cut_method = NULL,
+    cluster_similarity_threshold = NULL,
+    cluster_similarity_metric = NULL,
+    cluster_representation_method = NULL) {
+  
+  # Check that method is applicable.
+  .check_parameter_value_is_valid(
+    x = cluster_method,
+    var_name = ifelse(
+      data_type == "cluster",
+      "cluster_method",
+      paste0(data_type, "_cluster_method")),
+    values = .get_available_cluster_methods())
+  
+  # Check that data_type is valid.
+  .check_parameter_value_is_valid(
+    x = data_type,
+    var_name = "data_type",
+    values = c("feature", "cluster", "sample"))
+  
+  if (cluster_method == "none") {
+    object <- methods::new("clusterMethodNone")
+    
+  } else if (cluster_method == "pam") {
+    object <- methods::new("clusterMethodPAM")
+    
+  } else if (cluster_method == "hclust") {
+    object <- methods::new("clusterMethodHClust")
+    
+  } else if (cluster_method == "agnes") {
+    object <- methods::new("clusterMethodAgnes")
+    
+  } else if (cluster_method == "diana") {
+    object <- methods::new("clusterMethodDiana")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(
+      "create_cluster_method_object: encountered an unknown cluster method: ",
+      cluster_method))
+  }
+  
+  # Cluster method and data type are always set.
+  object@method <- cluster_method
+  object@data_type <- data_type
+  
+  # Set cluster object method parameters as required.
+  object <- set_object_parameters(
+    object = object,
+    cluster_linkage = cluster_linkage,
+    cluster_cut_method = cluster_cut_method,
+    cluster_similarity_threshold = cluster_similarity_threshold,
+    cluster_similarity_metric = cluster_similarity_metric,
+    cluster_representation_method = cluster_representation_method)
+  
+  return(object)
+}
+
+
+
+.convert_cluster_table_to_cluster_objects <- function(
+    cluster_table,
+    representation_method) {
+  
+  # Check that the cluster table is not empty.
+  if (is_empty(cluster_table)) return(NULL)
+  
+  # Check that the expect columns are present.
+  if (!(all(c("name", "cluster_id") %in% colnames(cluster_table)))) {
+    ..error_reached_unreachable_code(paste0(
+      ".convert_cluster_table_to_cluster_objects: expected name and ",
+      "cluster_id columns were not found."))
+  }
+  
+  return(lapply(
+    split(cluster_table, by = "cluster_id"),
+    ..convert_cluster_table_to_cluster_objects,
+    representation_method = representation_method))
+}
+
+
+
+..convert_cluster_table_to_cluster_objects <- function(
+    cluster_table,
+    representation_method) {
+  
+  if (nrow(cluster_table) == 1) {
+    # Create singular cluster object.
+    object <- methods::new(
+      "singularClusteringObject",
+      cluster_features = cluster_table$name)
+    
+  } else {
+    # Create cluster object with multiple features or instances.
+    object <- methods::new(
+      "clusteringObject",
+      cluster_features = cluster_table$name,
+      representation_method = representation_method)
+  }
+  
+  return(object)
+}
+
+
+
 .optimise_cluster_silhouette <- function(
     object,
     distance_matrix,
@@ -1608,160 +1764,6 @@ setMethod(
     ..error_reached_unreachable_code(
       "..optimise_cluster_silhouette: unknown clustering object encountered.")
   }
-}
-
-# .cluster_by_fixed_cut methods ------------------------------------------------
-
-## .cluster_by_fixed_cut (generic hierarchical) --------------------------------
-setMethod(
-  ".cluster_by_fixed_cut",
-  signature(object = "clusterMethodHierarchical"),
-  function(object, ...) {
-    
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
-    
-    # Attempt to create the dendrogram.
-    if (is.null(object@object)) object <- apply_cluster_method(object)
-    
-    # Check if a dendrogram could be created.
-    if (is.null(object@object)) return(NULL)
-    
-    # Compute the height at which the dendrogram should be cut.
-    cut_height <- similarity.to_distance(
-      x = object@similarity_threshold,
-      similarity_metric = object@similarity_metric)
-    
-    # Cut the dendrogram at the given height.
-    cluster_object <- stats::cutree(
-      tree = stats::as.hclust(object@object),
-      h = cut_height)
-    
-    # Set initial cluster table.
-    cluster_table <- data.table::data.table(
-      "name" = names(cluster_object),
-      "cluster_id" = cluster_object)
-    
-    # Get an ordering table.
-    order_table <- data.table::data.table(
-      "name" = object@object$labels[object@object$order],
-      "label_order" = seq_along(object@object$labels))
-    
-    # Insert label order into the cluster table.
-    cluster_table <- cluster_table[order_table, on = .NATURAL]
-    
-    return(cluster_table)
-  }
-)
-
-# .cluster_by_dynamic_cut methods ----------------------------------------------
-
-## .cluster_by_dynamic_cut (hclust) --------------------------------------------
-setMethod(
-  ".cluster_by_dynamic_cut",
-  signature(object = "clusterMethodHClust"),
-  function(object, ...) {
-    
-    # Attempt to create the dendrogram.
-    if (is.null(object@object)) object <- apply_cluster_method(object)
-    
-    # Check if a dendrogram could be created.
-    if (is.null(object@object)) return(NULL)
-    
-    require_package(
-      x = "dynamicTreeCut",
-      purpose = "to cluster similar features together through dynamic dendrogram cutting")
-    
-    # Compute the height at which the dendrogram should be cut anyway.
-    cut_height <- similarity.to_distance(
-      x = object@similarity_threshold,
-      similarity_metric = object@similarity_metric)
-    
-    if (length(get_similarity_names(object@similarity_table)) == 2) {
-      # For two features, dynamicTreeCut seems to ignore maxTreeHeight.
-      if (similarity.to_distance(
-        x = object@similarity_table@data$value,
-        similarity_metric = object@similarity_metric) <= cut_height) {
-        
-        cluster_ids <- c(1L, 1L)
-        
-      } else {
-        cluster_ids <- c(1L, 2L)
-      }
-      
-    } else {
-      # From Langfelder P, Zhang B, Horvath S (2007) Defining clusters from a
-      # hierarchical cluster tree: the Dynamic Tree Cut package for R.
-      # Bioinformatics 2008 24(5):719-720
-      cluster_ids <- tryCatch(
-        dynamicTreeCut::cutreeDynamicTree(
-          dendro = object@object,
-          maxTreeHeight = cut_height,
-          deepSplit = TRUE,
-          minModuleSize = 1),
-        error = identity)
-      
-      # Check that dynamic cutting does not produce an error.
-      if (inherits(cluster_ids, "error")) return(.cluster_by_fixed_cut(object, ...))
-      
-      # Order the cluster identifiers correctly.
-      cluster_ids <- cluster_ids[object@object$order]
-    }
-    
-    # Create a clustering table.
-    cluster_table <- data.table::data.table(
-      "name" = object@object$labels[object@object$order],
-      "cluster_id" = cluster_ids,
-      "label_order" = seq_along(object@object$labels))
-    
-    return(cluster_table)
-  }
-)
-
-
-
-
-.convert_cluster_table_to_cluster_objects <- function(
-    cluster_table,
-    representation_method) {
-  
-  # Check that the cluster table is not empty.
-  if (is_empty(cluster_table)) return(NULL)
-  
-  # Check that the expect columns are present.
-  if (!(all(c("name", "cluster_id") %in% colnames(cluster_table)))) {
-    ..error_reached_unreachable_code(paste0(
-      ".convert_cluster_table_to_cluster_objects: expected name and ",
-      "cluster_id columns were not found."))
-  }
-  
-  return(lapply(
-    split(cluster_table, by = "cluster_id"),
-    ..convert_cluster_table_to_cluster_objects,
-    representation_method = representation_method))
-}
-
-
-
-..convert_cluster_table_to_cluster_objects <- function(
-    cluster_table,
-    representation_method) {
-  
-  if (nrow(cluster_table) == 1) {
-    # Create singular cluster object.
-    object <- methods::new(
-      "singularClusteringObject",
-      cluster_features = cluster_table$name)
-    
-  } else {
-    # Create cluster object with multiple features or instances.
-    object <- methods::new(
-      "clusteringObject",
-      cluster_features = cluster_table$name,
-      representation_method = representation_method)
-  }
-  
-  return(object)
 }
 
 
