@@ -86,7 +86,10 @@
   
   # Check that x is numeric or NA.
   if (!is.numeric(x) && !is.na(x)) {
-    ..error_type_not_valid(x, var_name, "numeric")
+    ..error_type_not_valid(
+      x = x,
+      var_name = var_name,
+      valid_type = "numeric")
   }
   
   if (!is.na(x)) {
@@ -98,7 +101,10 @@
   }
   
   if (is_outside_range) {
-    ..error_value_outside_allowed_range(x, var_name, range)
+    ..error_value_outside_allowed_range(
+      x = x,
+      var_name = var_name,
+      range = range)
   }
   
   return(invisible(TRUE))
@@ -116,11 +122,16 @@
   
   overlap_values <- intersect(x, y)
   if (length(overlap_values) > 0) {
-    ..error_value_shared_between_variables(x, y, var_name_x, var_name_y)
+    ..error_value_shared_between_variables(
+      x = x,
+      y = y,
+      var_name_x = var_name_x,
+      var_name_y = var_name_y)
   }
   
   return(invisible(TRUE))
 }
+
 
 
 .check_argument_length <- function(
@@ -143,6 +154,7 @@
   
   return(invisible(TRUE))
 }
+
 
 
 .check_parameter_value_is_valid <- function(
@@ -182,6 +194,7 @@
 }
 
 
+
 .perform_type_conversion <- function(
     x,
     to_type,
@@ -215,35 +228,38 @@
     conv_function(x),
     warning = function(war) {
     ..error_type_conversion_not_possible(
-      x,
-      to_type,
-      var_name,
-      req_length,
-      allow_more)
+      x = x,
+      to_type = to_type,
+      var_name = var_name,
+      req_length = req_length,
+      allow_more = allow_more)
     },
     error = function(err) {
     ..error_type_conversion_not_possible(
-      x,
-      to_type,
-      var_name,
-      req_length,
-      allow_more)
+      x = x,
+      to_type = to_type,
+      var_name = var_name,
+      req_length = req_length,
+      allow_more = allow_more)
     }
   )
   
   # Test length of resulting vector
   if (length(x) < req_length) {
     ..error_variable_has_too_few_values(
-      x,
-      var_name,
-      req_length,
-      allow_more)
+      x = x,
+      var_name = var_name,
+      req_length = req_length,
+      allow_more = allow_more)
     
   } else if (length(x) > req_length && !allow_more) {
     ..error_variable_has_too_many_values(
       x,
       var_name,
       req_length,
+      x = x,
+      var_name = var_name,
+      req_length = req_length,
       allow_fewer = FALSE)
   }
   
@@ -298,17 +314,23 @@
     
   } else {
     # Required, but no default.
-    ..error_input_missing_without_default(var_name, TRUE)
+    ..error_input_missing_without_default(
+      var_name = var_name,
+      allow_config = TRUE)
   }
   
   # This point in the code can only be reached if the user provided a value.  
   # Check for presence of values
   if (length(x) == 0 && optional == FALSE) {
     # Throw an error as entry is required
-    ..error_input_missing_without_default(var_name, TRUE)
+    ..error_input_missing_without_default(
+      var_name = var_name,
+      allow_config = TRUE)
     
   } else if (isTRUE(all.equal("", x)) && optional == FALSE) {
-    ..error_input_missing_without_default(var_name, TRUE)
+    ..error_input_missing_without_default(
+      var_name = var_name,
+      allow_config = TRUE)
     
   } else if (length(x) == 0 || isTRUE(all.equal("", x))) {
     # Return the default value if no value is provided
@@ -361,7 +383,7 @@
       ..error_input_not_unique(
         x = x,
         var_name = var_name,
-        TRUE)
+        allow_config = TRUE)
     }
     
   } else {
