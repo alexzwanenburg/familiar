@@ -398,6 +398,8 @@ is_package_newer <- function(name, version) {
       "\n\n\tinstall.packages(c(",
       paste0("\"", x_cran, "\"", collapse = ", "), "))")
   }
+  
+  return(message_str)
 }
 
 
