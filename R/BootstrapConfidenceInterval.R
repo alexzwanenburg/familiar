@@ -119,9 +119,6 @@
       return(summary_list)
     }
     
-    # Add median in case its missing
-    if(!is.null(confidence_level))
-    
     # Define the z-statistic for bounds of the confidence interval.
     z_alpha <- stats::qnorm(percentiles)
     
