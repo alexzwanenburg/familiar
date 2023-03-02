@@ -76,12 +76,14 @@
 
   # Some internal checks that should never be triggered.
   if (length(x) != 1) {
-    ..error_reached_unreachable_code(".check_number_in_valid_range_x_not_length_1")
+    ..error_reached_unreachable_code(paste0(
+      ".check_number_in_valid_range: x does not have length 1."))
   }
   
   # Another internal checks that should never be triggered.
   if (range[2] - range[1] < 0.0) {
-    ..error_reached_unreachable_code(".check_number_in_valid_range_inverted_range")
+    ..error_reached_unreachable_code(paste0(
+      ".check_number_in_valid_range: the range is inverted"))
   }
   
   # Check that x is numeric or NA.
@@ -220,7 +222,7 @@
     
   } else {
     ..error_reached_unreachable_code(paste0(
-      ".perform_type_conversion: the to_type was not recognised: ", to_type))
+      ".perform_type_conversion: the to_type argument was not recognised: ", to_type))
   }
   
   # Attempt conversion
@@ -254,9 +256,6 @@
     
   } else if (length(x) > req_length && !allow_more) {
     ..error_variable_has_too_many_values(
-      x,
-      var_name,
-      req_length,
       x = x,
       var_name = var_name,
       req_length = req_length,
@@ -388,7 +387,8 @@
     
   } else {
     # By design unreachable
-    ..error_reached_unreachable_code(".parse_arg_unknown_type")
+    ..error_reached_unreachable_code(
+      paste0(".parse_arg: the type argument was not recognised: ", type))
   }
   
   return(x)
