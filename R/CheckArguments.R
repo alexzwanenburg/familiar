@@ -12,6 +12,8 @@
         "\nThese arguments may have been misspelled, or were deprecated or renamed."))
     }
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -51,6 +53,8 @@
         "\nThese parameters may have been misspelled, or were deprecated or renamed."))
     }
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -96,6 +100,8 @@
   if (is_outside_range) {
     ..error_value_outside_allowed_range(x, var_name, range)
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -112,6 +118,8 @@
   if (length(overlap_values) > 0) {
     ..error_value_shared_between_variables(x, y, var_name_x, var_name_y)
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -132,6 +140,8 @@
       var_name = var_name,
       req_length = c(min, max))
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -167,6 +177,8 @@
       var_name = var_name,
       values = values)
   }
+  
+  return(invisible(TRUE))
 }
 
 
