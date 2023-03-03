@@ -22,7 +22,7 @@
   if (!is.null(formula)) {
     
     # Parse information from the formula
-    term_object <- stats::terms(formula, data=data)
+    term_object <- stats::terms(formula, data = data)
 
     # Derive predictors
     predictor_vars <- check_column_name(attributes(term_object)$term.labels)
@@ -61,7 +61,7 @@
   if (!is.null(settings$data$sample_col) && check_stringency != "strict") {
     
     # Check if the internal default is used instead.
-    if(!any(settings$data$sample_col %in% colnames(data)) &&
+    if (!any(settings$data$sample_col %in% colnames(data)) &&
        get_id_columns(single_column = "sample") %in% colnames(data)) {
       settings$data$sample_col <- get_id_columns(single_column = "sample")
     }
@@ -76,7 +76,7 @@
     }
   }
   
-  if (!is.null(settings$data$series_col) & check_stringency != "strict") {
+  if (!is.null(settings$data$series_col) && check_stringency != "strict") {
     
     # Check if the internal default is used instead.
     if (!any(settings$data$series_col %in% colnames(data)) &&
@@ -208,7 +208,7 @@
     if (length(outcome_col) == 1) {
       # Only select outcome column with stringent checks.
       warning(paste0(
-        paste_s(outcome_col), "was selected as an outcome column. It is recommended" ,
+        paste_s(outcome_col), "was selected as an outcome column. It is recommended ",
         "to provide the column name manually to avoid selecting the wrong column."))
       
       # Set the outcome column
@@ -250,7 +250,7 @@
   # Outcome type ---------------------------------------------------------------
   
   # Attempt to impute outcome settings
-  if(outcome_type == "unset"){
+  if (outcome_type == "unset") {
     settings$data$outcome_type <- .impute_outcome_type(
       data = data,
       outcome_column = settings$data$outcome_col,
@@ -292,8 +292,8 @@
   }
   
   # Survival event indicator ---------------------------------------------------
-  if(settings$data$outcome_type %in% c("survival", "competing_risk") &&
-     !is.null(settings$data$outcome_col)){
+  if (settings$data$outcome_type %in% c("survival", "competing_risk") &&
+     !is.null(settings$data$outcome_col)) {
     settings <- .impute_survival_indicators(
       data = data,
       outcome_type = settings$data$outcome_type,
@@ -327,7 +327,7 @@
   }
   
   ## Novelty features ----------------------------------------------------------
-  if(!is.null(settings$data$novelty_features)){
+  if (!is.null(settings$data$novelty_features)) {
     # Check for overlap with exclude_features
     overlap_cols <- intersect(
       settings$data$novelty_features,
@@ -383,7 +383,7 @@
   }
   
   ## Included features ---------------------------------------------------------
-  if(!is.null(settings$data$include_features)){
+  if (!is.null(settings$data$include_features)) {
     
     missing_cols <- settings$data$include_features[!settings$data$include_features %in% predictor_vars]
     
@@ -456,7 +456,7 @@
 .update_experimental_design_settings <- function(
     section_table,
     data,
-    settings){
+    settings) {
 
   # Find out if any external validation is performed as part of the workflow
   if (is.waive(section_table)) {
@@ -469,7 +469,7 @@
   }
   
   # Determine the available batch identifiers
-  available_batch_ids <- unique(data[[get_id_columns(single_column="batch")]])
+  available_batch_ids <- unique(data[[get_id_columns(single_column = "batch")]])
   
   # Determine what happens if batch identifiers are not specified for both
   # development and validation.
@@ -786,14 +786,14 @@
     # Test for categorical outcomes based on class of the data in the outcome
     # column, in this case character.
     if (is.character(x)) {
-      if (data.table::uniqueN(x, na.rm=TRUE) == 2) {
+      if (data.table::uniqueN(x, na.rm = TRUE) == 2) {
         message(paste0(
           "A binomial outcome was imputed based on the data. If this is an incorrect type, ",
           "please provide an outcome_type manually."))
         
         return("binomial")
         
-      } else if (data.table::uniqueN(x, na.rm=TRUE) > 2) {
+      } else if (data.table::uniqueN(x, na.rm = TRUE) > 2) {
         message(paste0(
           "A multinomial outcome was imputed based on the data. If this is an incorrect type, ",
           "please provide an outcome_type manually."))
@@ -917,14 +917,14 @@
   
   if (!is.null(settings$data$competing_risk_indicator) && length(event_values) > 0) {
     # Competing risk indicators are only present in competing_risk outcomes.
-    if(outcome_type == "survival" && check_stringency == "strict"){
+    if (outcome_type == "survival" && check_stringency == "strict") {
       stop(paste0(
         "One or indicators for competing risks were specified. ",
         "However, the outcome type was set to survival, which does not check competing risks. ",
         "Please change outcome_type to competing_risk, or remove the competing risk indicators."))
     }
     
-    if(!all(tolower(as.character(settings$data$competing_risk_indicator)) %in% tolower(as.character(event_values))) &&
+    if (!all(tolower(as.character(settings$data$competing_risk_indicator)) %in% tolower(as.character(event_values))) &&
        check_stringency == "strict") {
       stop(paste0(
         "The following provided competing risk indicator(s) were not found in the data: ",
@@ -961,7 +961,7 @@
             "a standard value, nor provided. More than one unassigned value was found in ",
             event_column, ", preventing automatic assignment: ",
             paste_s(event_values)),
-          as_error=check_stringency == "strict")
+          as_error = check_stringency == "strict")
       }
     }
   }
@@ -991,7 +991,7 @@
           "One or more unassigned values for the survival outcome were found in ", event_column, ": ",
           paste_s(event_values),
           ". Please assign manually."),
-        as_error=check_stringency == "strict")
+        as_error = check_stringency == "strict")
     }
   }
   
@@ -1004,7 +1004,7 @@
             "One or more unassigned values for the survival outcome were found in ", event_column, ": ",
             paste_s(event_values), ". These could not be assigned automatically as indicators for ",
             "censoring and competing risks were both missing. Please assign manually."),
-          as_error=check_stringency == "strict")
+          as_error = check_stringency == "strict")
       }
       
     } else if (length(present_censoring_indicator) == 0) {
@@ -1050,7 +1050,7 @@
             "One or more unassigned values for the competing risk outcome were found in ",
             event_column, ": ", paste_s(event_values), 
             ". Please assign manually to the indicators."),
-          as_error=check_stringency == "strict")
+          as_error = check_stringency == "strict")
       }
     }
   }
@@ -1115,7 +1115,7 @@
     censoring_indicator,
     event_indicator,
     competing_risk_indicator,
-    check_stringency = "strict"){
+    check_stringency = "strict") {
   
   # Checks plausibility of the outcome type and identifies any errors 
   
@@ -1166,9 +1166,9 @@
           "Found: ", length(outcome_column)))
       }
       
-    } else if(check_stringency == "strict"){
+    } else if (check_stringency == "strict") {
       # For strict checks always check.
-      if(length(outcome_column) != 1){
+      if (length(outcome_column) != 1) {
         stop(paste0(
           "One outcome column is expected for data with ", outcome_type, " outcomes. ",
           "Found: ", length(outcome_column)))
@@ -1191,7 +1191,7 @@
   
   # Check for outcome columns with NA values.
   outcome_na <- TRUE
-  if(!is.null(outcome_column)){
+  if (!is.null(outcome_column)) {
     outcome_na <- any(sapply(
       outcome_column,
       function(ii, data) (!any(is_valid_data(data[[ii]]))),
@@ -1222,7 +1222,7 @@
     if (check_stringency == "strict") {
       if (length(classes_present) > 2) {
         stop(paste0(
-          "More than two classes (", paste_s(classes_present) ,
+          "More than two classes (", paste_s(classes_present),
           ") were found in the outcome column: ", outcome_column, ". ",
           "Exactly two classes are expected for the binomial outcome type. ",
           "Specify outcome_type=\"multinomial\" if this is intentional."))
@@ -1236,8 +1236,8 @@
     } else if (check_stringency == "external_warn") {
       if (length(classes_present) > 2) {
         stop(paste0(
-          "More than two classes (", paste_s(classes_present) 
-          ,") were found in the outcome column: ", outcome_column,
+          "More than two classes (", paste_s(classes_present),
+          ") were found in the outcome column: ", outcome_column,
           ". Exactly two classes are expected for the binomial outcome type."))
       }
     }
@@ -1269,7 +1269,7 @@
           "Numeric data are expected for the count outcome type."))
       }
       
-      if (min(data[[outcome_column]], na.rm=TRUE) < 0.0) {
+      if (min(data[[outcome_column]], na.rm = TRUE) < 0.0) {
         stop_or_warn(
           paste0(
             "The outcome column (", outcome_column, ") contains values smaller than 0. ",
@@ -1292,7 +1292,7 @@
   }
   
   # Plausibility check for the survival outcome type
-  if (outcome_type %in% c("survival", "competing_risk") & !outcome_na) {
+  if (outcome_type %in% c("survival", "competing_risk") && !outcome_na) {
     # Check for presence of an event column and time columns
     
     if (check_stringency == "strict") {
@@ -1330,7 +1330,7 @@
           ") contain event status information. This column may only contain values 0 and 1 or ",
           "FALSE and TRUE, or the value indicated by ",
           ifelse(
-            outcome_type=="survival",
+            outcome_type == "survival",
             "censoring_indicator and event_indicator",
             "censoring_indicator, event_indicator and competing_risk_indicator"),
           " arguments."))
@@ -1479,7 +1479,7 @@
     data,
     outcome_type,
     outcome_column,
-    check_stringency = "strict"){
+    check_stringency = "strict") {
   
   if (outcome_type %in% c("survival", "competing_risk")) {
     
@@ -1519,7 +1519,7 @@
     outcome_type, 
     outcome_column,
     class_levels,
-    check_stringency = "strict"){
+    check_stringency = "strict") {
   
   if (outcome_type %in% c("binomial", "multinomial") &&
       !is.null(class_levels)) {
@@ -1555,7 +1555,7 @@
 #' @return NULL
 #' @md
 #' @keywords internal
-.check_feature_availability <- function(data, feature){
+.check_feature_availability <- function(data, feature) {
   # Check whether features are available in the data
   
   # Missing features are features that are not available in the provided data.
@@ -1577,7 +1577,7 @@
     data,
     censoring_indicator = NULL,
     event_indicator = NULL,
-    competing_risk_indicator = NULL){
+    competing_risk_indicator = NULL) {
   # Identify if the column could contain survival status information.
   
   # Find all indicators
@@ -1612,7 +1612,7 @@
 
 .is_survival_time_col <- function(
     column_name,
-    data){
+    data) {
   # Identify if the column could contain survival time information.
   
   if (is.numeric(data[[column_name]])) {
