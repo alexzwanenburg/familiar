@@ -1361,6 +1361,8 @@
       }
     }
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -1455,6 +1457,8 @@
       "The ", col_type, " identifier column ", id_column,
       " also appears among the features marked for inclusion."))
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -1492,6 +1496,8 @@
       }
     }
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -1532,6 +1538,8 @@
       }
     }
   }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -1558,6 +1566,8 @@
       "One or more features could not be found in the data set: ",
       paste_s(missing_feature)))
   }
+  
+  return(invisible(TRUE))
 }
 
 
