@@ -373,7 +373,7 @@ summon_familiar <- function(formula=NULL,
   
   # Start evaluation
   run_evaluation(cl=cl,
-                 proj_list=project_info,
+                 project_list=project_info,
                  settings=settings,
                  file_paths=file_paths,
                  verbose=verbose)
