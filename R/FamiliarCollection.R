@@ -3,238 +3,7 @@
 NULL
 
 
-# .set_labels ------------------------------------------------------------------
-setMethod(
-  ".set_labels",
-  signature(x = "familiarCollection"),
-  function(
-    x,
-    old_label,
-    new_label,
-    new_order,
-    upd_slot) {
-    
-    # Suppress NOTES due to non-standard evaluation in data.table
-    label <- NULL
-    
-    # Make sure the collection object is updated.
-    x <- update_object(object = x)
-    
-    # Read the slot
-    label_table <- slot(x, upd_slot)
-    
-    # Generate the slot
-    if (is.null(label_table)) {
-      x <- .construct_label_table(x = x, upd_slot = upd_slot)
-      
-      # Read the label table
-      label_table <- slot(x, upd_slot)
-    }
-    
-    ## Label update ------------------------------------------------------------
-    if (!is.null(new_label)) {
-      
-      # Check that the length of new_label is not 0
-      if (length(new_label) == 0) {
-        stop("The number of \"new\" labels should be larger than 0.")
-      }
-      
-      # Check for duplicates in new_label
-      if (anyDuplicated(new_label)) {
-        warning("The \"new\" labels contain duplicate values.")
-      }
-      
-      # Get old labels, if they were not provided.
-      if (is.null(old_label)) {
-        
-        # Check if we can safely assume that the new labels are matching 
-        if (length(new_label) != nrow(label_table)) {
-          stop(paste0(
-            "If \"old\" is not provided explicitly, \"new\" should have the ",
-            "same length as the currently existing labels."))
-        }
-        
-        # Assume that old is the currently known label
-        old_label <- label_table$label
-      }
-      
-      # Check for duplicates in old_label
-      if (anyDuplicated(old_label)) {
-        stop("The provided \"old\" labels contain duplicate values.")
-      }
-      
-      # Check that length of new_label and old_label are the same
-      if (length(new_label) != length(old_label)) {
-        stop("The same number of \"old\" and \"new\" labels should be provided.")
-      }
-      
-      # Check if all old_label entries are actually existing labels.
-      unrecognised_labels <- old_label[!old_label %in% label_table$label]
-      if (length(unrecognised_labels) > 0) {
-        stop(paste0(
-          "The following old labels were not found: ",
-          paste_s(unrecognised_labels)))
-      }
-      
-      # Generate a data.table using old_label and new_label
-      replacement_table <- data.table::data.table(
-        "label" = old_label,
-        "new_label" = new_label)
-      
-      # Merge both tables
-      label_table <- merge(
-        x = label_table,
-        y = replacement_table,
-        by = "label",
-        all.x = TRUE)
-      
-      # Copy old labels to the new_label column for labels that were not
-      # provided previously
-      label_table[is.na(new_label), "new_label" := label]
-      
-      # Rename colums
-      data.table::setnames(
-        x = label_table,
-        old = c("label", "new_label"),
-        new = c("old_label", "label"))
-      
-      # Drop the "old_label" column as it is no longer required
-      label_table[, "old_label" := NULL]
-    }
-    
-    ## Label order update ------------------------------------------------------
-    if (!is.null(new_order)) {
-      # Update label order based on new_order
-      
-      # Check that new_order has the same length as the label_table
-      if (length(new_order) != length(unique(label_table$label))) {
-        stop("\"order\" should match the number of labels.")
-      }
-      
-      # Check that there are no duplicates in new_order.
-      if (anyDuplicated(new_order)) {
-        warning("\"order\" contains duplicate entries.")
-      }
-      
-      # Check that new_order has the same class the label.
-      if (!is_any(new_order, class(label_table$label))) {
-        stop(paste0(
-          "\"order should have the same class as the label, i.e. ",
-          paste(class(label_table$label), collapse = " or "), "."))
-      }
-      
-      # Check that there are no elements of new_order that do not appear as a label
-      unrecognised_labels <- new_order[!new_order %in% label_table$label]
-      if (length(unrecognised_labels) > 0) {
-        stop(paste0(
-          "The following labels were not found for ordering: ",
-          paste_s(unrecognised_labels)))
-      }
-      
-      # Find the order by matching the label column in the label table with the
-      # provided labels in new_order
-      new_label_order <- match(
-        label_table$label,
-        new_order)
-      
-      # Update the label order
-      label_table[, "label_order" := new_label_order]
-    }
-    
-    # Insert the updated label table into its slot
-    slot(x, upd_slot) <- label_table
-    
-    # Return the input object
-    return(x)
-  }
-)
 
-
-# .construct_label_table -------------------------------------------------------
-setMethod(
-  ".construct_label_table",
-  signature(x = "familiarCollection"),
-  function(x, upd_slot) {
-    # Constructs a new label table if required.
-    
-    # Do not generate a new table with labels if it already exists
-    if (!is.null(slot(x, upd_slot))) return(x)
-    
-    if (upd_slot == "data_set_labels") {
-      data <- slot(x, "data_sets")
-      
-    } else if (upd_slot == "learner_labels") {
-      data <- slot(x, "learner")
-      
-    } else if (upd_slot == "fs_method_labels") {
-      data <- slot(x, "fs_method")
-      
-    } else if (upd_slot == "feature_labels") {
-      data <- unique(c(
-        slot(x, "required_features"),
-        x@fs_vimp$vimp_table$name))
-      
-    } else if (upd_slot == "km_group_labels") {
-      data <- unique(c(
-        "low", "moderate", "high",
-        unlist(lapply(x@km_data, function(x) (levels(x@data$risk_group))))))
-      
-    } else if (upd_slot == "class_labels") {
-      data <- get_outcome_class_levels(x)
-      
-    } else {
-      stop("Slot is not available for familiarCollection objects.")
-    }
-    
-    # Add the new label table to the slot
-    slot(x, upd_slot) <- data.table::data.table(
-      "internal" = data,
-      "label" = data,
-      "label_order" = seq_len(length(data)))
-    
-    return(x)
-  }
-)
-
-
-# .get_labels ------------------------------------------------------------------
-setMethod(
-  ".get_labels",
-  signature(x = "familiarCollection"),
-  function(
-    x,
-    upd_slot,
-    get_levels = FALSE) {
-    # Get ordered levels (i.e. internal column from the label table) from the
-    # specific slot
-    
-    # Suppress NOTES due to non-standard evaluation in data.table
-    label_order <- NULL
-    
-    # Make sure the collection object is updated.
-    x <- update_object(object = x)
-    
-    # Determine if the slot has been set.
-    if (is.null(slot(x, upd_slot))) {
-      x <- .construct_label_table(x = x, upd_slot = upd_slot)
-    }
-    
-    # Read the label table
-    label_table <- slot(x, upd_slot)
-    
-    # Order table by label order
-    label_table <- label_table[order(label_order)]
-    
-    if (get_levels) {
-      # Return ordered levels if get_levels is TRUE
-      return(label_table$internal)
-      
-    } else {
-      # Return ordered labels
-      return(label_table$label)
-    }
-  }
-)
 
 
 # set_data_set_names -----------------------------------------------------------
@@ -862,5 +631,242 @@ setMethod(
     # Outcome details
     cat("\nThe collection contains data for the following outcome:\n")
     show(object@outcome_info)
+  }
+)
+
+
+
+# .set_labels ------------------------------------------------------------------
+setMethod(
+  ".set_labels",
+  signature(x = "familiarCollection"),
+  function(
+    x,
+    old_label,
+    new_label,
+    new_order,
+    upd_slot) {
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    label <- NULL
+    
+    # Make sure the collection object is updated.
+    x <- update_object(object = x)
+    
+    # Read the slot
+    label_table <- slot(x, upd_slot)
+    
+    # Generate the slot
+    if (is.null(label_table)) {
+      x <- .construct_label_table(x = x, upd_slot = upd_slot)
+      
+      # Read the label table
+      label_table <- slot(x, upd_slot)
+    }
+    
+    ## Label update ------------------------------------------------------------
+    if (!is.null(new_label)) {
+      
+      # Check that the length of new_label is not 0
+      if (length(new_label) == 0) {
+        stop("The number of \"new\" labels should be larger than 0.")
+      }
+      
+      # Check for duplicates in new_label
+      if (anyDuplicated(new_label)) {
+        warning("The \"new\" labels contain duplicate values.")
+      }
+      
+      # Get old labels, if they were not provided.
+      if (is.null(old_label)) {
+        
+        # Check if we can safely assume that the new labels are matching 
+        if (length(new_label) != nrow(label_table)) {
+          stop(paste0(
+            "If \"old\" is not provided explicitly, \"new\" should have the ",
+            "same length as the currently existing labels."))
+        }
+        
+        # Assume that old is the currently known label
+        old_label <- label_table$label
+      }
+      
+      # Check for duplicates in old_label
+      if (anyDuplicated(old_label)) {
+        stop("The provided \"old\" labels contain duplicate values.")
+      }
+      
+      # Check that length of new_label and old_label are the same
+      if (length(new_label) != length(old_label)) {
+        stop("The same number of \"old\" and \"new\" labels should be provided.")
+      }
+      
+      # Check if all old_label entries are actually existing labels.
+      unrecognised_labels <- old_label[!old_label %in% label_table$label]
+      if (length(unrecognised_labels) > 0) {
+        stop(paste0(
+          "The following old labels were not found: ",
+          paste_s(unrecognised_labels)))
+      }
+      
+      # Generate a data.table using old_label and new_label
+      replacement_table <- data.table::data.table(
+        "label" = old_label,
+        "new_label" = new_label)
+      
+      # Merge both tables
+      label_table <- merge(
+        x = label_table,
+        y = replacement_table,
+        by = "label",
+        all.x = TRUE)
+      
+      # Copy old labels to the new_label column for labels that were not
+      # provided previously
+      label_table[is.na(new_label), "new_label" := label]
+      
+      # Rename colums
+      data.table::setnames(
+        x = label_table,
+        old = c("label", "new_label"),
+        new = c("old_label", "label"))
+      
+      # Drop the "old_label" column as it is no longer required
+      label_table[, "old_label" := NULL]
+    }
+    
+    ## Label order update ------------------------------------------------------
+    if (!is.null(new_order)) {
+      # Update label order based on new_order
+      
+      # Check that new_order has the same length as the label_table
+      if (length(new_order) != length(unique(label_table$label))) {
+        stop("\"order\" should match the number of labels.")
+      }
+      
+      # Check that there are no duplicates in new_order.
+      if (anyDuplicated(new_order)) {
+        warning("\"order\" contains duplicate entries.")
+      }
+      
+      # Check that new_order has the same class the label.
+      if (!is_any(new_order, class(label_table$label))) {
+        stop(paste0(
+          "\"order should have the same class as the label, i.e. ",
+          paste(class(label_table$label), collapse = " or "), "."))
+      }
+      
+      # Check that there are no elements of new_order that do not appear as a label
+      unrecognised_labels <- new_order[!new_order %in% label_table$label]
+      if (length(unrecognised_labels) > 0) {
+        stop(paste0(
+          "The following labels were not found for ordering: ",
+          paste_s(unrecognised_labels)))
+      }
+      
+      # Find the order by matching the label column in the label table with the
+      # provided labels in new_order
+      new_label_order <- match(
+        label_table$label,
+        new_order)
+      
+      # Update the label order
+      label_table[, "label_order" := new_label_order]
+    }
+    
+    # Insert the updated label table into its slot
+    slot(x, upd_slot) <- label_table
+    
+    # Return the input object
+    return(x)
+  }
+)
+
+
+
+# .construct_label_table -------------------------------------------------------
+setMethod(
+  ".construct_label_table",
+  signature(x = "familiarCollection"),
+  function(x, upd_slot) {
+    # Constructs a new label table if required.
+    
+    # Do not generate a new table with labels if it already exists
+    if (!is.null(slot(x, upd_slot))) return(x)
+    
+    if (upd_slot == "data_set_labels") {
+      data <- slot(x, "data_sets")
+      
+    } else if (upd_slot == "learner_labels") {
+      data <- slot(x, "learner")
+      
+    } else if (upd_slot == "fs_method_labels") {
+      data <- slot(x, "fs_method")
+      
+    } else if (upd_slot == "feature_labels") {
+      data <- unique(c(
+        slot(x, "required_features"),
+        x@fs_vimp$vimp_table$name))
+      
+    } else if (upd_slot == "km_group_labels") {
+      data <- unique(c(
+        "low", "moderate", "high",
+        unlist(lapply(x@km_data, function(x) (levels(x@data$risk_group))))))
+      
+    } else if (upd_slot == "class_labels") {
+      data <- get_outcome_class_levels(x)
+      
+    } else {
+      stop("Slot is not available for familiarCollection objects.")
+    }
+    
+    # Add the new label table to the slot
+    slot(x, upd_slot) <- data.table::data.table(
+      "internal" = data,
+      "label" = data,
+      "label_order" = seq_len(length(data)))
+    
+    return(x)
+  }
+)
+
+
+
+# .get_labels ------------------------------------------------------------------
+setMethod(
+  ".get_labels",
+  signature(x = "familiarCollection"),
+  function(
+    x,
+    upd_slot,
+    get_levels = FALSE) {
+    # Get ordered levels (i.e. internal column from the label table) from the
+    # specific slot
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    label_order <- NULL
+    
+    # Make sure the collection object is updated.
+    x <- update_object(object = x)
+    
+    # Determine if the slot has been set.
+    if (is.null(slot(x, upd_slot))) {
+      x <- .construct_label_table(x = x, upd_slot = upd_slot)
+    }
+    
+    # Read the label table
+    label_table <- slot(x, upd_slot)
+    
+    # Order table by label order
+    label_table <- label_table[order(label_order)]
+    
+    if (get_levels) {
+      # Return ordered levels if get_levels is TRUE
+      return(label_table$internal)
+      
+    } else {
+      # Return ordered labels
+      return(label_table$label)
+    }
   }
 )
