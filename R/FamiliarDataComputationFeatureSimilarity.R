@@ -3,7 +3,6 @@
 NULL
 
 # familiarDataElementFeatureSimilarity object ----------------------------------
-
 setClass(
   "familiarDataElementFeatureSimilarity",
   contains = "familiarDataElement",
