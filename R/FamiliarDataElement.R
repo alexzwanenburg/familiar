@@ -9,7 +9,7 @@ NULL
 setMethod(
   "add_data_element_identifier",
   signature(x = "list"),
-  function(x, ...){
+  function(x, ...) {
     # Add identifier to every data element.
     data_elements <- unlist(lapply(x, add_data_element_identifier, ...))
     
@@ -43,7 +43,7 @@ setMethod(
         
         # Find the list of previous identifiers, or create a new one.
         identifier_list <- x@identifiers
-        if(is.null(identifier_list)) identifier_list <- list()
+        if (is.null(identifier_list)) identifier_list <- list()
         
         # Add value to identifier list.
         identifier_list[[identifier_name]] <- value
@@ -66,7 +66,7 @@ setMethod(
 setMethod(
   "add_data_element_identifier",
   signature(x = "ANY"),
-  function(x, ...){
+  function(x, ...) {
     return(NULL)
   }
 )
@@ -138,7 +138,7 @@ setMethod(
   signature(x = "familiarDataElement"),
   function(x, ...) {
     
-    return(add_data_element_bootstrap(x=list(x), ...))
+    return(add_data_element_bootstrap(x = list(x), ...))
   }
 )
 
@@ -153,7 +153,7 @@ setMethod(
     identifier, 
     as_grouping_column = TRUE) {
     
-    if(length(identifier) == 0) {
+    if (length(identifier) == 0) {
       ..error_reached_unreachable_code(
         ".identifier_as_data_attribute: Cannot pass an empty identifier.")
     }
@@ -224,11 +224,11 @@ setMethod(
   function(x, drop_identiers = NULL, ...) {
     
     # Check that that the list is not empty.
-    if(is_empty(x)) return(NULL)
+    if (is_empty(x)) return(NULL)
     
     # Check for empty elements.
     empty_elements <- sapply(x, is_empty)
-    if(all(empty_elements)) return(NULL)
+    if (all(empty_elements)) return(NULL)
     
     # Iterate over list.
     id_table <- mapply(
@@ -300,7 +300,7 @@ setMethod(
     }
     
     # Add list identifier.
-    if(!ignore_list_identifier) {
+    if (!ignore_list_identifier) {
       id_list <- c(id_list, "list_id" = ii)
     }
     
@@ -314,7 +314,7 @@ setMethod(
 setMethod(
   "identify_element_sets",
   signature(x = "NULL"),
-  function(x, ignore_estimation_type=FALSE, ...) {
+  function(x, ignore_estimation_type = FALSE, ...) {
     return(NULL)
   }
 )
@@ -339,7 +339,7 @@ setMethod(
     if (!is.list(x)) x <- list(x)
     
     # Check that at least one of the data elements in the list is not empty.
-    if(all(sapply(x, is_empty))) return(NULL)
+    if (all(sapply(x, is_empty))) return(NULL)
     
     # Create return list for data elements.
     data_element <- list()
@@ -443,7 +443,7 @@ setMethod(
         # Set data attribute.
         prototype_data_element@data <- data_attribute
         
-      } else if(any_is_list) {
+      } else if (any_is_list) {
         
         # Data attribute contains data.table.
         element_names <- unique(unlist(lapply(
@@ -499,7 +499,7 @@ setMethod(
 setMethod(
   "merge_data_elements",
   signature(x = "NULL"),
-  function(x, ...){
+  function(x, ...) {
     return(NULL)
   }
 )
@@ -560,22 +560,22 @@ setMethod(
     # Collect data elements.
     collected_data_elements <- slot(x, name = data_slot)
     
-    if(is_empty(collected_data_elements)) return(NULL)
+    if (is_empty(collected_data_elements)) return(NULL)
     
     # Add elements
-    if("data_set" %in% identifiers){
+    if ("data_set" %in% identifiers) {
       collected_data_elements <- add_data_element_identifier(
         x = collected_data_elements,
         data_set = x@name)
     }
     
-    if("fs_method" %in% identifiers){
+    if ("fs_method" %in% identifiers) {
       collected_data_elements <- add_data_element_identifier(
         x = collected_data_elements,
         fs_method = x@fs_method)
     }
     
-    if("learner" %in% identifiers){
+    if ("learner" %in% identifiers) {
       collected_data_elements <- add_data_element_identifier(
         x = collected_data_elements,
         learner = x@learner)
@@ -605,7 +605,7 @@ setMethod(
     ...) {
     
     # Obtain the data elements from the attribute slot indicated by data_slot.
-    if (!is.null(data_slot)) data_elements <- slot(x, name=data_slot)
+    if (!is.null(data_slot)) data_elements <- slot(x, name = data_slot)
     
     # Check that the list is not empty.
     if (is_empty(data_elements)) return(NULL)
@@ -688,7 +688,7 @@ setMethod(
 setMethod(
   ".export",
   signature(x = "familiarDataElement"),
-  function(x, x_list, aggregate_results=FALSE, ...) {
+  function(x, x_list, aggregate_results = FALSE, ...) {
     
     if (aggregate_results) {
       x_list <- .compute_data_element_estimates(x_list)
@@ -746,18 +746,18 @@ setMethod(
     object = "familiarEnsemble",
     proto_data_element = "familiarDataElement"),
   function(
-    cl=NULL,
+    cl = NULL,
     FUN,
     object,
     proto_data_element,
     aggregate_results,
     has_internal_bootstrap,
     ...,
-    message_indent=0L,
-    verbose=TRUE) {
+    message_indent = 0L,
+    verbose = TRUE) {
     
     # Check that any models were trained.
-    if(!model_is_trained(object)) return(NULL)
+    if (!model_is_trained(object)) return(NULL)
     
     # Determine the number of instances we need to find the estimates.
     if (proto_data_element@estimation_type == "point") {
@@ -786,7 +786,7 @@ setMethod(
       # The required number of instances cannot be created from models alone.
       
       # Add a message
-      if (verbose){
+      if (verbose) {
         message(paste0(
           "extract_dispatcher,familiarEnsemble,familiarDataElement: ",
           "too few models to compute confidence intervals."))
@@ -1000,7 +1000,7 @@ setMethod(
     n_models,
     parallel_external,
     ...,
-    verbose = FALSE){
+    verbose = FALSE) {
   
   # Add ensemble model name.
   proto_data_element <- add_model_name(proto_data_element, object = object)
@@ -1014,7 +1014,7 @@ setMethod(
         from = 0, 
         by = n_bootstraps,
         length.out = n_models),
-      MoreArgs=c(
+      MoreArgs = c(
         list(
           "cl" = NULL,
           "proto_data_element" = proto_data_element,
@@ -1100,7 +1100,7 @@ setMethod(
   # Set flag for interval aggregation.
   aggregate_internal <- aggregate_results && n_instances == n_bootstraps && n_bootstraps > 0
   
-  if(parallel_external){
+  if (parallel_external) {
     x <- fam_mapply(
       cl = cl,
       FUN = FUN,
@@ -1133,7 +1133,7 @@ setMethod(
         by = n_bootstraps,
         length.out = n_models),
       proto_data_element = proto_data_element,
-      MoreArgs=c(
+      MoreArgs = c(
         list(
           "cl" = cl,
           "aggregate_results" = aggregate_internal,
@@ -1202,7 +1202,7 @@ setMethod(
 setMethod(
   ".add_point_estimate_from_elements",
   signature(x = "familiarDataElement"),
-  function(x, x_list=NULL, ...) {
+  function(x, x_list = NULL, ...) {
     
     # It might be that x was only used to direct to this method.
     if (!is.null(x_list)) x <- x_list
@@ -1229,7 +1229,7 @@ setMethod(
       any_point_estimate <- any(sapply(
         x[current_group_data_element_ids],
         function(x) (x@estimation_type == "point")))
-      if(any_point_estimate) next
+      if (any_point_estimate) next
       
       # Set conversion back to list, in case this is required.
       data_as_list <- FALSE
@@ -1245,7 +1245,7 @@ setMethod(
         x[current_group_data_element_ids],
         function(x) (is_empty(x@data))))
       
-      if(all_data_empty){
+      if (all_data_empty) {
         # Add empty element to data_elements and skip to the next
         data_elements <- c(data_elements, list(prototype_data_element))
         
@@ -1260,7 +1260,7 @@ setMethod(
         x[current_group_data_element_ids],
         function(x) (rlang::is_bare_list(x@data))))
       
-      if (any_is_data_table){
+      if (any_is_data_table) {
         # Data attribute contains data.table.
         data <- lapply(
           x[current_group_data_element_ids],
@@ -1294,7 +1294,7 @@ setMethod(
       }
       
       # Convert to list again, if necessary.
-      if(data_as_list) data <- as.list(data)
+      if (data_as_list) data <- as.list(data)
       
       # Update data attribute with point estimate.
       prototype_data_element@data <- data
@@ -1363,7 +1363,7 @@ setMethod(
 setMethod(
   ".compute_data_element_estimates",
   signature(x = "familiarDataElement"),
-  function(x, x_list=NULL, ...) {
+  function(x, x_list = NULL, ...) {
     
     # It might be that x was only used to direct to this method.
     if (!is.null(x_list)) x <- x_list
@@ -1377,7 +1377,7 @@ setMethod(
       data_elements,
       function(x) (x@is_aggregated))
     
-    if(all(is_aggregated)) return(data_elements)
+    if (all(is_aggregated)) return(data_elements)
     
     # Continue with unaggregated data elements.
     unaggregated_data_elements <- data_elements[!is_aggregated]
@@ -1401,7 +1401,7 @@ setMethod(
       
       # Compute estimates.
       aggregated_data_element <- ..compute_data_element_estimates(
-        x=current_data_elements, ...)
+        x = current_data_elements, ...)
       
       if (is.null(aggregated_data_element)) next
       
@@ -1423,7 +1423,7 @@ setMethod(
 setMethod(
   ".compute_data_element_estimates",
   signature(x = "NULL"),
-  function(x, ...){
+  function(x, ...) {
     return(NULL)
   }
 )
@@ -1451,11 +1451,11 @@ setMethod(
 )
 
 
-## ..compute_data_elements_estimates (familiarDataElement) ---------------------
+## ..compute_data_element_estimates (familiarDataElement) ----------------------
 setMethod(
   "..compute_data_element_estimates",
   signature(x = "familiarDataElement"),
-  function(x, x_list = NULL, ...){
+  function(x, x_list = NULL, ...) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     n_group <- NULL
@@ -1467,35 +1467,47 @@ setMethod(
     # Identify the estimation types of the current data elements.
     estimation_type <- sapply(x, function(x) (x@estimation_type))
     
-    if (any(sapply(x, is_empty))){
+    if (any(sapply(x, is_empty))) {
       # Don't aggregate empty elements.
       y <- x[[1]]
       
-    } else if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
+    } else if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
       
       # Check the number of elements.
-      if(length(estimation_type) != 2L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly two data elements are required for bootstrap confidence intervals.")
-      if(!any(estimation_type %in% c("point"))) ..error_reached_unreachable_code(".compute_data_element_estimates: a point estimate is required for bootstrap confidence intervals.")
+      if (length(estimation_type) != 2L) {
+        ..error_reached_unreachable_code(paste0(
+          ".compute_data_element_estimates: exactly two data elements are ",
+          "required for bootstrap confidence intervals."))
+      }
+      
+      if (!any(estimation_type %in% c("point"))) {
+        ..error_reached_unreachable_code(paste0(
+          ".compute_data_element_estimates: a point estimate is required for ",
+          "bootstrap confidence intervals."))
+      }
       
       # Select point estimate.
-      point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
-      point_values[, "estimation_type":="point"]
+      point_values <- data.table::as.data.table(
+        x[estimation_type == "point"][[1]]@data)
+      point_values[, "estimation_type" := "point"]
       
       # Select bootstrap values
-      bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
-      bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
+      bootstrap_values <- data.table::as.data.table(
+        x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
+      bootstrap_values[, "estimation_type" := "bootstrap_confidence_interval"]
       
       # Combine to single table.
       data <- data.table::rbindlist(
         list(point_values, bootstrap_values),
-        use.names=TRUE,
-        fill=TRUE)
+        use.names = TRUE,
+        fill = TRUE)
       
-      if(length(x[[1]]@grouping_column > 0)){
+      if (length(x[[1]]@grouping_column > 0)) {
         
-        # Split table by grouping column and compute estimate and confidence intervals.
+        # Split table by grouping column and compute estimate and confidence
+        # intervals.
         data <- lapply(
-          split(data, by=x[[1]]@grouping_column, drop=TRUE),
+          split(data, by = x[[1]]@grouping_column, drop = TRUE),
           ..compute_bootstrap_confidence_estimate,
           confidence_level = x[[1]]@confidence_level,
           bootstrap_ci_method = x[[1]]@bootstrap_ci_method,
@@ -1505,8 +1517,8 @@ setMethod(
         # Combine to single table
         data <- data.table::rbindlist(
           data,
-          use.names=TRUE,
-          fill=TRUE)
+          use.names = TRUE,
+          fill = TRUE)
         
       } else {
         # Compute in absence of grouping columns.
@@ -1526,19 +1538,23 @@ setMethod(
         names(y@data),
         y@grouping_column)
       
-    } else if(any(estimation_type %in% c("bc", "bias_correction"))){
+    } else if (any(estimation_type %in% c("bc", "bias_correction"))) {
       
       # Check the number of elements.
-      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
+      if (length(estimation_type) != 1L) {
+        ..error_reached_unreachable_code(paste0(
+          ".compute_data_element_estimates: exactly one data element is required ",
+          "for bias corrected estimates."))
+      }
       
       # Select values.
       bootstrap_values <- data.table::as.data.table(
         x[estimation_type %in% c("bc", "bias_correction")][[1]]@data)
       
-      if(length(x[[1]]@grouping_column > 0)){
+      if (length(x[[1]]@grouping_column > 0)) {
         # Split table by grouping column and compute bias corrected estimate.
         data <- lapply(
-          split(bootstrap_values, by=x[[1]]@grouping_column, drop=TRUE),
+          split(bootstrap_values, by = x[[1]]@grouping_column, drop = TRUE),
           ..compute_bias_corrected_estimate,
           value_column = x[[1]]@value_column,
           grouping_column = x[[1]]@grouping_column)
@@ -1546,8 +1562,8 @@ setMethod(
         # Combine to single table
         data <- data.table::rbindlist(
           data,
-          use.names=TRUE,
-          fill=TRUE)
+          use.names = TRUE,
+          fill = TRUE)
         
       } else {
         # Compute in absence of grouping columns.
@@ -1565,18 +1581,22 @@ setMethod(
         names(y@data),
         y@grouping_column)
       
-    } else if(any(estimation_type %in% c("point"))){
-      # This follows the same procedure as for bias-corrected estimates.
-      # For ensemble and hybrid detail levels a single value needs to be
-      # generated. However, in the case of hybrid detail level, a point
-      # estimate is created for each model, and requires aggregation.
+    } else if (any(estimation_type %in% c("point"))) {
+      # This follows the same procedure as for bias-corrected estimates. For
+      # ensemble and hybrid detail levels a single value needs to be generated.
+      # However, in the case of hybrid detail level, a point estimate is created
+      # for each model, and requires aggregation.
       
       # Check the number of elements.
-      if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
+      if (length(estimation_type) != 1L) {
+        ..error_reached_unreachable_code(paste0(
+          ".compute_data_element_estimates: exactly one data element is ",
+          "required for point estimates."))
+      }
       
       # Find grouping columns.
       grouping_columns <- x[[1]]@grouping_column
-      if(length(grouping_columns) == 0) grouping_columns <- NULL
+      if (length(grouping_columns) == 0) grouping_columns <- NULL
       
       # Find value columns.
       value_columns <- x[[1]]@value_column
@@ -1585,28 +1605,25 @@ setMethod(
       bootstrap_values <- data.table::as.data.table(
         x[estimation_type %in% c("point")][[1]]@data)[, mget(c(grouping_columns, value_columns))]
       
-      # Refine a bit so that only those entries with multiple values for
-      # the same grouping columns are aggregated. This can save a lot of
-      # time, because the point estimate typically is determined only on
-      # a single run.
-      bootstrap_values[, "n_group":=.N, by=grouping_columns]
+      # Refine a bit so that only those entries with multiple values for the
+      # same grouping columns are aggregated. This can save a lot of time,
+      # because the point estimate typically is determined only on a single run.
+      bootstrap_values[, "n_group" := .N, by = grouping_columns]
       
       # Select data based on single/multiple entries. Keep only relevant
       # columns, namely grouping and value columns, to ensure that both
-      # unique_values and bootstrap_values will be processed the same
-      # way.
+      # unique_values and bootstrap_values will be processed the same way.
       unique_values <- bootstrap_values[n_group == 1, mget(c(grouping_columns, value_columns))]
       bootstrap_values <- bootstrap_values[n_group > 1, mget(c(grouping_columns, value_columns))]
       
-      if(is_empty(bootstrap_values)){
+      if (is_empty(bootstrap_values)) {
         # Data are unique values.
         data <- unique_values
         
-      } else if(length(grouping_columns) > 0){
-        # Split table by grouping column and compute bias corrected
-        # estimate.
+      } else if (length(grouping_columns) > 0) {
+        # Split table by grouping column and compute bias corrected estimate.
         data <- lapply(
-          split(bootstrap_values, by=grouping_columns, drop=TRUE),
+          split(bootstrap_values, by = grouping_columns, drop = TRUE),
           ..compute_bias_corrected_estimate,
           value_column = value_columns,
           grouping_column = grouping_columns)
@@ -1614,8 +1631,8 @@ setMethod(
         # Combine to single table
         data <- data.table::rbindlist(
           c(list(unique_values), data),
-          use.names=TRUE,
-          fill=TRUE)
+          use.names = TRUE,
+          fill = TRUE)
         
       } else {
         # Compute in absence of grouping columns.
@@ -1626,8 +1643,8 @@ setMethod(
         # Combine to single table
         data <- data.table::rbindlist(
           c(list(unique_values), list(data)),
-          use.names=TRUE,
-          fill=TRUE)
+          use.names = TRUE,
+          fill = TRUE)
       }
       
       # Update the data attribute.
@@ -1650,15 +1667,23 @@ setMethod(
 )
 
 
-##### ..compute_data_element_estimates (NULL) ##################################
-setMethod("..compute_data_element_estimates", signature(x="NULL"),
-          function(x, ...){
-            return(NULL)
-          })
+## ..compute_data_element_estimates (NULL) -------------------------------------
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x = "NULL"),
+  function(x, ...) {
+    return(NULL)
+  }
+)
 
 
 
-..compute_bootstrap_confidence_estimate <- function(x, value_column, confidence_level, bootstrap_ci_method, grouping_column=NULL){
+..compute_bootstrap_confidence_estimate <- function(
+    x,
+    value_column, 
+    confidence_level,
+    bootstrap_ci_method,
+    grouping_column = NULL) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   estimation_type <- NULL
@@ -1669,32 +1694,34 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
   # Fill value list.
   value_list <- list()
   value_column_names <- character(0L)
-  for(ii in seq_along(value_column)){
+  for (ii in seq_along(value_column)) {
     # Compute the estimate and its bootstrap confidence interval.
-    temp_estimate <- ..bootstrap_ci(x = x[estimation_type == "bootstrap_confidence_interval"][[value_column[ii]]],
-                                    x_0 = x[estimation_type == "point"][[value_column[ii]]],
-                                    confidence_level = confidence_level,
-                                    bootstrap_ci_method = bootstrap_ci_method)
+    temp_estimate <- ..bootstrap_ci(
+      x = x[estimation_type == "bootstrap_confidence_interval"][[value_column[ii]]],
+      x_0 = x[estimation_type == "point"][[value_column[ii]]],
+      confidence_level = confidence_level,
+      bootstrap_ci_method = bootstrap_ci_method)
     
     # Determine column names that should be assigned.
-    if(length(temp_estimate) == 3){
+    if (length(temp_estimate) == 3) {
       
-      if(length(value_column) == 1){
-        value_column_names <- c(value_column_names,
-                                value_column[ii],
-                                "ci_low",
-                                "ci_up")
+      if (length(value_column) == 1) {
+        value_column_names <- c(
+          value_column_names,
+          value_column[ii], "ci_low", "ci_up")
         
       } else {
-        value_column_names <- c(value_column_names,
-                                value_column[ii],
-                                paste0(value_column[ii], "_ci_low"),
-                                paste0(value_column[ii], "_ci_up"))
+        value_column_names <- c(
+          value_column_names,
+          value_column[ii],
+          paste0(value_column[ii], "_ci_low"),
+          paste0(value_column[ii], "_ci_up"))
       }
       
     } else {
-      value_column_names <- c(value_column_names,
-                              value_column[ii])
+      value_column_names <- c(
+        value_column_names,
+        value_column[ii])
     }
     
     # Set to value list
@@ -1702,16 +1729,17 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
   }
 
   # Flatten list and then re-list
-  value_list <- unlist(value_list, recursive=FALSE)
-  if(!is.list(value_list)) value_list <- as.list(value_list)
+  value_list <- unlist(value_list, recursive = FALSE)
+  if (!is.list(value_list)) value_list <- as.list(value_list)
   
   # Assign to table.
-  ci_estimate[, c(value_column_names):=value_list]
+  ci_estimate[, c(value_column_names) := value_list]
   
   # Add in grouping columns, if any.
-  if(length(grouping_column) > 0){
-    ci_estimate <- cbind(head(x[, mget(grouping_column)], n=1L),
-                         ci_estimate)
+  if (length(grouping_column) > 0) {
+    ci_estimate <- cbind(
+      head(x[, mget(grouping_column)], n = 1L),
+      ci_estimate)
   }
   
   return(ci_estimate)
@@ -1719,24 +1747,28 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
 
 
 
-..compute_bias_corrected_estimate <- function(x, value_column, grouping_column=NULL){
+..compute_bias_corrected_estimate <- function(
+    x,
+    value_column,
+    grouping_column = NULL) {
   
   # Construct NULL table.
   bc_estimate <- data.table::data.table()
   
   # Fill value list.
   value_list <- list()
-  for(ii in seq_along(value_column)){
+  for (ii in seq_along(value_column)) {
     value_list[[ii]] <- ..bootstrap_bias_correction(x = x[[value_column[ii]]])$median
   }
   
   # Assign to table.
-  bc_estimate[, c(value_column):=value_list]
+  bc_estimate[, c(value_column) := value_list]
   
   # Add in grouping columns, if any.
-  if(length(grouping_column) > 0){
-    bc_estimate <- cbind(head(x[, mget(grouping_column)], n=1L),
-                         bc_estimate)
+  if (length(grouping_column) > 0) {
+    bc_estimate <- cbind(
+      head(x[, mget(grouping_column)], n = 1L),
+      bc_estimate)
   }
   
   return(bc_estimate)
@@ -1744,53 +1776,62 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
 
 
 
-..message_dispatcher_details <- function(estimation_type,
-                                         detail_level,
-                                         n_bootstraps,
-                                         n_instances,
-                                         n_models,
-                                         n_nodes,
-                                         parallel_external,
-                                         message_indent,
-                                         verbose){
+..message_dispatcher_details <- function(
+    estimation_type,
+    detail_level,
+    n_bootstraps,
+    n_instances,
+    n_models,
+    n_nodes,
+    parallel_external,
+    message_indent,
+    verbose) {
   
   # Skip if the dispatcher is not verbose.
-  if(!verbose) return(NULL)
+  if (!verbose) return(NULL)
   
   # Set the estimator string.
-  estimator_str <- switch(estimation_type,
-                          "point" = "point estimate",
-                          "bc" = "bias-corrected estimate",
-                          "bias_correction" = "bias-corrected estimate",
-                          "bci" = "bias-corrected estimate with confidence interval",
-                          "bootstrap_confidence_interval" = "bias-corrected estimate with confidence interval")
+  estimator_str <- switch(
+    estimation_type,
+    "point" = "point estimate",
+    "bc" = "bias-corrected estimate",
+    "bias_correction" = "bias-corrected estimate",
+    "bci" = "bias-corrected estimate with confidence interval",
+    "bootstrap_confidence_interval" = "bias-corrected estimate with confidence interval")
   
   # Set the detail level string.
-  detail_level_str <- switch(detail_level,
-                             "ensemble" = "the ensemble model as a whole. ",
-                             "hybrid" = paste0("the ensemble model from the ",
-                                               ifelse(n_models > 1,
-                                                      paste0(n_models, " underlying models. "),
-                                                      paste0("single underlying model. "))),
-                             "model" = paste0(ifelse(n_models > 1,
-                                                     paste0("each of the ", n_models, " models"),
-                                                     paste0("the single model")),
-                                              " in the ensemble. "))
+  detail_level_str <- switch(
+    detail_level,
+    "ensemble" = "the ensemble model as a whole. ",
+    "hybrid" = paste0(
+      "the ensemble model from the ",
+      ifelse(
+        n_models > 1,
+        paste0(n_models, " underlying models. "),
+        paste0("single underlying model. "))),
+    "model" = paste0(
+      ifelse(
+        n_models > 1,
+        paste0("each of the ", n_models, " models"),
+        paste0("the single model")),
+      " in the ensemble. "))
   
   # Bootstraps.
-  if(n_bootstraps > 0L){
-    bootstrap_str <- paste0(n_bootstraps, " bootstrap samples are obtained ",
-                            ifelse(n_models > 1L,
-                                   paste0("for each model (total: ", n_instances, "). "),
-                                   "in total. "))
+  if (n_bootstraps > 0L) {
+    bootstrap_str <- paste0(
+      n_bootstraps, " bootstrap samples are obtained ",
+      ifelse(
+        n_models > 1L,
+        paste0("for each model (total: ", n_instances, "). "),
+        "in total. "))
     
   } else {
     bootstrap_str <- ""
   }
   
   # Parallelisation.
-  if(n_nodes > 1L){
-    if(parallel_external){
+  if (n_nodes > 1L) {
+    if (parallel_external) {
       parallel_str <- paste0("Computation is parallelised over models.")
       
     } else {
@@ -1801,12 +1842,16 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
     parallel_str <- ""
   }
   
-  logger.message(paste0("Computing the ",
-                        estimator_str,
-                        " of the value(s) of interest for ",
-                        detail_level_str,
-                        bootstrap_str,
-                        parallel_str),
-                 indent=message_indent,
-                 verbose=verbose)
+  logger.message(
+    paste0(
+      "Computing the ",
+      estimator_str,
+      " of the value(s) of interest for ",
+      detail_level_str,
+      bootstrap_str,
+      parallel_str),
+    indent = message_indent,
+    verbose = verbose)
+  
+  return(invisible(NULL))
 }
