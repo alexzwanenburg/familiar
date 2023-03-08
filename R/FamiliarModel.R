@@ -1356,11 +1356,12 @@ setMethod(
       selected_features <- fam_sample(
         x = selected_features,
         size = signature_size,
-        replace = FALSE
-      )
+        replace = FALSE)
+      
     } else if (vimp_method %in% .get_available_no_features_vimp_methods()) {
       # No features are selected.
       selected_features <- NULL
+      
     } else {
       # Select signature and any additional features according to rank.
       selected_features <- signature_features
@@ -1368,14 +1369,12 @@ setMethod(
       # Get number remaining available features
       n_allowed_features <- signature_size - length(signature_features)
 
-      # Check that features may be added, and the rank table is not
-      # empty.
-      if (n_allowed_features > 0 & !is_empty(rank_table)) {
+      # Check that features may be added, and the rank table is not empty.
+      if (n_allowed_features > 0 && !is_empty(rank_table)) {
         # Get available features.
         features <- features_after_clustering(
           features = get_available_features(feature_info_list = object),
-          feature_info_list = object
-        )
+          feature_info_list = object)
 
         # Remove signature features, if any, to prevent duplicates.
         features <- setdiff(features, signature_features)
@@ -1387,8 +1386,7 @@ setMethod(
         # Add good features (low rank) to the selection
         selected_features <- c(
           signature_features,
-          head(x = rank_table, n = n_allowed_features)$name
-        )
+          head(x = rank_table, n = n_allowed_features)$name)
       }
     }
 
