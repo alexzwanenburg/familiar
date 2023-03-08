@@ -1,4 +1,4 @@
-#### familiarModel -------------------------------------------------------------
+# familiarModel object ---------------------------------------------------------
 
 #' Familiar model.
 #'
@@ -56,95 +56,91 @@
 #' @export
 
 setClass("familiarModel",
-         slots = list(
-           # Model name.
-           name = "character",
-           # Model container
-           model = "ANY",
-           # Outcome type
-           outcome_type = "character",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Data required for feature pre-processing
-           feature_info = "ANY",
-           # Info related to the columns in the dataset.
-           data_column_info = "ANY",
-           # Hyper-parameters (typically stored in the model as well)
-           hyperparameters = "ANY",
-           # Hyperparameter data, e.g. for visualising the hyperparameter space.
-           hyperparameter_data = "ANY",
-           # Models used for recalibration
-           calibration_model = "ANY",
-           # Model used for novelty detection
-           novelty_detector = "ANY",
-           # Name of learner
-           learner = "character",
-           # Name of feature selection method
-           fs_method = "character",
-           # Required features for complete reconstruction, including
-           # imputation.
-           required_features = "ANY",
-           # Features that are required for the model.
-           model_features = "ANY",
-           # Features that are required for novelty detection.
-           novelty_features = "ANY",
-           # Run table for the current model
-           run_table = "ANY",
-           # Information required to assess model calibrations (e.g. baseline survival)
-           calibration_info = "ANY",
-           # Information required to do perform a Kaplan-Meier analysis using the model
-           km_info = "ANY",
-           # Evaluation settings. This allows default values for external use of
-           # existing models.
-           settings = "ANY",
-           # Flags trimming of the model
-           is_trimmed = "logical",
-           # Restores functions lost due to model trimming, such as coef or
-           # vcov.
-           trimmed_function = "list",
-           # List of warning and error messages encountered during training.
-           messages = "list",
-           # Project identifier for consistency tracking
-           project_id = "ANY",
-           # Package version for backward compatibility
-           familiar_version = "ANY",
-           # Name of the package required to train the learner.
-           package = "ANY",
-           # Version of the learner for reproducibility.
-           package_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           model = NULL,
-           outcome_type = NA_character_,
-           outcome_info = NULL,
-           feature_info = NULL,
-           data_column_info = NULL,
-           hyperparameters = NULL,
-           hyperparameter_data = NULL,
-           calibration_model = NULL,
-           novelty_detector = NULL,
-           learner = NA_character_,
-           fs_method = NA_character_,
-           required_features = NULL,
-           model_features = NULL,
-           novelty_features = NULL,
-           calibration_info = NULL,
-           km_info = NULL,
-           run_table = NULL,
-           settings = NULL,
-           is_trimmed = FALSE,
-           trimmed_function = list(),
-           messages = list(),
-           project_id = NULL,
-           familiar_version = NULL,
-           package = NULL,
-           package_version = NULL
-         )
+  slots = list(
+    # Model name.
+    name = "character",
+    # Model container
+    model = "ANY",
+    # Outcome type
+    outcome_type = "character",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Data required for feature pre-processing
+    feature_info = "ANY",
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Hyper-parameters (typically stored in the model as well)
+    hyperparameters = "ANY",
+    # Hyperparameter data, e.g. for visualising the hyperparameter space.
+    hyperparameter_data = "ANY",
+    # Models used for recalibration
+    calibration_model = "ANY",
+    # Model used for novelty detection
+    novelty_detector = "ANY",
+    # Name of learner
+    learner = "character",
+    # Name of feature selection method
+    fs_method = "character",
+    # Required features for complete reconstruction, including imputation.
+    required_features = "ANY",
+    # Features that are required for the model.
+    model_features = "ANY",
+    # Features that are required for novelty detection.
+    novelty_features = "ANY",
+    # Run table for the current model
+    run_table = "ANY",
+    # Information required to assess model calibrations (e.g. baseline survival)
+    calibration_info = "ANY",
+    # Information required to do perform a Kaplan-Meier analysis using the model
+    km_info = "ANY",
+    # Evaluation settings. This allows default values for external use of
+    # existing models.
+    settings = "ANY",
+    # Flags trimming of the model
+    is_trimmed = "logical",
+    # Restores functions lost due to model trimming, such as coef or vcov.
+    trimmed_function = "list",
+    # List of warning and error messages encountered during training.
+    messages = "list",
+    # Project identifier for consistency tracking
+    project_id = "ANY",
+    # Package version for backward compatibility
+    familiar_version = "ANY",
+    # Name of the package required to train the learner.
+    package = "ANY",
+    # Version of the learner for reproducibility.
+    package_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    model = NULL,
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    feature_info = NULL,
+    data_column_info = NULL,
+    hyperparameters = NULL,
+    hyperparameter_data = NULL,
+    calibration_model = NULL,
+    novelty_detector = NULL,
+    learner = NA_character_,
+    fs_method = NA_character_,
+    required_features = NULL,
+    model_features = NULL,
+    novelty_features = NULL,
+    calibration_info = NULL,
+    km_info = NULL,
+    run_table = NULL,
+    settings = NULL,
+    is_trimmed = FALSE,
+    trimmed_function = list(),
+    messages = list(),
+    project_id = NULL,
+    familiar_version = NULL,
+    package = NULL,
+    package_version = NULL)
 )
 
 
-#### familiarEnsemble ----------------------------------------------------------
+# familiarEnsemble object ------------------------------------------------------
 
 #' Ensemble of familiar models.
 #'
@@ -168,8 +164,8 @@ setClass("familiarModel",
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The combined set of features that is used to train the
 #'   models in the ensemble,
-#' @slot novelty_features The combined set of features that is used to train
-#'   all novelty detectors in the ensemble.
+#' @slot novelty_features The combined set of features that is used to train all
+#'   novelty detectors in the ensemble.
 #' @slot run_table Run table for the data used to train the ensemble. Used
 #'   internally.
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
@@ -181,84 +177,79 @@ setClass("familiarModel",
 #' @slot settings A copy of the evaluation configuration parameters used at
 #'   model creation. These are used as default parameters when evaluating the
 #'   ensemble to create a familiarData object.
-#' @slot project_id Identifier of the project that generated the
-#'   underlying familiarModel object(s).
+#' @slot project_id Identifier of the project that generated the underlying
+#'   familiarModel object(s).
 #' @slot familiar_version Version of the familiar package.
 #'
 #' @export
 
 setClass("familiarEnsemble",
-         slots = list(
-           # Ensemble name
-           name = "character",
-           # Model container.
-           model_list = "ANY",
-           # Model outcome type.
-           outcome_type = "character",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Info related to the columns in the dataset.
-           data_column_info = "ANY",
-           # Name of learner.
-           learner = "character",
-           # Name of feature selection method.
-           fs_method = "character",
-           # Data required for feature pre-processing.
-           feature_info = "ANY",
-           # Required features for complete reconstruction, including
-           # imputation.
-           required_features = "ANY",
-           # Features that are required for reconstruction, without imputation
-           # (i.e. features that are in the signature directly or as part of a
-           # cluster)
-           model_features = "ANY",
-           # Features that are required for novelty detection.
-           novelty_features = "ANY",
-           # Set of run tables for the current ensemble. This is only required
-           # for processing internal data.
-           run_table = "ANY",
-           # Information required to assess model calibrations (e.g. baseline
-           # survival)
-           calibration_info = "ANY",
-           # Path to the model directory. Required for auto-detaching.
-           model_dir_path = "character",
-           # Flag that signals auto-detaching. This means that models are loaded
-           # and discarded one-by-one. This saves memory, but comes at the cost
-           # of IO overhead. Moreover, its not possible if the models are not
-           # stored on drive in the first place.
-           auto_detach = "logical",
-           # Evaluation settings. This allows default values for external use of
-           # existing models.
-           settings = "ANY",
-           # Project identifier for consistency tracking.
-           project_id = "ANY",
-           # Package version for backward compatibility checks.
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           model_list = NULL,
-           outcome_type = NA_character_,
-           outcome_info = NULL,
-           data_column_info = NULL,
-           learner = NA_character_,
-           fs_method = NA_character_,
-           feature_info = NULL,
-           required_features = NULL,
-           model_features = NULL,
-           novelty_features = NULL,
-           run_table = NULL,
-           calibration_info = NULL,
-           model_dir_path = NA_character_,
-           auto_detach = FALSE,
-           settings = NULL,
-           project_id = NULL,
-           familiar_version = NULL
-         )
+  slots = list(
+    # Ensemble name
+    name = "character",
+    # Model container.
+    model_list = "ANY",
+    # Model outcome type.
+    outcome_type = "character",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Name of learner.
+    learner = "character",
+    # Name of feature selection method.
+    fs_method = "character",
+    # Data required for feature pre-processing.
+    feature_info = "ANY",
+    # Required features for complete reconstruction, including imputation.
+    required_features = "ANY",
+    # Features that are required for reconstruction, without imputation (i.e.
+    # features that are in the signature directly or as part of a cluster)
+    model_features = "ANY",
+    # Features that are required for novelty detection.
+    novelty_features = "ANY",
+    # Set of run tables for the current ensemble. This is only required for
+    # processing internal data.
+    run_table = "ANY",
+    # Information required to assess model calibrations (e.g. baseline survival)
+    calibration_info = "ANY",
+    # Path to the model directory. Required for auto-detaching.
+    model_dir_path = "character",
+    # Flag that signals auto-detaching. This means that models are loaded and
+    # discarded one-by-one. This saves memory, but comes at the cost of IO
+    # overhead. Moreover, its not possible if the models are not stored on drive
+    # in the first place.
+    auto_detach = "logical",
+    # Evaluation settings. This allows default values for external use of
+    # existing models.
+    settings = "ANY",
+    # Project identifier for consistency tracking.
+    project_id = "ANY",
+    # Package version for backward compatibility checks.
+    familiar_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    model_list = NULL,
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    data_column_info = NULL,
+    learner = NA_character_,
+    fs_method = NA_character_,
+    feature_info = NULL,
+    required_features = NULL,
+    model_features = NULL,
+    novelty_features = NULL,
+    run_table = NULL,
+    calibration_info = NULL,
+    model_dir_path = NA_character_,
+    auto_detach = FALSE,
+    settings = NULL,
+    project_id = NULL,
+    familiar_version = NULL)
 )
 
 
-#### familiarData --------------------------------------------------------------
+# familiarData object ----------------------------------------------------------
 
 #' Dataset obtained after evaluating models on a dataset.
 #'
@@ -322,123 +313,120 @@ setClass("familiarEnsemble",
 #' @slot project_id Identifier of the project that generated the familiarData
 #'   object.
 #' @slot familiar_version Version of the familiar package.
-#' 
-#' familiarData objects contain information obtained by evaluating a single
-#' model or single ensemble of models on a dataset.
+#'
+#'   familiarData objects contain information obtained by evaluating a single
+#'   model or single ensemble of models on a dataset.
 #'
 #' @export
 
 setClass("familiarData",
-         slots = list(
-           # Name of the familiar data set
-           name = "character",
-           # Model outcome type
-           outcome_type = "character",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Feature selection variable importance
-           fs_vimp = "ANY",
-           # Model variable importance
-           model_vimp = "ANY",
-           # Permutation variable importance
-           permutation_vimp = "ANY",
-           # Hyper-parameters
-           hyperparameters = "ANY",
-           # Hyperparameter data, e.g. for visualising the hyperparameter space.
-           hyperparameter_data = "ANY",
-           # Required features to update the data
-           required_features = "ANY",
-           # Features that are required for reconstruction, without imputation
-           # (i.e. features that are in the signature directly or as part of a
-           # cluster)
-           model_features = "ANY",
-           # Name of learner
-           learner = "character",
-           # Name of feature selection method
-           fs_method = "character",
-           # Run table for the current data
-           pooling_table = "ANY",
-           # Model predictions for later reference
-           prediction_data = "ANY",
-           # Confusion matrix for categorical outcomes
-           confusion_matrix = "ANY",
-           # Data for decision curve analysis
-           decision_curve_data = "ANY",
-           # Calibration information, e.g. baseline survival
-           calibration_info = "ANY",
-           # Calibration test information
-           calibration_data = "ANY",
-           # Model performance metrics
-           model_performance = "ANY",
-           # Kaplan-Meier cut-offs
-           km_info = "ANY",
-           # Kaplan-Meier data
-           km_data = "ANY",
-           # AUC data (for plotting)
-           auc_data = "ANY",
-           # Information concerning the univariate importance of features
-           univariate_analysis = "ANY",
-           # Information concerning feature expression for individual samples
-           feature_expressions = "ANY",
-           # Information concerning mutual correlations between features
-           feature_similarity = "ANY",
-           # Information concerning similarity between samples.
-           sample_similarity = "ANY",
-           # Information on individual conditional expectation
-           ice_data = "ANY",
-           # Flag to signal whether the data concerns validation data (TRUE) or
-           # development data (FALSE)
-           is_validation = "logical",
-           # Name of the model ensemble used to generate this data
-           generating_ensemble = "character",
-           # Project identifier
-           project_id = "ANY",
-           # Package version for backward compatibility
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           outcome_type = NA_character_,
-           outcome_info = NULL,
-           fs_vimp = NULL,
-           model_vimp = NULL,
-           permutation_vimp = NULL,
-           hyperparameters = NULL,
-           hyperparameter_data = NULL,
-           required_features = NULL,
-           model_features = NULL,
-           learner = NA_character_,
-           fs_method = NA_character_,
-           pooling_table = NULL,
-           prediction_data = NULL,
-           confusion_matrix = NULL,
-           decision_curve_data = NULL,
-           calibration_info = NULL,
-           calibration_data = NULL,
-           model_performance = NULL,
-           km_info = NULL,
-           km_data = NULL,
-           auc_data = NULL,
-           univariate_analysis = NULL,
-           feature_expressions = NULL,
-           feature_similarity = NULL,
-           sample_similarity = NULL,
-           ice_data = NULL,
-           is_validation = FALSE,
-           generating_ensemble = character(0),
-           project_id = NULL,
-           familiar_version = NULL
-         )
+  slots = list(
+    # Name of the familiar data set
+    name = "character",
+    # Model outcome type
+    outcome_type = "character",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Feature selection variable importance
+    fs_vimp = "ANY",
+    # Model variable importance
+    model_vimp = "ANY",
+    # Permutation variable importance
+    permutation_vimp = "ANY",
+    # Hyper-parameters
+    hyperparameters = "ANY",
+    # Hyperparameter data, e.g. for visualising the hyperparameter space.
+    hyperparameter_data = "ANY",
+    # Required features to update the data
+    required_features = "ANY",
+    # Features that are required for reconstruction, without imputation (i.e.
+    # features that are in the signature directly or as part of a cluster)
+    model_features = "ANY",
+    # Name of learner
+    learner = "character",
+    # Name of feature selection method
+    fs_method = "character",
+    # Run table for the current data
+    pooling_table = "ANY",
+    # Model predictions for later reference
+    prediction_data = "ANY",
+    # Confusion matrix for categorical outcomes
+    confusion_matrix = "ANY",
+    # Data for decision curve analysis
+    decision_curve_data = "ANY",
+    # Calibration information, e.g. baseline survival
+    calibration_info = "ANY",
+    # Calibration test information
+    calibration_data = "ANY",
+    # Model performance metrics
+    model_performance = "ANY",
+    # Kaplan-Meier cut-offs
+    km_info = "ANY",
+    # Kaplan-Meier data
+    km_data = "ANY",
+    # AUC data (for plotting)
+    auc_data = "ANY",
+    # Information concerning the univariate importance of features
+    univariate_analysis = "ANY",
+    # Information concerning feature expression for individual samples
+    feature_expressions = "ANY",
+    # Information concerning mutual correlations between features
+    feature_similarity = "ANY",
+    # Information concerning similarity between samples.
+    sample_similarity = "ANY",
+    # Information on individual conditional expectation
+    ice_data = "ANY",
+    # Flag to signal whether the data concerns validation data (TRUE) or
+    # development data (FALSE)
+    is_validation = "logical",
+    # Name of the model ensemble used to generate this data
+    generating_ensemble = "character",
+    # Project identifier
+    project_id = "ANY",
+    # Package version for backward compatibility
+    familiar_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    fs_vimp = NULL,
+    model_vimp = NULL,
+    permutation_vimp = NULL,
+    hyperparameters = NULL,
+    hyperparameter_data = NULL,
+    required_features = NULL,
+    model_features = NULL,
+    learner = NA_character_,
+    fs_method = NA_character_,
+    pooling_table = NULL,
+    prediction_data = NULL,
+    confusion_matrix = NULL,
+    decision_curve_data = NULL,
+    calibration_info = NULL,
+    calibration_data = NULL,
+    model_performance = NULL,
+    km_info = NULL,
+    km_data = NULL,
+    auc_data = NULL,
+    univariate_analysis = NULL,
+    feature_expressions = NULL,
+    feature_similarity = NULL,
+    sample_similarity = NULL,
+    ice_data = NULL,
+    is_validation = FALSE,
+    generating_ensemble = character(0),
+    project_id = NULL,
+    familiar_version = NULL)
 )
 
-#### familiarCollection --------------------------------------------------------
+# familiarCollection object ----------------------------------------------------
 
 #' Collection of familiar data.
 #'
 #' A familiarCollection object aggregates data from one or more familiarData
 #' objects.
-#' 
-#' @slot name Name of the collection. 
+#'
+#' @slot name Name of the collection.
 #' @slot data_sets Name of the individual underlying datasets.
 #' @slot outcome_type Outcome type for which the collection was created.
 #' @slot outcome_info Outcome information object, which contains information
@@ -499,130 +487,129 @@ setClass("familiarData",
 #' @slot project_id Identifier of the project that generated this collection.
 #' @slot familiar_version Version of the familiar package.
 #'
-#' familiarCollection objects collect data from one or more familiarData
-#' objects. This objects are important, as all plotting and export functions use
-#' it. The fact that one can supply familiarModel, familiarEnsemble and
-#' familiarData objects as arguments for these methods, is because familiar
-#' internally converts these into familiarCollection objects prior to executing
-#' the method.
+#'   familiarCollection objects collect data from one or more familiarData
+#'   objects. This objects are important, as all plotting and export functions
+#'   use it. The fact that one can supply familiarModel, familiarEnsemble and
+#'   familiarData objects as arguments for these methods, is because familiar
+#'   internally converts these into familiarCollection objects prior to
+#'   executing the method.
 #'
 #' @export
 
 setClass("familiarCollection",
-         slots = list(
-           # Name of the collection
-           name = "character",
-           # Name of the underlying data sets
-           data_sets = "character",
-           # Model outcome type
-           outcome_type = "character",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Feature selection variable importance
-           fs_vimp = "ANY",
-           # Model variable importance
-           model_vimp = "ANY",
-           # Permutation variable importance
-           permutation_vimp = "ANY",
-           # Hyper-parameters
-           hyperparameters = "ANY",
-           # Hyperparameter data, e.g. for visualising the hyperparameter space.
-           hyperparameter_data = "ANY",
-           # Required features to update the data
-           required_features = "ANY",
-           # Important features, e.g. features that ended up in a signature
-           # individually or as part of a cluster
-           model_features = "ANY",
-           # Name of learner
-           learner = "character",
-           # Name of feature selection method
-           fs_method = "character",
-           # Model predictions for later reference
-           prediction_data = "ANY",
-           # Confusion matrix for categorical outcomes
-           confusion_matrix = "ANY",
-           # Data for decision curve analysis
-           decision_curve_data = "ANY",
-           # Calibration information, e.g. baseline survival
-           calibration_info = "ANY",
-           # Calibration test information
-           calibration_data = "ANY",
-           # Model performance metrics
-           model_performance = "ANY",
-           # Kaplan-Meier cut-offs
-           km_info = "ANY",
-           # Kaplan-Meier data
-           km_data = "ANY",
-           # AUC data (for plotting)
-           auc_data = "ANY",
-           # Information concerning the univariate importance of features
-           univariate_analysis = "ANY",
-           # Information concerning feature expression for individual samples
-           feature_expressions = "ANY",
-           # Information concerning mutual correlations between features
-           feature_similarity = "ANY",
-           # Information concerning similarity between samples.
-           sample_similarity = "ANY",
-           # Information on individual conditional expectation
-           ice_data = "ANY",
-           # Label and order of data names
-           data_set_labels = "ANY",
-           # Label and order of learners
-           learner_labels = "ANY",
-           # Label and order of feature selection methods
-           fs_method_labels = "ANY",
-           # Label and order of features
-           feature_labels = "ANY",
-           # Label and order of kaplan-meier groups
-           km_group_labels = "ANY",
-           # Label and order of outcome classes
-           class_labels = "ANY",
-           # Project identifier
-           project_id = "ANY",
-           # Package version for backward compatibility
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           data_sets = character(0),
-           outcome_type = NA_character_,
-           outcome_info = NULL,
-           fs_vimp = NULL,
-           model_vimp = NULL,
-           permutation_vimp = NULL,
-           hyperparameters = NULL,
-           hyperparameter_data = NULL,
-           required_features = NULL,
-           model_features = NULL,
-           learner = NA_character_,
-           fs_method = NA_character_,
-           prediction_data = NULL,
-           confusion_matrix = NULL,
-           decision_curve_data = NULL,
-           calibration_info = NULL,
-           calibration_data = NULL,
-           model_performance = NULL,
-           km_info = NULL,
-           km_data = NULL,
-           auc_data = NULL,
-           univariate_analysis = NULL,
-           feature_expressions = NULL,
-           feature_similarity = NULL,
-           sample_similarity = NULL,
-           ice_data = NULL,
-           data_set_labels = NULL,
-           learner_labels = NULL,
-           fs_method_labels = NULL,
-           feature_labels = NULL,
-           km_group_labels = NULL,
-           class_labels = NULL,
-           project_id = NULL,
-           familiar_version = NULL
-         )
+  slots = list(
+    # Name of the collection
+    name = "character",
+    # Name of the underlying data sets
+    data_sets = "character",
+    # Model outcome type
+    outcome_type = "character",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Feature selection variable importance
+    fs_vimp = "ANY",
+    # Model variable importance
+    model_vimp = "ANY",
+    # Permutation variable importance
+    permutation_vimp = "ANY",
+    # Hyper-parameters
+    hyperparameters = "ANY",
+    # Hyperparameter data, e.g. for visualising the hyperparameter space.
+    hyperparameter_data = "ANY",
+    # Required features to update the data
+    required_features = "ANY",
+    # Important features, e.g. features that ended up in a signature
+    # individually or as part of a cluster
+    model_features = "ANY",
+    # Name of learner
+    learner = "character",
+    # Name of feature selection method
+    fs_method = "character",
+    # Model predictions for later reference
+    prediction_data = "ANY",
+    # Confusion matrix for categorical outcomes
+    confusion_matrix = "ANY",
+    # Data for decision curve analysis
+    decision_curve_data = "ANY",
+    # Calibration information, e.g. baseline survival
+    calibration_info = "ANY",
+    # Calibration test information
+    calibration_data = "ANY",
+    # Model performance metrics
+    model_performance = "ANY",
+    # Kaplan-Meier cut-offs
+    km_info = "ANY",
+    # Kaplan-Meier data
+    km_data = "ANY",
+    # AUC data (for plotting)
+    auc_data = "ANY",
+    # Information concerning the univariate importance of features
+    univariate_analysis = "ANY",
+    # Information concerning feature expression for individual samples
+    feature_expressions = "ANY",
+    # Information concerning mutual correlations between features
+    feature_similarity = "ANY",
+    # Information concerning similarity between samples.
+    sample_similarity = "ANY",
+    # Information on individual conditional expectation
+    ice_data = "ANY",
+    # Label and order of data names
+    data_set_labels = "ANY",
+    # Label and order of learners
+    learner_labels = "ANY",
+    # Label and order of feature selection methods
+    fs_method_labels = "ANY",
+    # Label and order of features
+    feature_labels = "ANY",
+    # Label and order of kaplan-meier groups
+    km_group_labels = "ANY",
+    # Label and order of outcome classes
+    class_labels = "ANY",
+    # Project identifier
+    project_id = "ANY",
+    # Package version for backward compatibility
+    familiar_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    data_sets = character(0),
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    fs_vimp = NULL,
+    model_vimp = NULL,
+    permutation_vimp = NULL,
+    hyperparameters = NULL,
+    hyperparameter_data = NULL,
+    required_features = NULL,
+    model_features = NULL,
+    learner = NA_character_,
+    fs_method = NA_character_,
+    prediction_data = NULL,
+    confusion_matrix = NULL,
+    decision_curve_data = NULL,
+    calibration_info = NULL,
+    calibration_data = NULL,
+    model_performance = NULL,
+    km_info = NULL,
+    km_data = NULL,
+    auc_data = NULL,
+    univariate_analysis = NULL,
+    feature_expressions = NULL,
+    feature_similarity = NULL,
+    sample_similarity = NULL,
+    ice_data = NULL,
+    data_set_labels = NULL,
+    learner_labels = NULL,
+    fs_method_labels = NULL,
+    feature_labels = NULL,
+    km_group_labels = NULL,
+    class_labels = NULL,
+    project_id = NULL,
+    familiar_version = NULL)
 )
 
 
-####dataObject#####
+
+# dataObject object ------------------------------------------------------------
 
 #' Data object
 #'
@@ -648,44 +635,46 @@ setClass("familiarCollection",
 #' @slot aggregate_on_load logical. Determines whether data is aggregated after
 #'   loading.
 #' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
-#'   
+#'
 setClass("dataObject",
-         slots = list(
-           # Data
-           data = "ANY",
-           # Level to which pre-processing has been conducted.
-           preprocessing_level = "character",
-           # Outcome type
-           outcome_type = "character",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Info related to the columns in the dataset.
-           data_column_info = "ANY",
-           # Flag for delayed loading. This can only be meaningfully set using internal data.
-           delay_loading = "logical",
-           # Perturbation level for data which has not been loaded. Used for data retrieval in combination with the run table of the accompanying model.
-           perturb_level = "numeric",
-           # Determines which data should be loaded.
-           load_validation = "logical",
-           # Flag for aggregation after loading and pre-processing
-           aggregate_on_load = "logical",
-           # Samples to be loaded
-           sample_set_on_load = "ANY"
-         ),
-         prototype = list(
-           data = NULL,
-           preprocessing_level = "none",
-           outcome_type = NA_character_,
-           outcome_info = NULL,
-           delay_loading = FALSE,
-           perturb_level = NA_integer_,
-           load_validation = TRUE,
-           aggregate_on_load = FALSE,
-           sample_set_on_load = NULL
-         )
+  slots = list(
+    # Data
+    data = "ANY",
+    # Level to which pre-processing has been conducted.
+    preprocessing_level = "character",
+    # Outcome type
+    outcome_type = "character",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Flag for delayed loading. This can only be meaningfully set using internal
+    # data.
+    delay_loading = "logical",
+    # Perturbation level for data which has not been loaded. Used for data
+    # retrieval in combination with the run table of the accompanying model.
+    perturb_level = "numeric",
+    # Determines which data should be loaded.
+    load_validation = "logical",
+    # Flag for aggregation after loading and pre-processing
+    aggregate_on_load = "logical",
+    # Samples to be loaded
+    sample_set_on_load = "ANY"),
+  prototype = list(
+    data = NULL,
+    preprocessing_level = "none",
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    delay_loading = FALSE,
+    perturb_level = NA_integer_,
+    load_validation = TRUE,
+    aggregate_on_load = FALSE,
+    sample_set_on_load = NULL)
 )
 
-#### featureInfo ---------------------------------------------------------------
+
+
+# featureInfo object -----------------------------------------------------------
 
 #' Feature information object.
 #'
@@ -744,68 +733,67 @@ setClass("dataObject",
 #' @export
 
 setClass("featureInfo",
-         slots = list(
-           name = "character",
-           set_descriptor = "character",
-           feature_type = "character",
-           levels = "ANY",
-           ordered = "logical",
-           distribution = "ANY",
-           data_id = "integer",
-           run_id = "integer",
-           in_signature = "logical",
-           in_novelty = "logical",
-           removed = "logical",
-           removed_unknown_type = "logical",
-           removed_missing_values = "logical",
-           removed_no_variance = "logical",
-           removed_low_variance = "logical",
-           removed_low_robustness = "logical",
-           removed_low_importance = "logical",
-           fraction_missing = "numeric",
-           robustness = "ANY",
-           univariate_importance = "ANY",
-           transformation_parameters = "ANY",
-           normalisation_parameters = "ANY",
-           batch_normalisation_parameters = "ANY",
-           imputation_parameters = "ANY",
-           cluster_parameters = "ANY",
-           required_features = "ANY",
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           name = NA_character_,
-           set_descriptor = NA_character_,
-           feature_type = NA_character_,
-           levels = NULL,
-           ordered = FALSE,
-           distribution = NULL,
-           data_id = NA_integer_,
-           run_id = NA_integer_,
-           in_signature = FALSE,
-           in_novelty = FALSE,
-           removed = FALSE,
-           removed_unknown_type = FALSE,
-           removed_missing_values = FALSE,
-           removed_no_variance = FALSE,
-           removed_low_variance = FALSE,
-           removed_low_robustness = FALSE,
-           removed_low_importance = FALSE,
-           fraction_missing = NA_real_,
-           robustness = NULL,
-           univariate_importance = NULL,
-           transformation_parameters = NULL,
-           normalisation_parameters = NULL,
-           batch_normalisation_parameters = NULL,
-           imputation_parameters = NULL,
-           cluster_parameters = NULL,
-           required_features = NULL,
-           familiar_version = NULL
-         )
+  slots = list(
+    name = "character",
+    set_descriptor = "character",
+    feature_type = "character",
+    levels = "ANY",
+    ordered = "logical",
+    distribution = "ANY",
+    data_id = "integer",
+    run_id = "integer",
+    in_signature = "logical",
+    in_novelty = "logical",
+    removed = "logical",
+    removed_unknown_type = "logical",
+    removed_missing_values = "logical",
+    removed_no_variance = "logical",
+    removed_low_variance = "logical",
+    removed_low_robustness = "logical",
+    removed_low_importance = "logical",
+    fraction_missing = "numeric",
+    robustness = "ANY",
+    univariate_importance = "ANY",
+    transformation_parameters = "ANY",
+    normalisation_parameters = "ANY",
+    batch_normalisation_parameters = "ANY",
+    imputation_parameters = "ANY",
+    cluster_parameters = "ANY",
+    required_features = "ANY",
+    familiar_version = "ANY"),
+  prototype = list(
+    name = NA_character_,
+    set_descriptor = NA_character_,
+    feature_type = NA_character_,
+    levels = NULL,
+    ordered = FALSE,
+    distribution = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    in_signature = FALSE,
+    in_novelty = FALSE,
+    removed = FALSE,
+    removed_unknown_type = FALSE,
+    removed_missing_values = FALSE,
+    removed_no_variance = FALSE,
+    removed_low_variance = FALSE,
+    removed_low_robustness = FALSE,
+    removed_low_importance = FALSE,
+    fraction_missing = NA_real_,
+    robustness = NULL,
+    univariate_importance = NULL,
+    transformation_parameters = NULL,
+    normalisation_parameters = NULL,
+    batch_normalisation_parameters = NULL,
+    imputation_parameters = NULL,
+    cluster_parameters = NULL,
+    required_features = NULL,
+    familiar_version = NULL)
 )
 
 
-#### featureInfoParameters -----------------------------------------------------
+
+# featureInfoParameters object -------------------------------------------------
 
 #' Feature information parameters object.
 #'
@@ -824,21 +812,19 @@ setClass("featureInfo",
 #'
 #' @export
 setClass("featureInfoParameters",
-         slots = list(
-           name = "character",
-           complete = "logical",
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           name = NA_character_,
-           complete = FALSE,
-           familiar_version = NULL
-         )
+  slots = list(
+    name = "character",
+    complete = "logical",
+    familiar_version = "ANY"),
+  prototype = list(
+    name = NA_character_,
+    complete = FALSE,
+    familiar_version = NULL)
 )
 
 
 
-#### vimpTable -----------------------------------------------------------------
+# vimpTable object -------------------------------------------------------------
 
 #' Variable importance table
 #'
@@ -905,47 +891,45 @@ setClass("featureInfoParameters",
 #' @export
 
 setClass("vimpTable",
-         slots = list(
-           # Variable importance table.
-           vimp_table = "ANY",
-           # Variable importance method that generated the current variable
-           # importance table.
-           vimp_method = "character",
-           # Run table for the current model
-           run_table = "ANY",
-           # Set how scores from encoded features should be aggregated.
-           score_aggregation = "character",
-           # Table that can be used to merge encoded features back into
-           # singleton features, if necessary.
-           encoding_table = "ANY",
-           # Table that can be used to decluster the current table.
-           cluster_table = "ANY",
-           # Whether scores should be inverted for ranking.
-           invert = "logical",
-           # Project identifier.
-           project_id = "ANY",
-           # Version of familiar used to create the object.
-           familiar_version = "ANY",
-           # State of the object.
-           state="character"
-         ),
-         prototype = list(
-           vimp_table = NULL,
-           vimp_method = NA_character_,
-           run_table = NULL,
-           score_aggregation = NA_character_,
-           encoding_table = NULL,
-           cluster_table = NULL,
-           invert = FALSE,
-           project_id = NULL,
-           familiar_version = NULL,
-           state="initial"
-         )
+  slots = list(
+    # Variable importance table.
+    vimp_table = "ANY",
+    # Variable importance method that generated the current variable
+    # importance table.
+    vimp_method = "character",
+    # Run table for the current model
+    run_table = "ANY",
+    # Set how scores from encoded features should be aggregated.
+    score_aggregation = "character",
+    # Table that can be used to merge encoded features back into
+    # singleton features, if necessary.
+    encoding_table = "ANY",
+    # Table that can be used to decluster the current table.
+    cluster_table = "ANY",
+    # Whether scores should be inverted for ranking.
+    invert = "logical",
+    # Project identifier.
+    project_id = "ANY",
+    # Version of familiar used to create the object.
+    familiar_version = "ANY",
+    # State of the object.
+    state = "character"),
+  prototype = list(
+    vimp_table = NULL,
+    vimp_method = NA_character_,
+    run_table = NULL,
+    score_aggregation = NA_character_,
+    encoding_table = NULL,
+    cluster_table = NULL,
+    invert = FALSE,
+    project_id = NULL,
+    familiar_version = NULL,
+    state = "initial")
 )
 
 
 
-#### outcomeInfo ---------------------------------------------------------------
+# outcomeInfo object -----------------------------------------------------------
 
 #' Outcome information object.
 #'
@@ -977,59 +961,58 @@ setClass("vimpTable",
 #' @export
 
 setClass("outcomeInfo",
-         slots = list(
-           # Name of the outcome
-           name = "character",
-           # Outcome type
-           outcome_type = "character",
-           # Outcome column
-           outcome_column = "ANY",
-           # Class levels of categorical outcomes.
-           levels = "ANY",
-           # Flag for ordinal categorical outcomes.
-           ordered = "logical",
-           # Reference class of categorical outcomes.
-           reference = "ANY",
-           # Max time for the outcome.
-           time = "numeric",
-           # Censor indicator for survival outcomes, e.g. alive.
-           censored = "character",
-           # Event indicator for survival outcomes, e.g. recurrent disease.
-           event = "character",
-           # Competing risk indicator(s) for survival outcomes, e.g. dead.
-           competing_risk = "character",
-           # Distribution information of outcome variables.
-           distribution = "ANY",
-           # Data id to which this outcome data belongs.
-           data_id = "integer",
-           # Run id to which this outcome data belongs.
-           run_id = "integer",
-           # Transformation parameters for the outcome data.
-           transformation_parameters = "ANY",
-           # Normalisation parameters for the outcome data.
-           normalisation_parameters = "ANY"
-         ),
-         prototype = list(
-           name = NA_character_,
-           outcome_type = NA_character_,
-           outcome_column = NULL,
-           levels = NULL,
-           ordered = FALSE,
-           reference = NA_character_,
-           time = Inf,
-           censored = NA_character_,
-           event = NA_character_,
-           competing_risk = NA_character_,
-           distribution = NULL,
-           data_id = NA_integer_,
-           run_id = NA_integer_,
-           transformation_parameters = NULL,
-           normalisation_parameters = NULL
-         )
+  slots = list(
+    # Name of the outcome
+    name = "character",
+    # Outcome type
+    outcome_type = "character",
+    # Outcome column
+    outcome_column = "ANY",
+    # Class levels of categorical outcomes.
+    levels = "ANY",
+    # Flag for ordinal categorical outcomes.
+    ordered = "logical",
+    # Reference class of categorical outcomes.
+    reference = "ANY",
+    # Max time for the outcome.
+    time = "numeric",
+    # Censor indicator for survival outcomes, e.g. alive.
+    censored = "character",
+    # Event indicator for survival outcomes, e.g. recurrent disease.
+    event = "character",
+    # Competing risk indicator(s) for survival outcomes, e.g. dead.
+    competing_risk = "character",
+    # Distribution information of outcome variables.
+    distribution = "ANY",
+    # Data id to which this outcome data belongs.
+    data_id = "integer",
+    # Run id to which this outcome data belongs.
+    run_id = "integer",
+    # Transformation parameters for the outcome data.
+    transformation_parameters = "ANY",
+    # Normalisation parameters for the outcome data.
+    normalisation_parameters = "ANY"),
+  prototype = list(
+    name = NA_character_,
+    outcome_type = NA_character_,
+    outcome_column = NULL,
+    levels = NULL,
+    ordered = FALSE,
+    reference = NA_character_,
+    time = Inf,
+    censored = NA_character_,
+    event = NA_character_,
+    competing_risk = NA_character_,
+    distribution = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    transformation_parameters = NULL,
+    normalisation_parameters = NULL)
 )
 
 
-#### familiarVimpMethod --------------------------------------------------------
+
+# familiarVimpMethod object ----------------------------------------------------
 
 #' Variable importance method object.
 #'
@@ -1059,46 +1042,44 @@ setClass("outcomeInfo",
 #'
 #' @export
 setClass("familiarVimpMethod",
-         slots = list(
-           # Outcome type
-           outcome_type = "character",
-           # Hyper-parameters (typically stored in the model as well)
-           hyperparameters = "ANY",
-           # Name of variable importance method
-           vimp_method = "character",
-           # Indicates whether the method is a univariate or multivariate
-           # method.
-           multivariate = "logical",
-           # Outcome info, such as class levels, mean values etc.
-           outcome_info = "ANY",
-           # Data required for feature pre-processing
-           feature_info = "ANY",
-           # Required features for complete reconstruction, including imputation
-           required_features = "ANY",
-           # Name of the package required to perform variable importance.
-           package = "ANY",
-           # Run table for the current vimp method
-           run_table = "ANY",
-           # Project identifier for consistency tracking
-           project_id = "ANY"
-         ),
-         prototype = list(
-           outcome_type = NA_character_,
-           hyperparameters = NULL,
-           vimp_method = NA_character_,
-           multivariate = FALSE,
-           outcome_info = NULL,
-           feature_info = NULL,
-           required_features = NULL,
-           package = NULL,
-           run_table = NULL,
-           project_id = NULL
-         )
+  slots = list(
+    # Outcome type
+    outcome_type = "character",
+    # Hyper-parameters (typically stored in the model as well)
+    hyperparameters = "ANY",
+    # Name of variable importance method
+    vimp_method = "character",
+    # Indicates whether the method is a univariate or multivariate
+    # method.
+    multivariate = "logical",
+    # Outcome info, such as class levels, mean values etc.
+    outcome_info = "ANY",
+    # Data required for feature pre-processing
+    feature_info = "ANY",
+    # Required features for complete reconstruction, including imputation
+    required_features = "ANY",
+    # Name of the package required to perform variable importance.
+    package = "ANY",
+    # Run table for the current vimp method
+    run_table = "ANY",
+    # Project identifier for consistency tracking
+    project_id = "ANY"),
+  prototype = list(
+    outcome_type = NA_character_,
+    hyperparameters = NULL,
+    vimp_method = NA_character_,
+    multivariate = FALSE,
+    outcome_info = NULL,
+    feature_info = NULL,
+    required_features = NULL,
+    package = NULL,
+    run_table = NULL,
+    project_id = NULL)
 )
 
 
 
-#### familiarNoveltyDetector ---------------------------------------------------
+# familiarNoveltyDetector object -----------------------------------------------
 
 #' Novelty detector.
 #'
@@ -1135,71 +1116,69 @@ setClass("familiarVimpMethod",
 #' @slot package_version Version of the packages mentioned in the `package`
 #'   attribute.
 #'
-#' Note that these objects do not contain any data concerning outcome, as this
-#' not relevant for (prospective) out-of-distribution detection.
+#' @details Note that these objects do not contain any data concerning outcome,
+#'   as this not relevant for (prospective) out-of-distribution detection.
 #'
 #' @export
 
 setClass("familiarNoveltyDetector",
-         slots = list(
-           # Model name.
-           name = "character",
-           # Detector
-           learner = "character",
-           # Model container
-           model = "ANY",
-           # Info related to the columns in the dataset.
-           data_column_info = "ANY",
-           # Parameters needed to convert raw novelty scores into p-values.
-           conversion_parameters = "ANY",
-           # Hyperparameters used to create the novelty detector.
-           hyperparameters = "ANY",
-           # Data required for feature pre-processing
-           feature_info = "ANY",
-           # Required features for complete reconstruction, including
-           # imputation.
-           required_features = "ANY",
-           # Features that are required for novelty detection.
-           model_features = "ANY",
-           # Run table for the current model
-           run_table = "ANY",
-           # Flags trimming of the novelty detector.
-           is_trimmed = "logical",
-           # Restores functions lost due to model trimming, such as coef or
-           # vcov.
-           trimmed_function = "list",
-           # Project identifier for consistency tracking
-           project_id = "ANY",
-           # Package version for backward compatibility.
-           familiar_version = "ANY",
-           # Name of the package required to train the learner.
-           package = "ANY",
-           # Version of the learner for reproducibility.
-           package_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           learner = NA_character_,
-           model = NULL,
-           data_column_info = NULL,
-           conversion_parameters = NULL,
-           hyperparameters = NULL,
-           feature_info = NULL,
-           required_features = NULL,
-           model_features = NULL,
-           run_table = NULL,
-           is_trimmed = FALSE,
-           trimmed_function = list(),
-           project_id = NULL,
-           familiar_version = NULL,
-           package = NULL,
-           package_version = NULL
-         )
+  slots = list(
+    # Model name.
+    name = "character",
+    # Detector
+    learner = "character",
+    # Model container
+    model = "ANY",
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Parameters needed to convert raw novelty scores into p-values.
+    conversion_parameters = "ANY",
+    # Hyperparameters used to create the novelty detector.
+    hyperparameters = "ANY",
+    # Data required for feature pre-processing
+    feature_info = "ANY",
+    # Required features for complete reconstruction, including
+    # imputation.
+    required_features = "ANY",
+    # Features that are required for novelty detection.
+    model_features = "ANY",
+    # Run table for the current model
+    run_table = "ANY",
+    # Flags trimming of the novelty detector.
+    is_trimmed = "logical",
+    # Restores functions lost due to model trimming, such as coef or
+    # vcov.
+    trimmed_function = "list",
+    # Project identifier for consistency tracking
+    project_id = "ANY",
+    # Package version for backward compatibility.
+    familiar_version = "ANY",
+    # Name of the package required to train the learner.
+    package = "ANY",
+    # Version of the learner for reproducibility.
+    package_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    learner = NA_character_,
+    model = NULL,
+    data_column_info = NULL,
+    conversion_parameters = NULL,
+    hyperparameters = NULL,
+    feature_info = NULL,
+    required_features = NULL,
+    model_features = NULL,
+    run_table = NULL,
+    is_trimmed = FALSE,
+    trimmed_function = list(),
+    project_id = NULL,
+    familiar_version = NULL,
+    package = NULL,
+    package_version = NULL)
 )
 
 
 
-#### familiarHyperparameterLearner ---------------------------------------------
+# familiarHyperparameterLearner object -----------------------------------------
 
 #' Hyperparameter learner.
 #'
@@ -1236,52 +1215,50 @@ setClass("familiarNoveltyDetector",
 #' @export
 
 setClass("familiarHyperparameterLearner",
-         slots = list(
-           # Model name.
-           name = "character",
-           # Hyperparameter learner
-           learner = "character",
-           # Learner for which the hyperparameters are being learned.
-           target_learner = "character",
-           # Outcome type for the above learner.
-           target_outcome_type = "character",
-           # Metric(s) used to generate the input data for optimisation score
-           # that is being learned.
-           optimisation_metric = "character",
-           # Function used to generate the optimisation score.
-           optimisation_function = "character",
-           # Model container
-           model = "ANY",
-           # Names of the hyperparameters that are being learned.
-           target_hyperparameters = "ANY",
-           # Project identifier for consistency tracking
-           project_id = "ANY",
-           # Package version for backward compatibility.
-           familiar_version = "ANY",
-           # Name of the package required to train the learner.
-           package = "ANY",
-           # Version of the learner for reproducibility.
-           package_version = "ANY"
-         ),
-         prototype = list(
-           name = character(0),
-           learner = NA_character_,
-           target_learner = NA_character_,
-           target_outcome_type = NA_character_,
-           optimisation_metric = NA_character_,
-           optimisation_function = NA_character_,
-           model = NULL,
-           target_hyperparameters = NULL,
-           project_id = NULL,
-           familiar_version = NULL,
-           package = NULL,
-           package_version = NULL
-         )
+  slots = list(
+    # Model name.
+    name = "character",
+    # Hyperparameter learner
+    learner = "character",
+    # Learner for which the hyperparameters are being learned.
+    target_learner = "character",
+    # Outcome type for the above learner.
+    target_outcome_type = "character",
+    # Metric(s) used to generate the input data for optimisation score
+    # that is being learned.
+    optimisation_metric = "character",
+    # Function used to generate the optimisation score.
+    optimisation_function = "character",
+    # Model container
+    model = "ANY",
+    # Names of the hyperparameters that are being learned.
+    target_hyperparameters = "ANY",
+    # Project identifier for consistency tracking
+    project_id = "ANY",
+    # Package version for backward compatibility.
+    familiar_version = "ANY",
+    # Name of the package required to train the learner.
+    package = "ANY",
+    # Version of the learner for reproducibility.
+    package_version = "ANY"),
+  prototype = list(
+    name = character(0),
+    learner = NA_character_,
+    target_learner = NA_character_,
+    target_outcome_type = NA_character_,
+    optimisation_metric = NA_character_,
+    optimisation_function = NA_character_,
+    model = NULL,
+    target_hyperparameters = NULL,
+    project_id = NULL,
+    familiar_version = NULL,
+    package = NULL,
+    package_version = NULL)
 )
 
 
 
-#### familiarMetric ------------------------------------------------------------
+# familiarMetric object --------------------------------------------------------
 
 #' Model performance metric.
 #'
@@ -1301,166 +1278,165 @@ setClass("familiarHyperparameterLearner",
 #' @export
 
 setClass("familiarMetric",
-         slots = list(
-           # The metric itself.
-           metric = "character",
-           # The outcome type associated with the metric.
-           outcome_type = "character",
-           # The name of the metric, e.g. for plotting.
-           name = "character",
-           # The potential value range of the metric.
-           value_range = "numeric",
-           # The baseline value of the metric, e.g. to derive an objective
-           # function from.
-           baseline_value = "ANY",
-           # Flag that sets whether higher values denote better performance.
-           higher_better = "logical"
-         ),
-         prototype = list(
-           metric = NA_character_,
-           outcome_type = NA_character_,
-           name = NA_character_,
-           value_range = c(NA_real_, NA_real_),
-           baseline_value = NULL,
-           higher_better = TRUE)
+  slots = list(
+    # The metric itself.
+    metric = "character",
+    # The outcome type associated with the metric.
+    outcome_type = "character",
+    # The name of the metric, e.g. for plotting.
+    name = "character",
+    # The potential value range of the metric.
+    value_range = "numeric",
+    # The baseline value of the metric, e.g. to derive an objective
+    # function from.
+    baseline_value = "ANY",
+    # Flag that sets whether higher values denote better performance.
+    higher_better = "logical"),
+  prototype = list(
+    metric = NA_character_,
+    outcome_type = NA_character_,
+    name = NA_character_,
+    value_range = c(NA_real_, NA_real_),
+    baseline_value = NULL,
+    higher_better = TRUE)
 )
 
 
 
-#### familiarDataElement -------------------------------------------------------
+# familiarDataElement object ---------------------------------------------------
 
-#'  Data container for evaluation data.
+#' Data container for evaluation data.
 #'
-#'  Most attributes of the familiarData object are objects of the
-#'  familiarDataElement class. This (super-)class is used to allow for
-#'  standardised aggregation and processing of evaluation data.
+#' Most attributes of the familiarData object are objects of the
+#' familiarDataElement class. This (super-)class is used to allow for
+#' standardised aggregation and processing of evaluation data.
 #'
-#'@slot data Evaluation data, typically a data.table or list.
-#'@slot identifiers Identifiers of the data, e.g. the generating model name,
-#'  learner, etc.
-#'@slot detail_level Sets the level at which results are computed and
-#'  aggregated.
+#' @slot data Evaluation data, typically a data.table or list.
+#' @slot identifiers Identifiers of the data, e.g. the generating model name,
+#'   learner, etc.
+#' @slot detail_level Sets the level at which results are computed and
+#'   aggregated.
 #'
 #'  * `ensemble`: Results are computed at the ensemble level, i.e. over all
-#'  models in the ensemble. This means that, for example, bias-corrected
-#'  estimates of model performance are assessed by creating (at least) 20
-#'  bootstraps and computing the model performance of the ensemble model for
-#'  each bootstrap.
+#'   models in the ensemble. This means that, for example, bias-corrected
+#'   estimates of model performance are assessed by creating (at least) 20
+#'   bootstraps and computing the model performance of the ensemble model for
+#'   each bootstrap.
 #'
 #'  * `hybrid` (default): Results are computed at the level of models in an
-#'  ensemble. This means that, for example, bias-corrected estimates of model
-#'  performance are directly computed using the models in the ensemble. If there
-#'  are at least 20 trained models in the ensemble, performance is computed for
-#'  each model, in contrast to `ensemble` where performance is computed for the
-#'  ensemble of models. If there are less than 20 trained models in the
-#'  ensemble, bootstraps are created so that at least 20 point estimates can be
-#'  made.
+#'   ensemble. This means that, for example, bias-corrected estimates of model
+#'   performance are directly computed using the models in the ensemble. If
+#'   there are at least 20 trained models in the ensemble, performance is
+#'   computed for each model, in contrast to `ensemble` where performance is
+#'   computed for the ensemble of models. If there are less than 20 trained
+#'   models in the ensemble, bootstraps are created so that at least 20 point
+#'   estimates can be made.
 #'
 #'  * `model`: Results are computed at the model level. This means that, for
-#'  example, bias-corrected estimates of model performance are assessed by
-#'  creating (at least) 20 bootstraps and computing the performance of the model
-#'  for each bootstrap.
+#'   example, bias-corrected estimates of model performance are assessed by
+#'   creating (at least) 20 bootstraps and computing the performance of the
+#'   model for each bootstrap.
 #'
-#'  Note that each level of detail has a different interpretation for bootstrap
-#'  confidence intervals. For `ensemble` and `model` these are the confidence
-#'  intervals for the ensemble and an individual model, respectively. That is,
-#'  the confidence interval describes the range where an estimate produced by a
-#'  respective ensemble or model trained on a repeat of the experiment may be
-#'  found with the probability of the confidence level. For `hybrid`, it
-#'  represents the range where any single model trained on a repeat of the
-#'  experiment may be found with the probability of the confidence level. By
-#'  definition, confidence intervals obtained using `hybrid` are at least as
-#'  wide as those for `ensemble`. `hybrid` offers the correct interpretation if
-#'  the goal of the analysis is to assess the result of a single, unspecified,
-#'  model.
+#'   Note that each level of detail has a different interpretation for bootstrap
+#'   confidence intervals. For `ensemble` and `model` these are the confidence
+#'   intervals for the ensemble and an individual model, respectively. That is,
+#'   the confidence interval describes the range where an estimate produced by a
+#'   respective ensemble or model trained on a repeat of the experiment may be
+#'   found with the probability of the confidence level. For `hybrid`, it
+#'   represents the range where any single model trained on a repeat of the
+#'   experiment may be found with the probability of the confidence level. By
+#'   definition, confidence intervals obtained using `hybrid` are at least as
+#'   wide as those for `ensemble`. `hybrid` offers the correct interpretation if
+#'   the goal of the analysis is to assess the result of a single, unspecified,
+#'   model.
 #'
-#'  Some child classes do not use this parameter.
-#'@slot estimation_type Sets the type of estimation that should be possible.
-#'  This has the following options:
+#'   Some child classes do not use this parameter.
+#' @slot estimation_type Sets the type of estimation that should be possible.
+#'   This has the following options:
 #'
 #'  * `point`: Point estimates.
 #'
 #'  * `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected
-#'  estimate is computed from (at least) 20 point estimates, and `familiar` may
-#'  bootstrap the data to create them.
+#'   estimate is computed from (at least) 20 point estimates, and `familiar` may
+#'   bootstrap the data to create them.
 #'
 #'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
-#'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
-#'  number of point estimates required depends on the `confidence_level`
-#'  parameter, and `familiar` may bootstrap the data to create them.
+#'   estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+#'   number of point estimates required depends on the `confidence_level`
+#'   parameter, and `familiar` may bootstrap the data to create them.
 #'
-#'  Some child classes do not use this parameter.
-#'@slot confidence_level (*optional*) Numeric value for the level at which
-#'  confidence intervals are determined. In the case bootstraps are used to
-#'  determine the confidence intervals bootstrap estimation, `familiar` uses the
-#'  rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
-#'  bootstraps.
-#'@slot bootstrap_ci_method Method used to determine bootstrap confidence
-#'  intervals (Efron and Hastie, 2016). The following methods are implemented:
+#'   Some child classes do not use this parameter.
+#' @slot confidence_level (*optional*) Numeric value for the level at which
+#'   confidence intervals are determined. In the case bootstraps are used to
+#'   determine the confidence intervals bootstrap estimation, `familiar` uses
+#'   the rule of thumb \eqn{n = 20 / ci.level} to determine the number of
+#'   required bootstraps.
+#' @slot bootstrap_ci_method Method used to determine bootstrap confidence
+#'   intervals (Efron and Hastie, 2016). The following methods are implemented:
 #'
 #'  * `percentile` (default): Confidence intervals obtained using the percentile
-#'  method.
+#'   method.
 #'
 #'  * `bc`: Bias-corrected confidence intervals.
 #'
-#'  Note that the standard method is not implemented because this method is
-#'  often not suitable due to non-normal distributions. The bias-corrected and
-#'  accelerated (BCa) method is not implemented yet.
-#'@slot value_column Identifies column(s) in the `data` attribute presenting
-#'  values.
-#'@slot grouping_column Identifies column(s) in the `data` attribute presenting
-#'  identifier columns for grouping during aggregation. Familiar will
-#'  automatically assign items from the `identifiers` attribute to the data and
-#'  this attribute when combining multiple familiarDataElements of the same
-#'  (child) class.
-#'@slot is_aggregated Defines whether the object was aggregated.
+#'   Note that the standard method is not implemented because this method is
+#'   often not suitable due to non-normal distributions. The bias-corrected and
+#'   accelerated (BCa) method is not implemented yet.
+#' @slot value_column Identifies column(s) in the `data` attribute presenting
+#'   values.
+#' @slot grouping_column Identifies column(s) in the `data` attribute presenting
+#'   identifier columns for grouping during aggregation. Familiar will
+#'   automatically assign items from the `identifiers` attribute to the data and
+#'   this attribute when combining multiple familiarDataElements of the same
+#'   (child) class.
+#' @slot is_aggregated Defines whether the object was aggregated.
 #'
-#'@references 1. Efron, B. & Hastie, T. Computer Age Statistical Inference.
-#'  (Cambridge University Press, 2016).
+#' @references 1. Efron, B. & Hastie, T. Computer Age Statistical Inference.
+#'   (Cambridge University Press, 2016).
 #'
-#'@export
+#' @export
 
 setClass("familiarDataElement",
-         slots = list(
-           # The primary results.
-           data = "ANY",
-           # Identifiers of the data, e.g. the generating model name, the
-           # feature-selection method and learner.
-           identifiers = "ANY",
-           # The level of detail at which the data was computed.
-           detail_level = "character",
-           # The kind of estimation for which the data was computed, e.g.
-           # bias-corrected estimates.
-           estimation_type = "character",
-           # The confidence level for which data was computed. Only set if the
-           # correct estimation type is set.
-           confidence_level = "ANY",
-           # The method used to compute the bootstrap confidence intervals from
-           # the data.
-           bootstrap_ci_method = "character",
-           # The column that contains the relevant data. Useful for merging and
-           # identifying bootstraps.
-           value_column = "character",
-           # The column(s) required for grouping the data. Useful for determining confidence intervals.
-           grouping_column = "ANY",
-           # Flag that signals whether the data is aggregated, e.g. by computing
-           # confidence intervals and a bias-corrected value.
-           is_aggregated = "logical"
-         ),
-         prototype = list(
-           data = NULL,
-           identifiers = NULL,
-           detail_level = NA_character_,
-           estimation_type = NA_character_,
-           confidence_level = NULL,
-           bootstrap_ci_method = NA_character_,
-           value_column = NA_character_,
-           grouping_column = NULL,
-           is_aggregated = FALSE)
+  slots = list(
+    # The primary results.
+    data = "ANY",
+    # Identifiers of the data, e.g. the generating model name, the
+    # feature-selection method and learner.
+    identifiers = "ANY",
+    # The level of detail at which the data was computed.
+    detail_level = "character",
+    # The kind of estimation for which the data was computed, e.g.
+    # bias-corrected estimates.
+    estimation_type = "character",
+    # The confidence level for which data was computed. Only set if the
+    # correct estimation type is set.
+    confidence_level = "ANY",
+    # The method used to compute the bootstrap confidence intervals from
+    # the data.
+    bootstrap_ci_method = "character",
+    # The column that contains the relevant data. Useful for merging and
+    # identifying bootstraps.
+    value_column = "character",
+    # The column(s) required for grouping the data. Useful for determining confidence intervals.
+    grouping_column = "ANY",
+    # Flag that signals whether the data is aggregated, e.g. by computing
+    # confidence intervals and a bias-corrected value.
+    is_aggregated = "logical"),
+  prototype = list(
+    data = NULL,
+    identifiers = NULL,
+    detail_level = NA_character_,
+    estimation_type = NA_character_,
+    confidence_level = NULL,
+    bootstrap_ci_method = NA_character_,
+    value_column = NA_character_,
+    grouping_column = NULL,
+    is_aggregated = FALSE)
 )
 
 
-#### experimentData ------------------------------------------------------------
+
+# experimentData object --------------------------------------------------------
 
 #' Experiment data
 #'
@@ -1492,25 +1468,24 @@ setClass("familiarDataElement",
 #' @export
 
 setClass("experimentData",
-         slots = list(
-           # Experimental design.
-           experiment_setup = "ANY",
-           # List of iteration data.
-           iteration_list = "ANY",
-           # List of feature information objects.
-           feature_info = "ANY",
-           # List of variable importance tables.
-           vimp_table_list = "ANY",
-           # Project identifier for consistency tracking
-           project_id = "ANY",
-           # Package version for backward compatibility
-           familiar_version = "ANY"
-         ),
-         prototype = list(
-           experiment_setup = NULL,
-           iteration_list = NULL,
-           feature_info = NULL,
-           vimp_table_list = NULL,
-           project_id = NULL,
-           familiar_version = NULL
-         ))
+  slots = list(
+    # Experimental design.
+    experiment_setup = "ANY",
+    # List of iteration data.
+    iteration_list = "ANY",
+    # List of feature information objects.
+    feature_info = "ANY",
+    # List of variable importance tables.
+    vimp_table_list = "ANY",
+    # Project identifier for consistency tracking
+    project_id = "ANY",
+    # Package version for backward compatibility
+    familiar_version = "ANY"),
+  prototype = list(
+    experiment_setup = NULL,
+    iteration_list = NULL,
+    feature_info = NULL,
+    vimp_table_list = NULL,
+    project_id = NULL,
+    familiar_version = NULL)
+)
