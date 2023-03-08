@@ -8,11 +8,12 @@ NULL
 
 #' @title Conversion to familiarEnsemble object.
 #'
-#' @description Creates `familiarEnsemble` a object from `familiarModel` objects.
+#' @description Creates `familiarEnsemble` a object from `familiarModel`
+#'   objects.
 #'
-#' @param object A `familiarEnsemble` object, or one or more
-#'  `familiarModel` objects that will be internally converted to a
-#'  `familiarEnsemble` object. Paths to such objects can also be provided.
+#' @param object A `familiarEnsemble` object, or one or more `familiarModel`
+#'   objects that will be internally converted to a `familiarEnsemble` object.
+#'   Paths to such objects can also be provided.
 #' @param ... Unused arguments.
 #'
 #' @return A `familiarEnsemble` object.
@@ -139,19 +140,19 @@ setMethod(
 #' @title Conversion to familiarData object.
 #'
 #' @description Creates `familiarData` a object from `familiarEnsemble` or
-#'  `familiarModel` objects.
+#'   `familiarModel` objects.
 #'
 #' @param object A `familiarData` object, or a `familiarEnsemble` or
-#'  `familiarModel` objects that will be internally converted to a
-#'  `familiarData` object. Paths to such objects can also be provided.
+#'   `familiarModel` objects that will be internally converted to a
+#'   `familiarData` object. Paths to such objects can also be provided.
 #'
 #' @param name Name of the `familiarData` object. If not set, a name is
-#'  automatically generated.
+#'   automatically generated.
 #'
 #' @inheritDotParams extract_data
 #'
 #' @details The `data` argument is required if `familiarEnsemble` or
-#'  `familiarModel` objects are provided.
+#'   `familiarModel` objects are provided.
 #'
 #' @return A `familiarData` object.
 #' @exportMethod as_familiar_data
