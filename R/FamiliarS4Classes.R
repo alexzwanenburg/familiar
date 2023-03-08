@@ -635,7 +635,7 @@ setClass("familiarCollection",
 #' @slot aggregate_on_load logical. Determines whether data is aggregated after
 #'   loading.
 #' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
-#'
+#' 
 setClass("dataObject",
   slots = list(
     # Data
@@ -714,20 +714,27 @@ setClass("dataObject",
 #'   pre-processing because the variance was too low. Requires applying
 #'   `low_variance` as a `filter_method`.
 #' @slot removed_low_robustness Specifies whether the feature was removed during
-#'   pre-processing because it lacks robustness. Requires applying
-#'   `robustness` as a `filter_method`, as well as repeated measurement.
+#'   pre-processing because it lacks robustness. Requires applying `robustness`
+#'   as a `filter_method`, as well as repeated measurement.
 #' @slot removed_low_importance Specifies whether the feature was removed during
 #'   pre-processing because it lacks relevance. Requires applying
 #'   `univariate_test` as a `filter_method`.
 #' @slot fraction_missing Specifies the fraction of missing values.
 #' @slot robustness Specifies robustness of the feature, if measured.
-#' @slot univariate_importance Specifies the univariate p-value of the feature, if measured.
-#' @slot transformation_parameters Details parameters for power transformation of numeric features.
-#' @slot normalisation_parameters Details parameters for (global) normalisation of numeric features.
-#' @slot batch_normalisation_parameters Details parameters for batch normalisation of numeric features.
-#' @slot imputation_parameters Details parameters or models for imputation of missing values.
-#' @slot cluster_parameters Details parameters for forming clusters with other features.
-#' @slot required_features Details features required for clustering or imputation.
+#' @slot univariate_importance Specifies the univariate p-value of the feature,
+#'   if measured.
+#' @slot transformation_parameters Details parameters for power transformation
+#'   of numeric features.
+#' @slot normalisation_parameters Details parameters for (global) normalisation
+#'   of numeric features.
+#' @slot batch_normalisation_parameters Details parameters for batch
+#'   normalisation of numeric features.
+#' @slot imputation_parameters Details parameters or models for imputation of
+#'   missing values.
+#' @slot cluster_parameters Details parameters for forming clusters with other
+#'   features.
+#' @slot required_features Details features required for clustering or
+#'   imputation.
 #' @slot familiar_version Version of the familiar package.
 #'
 #' @export
