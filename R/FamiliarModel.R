@@ -1300,6 +1300,7 @@ setMethod(
 )
 
 
+
 # get_signature (list)----------------------------------------------------------
 setMethod(
   "get_signature",
@@ -1393,6 +1394,7 @@ setMethod(
     return(selected_features)
   }
 )
+
 
 
 .get_available_risklike_prediction_types <- function() {
