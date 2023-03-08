@@ -39,12 +39,13 @@
    id="namedview75"
    showgrid="false"
    inkscape:zoom="0.70539906"
-   inkscape:cx="455.24253"
-   inkscape:cy="60.680079"
+   inkscape:cx="390.74003"
+   inkscape:cy="287.50204"
    inkscape:window-x="0"
    inkscape:window-y="0"
    inkscape:window-maximized="0"
-   inkscape:current-layer="layer2" />
+   inkscape:current-layer="layer1"
+   inkscape:document-rotation="0" />
 <style
    type="text/css"
    id="style2">
@@ -141,8 +142,7 @@
    inkscape:groupmode="layer"
    id="layer1"
    inkscape:label="Familiar"
-   style="display:inline"
-   sodipodi:insensitive="true"><path
+   style="display:inline"><path
      id="rect1265"
      style="fill:#ffd5e5;stroke:none;stroke-width:0.888669;stroke-linecap:round;stroke-linejoin:round"
      d="m 245.46055,257.17563 229.95737,-15.59401 25.54911,67.75725 -0.0316,100.16657 -113.21601,42.22457 -148.63819,-42.93339 z"
@@ -153,14 +153,14 @@
      sodipodi:nodetypes="scczczczcccczczczccscczscscccssscccsccccccccccccczccccccccc" /><text
      xml:space="preserve"
      style="font-size:106.667px;line-height:1.25;font-family:Bahnschrift;-inkscape-font-specification:Bahnschrift;fill:#ffffff"
-     x="133.01973"
-     y="669.02026"
+     x="170.10356"
+     y="673.27319"
      id="text1007"><tspan
        sodipodi:role="line"
        id="tspan1005"
-       x="133.01973"
-       y="669.02026"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:106.667px;font-family:'Lucida Sans';-inkscape-font-specification:'Lucida Sans';fill:#ffffff">FAMILIAR</tspan></text><path
+       x="170.10356"
+       y="673.27319"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:106.667px;font-family:'Lucida Sans';-inkscape-font-specification:'Lucida Sans';fill:#ffffff">familiar</tspan></text><path
      style="fill:#ffaacc;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
      d="M 362.57822,85.512104 311.7313,246.86829 c 0,0 25.2203,31.68457 54.88255,30.82445 36.78744,-1.06673 54.26709,-35.12035 54.26709,-35.12035 z"
      id="path1009"
