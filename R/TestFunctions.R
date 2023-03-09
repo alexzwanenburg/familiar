@@ -2020,7 +2020,7 @@ test_all_metrics <- function(metrics,
       
       # Check if the metric is available for the current outcome type, and skip
       # otherwise.
-      if(!metric.check_outcome_type(metric=metric, outcome_type=outcome_type, as_flag=TRUE)) break()
+      if(!.check_metric_outcome_type(metric=metric, outcome_type=outcome_type, as_flag=TRUE)) break()
       
       # Parse hyperparameter list
       hyperparameters <- list("sign_size"=get_n_features(full_data),

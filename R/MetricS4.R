@@ -648,7 +648,7 @@ setMethod(
 
 
 
-metric.check_outcome_type <- function(
+.check_metric_outcome_type <- function(
     metric,
     object = NULL, 
     outcome_type = NULL,

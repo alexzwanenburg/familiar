@@ -172,7 +172,7 @@ setMethod(
     # Check metric input argument
     sapply(
       metric,
-      metric.check_outcome_type,
+      .check_metric_outcome_type,
       object = object)
     
     # Aggregate feature similarity data elements.

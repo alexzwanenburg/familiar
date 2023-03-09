@@ -102,7 +102,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
             
             # Determine which of the metrics is available for the outcome type.
             metric_is_available <- sapply(metric_range,
-                                          metric.check_outcome_type,
+                                          .check_metric_outcome_type,
                                           outcome_type=object@outcome_type,
                                           as_flag=TRUE)
             

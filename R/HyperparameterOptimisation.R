@@ -465,7 +465,7 @@ setMethod(
 
     # Check if the metric is ok. Packed into a for loop to enable multi-metric
     # optimisation.
-    sapply(metric, metric.check_outcome_type, outcome_type = object@outcome_type)
+    sapply(metric, .check_metric_outcome_type, outcome_type = object@outcome_type)
 
     # Check if acquisition_function is correctly specified.
     .check_parameter_value_is_valid(

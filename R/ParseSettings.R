@@ -2927,7 +2927,7 @@
   
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
   sapply(settings$hpo_metric,
-         metric.check_outcome_type,
+         .check_metric_outcome_type,
          outcome_type=outcome_type)
   
   
@@ -3510,7 +3510,7 @@
                                 optional=TRUE,
                                 default=hpo_metric)
   
-  sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$metric, .check_metric_outcome_type, outcome_type=outcome_type)
   
   ##### sample_limit ###########################################################
   # Number of samples that should be analysed.
