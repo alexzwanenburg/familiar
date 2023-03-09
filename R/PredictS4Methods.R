@@ -432,7 +432,7 @@ setMethod(".predict", signature(object="familiarModel"),
               
               # Recalibrate the results.
               if(allow_recalibration){
-                temp_prediction_table <- learner.apply_calibration(object=object,
+                temp_prediction_table <- .apply_recalibration(object=object,
                                                                    predictions=temp_prediction_table)
               }
               

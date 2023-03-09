@@ -89,11 +89,9 @@
 
 
 
-learner.apply_calibration <- function(object, predictions){
-
+.apply_recalibration <- function(object, predictions) {
   # Suppress NOTES due to non-standard evaluation in data.table
   prob_sum <- NULL
-  
 
   # Return predictions if calibration models are missing
   if (is_empty(object@calibration_model)) return(predictions)
