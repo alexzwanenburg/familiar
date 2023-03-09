@@ -606,14 +606,10 @@ setMethod(
       # User-specified method --------------------------------------------------
 
       # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
+      if (!model_is_trained(object)) return(NULL)
 
       # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
+      if (is_empty(data)) return(NULL)
 
       # Make predictions using the model.
       return(predict(
@@ -621,8 +617,7 @@ setMethod(
         data = data@data,
         type = type,
         num.threads = 1,
-        ...
-      ))
+        ...))
     }
   }
 )
