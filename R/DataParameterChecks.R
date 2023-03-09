@@ -1260,7 +1260,7 @@
   # Plausibility check for the count outcome type
   if (outcome_type == "count" && !outcome_na) {
     
-    .Deprecated(msg = "The \"count\" outcome type will be deprecated in version 2.0.0.")
+    ..deprecation_count()
     
     if (check_stringency %in% c("strict", "external_warn")) {
       if (!is.numeric(data[[outcome_column]])) {
