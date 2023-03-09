@@ -723,14 +723,14 @@ setMethod(
 
   # Select the correct optimisation function.
   optimisation_fun <- switch(optimisation_function,
-    "max_validation" = metric.optim_score.max_validation,
-    "validation" = metric.optim_score.max_validation,
+    "max_validation" = ..optimisation_score_max_validation,
+    "validation" = ..optimisation_score_max_validation,
     "balanced" = metric.optim_score.balanced,
     "stronger_balance" = metric.optim_score.stronger_balance,
-    "validation_minus_sd" = metric.optim_score.max_validation,
-    "validation_25th_percentile" = metric.optim_score.max_validation,
-    "model_estimate" = metric.optim_score.max_validation,
-    "model_estimate_minus_sd" = metric.optim_score.max_validation,
+    "validation_minus_sd" = ..optimisation_score_max_validation,
+    "validation_25th_percentile" = ..optimisation_score_max_validation,
+    "model_estimate" = ..optimisation_score_max_validation,
+    "model_estimate_minus_sd" = ..optimisation_score_max_validation,
     "model_balanced_estimate" = metric.optim_score.balanced,
     "model_balanced_estimate_minus_sd" = metric.optim_score.balanced)
 
@@ -822,7 +822,7 @@ setMethod(
 
 
 
-metric.optim_score.max_validation <- function(training = NULL, validation) {
+..optimisation_score_max_validation <- function(training = NULL, validation) {
   return(validation)
 }
 
