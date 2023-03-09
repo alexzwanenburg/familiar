@@ -874,7 +874,7 @@ setMethod("..set_recalibration_model", signature(object="familiarXGBoost", data=
             if(object@outcome_type %in% c("survival")){
 
               # Calibrate the models.
-              object@calibration_model <- learner.recalibrate_model(object=object, data=data, time=time)
+              object@calibration_model <- .set_recalibration(object=object, data=data, time=time)
 
               # Return object.
               return(object)

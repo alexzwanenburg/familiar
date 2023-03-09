@@ -1,5 +1,4 @@
-learner.recalibrate_model <- function(object, data, time=NULL) {
-  
+.set_recalibration <- function(object, data, time = NULL) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- predicted_outcome <- NULL
 
