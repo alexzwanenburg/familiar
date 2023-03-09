@@ -707,7 +707,7 @@ setMethod(
 
 
 
-metric.compute_optimisation_score <- function(
+.compute_metric_optimisation_score <- function(
     score_table,
     optimisation_function,
     replace_na = TRUE) {
