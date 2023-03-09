@@ -725,14 +725,14 @@ setMethod(
   optimisation_fun <- switch(optimisation_function,
     "max_validation" = ..optimisation_score_max_validation,
     "validation" = ..optimisation_score_max_validation,
-    "balanced" = metric.optim_score.balanced,
+    "balanced" = ..optimisation_score_balanced,
     "stronger_balance" = metric.optim_score.stronger_balance,
     "validation_minus_sd" = ..optimisation_score_max_validation,
     "validation_25th_percentile" = ..optimisation_score_max_validation,
     "model_estimate" = ..optimisation_score_max_validation,
     "model_estimate_minus_sd" = ..optimisation_score_max_validation,
-    "model_balanced_estimate" = metric.optim_score.balanced,
-    "model_balanced_estimate_minus_sd" = metric.optim_score.balanced)
+    "model_balanced_estimate" = ..optimisation_score_balanced,
+    "model_balanced_estimate_minus_sd" = ..optimisation_score_balanced)
 
   # Find identifier columns.
   id_columns <- intersect(
@@ -828,7 +828,7 @@ setMethod(
 
 
 
-metric.optim_score.balanced <- function(training, validation) {
+..optimisation_score_balanced <- function(training, validation) {
   # Start with the validation score.
   value <- validation
 
