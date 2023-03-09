@@ -1,5 +1,5 @@
 ..warning_missing_cohorts <- function(x) {
-  logger.warning(paste0(
+  logger_warning(paste0(
     "Creating iterations: ",
     ifelse(length(x) > 1, "Cohorts ", "Cohort "),
     paste_s(x),
@@ -10,7 +10,7 @@
 
 
 ..warning_no_comparison_between_models <- function() {
-  logger.warning(paste0(
+  logger_warning(paste0(
     "Cannot create plots to compare directly between models. ",
     "Please use the hybrid or ensemble detail levels."))
 }

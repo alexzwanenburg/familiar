@@ -328,7 +328,7 @@
               # Extract validation cohorts from data
               validation_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
               if (length(validation_cohorts) == 0) {
-                logger.warning("Creating iterations: No validation cohorts could be found.")
+                logger_warning("Creating iterations: No validation cohorts could be found.")
               }
             }
             
@@ -549,7 +549,7 @@
         # Extract validation cohorts from data
         validation_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
         if (length(validation_cohorts) == 0) {
-          logger.warning("Creating iterations: No validation cohorts could be found.")
+          logger_warning("Creating iterations: No validation cohorts could be found.")
         }
       }
 
@@ -1919,7 +1919,7 @@
               subset_table[is.na(partition), mget(sample_id_columns)])
 
             # Throw warning.
-            logger.warning(
+            logger_warning(
               paste0(
                 n_samples_not_assigned,
                 ifelse(n_samples_not_assigned > 1, " samples", " sample"),
@@ -1948,7 +1948,7 @@
                 subset_table[is.na(partition), mget(sample_id_columns)])
 
               # Throw warning.
-              logger.warning(paste0(
+              logger_warning(paste0(
                 n_samples_not_assigned,
                 ifelse(n_samples_not_assigned > 1, " samples", " sample"),
                 " could not be assigned during undersampling for balance correction."))

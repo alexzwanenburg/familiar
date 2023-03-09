@@ -32,7 +32,7 @@ logger_message <- function(
 
 
 
-logger.warning <- function(
+logger_warning <- function(
     warn_str,
     file_name = NULL) {
   # Write warning to console and file

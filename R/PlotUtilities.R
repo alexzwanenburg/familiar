@@ -2236,7 +2236,7 @@ plotting.save_plot_to_file <- function(
             list(...))))
       
     }, error = function(err){
-      logger.warning(
+      logger_warning(
         paste0(
           "Could not create plot ",
           filename,
