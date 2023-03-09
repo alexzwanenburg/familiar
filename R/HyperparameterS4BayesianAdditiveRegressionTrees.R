@@ -53,7 +53,9 @@ setMethod(
 # ..train ----------------------------------------------------------------------
 setMethod(
   "..train",
-  signature(object = "familiarHyperparameterLearnerBART", data = "data.table"),
+  signature(
+    object = "familiarHyperparameterLearnerBART",
+    data = "data.table"),
   function(object, data, ...) {
     # Check if the training data is ok.
     if (has_bad_training_data(object = object, data = data)) {
