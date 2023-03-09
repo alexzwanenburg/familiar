@@ -705,7 +705,9 @@ find_unimportant_features <- function(
 
   # Calculate q-value
   if (nrow(regression_data) >= 2 && is_package_installed(name = "qvalue")) {
+    ..deprecation_qvalue()
     regression_data[, "q_full" := qvalue::qvalue(p = p_full, lambda = 0)$qvalues]
+    
   } else {
     regression_data[, "q_full" := p_full]
   }
@@ -748,8 +750,10 @@ find_unimportant_features <- function(
       regression_data_bootstrap[[ii]][!is.finite(p_val), "p_val" := 1.0]
 
       # Calculate q-values for the current bootstrap
-      if (nrow(regression_data_bootstrap[[ii]]) >= 2 &&
-          is_package_installed(name = "qvalue")) {
+      if (
+        nrow(regression_data_bootstrap[[ii]]) >= 2 &&
+        is_package_installed(name = "qvalue")) {
+        ..deprecation_qvalue()
         regression_data_bootstrap[[ii]][, "q_val" := qvalue::qvalue(p = p_val, lambda = 0)$qvalues]
         
       } else {

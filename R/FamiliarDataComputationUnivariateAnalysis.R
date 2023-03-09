@@ -152,6 +152,7 @@ setMethod(
       
       # Only introduce q-values if the qvalue package is installed.
       if (has_qvalue_package) {
+        ..deprecation_qvalue()
         
         if (all(!is.finite(regression_p_values))) {
           # q-values can only be computed if any p-values are not NA.

@@ -1655,6 +1655,7 @@
   
   # If the qvalue package is not installed, use p-values instead.
   if(settings$univar_metric == "q_value"){
+    ..deprecation_qvalue()
     if(!require_package(
       x="qvalue",
       purpose="to use q-values as a metric for univariate feature tests",
