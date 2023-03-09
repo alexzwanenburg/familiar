@@ -707,25 +707,6 @@ setMethod(
 
 
 
-metric.is_higher_score_better <- function(
-    metric, 
-    object = NULL, 
-    outcome_type = NULL) {
-  # Obtain outcome_type
-  if (is.null(outcome_type) && !is.null(object)) {
-    outcome_type <- object@outcome_type
-  }
-
-  # Initialise metric object.
-  metric_object <- as_metric(
-    metric = metric,
-    outcome_type = outcome_type)
-
-  return(metric_object@higher_better)
-}
-
-
-
 metric.compute_optimisation_score <- function(
     score_table,
     optimisation_function,
