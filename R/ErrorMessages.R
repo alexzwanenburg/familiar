@@ -47,6 +47,16 @@
 
 
 
+..deprecation_mboost <- function() {
+  rlang::warn(
+    message = "The use of mboost for gradient boosted models will be deprecated in familiar version 2.0.0.",
+    class = "deprecation_warning",
+    .frequency = "once",
+    .frequency_id = "deprecation_warning_mboost")
+}
+
+
+
 ..error_no_predictions_possible <- function(outcome_type, prediction_type) {
   stop(paste0(
     "Predictions of the ", prediction_type, " type are not possible ",

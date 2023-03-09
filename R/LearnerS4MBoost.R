@@ -94,11 +94,13 @@ setMethod("is_available", signature(object="familiarMBoostLM"),
                                                            "boosted_glm_loglog", "boosted_glm_weibull",
                                                            "boosted_glm_lognormal", "boosted_glm_gehan",
                                                            "boosted_glm_cindex")){
+              ..deprecation_mboost()
               return(TRUE)
               
             } else if(outcome_type == "continuous" & learner %in% c("boosted_glm", "boosted_glm_gaussian",
                                                                     "boosted_glm_huber", "boosted_glm_laplace",
                                                                     "boosted_glm_poisson")){
+              ..deprecation_mboost()
               return(TRUE)
               
             # } else if(outcome_type == "multinomial" & learner %in% c("boosted_glm", "boosted_glm_multinomial")){
@@ -108,9 +110,11 @@ setMethod("is_available", signature(object="familiarMBoostLM"),
                                                                   "boosted_glm_probit", "boosted_glm_loglog",
                                                                   "boosted_glm_cauchy", "boosted_glm_log",
                                                                   "boosted_glm_auc")){
+              ..deprecation_mboost()
               return(TRUE)
               
             } else if(outcome_type == "count" & learner %in% c("boosted_glm", "boosted_glm_poisson")) {
+              ..deprecation_mboost()
               return(TRUE)
               
             } else {
