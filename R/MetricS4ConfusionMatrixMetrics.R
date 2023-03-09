@@ -793,8 +793,7 @@ setMethod(
     .get_available_ppv_metrics(),
     .get_available_sensitivity_metrics(),
     .get_available_specificity_metrics(),
-    .get_available_youden_metrics()
-  ))
+    .get_available_youden_metrics()))
 }
 
 
