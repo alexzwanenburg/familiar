@@ -83,7 +83,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             
             
             ##### Signature size ###############################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
+            param$sign_size <- .get_default_sign_size(data=data)
             
             
             ##### Number of nearest neighbours k ###############################

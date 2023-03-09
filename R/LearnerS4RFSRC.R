@@ -85,7 +85,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ###### Signature size ########################################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
+            param$sign_size <- .get_default_sign_size(data=data)
             
             
             ###### Number of trees #######################################################
@@ -270,7 +270,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRCDefault"
             n_samples <- get_n_samples(data, id_depth="series")
             
             ###### Signature size ########################################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
+            param$sign_size <- .get_default_sign_size(data=data)
             
             
             ##### Sample weighting method ######################################

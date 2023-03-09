@@ -61,7 +61,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
             
             
             ##### Signature size #########################################################
-            param$sign_size <- .get_default_sign_size(data_obj=data, restrict_samples=TRUE)
+            param$sign_size <- .get_default_sign_size(data=data, restrict_samples=TRUE)
             
             
             ##### Outcome distribution ###################################################

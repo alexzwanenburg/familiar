@@ -155,7 +155,7 @@ setMethod(
 
 #' Internal function for obtaining a default signature size parameter
 #'
-#' @param data_obj dataObject class object which contains the data on which the
+#' @param data dataObject class object which contains the data on which the
 #'   preset parameters are determined.
 #' @param outcome_type Type of oucome. Default settings are determined, among
 #'   others by the the outcome type. For example, one default signature size
@@ -170,19 +170,19 @@ setMethod(
 #' @md
 #' @keywords internal
 .get_default_sign_size <- function(
-    data_obj,
+    data,
     restrict_samples = FALSE) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome_event <- NULL
 
   # Determine the outcome type
-  outcome_type <- data_obj@outcome_type
+  outcome_type <- data@outcome_type
 
   # Determine the number of samples and features
   n_samples <- data.table::uniqueN(
-    data_obj@data,
+    data@data,
     by = get_id_columns(id_depth = "series"))
-  n_features <- get_n_features(data_obj)
+  n_features <- get_n_features(data)
 
   # Determine the actual range of features dynamically.
   if (restrict_samples && n_samples > 1) {
@@ -195,14 +195,14 @@ setMethod(
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     # Get the number of outcome classes
-    n_classes <- nlevels(data_obj@data$outcome)
+    n_classes <- nlevels(data@data$outcome)
 
     # Determine the range
     sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_samples / (n_classes * 7.5))))))
     
   } else if (outcome_type %in% c("survival")) {
     # Get the number of events
-    n_events <- nrow(data_obj@data[outcome_event == 1, ])
+    n_events <- nrow(data@data[outcome_event == 1, ])
 
     # Determine the range
     sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_events / 15)))))

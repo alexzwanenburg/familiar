@@ -119,7 +119,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
 
             
             ##### Signature size ###############################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
+            param$sign_size <- .get_default_sign_size(data=data)
             
             
             ##### SVM kernel ###################################################
