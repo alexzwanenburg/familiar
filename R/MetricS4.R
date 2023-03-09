@@ -774,7 +774,7 @@ setMethod(
 
 
 
-metric.summarise_optimisation_score <- function(
+.summarise_metric_optimisation_score <- function(
     score_table,
     method,
     replace_na = TRUE) {

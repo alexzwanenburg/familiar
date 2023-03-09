@@ -418,7 +418,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
                                                         optimisation_function="max_validation")
   
   # Compute the summary score.
-  performance_data <- metric.summarise_optimisation_score(score_table=performance_data,
+  performance_data <- .summarise_metric_optimisation_score(score_table=performance_data,
                                                           method="median")
   
   # Return sample mean and standard deviation of the objective score.
