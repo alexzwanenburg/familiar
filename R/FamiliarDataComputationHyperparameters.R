@@ -49,7 +49,7 @@ setMethod(
     # Extracts hyper-parameters from each model and collects them.
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Extracting hyperparameters from the models in the ensemble."),
       indent = message_indent,
       verbose = verbose)

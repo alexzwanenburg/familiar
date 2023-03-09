@@ -191,7 +191,7 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory),
+    logger_message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory),
                    verbose=verbose)
   }
   

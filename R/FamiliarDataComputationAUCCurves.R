@@ -78,7 +78,7 @@ setMethod(
     if (!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
     
     # Message start of auc computations
-    logger.message(
+    logger_message(
       paste0("Computing receiver-operating characteristic curves."),
       indent = message_indent,
       verbose = verbose)
@@ -251,7 +251,7 @@ setMethod(
   if (nrow(data) <= 1) return(NULL)
   
   if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
-    logger.message(
+    logger_message(
       paste0(
         "Computing ROC and Precision-Recall curves for the \"",
         data_element@identifiers$positive_class, "\" class."),

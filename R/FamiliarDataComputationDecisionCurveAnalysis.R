@@ -76,7 +76,7 @@ setMethod(
     if (object@outcome_type %in% c("count", "continuous")) return(NULL)
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Computing data for decision curve analysis."),
       indent = message_indent,
       verbose = verbose)
@@ -281,7 +281,7 @@ setMethod(
   if (nrow(data) <= 1) return(NULL)
   
   if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
-    logger.message(
+    logger_message(
       paste0(
         "Computing decision curves for the \"",
         data_element@identifiers$positive_class, "\" class."),
@@ -455,7 +455,7 @@ setMethod(
   # computed. This is only relevant for survival analysis, where survival
   # probability is time depend.
   if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
-    logger.message(
+    logger_message(
       paste0(
         "Computing decision curves at time ", 
         data_element@identifiers$evaluation_time, "."),

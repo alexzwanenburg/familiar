@@ -75,7 +75,7 @@ setMethod(
     verbose = FALSE) {
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Compute feature expression."),
       indent = message_indent,
       verbose = verbose)

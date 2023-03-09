@@ -39,11 +39,13 @@ run_model_development <- function(cl,
     if(length(iter_run_list)==0) next()
 
     # Message
-    logger.message(paste0("\nModel building: starting model building using \"",
-                          iter_methods$learner, "\" learner, based on \"",
-                          iter_methods$fs_method, "\" feature selection."),
-                   indent=message_indent,
-                   verbose=verbose)
+    logger_message(
+      paste0(
+        "\nModel building: starting model building using \"",
+             iter_methods$learner, "\" learner, based on \"",
+             iter_methods$fs_method, "\" feature selection."),
+      indent=message_indent,
+      verbose=verbose)
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
@@ -64,7 +66,9 @@ run_model_development <- function(cl,
                   progress_bar=verbose,
                   hpo_list=hpo_list)
 
-    logger.message(paste0("Model building: model building using \"",
+    logger_message(
+      paste0(
+        "Model building: model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
                           iter_methods$fs_method, "\" feature selection, has been completed."),
                    indent=message_indent,

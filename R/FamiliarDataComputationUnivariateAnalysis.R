@@ -81,7 +81,7 @@ setMethod(
     p_value <- NULL
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Extracting univariate analysis information."),
       indent = message_indent,
       verbose = verbose)

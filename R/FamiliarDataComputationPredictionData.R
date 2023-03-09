@@ -79,7 +79,7 @@ setMethod(
     # generating both single and ensemble predictions.
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Computing ensemble predictions for the dataset."),
       indent = message_indent,
       verbose = verbose)

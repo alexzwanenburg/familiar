@@ -1,4 +1,8 @@
-logger.message <- function(mess_str, file_name=NULL, indent=0L, verbose=TRUE){
+logger_message <- function(
+    mess_str,
+    file_name = NULL,
+    indent = 0L,
+    verbose = TRUE) {
   # Write message to console and file
 
   if (is.null(file_name)) file_name <- .get_log_file()

@@ -233,7 +233,7 @@ add_cluster_info <- function(
     
     # Message that computations are starting.
     if (cluster_method_object@method != "none") {
-      logger.message(paste0(
+      logger_message(paste0(
         "Computing similarity between ", length(same_method_features), " features ",
         "using the ", cluster_method_object@similarity_metric, " metric ",
         "for clustering using the ", cluster_method_object@method, " method."),

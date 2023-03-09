@@ -83,7 +83,7 @@ setMethod(
     ...) {
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Computing pairwise similarity between samples."),
       indent = message_indent,
       verbose = verbose)

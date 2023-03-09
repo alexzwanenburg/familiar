@@ -107,7 +107,7 @@ run_hyperparameter_optimisation <- function(
     cl_outer <- cl
 
     if (!is.null(cl_outer)) {
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: Load-balanced parallel processing ",
           "is done in the outer loop. No progress can be displayed."),
@@ -121,7 +121,7 @@ run_hyperparameter_optimisation <- function(
 
   # Message start of hyperparameter optimisation.
   if (is_vimp) {
-    logger.message(
+    logger_message(
       paste0(
         "Hyperparameter optimisation: Starting parameter optimisation for the ",
         vimp_method, " variable importance method."),
@@ -129,7 +129,7 @@ run_hyperparameter_optimisation <- function(
       verbose = verbose)
     
   } else {
-    logger.message(
+    logger_message(
       paste0(
         "Hyperparameter optimisation: Starting parameter optimisation for the ",
         learner, " learner, based on variable importances from the ",
@@ -189,8 +189,8 @@ run_hyperparameter_optimisation <- function(
 
   # Message completion of hyperparameter optimisation.
   if (is_vimp) {
-    logger.message("", verbose = verbose)
-    logger.message(
+    logger_message("", verbose = verbose)
+    logger_message(
       paste0(
         "Hyperparameter optimisation: Completed parameter optimisation for the ",
         vimp_method, " variable importance method."),
@@ -198,8 +198,8 @@ run_hyperparameter_optimisation <- function(
       verbose = verbose)
     
   } else {
-    logger.message("", verbose = verbose)
-    logger.message(
+    logger_message("", verbose = verbose)
+    logger_message(
       paste0(
         "Hyperparameter optimisation: Completed parameter optimisation for the ",
         learner, " learner, based on variable importances from the ",
@@ -435,8 +435,8 @@ setMethod(
     param_id <- NULL
     
     if (!is.null(experiment_info)) {
-      logger.message("", verbose = verbose)
-      logger.message(
+      logger_message("", verbose = verbose)
+      logger_message(
         paste0(
           "Starting hyperparameter optimisation for data subsample ",
           experiment_info$experiment_id, " of ",
@@ -520,7 +520,7 @@ setMethod(
         "between in-bag and out-of-bag data while penalising ",
         "estimated variance in performance differences"))
 
-    logger.message(
+    logger_message(
       paste0(
         "Hyperparameter optimisation is conducted using the ",
         paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
@@ -543,7 +543,7 @@ setMethod(
       "random" = "drawn randomly",
       "random_search" = "drawn randomly")
 
-    logger.message(
+    logger_message(
       paste0(
         "Candidate hyperparameter sets after the initial run are ",
         inference_description, "."),
@@ -562,7 +562,7 @@ setMethod(
         "upper_confidence_bound" = "the upper regret bound",
         "bayes_upper_confidence_bound" = "the Bayesian upper confidence bound")
 
-      logger.message(
+      logger_message(
         paste0("Utility is measured as ", utility_description, "."),
         indent = message_indent + 1L,
         verbose = verbose)
@@ -604,7 +604,7 @@ setMethod(
         parameter_list, 
         function(list_entry) list_entry$init_config)
 
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: All hyperparameters are fixed. ",
           "No optimisation is required."),
@@ -627,7 +627,7 @@ setMethod(
     # Check that bootstraps could be created. This may fail if the data set is
     # too small.
     if (inherits(bootstraps, "error")) {
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: Failed to create bootstraps. ",
           "The dataset may be too small."),
@@ -687,7 +687,7 @@ setMethod(
           parameter_list,
           function(list_entry) list_entry$init_config)
 
-        logger.message(
+        logger_message(
           paste0(
             "Hyperparameter optimisation: All hyperparameters are fixed. ",
             "No optimisation is required."),
@@ -733,7 +733,7 @@ setMethod(
 
     # Check that the parameter table is not empty.
     if (is_empty(parameter_table)) {
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: No hyperparameters were found ",
           "to initialise the optimisation process."),
@@ -784,7 +784,7 @@ setMethod(
         parameter_ids = parameter_table$param_id)
 
       # Message begin.
-      logger.message(
+      logger_message(
         paste0(
           "Compute initial model performance based on ",
           nrow(run_table), " hyperparameter sets."),
@@ -826,7 +826,7 @@ setMethod(
           optimisation_model = optimisation_model_prototype,
           n_max_bootstraps = n_max_bootstraps)
 
-        logger.message(
+        logger_message(
           paste0(
             "Compute initial model performance based on the second batch of ",
             nrow(run_table), " hyperparameter sets."),
@@ -871,7 +871,7 @@ setMethod(
         parameter_ids = parameter_table$param_id
       )
 
-      logger.message(
+      logger_message(
         paste0(
           "Compute initial model performance based on ",
           nrow(run_table), " hyperparameter sets."),
@@ -909,7 +909,7 @@ setMethod(
       n = 1L)
 
     # Message the user concerning the initial optimisation score.
-    logger.message(
+    logger_message(
       paste0(
         "Hyperparameter optimisation: Initialisation complete: ",
         ..parse_optimisation_summary_to_string(
@@ -1019,7 +1019,7 @@ setMethod(
         if (is_empty(run_table)) break
 
         # Message the user.
-        logger.message(
+        logger_message(
           paste0(
             "Intensify step ", n_intensify_steps + 1L, " using ",
             length(parameter_id_challenger), " challenger hyperparameter sets."),
@@ -1101,7 +1101,7 @@ setMethod(
         tolerance = convergence_tolerance)
 
       # Message progress.
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": ",
           ..parse_optimisation_summary_to_string(
@@ -1125,7 +1125,7 @@ setMethod(
       if (stop_list$convergence_counter_score >= convergence_stopping ||
         stop_list$convergence_counter_parameter_id >= convergence_stopping) {
         # Message convergence
-        logger.message(
+        logger_message(
           paste0(
             "Hyperparameter optimisation: Optimisation stopped early ",
             "as convergence was achieved."),
@@ -1139,7 +1139,7 @@ setMethod(
       # Break if no model better than the naive model was found.
       if (stop_list$no_naive_improvement_counter >= no_decent_model_stopping) {
         # Message early stopping.
-        logger.message(
+        logger_message(
           paste0(
             "Hyperparameter optimisation: Optimisation stopped early because ",
             "no models were found to perform better than naive models."),
@@ -1172,7 +1172,7 @@ setMethod(
       # In this case, no suitable hyperparameters were found, for whatever
       # reason.
 
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: No suitable set of ",
           "hyperparameters was found."),
@@ -1185,7 +1185,7 @@ setMethod(
         train_errors <- condition_summary(train_errors)
 
         # Notify that one or more errors were encountered.
-        logger.message(
+        logger_message(
           paste0(
             "Hyperparameter optimisation: The following ",
             ifelse(length(train_errors) == 1, "error was", "errors were"),
@@ -1196,7 +1196,7 @@ setMethod(
         # Show errors.
         sapply(
           train_errors,
-          logger.message,
+          logger_message,
           indent = message_indent + 1L,
           verbose = verbose)
       }
@@ -1213,7 +1213,7 @@ setMethod(
       object@hyperparameters <- as.list(optimal_set_table)
       object@hyperparameters$sign_size <- 0
 
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: No set of hyperparameters was identified that ",
           "leads to a model that performs better than a naive model."),
@@ -1224,7 +1224,7 @@ setMethod(
       # In this case the model trained properly.
       object@hyperparameters <- as.list(optimal_set_table)
 
-      logger.message(
+      logger_message(
         paste0(
           "Hyperparameter optimisation: A suitable set of hyperparameters was identified: ",
           ..parse_optimisation_summary_to_string(

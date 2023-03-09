@@ -62,7 +62,7 @@ setMethod(
     if (!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Computing confusion matrix."),
       indent = message_indent,
       verbose = verbose)

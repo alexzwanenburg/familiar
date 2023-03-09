@@ -250,7 +250,7 @@
   if (is.null(iteration_list)) {
     iteration_list <- list()
 
-    logger.message(
+    logger_message(
       "Creating iterations: Starting creation of iterations.",
       indent = message_indent,
       verbose = verbose)
@@ -508,7 +508,7 @@
       }
     }
 
-    logger.message(
+    logger_message(
       "Creating iterations: Finished creation of iterations.",
       indent = message_indent,
       verbose = verbose)
@@ -582,7 +582,7 @@
     project_id <- as.numeric(format(Sys.time(), "%Y%m%d%H%M%S"))
 
     # Message project identifier
-    logger.message(
+    logger_message(
       paste0("Creating iterations: New project id is: \'", project_id, "\'."),
       indent = message_indent,
       verbose = verbose)

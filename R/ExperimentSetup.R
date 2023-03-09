@@ -382,13 +382,13 @@ extract_experimental_setup <- function(
   
   # Report on validation data:
   if (any(section_table$external_validation)) {
-    logger.message(
+    logger_message(
       "Setup report: Validation is external.",
       indent = message_indent,
       verbose = verbose)
     
   } else {
-    logger.message(
+    logger_message(
       "Setup report: Validation is internal only.",
       indent = message_indent,
       verbose = verbose)
@@ -435,7 +435,7 @@ extract_experimental_setup <- function(
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(
+    logger_message(
       paste0(main_message, collapse = " "),
       indent = message_indent,
       verbose = verbose)
@@ -483,7 +483,7 @@ extract_experimental_setup <- function(
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(
+    logger_message(
       paste0(main_message, collapse = " "),
       indent = message_indent,
       verbose = verbose)
@@ -530,7 +530,7 @@ extract_experimental_setup <- function(
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(
+    logger_message(
       paste0(main_message, collapse = " "),
       indent = message_indent,
       verbose = verbose)

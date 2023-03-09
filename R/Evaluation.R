@@ -184,7 +184,7 @@ run_evaluation <- function(
     # Select unique entries.
     new_ensemble_table <- unique(new_ensemble_table)
     
-    logger.message(
+    logger_message(
       "\nEvaluation: Creating ensemble models from individual models.",
       indent = message_indent,
       verbose = verbose)
@@ -221,7 +221,7 @@ run_evaluation <- function(
     # Add iteration_id and total number of iterations
     new_data_table[, ":="("iteration_id" = .I, "n_sets" = nrow(new_data_table))]
     
-    logger.message(
+    logger_message(
       "\nEvaluation: Processing data to create familiarData objects.",
       indent = message_indent,
       verbose = verbose)
@@ -235,7 +235,7 @@ run_evaluation <- function(
       cl_inner <- NULL
       cl_outer <- cl
       
-      logger.message(
+      logger_message(
         paste0(
           "Evaluation: Parallel processing is done in the outer loop. ",
           "No progress can be displayed."),
@@ -545,7 +545,7 @@ run_evaluation <- function(
     verbose = TRUE) {
   # Creates a familiarData object.
   
-  logger.message(
+  logger_message(
     paste0(
       "\nEvaluation: Processing dataset ", pool_data_table$iteration_id,
       " of ", pool_data_table$n_sets, "."),
@@ -615,7 +615,7 @@ run_evaluation <- function(
   # Save the familiarData object
   save(list = fam_data, file = dir_path)
   
-  logger.message(
+  logger_message(
     paste0(
       "Evaluation: familiarData object ", get_object_name(object = fam_data), " was created."),
     indent = message_indent,
@@ -696,7 +696,7 @@ run_evaluation <- function(
   
   # Check if the familiarCollection already exists.
   if (!file.exists(fam_collection_file)) {
-    logger.message(
+    logger_message(
       paste0("\nEvaluation: Creating collection ", collection_info$collection_name),
       indent = message_indent,
       verbose = verbose)
@@ -736,7 +736,7 @@ run_evaluation <- function(
     message_indent = message_indent,
     verbose = verbose)
   
-  logger.message(
+  logger_message(
     paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name),
     indent = message_indent,
     verbose = verbose)

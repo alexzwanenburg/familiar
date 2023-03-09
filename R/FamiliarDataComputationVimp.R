@@ -60,7 +60,7 @@ setMethod(
     ...) {
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Extracting variable importance obtained from the models."),
       indent = message_indent,
       verbose = verbose)
@@ -224,7 +224,7 @@ setMethod(
     if (inherits(file_paths, "error") || inherits(project_list, "error")) return(NULL)
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Extracting variable importance obtained during feature selection."),
       indent = message_indent,
       verbose = verbose)

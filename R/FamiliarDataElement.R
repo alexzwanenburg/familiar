@@ -1842,7 +1842,7 @@ setMethod(
     parallel_str <- ""
   }
   
-  logger.message(
+  logger_message(
     paste0(
       "Computing the ",
       estimator_str,

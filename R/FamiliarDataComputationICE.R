@@ -96,7 +96,7 @@ setMethod(
     
     # Message extraction start
     if (is.null(features)) {
-      logger.message(
+      logger_message(
         paste0(
           "Computing individual conditional expectation and partial dependence ",
           "data for features in the dataset."),
@@ -104,7 +104,7 @@ setMethod(
         verbose = verbose)
       
     } else {
-      logger.message(
+      logger_message(
         paste0(
           "Computing individual conditional expectation and partial dependence ",
           "data for the selected features."),
@@ -432,7 +432,7 @@ setMethod(
     message_str <- c(message_str, ".")
   }
   
-  logger.message(
+  logger_message(
     paste0(message_str, collapse = ""),
     indent = message_indent,
     verbose = verbose)

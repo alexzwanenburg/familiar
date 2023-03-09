@@ -311,7 +311,7 @@
   # Check if there still is time left.
   if (optimisation_time < time_limit) return(TRUE)
 
-  logger.message(
+  logger_message(
     paste0(
       "Hyperparameter optimisation: Optimisation stopped because the ",
       "optimisation process exceeded the allotted time: ",
@@ -385,7 +385,7 @@
         ...)
     }
 
-    logger.message(
+    logger_message(
       paste0(
         "Computing variable importance for ",
         length(bootstraps), " bootstraps."),

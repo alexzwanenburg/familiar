@@ -54,7 +54,7 @@ setMethod(
     if (!object@outcome_type %in% c("survival")) return(NULL)
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Extracting calibration information."),
       indent = message_indent,
       verbose = verbose)

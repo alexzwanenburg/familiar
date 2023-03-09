@@ -28,7 +28,7 @@ run_feature_selection <- function(
   # Create variable importance matrices by iterating over feature selection
   # methods
   for (curr_fs_method in run_fs_methods) {
-    logger.message(
+    logger_message(
       paste0(
         "\nFeature selection: starting feature selection using \"",
         curr_fs_method, "\" method."),
@@ -65,7 +65,7 @@ run_feature_selection <- function(
       file_paths = file_paths))
 
     # Message that feature selection has been completed.
-    logger.message(paste0(
+    logger_message(paste0(
       "Feature selection: feature selection using \"",
       curr_fs_method, "\" method has been completed."),
       indent = message_indent,

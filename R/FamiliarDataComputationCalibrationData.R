@@ -86,7 +86,7 @@ setMethod(
     ...) {
     
     # Message extraction start
-    logger.message(
+    logger_message(
       paste0("Assessing model calibration."),
       indent = message_indent,
       verbose = verbose)
@@ -253,7 +253,7 @@ setMethod(
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
   if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
-    logger.message(
+    logger_message(
       paste0(
         "Assessing model calibration at time ",
         data_element@identifiers$evaluation_time, "."),
