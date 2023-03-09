@@ -999,7 +999,7 @@ setMethod(
   signature(
     object = "familiarModel",
     data = "dataObject"),
-  function(object, data, time) {
+  function(object, data, time, ...) {
     # This is a fall-back option.
     return(get_placeholder_prediction_table(
       object = object, 
