@@ -686,7 +686,7 @@ setMethod(
 
 
 
-metric.get_metric_default_range <- function(
+.get_metric_default_range <- function(
     metric,
     object = NULL,
     outcome_type = NULL) {
