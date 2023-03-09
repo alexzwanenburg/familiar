@@ -61,7 +61,7 @@ logger_warning <- function(
 
 
 
-logger.stop <- function(
+logger_stop <- function(
     err_str,
     file_name = NULL) {
   # Write error to console and file

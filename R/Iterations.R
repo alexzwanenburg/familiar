@@ -293,7 +293,7 @@
 
           # Check whether the requested train cohorts are provided
           if (is.null(settings$data$train_cohorts) && external_validation_required) {
-            logger.stop(paste0(
+            logger_stop(paste0(
               "Creating iterations: Training cohorts were not provided, ",
               "but are required for external validation."))
             
@@ -537,7 +537,7 @@
         # Extract validation cohorts from data by selecting all non-training
         # cohorts
         if (is.null(settings$data$train_cohorts)) {
-          logger.stop("Creating iterations: Training cohorts were not provided.")
+          logger_stop("Creating iterations: Training cohorts were not provided.")
         }
 
         # Extract train cohorts from settings
@@ -1543,7 +1543,7 @@
 
   # Class imbalance should only be addressed if the outcome data is categorical.
   if (!outcome_type %in% c("binomial", "multinomial")) {
-    logger.stop(paste0(
+    logger_stop(paste0(
       "Creating iterations: Imbalance partitions (ip) are only available ",
       "for binomial and multinomial outcomes."))
   }

@@ -1989,7 +1989,7 @@ setMethod(
     # Check if features are present as column name
     if (length(features) > 0) {
       if (!all(features %in% colnames(data@data))) {
-        logger.stop("Not all features were found in the data set.")
+        logger_stop("Not all features were found in the data set.")
       }
     }
     
