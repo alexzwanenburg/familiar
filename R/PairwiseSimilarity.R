@@ -133,7 +133,7 @@ similarity.pseudo_r2 <- function(
   y <- y[valid_elements]
 
   # Check if there are more than one unique values in x and or y.
-  if (length(unique(x)) == 1 & length(unique(y)) == 1) {
+  if (length(unique(x)) == 1 && length(unique(y)) == 1) {
     return(1.0)
   }
 
@@ -153,7 +153,7 @@ similarity.pseudo_r2 <- function(
   }
 
   # Check if there are more than one unique values in x and or y.
-  if (length(unique(x)) == 1 & length(unique(y)) == 1) {
+  if (length(unique(x)) == 1 && length(unique(y)) == 1) {
     return(1.0)
   }
 
@@ -442,7 +442,7 @@ similarity.pseudo_r2.get_analysis_type <- function(x, y, x_categorical, y_catego
   n_x <- ifelse(x_categorical, nlevels(x), data.table::uniqueN(x))
   n_y <- ifelse(y_categorical, nlevels(y), data.table::uniqueN(y))
 
-  if (x_categorical & y_categorical) {
+  if (x_categorical && y_categorical) {
     # Case 1: Both x and y are categorical variables.
 
     # Determine analysis type.
@@ -820,10 +820,10 @@ similarity.metric_range <- function(similarity_metric, as_distance = FALSE) {
   if (similarity_metric %in% c("gower", "mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "mutual_information")) {
     return(c(0.0, 1.0))
     
-  } else if (similarity_metric %in% c("spearman", "kendall", "pearson") & !as_distance) {
+  } else if (similarity_metric %in% c("spearman", "kendall", "pearson") && !as_distance) {
     return(c(-1.0, 0.0, 1.0))
     
-  } else if (similarity_metric %in% c("spearman", "kendall", "pearson") & as_distance) {
+  } else if (similarity_metric %in% c("spearman", "kendall", "pearson") && as_distance) {
     return(c(0.0, 1.0))
     
   } else {
