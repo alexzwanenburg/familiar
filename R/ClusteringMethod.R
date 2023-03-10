@@ -531,7 +531,7 @@ setMethod(
         feature_2 <- combinations[2, ii]
         
         # Compute pairwise similarity
-        similarity <- similarity.compute_similarity(
+        similarity <- .compute_similarity_metric(
           x = data[[feature_1]],
           y = data[[feature_2]],
           x_categorical = categorical_mask[feature_1],
@@ -583,7 +583,7 @@ setMethod(
         row_2 <- combinations[2, ii]
         
         # Compute pairwise similarity
-        similarity <- similarity.compute_similarity(
+        similarity <- .compute_similarity_metric(
           x = as.numeric(data[row_1, ]),
           y = as.numeric(data[row_2, ]),
           x_categorical = categorical_mask,
