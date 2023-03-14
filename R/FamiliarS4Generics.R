@@ -134,12 +134,6 @@ setGeneric(".export", function(x, ...) standardGeneric(".export"))
 setGeneric("load_familiar_object", function(object, ...) standardGeneric("load_familiar_object"))
 
 
-
-# plotting methods -------------------------------------------------------------
-setGeneric("plot_all", function(object, ...) standardGeneric("plot_all"))
-
-
-
 # utilities --------------------------------------------------------------------
 setGeneric("is_empty", function(x, ...) standardGeneric("is_empty"))
 
