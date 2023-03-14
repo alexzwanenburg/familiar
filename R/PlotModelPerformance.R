@@ -751,7 +751,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                                        fill=!!sym("median")))
     
     # Colors
-    gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
+    gradient_colours <- .get_palette(x=gradient_palette, palette_type=palette_type)
     if(invert_scale) gradient_colours <- rev(gradient_colours)
     
     # Add gradient palette.

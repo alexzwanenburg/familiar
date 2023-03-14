@@ -1321,7 +1321,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   
   # Colors
-  gradient_colours <- plotting.get_palette(x=gradient_palette,
+  gradient_colours <- .get_palette(x=gradient_palette,
                                            palette_type=palette_type,
                                            diverge_to_white=TRUE)
   
@@ -1568,7 +1568,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   if(outcome_type %in% c("continuous", "count")){
     
     # Colors
-    outcome_colours <- plotting.get_palette(x=outcome_palette,
+    outcome_colours <- .get_palette(x=outcome_palette,
                                             palette_type=palette_type,
                                             use_alternative=TRUE)
     
@@ -1579,7 +1579,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                            oob=scales::squish)
   } else {
     # Colors
-    outcome_colours <- plotting.get_palette(x=outcome_palette,
+    outcome_colours <- .get_palette(x=outcome_palette,
                                             n=nlevels(x$value),
                                             palette_type=palette_type,
                                             use_alternative=TRUE)

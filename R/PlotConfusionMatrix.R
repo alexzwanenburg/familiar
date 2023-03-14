@@ -418,7 +418,10 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
                                         rotate_x_tick_labels){
   
   # Find the colours
-  discrete_colours <- plotting.get_palette(x=discrete_palette, palette_type="qualitative", n=2)
+  discrete_colours <- .get_palette(
+    x=discrete_palette,
+    palette_type="qualitative",
+    n=2)
   
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected_outcome"),

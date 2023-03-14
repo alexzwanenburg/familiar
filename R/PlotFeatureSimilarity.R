@@ -654,7 +654,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
 
   
   # Colors
-  gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type, diverge_to_white=TRUE)
+  gradient_colours <- .get_palette(x=gradient_palette, palette_type=palette_type, diverge_to_white=TRUE)
   if(invert_palette) gradient_colours <- rev(gradient_colours)
   
   if(length(gradient_palette_range) > 0){

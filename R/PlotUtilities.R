@@ -2045,7 +2045,7 @@ plotting.create_guide_table <- function(x, color_by=NULL, linetype_by=NULL, disc
       guide_table[, "color_id":=.GRP, by=color_by]
       
       # Get the palette to use.
-      discr_palette <- plotting.get_palette(x=discrete_palette,
+      discr_palette <- .get_palette(x=discrete_palette,
                                             n=max(guide_table$color_id),
                                             palette_type="qualitative")
 

@@ -583,7 +583,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
     p <- p + ggplot2::geom_bar(stat="identity",
                                mapping=ggplot2::aes(fill=!!sym("log_value")),
                                show.legend=FALSE)
-    p <- p + ggplot2::scale_fill_gradientn(colors=plotting.get_palette(x=gradient_palette,
+    p <- p + ggplot2::scale_fill_gradientn(colors=.get_palette(x=gradient_palette,
                                                                        palette_type="sequential"),
                                            limits=x_range)
     

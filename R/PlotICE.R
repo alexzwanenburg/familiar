@@ -1909,7 +1909,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   } else {
     # Set colour for value points.
     if(!is.null(discrete_palette)){
-      colour <- plotting.get_palette(x=discrete_palette,
+      colour <- .get_palette(x=discrete_palette,
                                      n=1L,
                                      palette_type="qualitative")
       
@@ -1938,7 +1938,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   }
   
   # Set colours used for plotting 
-  gradient_colours <- plotting.get_palette(x=gradient_palette,
+  gradient_colours <- .get_palette(x=gradient_palette,
                                            palette_type="sequential")
   
   # Add gradient palette as fill.

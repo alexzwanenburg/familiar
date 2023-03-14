@@ -713,7 +713,7 @@ plot_model_signature_variable_importance <- function(...){
     
     
     # Get gradient colours
-    gradient_colours <- plotting.get_palette(x=gradient_palette,
+    gradient_colours <- .get_palette(x=gradient_palette,
                                              palette_type="sequential")
     
     p <- p + ggplot2::scale_fill_gradientn(colors=gradient_colours,
