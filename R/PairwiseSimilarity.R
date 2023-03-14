@@ -141,9 +141,9 @@ setMethod(
 setMethod(
   "encode_categorical_variables",
   signature(
-    data = "ANY",
-    object = "familiarSimilarityMetric"),
-  function(data, object, ...) {
+    object = "familiarSimilarityMetric",
+    data = "ANY"),
+  function(object, data, ...) {
     
     # Extract data table with contrasts.
     data <- encode_categorical_variables(
@@ -162,9 +162,9 @@ setMethod(
 setMethod(
   "encode_categorical_variables",
   signature(
-    data = "ANY",
-    object = "familiarSimilarityMetricDistance"),
-  function(data, object, ...) {
+    object = "familiarSimilarityMetricDistance",
+    data = "ANY"),
+  function(object, data, ...) {
     
     # Leave data as is.
     return(data)
@@ -172,6 +172,8 @@ setMethod(
 )
 
 
+
+# .compute_feature_similarity methods ------------------------------------------
 
 compute_feature_similarity_metric <- function(
     data,
@@ -288,7 +290,7 @@ compute_feature_similarity_metric <- function(
 
 
 
-# .compute_feature_similarity methods ------------------------------------------
+
 
 ## .compute_feature_similarity (generic) ---------------------------------------
 setGeneric(".compute_feature_similarity", function(object, ...) standardGeneric(".compute_feature_similarity"))
