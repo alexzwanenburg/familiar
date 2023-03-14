@@ -29,7 +29,8 @@ setMethod(
 
 # is_available -----------------------------------------------------------------
 setMethod(
-  "is_available", signature(object = "familiarKNN"),
+  "is_available",
+  signature(object = "familiarKNN"),
   function(object, ...) {
     # k-nearest neighbours is only available for categorical outcomes.
     if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {

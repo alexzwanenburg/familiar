@@ -236,7 +236,7 @@ setMethod(
         cluster_similarity_threshold,
         .check_number_in_valid_range,
         var_name = paste0(object@data_type, "_similarity_threshold"),
-        range = similarity.metric_range(
+        range = get_similarity_range(
           similarity_metric = object@similarity_metric,
           as_distance = TRUE))
       
@@ -503,11 +503,6 @@ setMethod(
     # Get feature columns.
     feature_columns <- get_feature_columns(data)
     
-    # Set the categorical mask.
-    categorical_mask <- sapply(
-      feature_info_list[feature_columns],
-      function(x) (x@feature_type == "factor"))
-    
     # Sanity check.
     if (!(setequal(feature_columns, get_available_features(feature_info_list = feature_info_list)))) {
       ..error_reached_unreachable_code(paste0(
@@ -517,141 +512,23 @@ setMethod(
     
     if (object@data_type %in% c("cluster", "feature")) {
       
-      # Internal function for computing pair-wise similarity between
-      # features.
-      ..compute_similarity <- function(
-        ii,
-        combinations,
-        data,
-        similarity_metric,
-        categorical_mask) {
-        
-        # Identify features that are being compared.
-        feature_1 <- combinations[1, ii]
-        feature_2 <- combinations[2, ii]
-        
-        # Compute pairwise similarity
-        similarity <- .compute_similarity_metric(
-          x = data[[feature_1]],
-          y = data[[feature_2]],
-          x_categorical = categorical_mask[feature_1],
-          y_categorical = categorical_mask[feature_2],
-          similarity_metric = similarity_metric)
-        
-        return(similarity)
-      }
-      
-      # Check that the number of features is at least two. This is more
-      # of technical requirement than anything else.
-      if (length(feature_columns) < 2) return(NULL)
-      
-      # Generate all combinations of features
-      combinations <- utils::combn(sort(feature_columns), 2)
-      
-      # Determine similarity measures for each feature pair.
-      similarity <- fam_sapply(
-        cl = cl,
-        assign = NULL,
-        X = seq_len(ncol(combinations)),
-        FUN = ..compute_similarity,
-        progress_bar = verbose,
-        combinations = combinations,
-        data = droplevels(data@data),
+      # Find similarity between features.
+      similarity_data  <- compute_feature_similarity_metric(
+        data = data,
         similarity_metric = object@similarity_metric,
-        categorical_mask = categorical_mask,
-        chopchop = TRUE)
-      
-      # Transform similarity scores into a data.table.
-      similarity_data  <- data.table::data.table(
-        "feature_name_1" = combinations[1, ],
-        "feature_name_2" = combinations[2, ],
-        "value" = similarity)
+        feature_info_list = feature_info_list,
+        cl = cl,
+        verbose = verbose)
       
     } else if (object@data_type == "sample") {
       
-      # Internal function for computing pair-wise similarity between
-      # instances.
-      ..compute_similarity <- function(
-        ii,
-        combinations,
-        data,
-        similarity_metric,
-        categorical_mask) {
-        
-        # Identify features that are being compared.
-        row_1 <- combinations[1, ii]
-        row_2 <- combinations[2, ii]
-        
-        # Compute pairwise similarity
-        similarity <- .compute_similarity_metric(
-          x = as.numeric(data[row_1, ]),
-          y = as.numeric(data[row_2, ]),
-          x_categorical = categorical_mask,
-          y_categorical = categorical_mask,
-          similarity_metric = similarity_metric)
-        
-        return(similarity)
-      }
-      
-      # Determine if data requires normalisation
-      if (similarity.requires_normalisation(similarity_metric = object@similarity_metric)) {
-        # Identify numerical features
-        numerical_features <- feature_columns[!categorical_mask]
-        
-        # Create a local copy of data.
-        data@data <- data.table::copy(data@data)
-        
-        # Find the normalisation method.
-        if (grepl(pattern = "_trim", x = object@similarity_metric, fixed = TRUE)) {
-          norm_method <- "normalisation_trim"
-          
-        } else if (grepl(pattern = "_winsor", x = object@similarity_metric, fixed = TRUE)) {
-          norm_method <- "normalisation_winsor"
-          
-        } else {
-          norm_method <- "normalisation"
-        }
-        
-        # Perform normalisation.
-        for (ii in numerical_features) {
-          data.table::set(
-            data@data,
-            j = ii,
-            value = .normalise(
-              x = data@data[[ii]],
-              normalisation_method = norm_method,
-              range = c(0, 1)))
-        }
-      }
-      
-      # Check that the number of rows is at least two. This is more
-      # of technical requirement than anything else.
-      if (nrow(data@data) < 2) return(NULL)
-      
-      # Generate all combinations of samples
-      combinations <- utils::combn(seq_len(nrow(data@data)), 2)
-      
-      # Determine similarity measures for each sample pair.
-      similarity <- fam_sapply(
-        cl = cl,
-        assign = NULL,
-        X = seq_len(ncol(combinations)),
-        FUN = ..compute_similarity,
-        progress_bar = verbose,
-        combinations = combinations,
-        data = data@data[, mget(feature_columns)],
+      # Find similarity between samples
+      similarity_data <- compute_sample_similarity_metric(
+        data = data,
         similarity_metric = object@similarity_metric,
-        categorical_mask = categorical_mask,
-        chopchop = TRUE)
-      
-      # Create unique row names.
-      row_names <- get_unique_row_names(x = data)
-      
-      # Transform similarity scores into a data.table.
-      similarity_data  <- data.table::data.table(
-        "sample_1" = row_names[combinations[1, ]],
-        "sample_2" = row_names[combinations[2, ]],
-        "value" = similarity)
+        feature_info_list = feature_info_list,
+        cl = cl,
+        verbose = verbose)
       
     } else {
       ..error_reached_unreachable_code(paste0(
@@ -795,7 +672,7 @@ setMethod(
       lower_triangle[[element_names[2]]])
     
     # Convert similarity to distance.
-    lower_triangle[, "value" := similarity.to_distance(
+    lower_triangle[, "value" := convert_similarity_to_distance(
       x = value,
       similarity_metric = similarity_metric)]
     
@@ -1418,7 +1295,7 @@ setMethod(
     if (is.null(object@object)) return(NULL)
     
     # Compute the height at which the dendrogram should be cut.
-    cut_height <- similarity.to_distance(
+    cut_height <- convert_similarity_to_distance(
       x = object@similarity_threshold,
       similarity_metric = object@similarity_metric)
     
@@ -1463,13 +1340,13 @@ setMethod(
       purpose = "to cluster similar features together through dynamic dendrogram cutting")
     
     # Compute the height at which the dendrogram should be cut anyway.
-    cut_height <- similarity.to_distance(
+    cut_height <- convert_similarity_to_distance(
       x = object@similarity_threshold,
       similarity_metric = object@similarity_metric)
     
     if (length(get_similarity_names(object@similarity_table)) == 2) {
       # For two features, dynamicTreeCut seems to ignore maxTreeHeight.
-      if (similarity.to_distance(
+      if (convert_similarity_to_distance(
         x = object@similarity_table@data$value,
         similarity_metric = object@similarity_metric) <= cut_height) {
         
@@ -1626,7 +1503,9 @@ create_cluster_method_object <- function(
   # Determine the number of features.
   n_features <- length(get_similarity_names(object@similarity_table))
   
-  highly_similar_distance <- similarity.highly_similar(similarity_metric = object@similarity_metric)
+  highly_similar_distance <- convert_similarity_to_distance(
+    x = get_high_similarity_threshold(similarity_metric = object@similarity_metric),
+    similarity_metric = object@similarity_metric)
   
   # Check problematic values.
   if (n_features == 1) {

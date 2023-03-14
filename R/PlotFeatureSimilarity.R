@@ -623,7 +623,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   
   if(is.null(gradient_palette_range) && !is.null(similarity_metric)){
     # Find the palette range.
-    gradient_palette_range <- similarity.metric_range(similarity_metric=similarity_metric)
+    gradient_palette_range <- get_similarity_range(similarity_metric=similarity_metric)
   }
 
   # Determine whether a sequential or divergent palette should be used by default.
@@ -635,7 +635,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   # are those with least distance, not highest similarity.
   invert_palette <- FALSE
   if(!is.null(similarity_metric)){
-    invert_palette <- similarity.default_is_distance(similarity_metric=similarity_metric)
+    invert_palette <- is_default_distance(similarity_metric=similarity_metric)
   }
   
   # Create basic plot

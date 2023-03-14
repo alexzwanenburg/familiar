@@ -2327,7 +2327,7 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   h <- stats::as.dendrogram(h)
   
   # Determine the metric range.
-  metric_range <- similarity.metric_range(similarity_metric=similarity_metric, as_distance=TRUE)
+  metric_range <- get_similarity_range(similarity_metric=similarity_metric, as_distance=TRUE)
   
   # Convert dendogram to a list of connectors that can later be used for
   # plotting. Note that we do not know where the origin should be located on the
