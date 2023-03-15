@@ -481,7 +481,7 @@ setMethod(
       if (is.waive(plot_title)) plot_title <- "Univariate variable importance"
 
       if (autogenerate_plot_subtitle) {
-        plot_sub_title <- plotting.create_subtitle(
+        plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           x = x_sub)
       }

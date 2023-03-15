@@ -392,7 +392,7 @@ setMethod(
       if (is.waive(plot_title)) plot_title <- "Feature similarity"
 
       if (autogenerate_plot_subtitle) {
-        plot_sub_title <- plotting.create_subtitle(
+        plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = list("metric" = x@similarity_metric),
           x = x_sub)

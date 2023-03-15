@@ -315,7 +315,8 @@ theme_familiar <- function(
 }
 
 
-plotting.create_subtitle <- function(
+
+.create_plot_subtitle <- function(
     x, 
     split_by = NULL, 
     additional = NULL) {

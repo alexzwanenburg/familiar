@@ -599,7 +599,7 @@ plot_model_signature_variable_importance <- function(...) {
     }
 
     if (autogenerate_plot_subtitle) {
-      plot_sub_title <- plotting.create_subtitle(
+      plot_sub_title <- .create_plot_subtitle(
         split_by = split_by,
         additional = list("aggregation_method" = x@rank_aggregation_method),
         x = x_sub)

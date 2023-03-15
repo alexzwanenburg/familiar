@@ -763,7 +763,7 @@ setMethod(
       if (is.waive(plot_title)) plot_title <- "Sample clustering"
 
       if (autogenerate_plot_subtitle) {
-        plot_sub_title <- plotting.create_subtitle(
+        plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
           x = x_sub)
