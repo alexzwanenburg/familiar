@@ -20,7 +20,7 @@ NULL
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -286,7 +286,7 @@ setMethod(
 
     # x_breaks
     if (is.null(x_breaks)) {
-      plotting.check_input_args(x_n_breaks = x_n_breaks)
+      .check_input_plot_args(x_n_breaks = x_n_breaks)
 
       # Create breaks
       x_breaks <- labeling::extended(
@@ -326,7 +326,7 @@ setMethod(
 
     # y_breaks
     if (is.null(y_breaks)) {
-      plotting.check_input_args(y_n_breaks = y_n_breaks)
+      .check_input_plot_args(y_n_breaks = y_n_breaks)
 
       # Create breaks
       y_breaks <- labeling::extended(
@@ -434,7 +434,7 @@ setMethod(
       color_by = color_by)
 
     # Check input arguments for validity.
-    plotting.check_input_args(
+    .check_input_plot_args(
       x_range = x_range,
       y_range = y_range,
       x_breaks = x_breaks,

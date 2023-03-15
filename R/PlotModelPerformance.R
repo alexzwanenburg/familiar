@@ -35,7 +35,7 @@ NULL
 #'
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
-#'@inheritParams plotting.check_input_args
+#'@inheritParams .check_input_plot_args
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams extract_performance -object
 #'@inheritDotParams as_familiar_collection -object
@@ -443,7 +443,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                             values=c("none", "value", "value_ci"))
             
             
-            plotting.check_input_args(facet_wrap_cols=facet_wrap_cols,
+            .check_input_plot_args(facet_wrap_cols=facet_wrap_cols,
                                       x_label=x_label,
                                       plot_title=plot_title,
                                       plot_sub_title=plot_sub_title,
@@ -635,12 +635,12 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
       }
       
     } else {
-      plotting.check_input_args(y_range=y_range)
+      .check_input_plot_args(y_range=y_range)
     }
     
     # y_breaks
     if(is.null(y_breaks)){
-      plotting.check_input_args(y_range=y_range, y_n_breaks=y_n_breaks)
+      .check_input_plot_args(y_range=y_range, y_n_breaks=y_n_breaks)
       
       # Create breaks and update x_range
       y_breaks <- labeling::extended(m=y_n_breaks,
@@ -650,7 +650,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
       y_range  <- c(0, tail(y_breaks, n=1))
       
     } else {
-      plotting.check_input_args(y_breaks=y_breaks)
+      .check_input_plot_args(y_breaks=y_breaks)
     }
     
     # y_label for non-heatmap plots
@@ -708,7 +708,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
   }
   
   # Check remaining input arguments.
-  plotting.check_input_args(y_label=y_label,
+  .check_input_plot_args(y_label=y_label,
                             legend_label=legend_label)
   
   # Create basic plot

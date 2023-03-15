@@ -1903,7 +1903,7 @@ plotting.to_grob <- function(plots_or_grobs){
 plotting.create_legend_label <- function(user_label, color_by=NULL, linetype_by=NULL, combine_legend=FALSE){
   
   # Sent for inspection
-  plotting.check_input_args(legend_label=user_label,
+  .check_input_plot_args(legend_label=user_label,
                             combine_legend=combine_legend)
   
   if(is.null(color_by) & is.null(linetype_by)){

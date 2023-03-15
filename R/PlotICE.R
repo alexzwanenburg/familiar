@@ -80,7 +80,7 @@ NULL
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams export_ice_data -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -800,7 +800,7 @@ setMethod(
     }
 
     # Check input arguments for validity.
-    plotting.check_input_args(
+    .check_input_plot_args(
       conf_int_alpha = conf_int_alpha,
       conf_int_style = conf_int_style,
       facet_wrap_cols = facet_wrap_cols,
@@ -1201,7 +1201,7 @@ setMethod(
   }
 
   # Check label sharing.
-  plotting.check_input_args(
+  .check_input_plot_args(
     x_label_shared = x_label_shared,
     y_label_shared = y_label_shared)
 
@@ -1379,7 +1379,7 @@ setMethod(
 
     # x_breaks
     if (is.null(x_breaks)) {
-      plotting.check_input_args(x_n_breaks = x_n_breaks)
+      .check_input_plot_args(x_n_breaks = x_n_breaks)
 
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
@@ -1394,7 +1394,7 @@ setMethod(
         tail(x_breaks, n = 1))
     }
 
-    plotting.check_input_args(x_range = x_range)
+    .check_input_plot_args(x_range = x_range)
     
   } else {
     x_range <- NULL
@@ -1409,7 +1409,7 @@ setMethod(
 
     # y_breaks
     if (is.null(y_breaks)) {
-      plotting.check_input_args(y_n_breaks = y_n_breaks)
+      .check_input_plot_args(y_n_breaks = y_n_breaks)
 
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
@@ -1425,7 +1425,7 @@ setMethod(
     }
   }
 
-  plotting.check_input_args(y_range = y_range)
+  .check_input_plot_args(y_range = y_range)
 
   # Set x-label
   if (is.waive(x_label)) {
@@ -1449,7 +1449,7 @@ setMethod(
     )
   }
 
-  plotting.check_input_args(
+  .check_input_plot_args(
     x_label = x_label,
     y_label = y_label)
 
@@ -1939,7 +1939,7 @@ setMethod(
 
     # x_breaks
     if (is.null(x_breaks)) {
-      plotting.check_input_args(x_n_breaks = x_n_breaks)
+      .check_input_plot_args(x_n_breaks = x_n_breaks)
 
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
@@ -1954,7 +1954,7 @@ setMethod(
         tail(x_breaks, n = 1))
     }
 
-    plotting.check_input_args(x_range = x_range)
+    .check_input_plot_args(x_range = x_range)
     
   } else {
     x_range <- NULL
@@ -1970,7 +1970,7 @@ setMethod(
 
     # y_breaks
     if (is.null(y_breaks)) {
-      plotting.check_input_args(y_n_breaks = y_n_breaks)
+      .check_input_plot_args(y_n_breaks = y_n_breaks)
 
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
@@ -1985,7 +1985,7 @@ setMethod(
         tail(y_breaks, n = 1))
     }
 
-    plotting.check_input_args(y_range = y_range)
+    .check_input_plot_args(y_range = y_range)
     
   } else {
     y_range <- NULL
@@ -2033,7 +2033,7 @@ setMethod(
     }
   }
 
-  plotting.check_input_args(
+  .check_input_plot_args(
     x_label = x_label,
     y_label = y_label)
 

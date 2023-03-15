@@ -33,7 +33,7 @@ NULL
 #'
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
-#'@inheritParams plotting.check_input_args
+#'@inheritParams .check_input_plot_args
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
@@ -313,7 +313,7 @@ setMethod(
     
     # x_label_shared
     if(!is.waive(x_label_shared)){
-      plotting.check_input_args(x_label_shared=x_label_shared)
+      .check_input_plot_args(x_label_shared=x_label_shared)
       
     } else {
       x_label_shared <- "column"
@@ -321,7 +321,7 @@ setMethod(
     
     # y_label_shared
     if(!is.waive(y_label_shared)){
-      plotting.check_input_args(y_label_shared=y_label_shared)
+      .check_input_plot_args(y_label_shared=y_label_shared)
       
     } else {
       y_label_shared <- "row"
@@ -332,7 +332,7 @@ setMethod(
     
     # x_breaks
     if(is.null(x_breaks)){
-      plotting.check_input_args(x_n_breaks=x_n_breaks)
+      .check_input_plot_args(x_n_breaks=x_n_breaks)
       
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
@@ -349,7 +349,7 @@ setMethod(
     
     # y_breaks
     if(is.null(y_breaks)){
-      plotting.check_input_args(y_n_breaks=y_n_breaks)
+      .check_input_plot_args(y_n_breaks=y_n_breaks)
       
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
@@ -417,7 +417,7 @@ setMethod(
     }
     
     # Check input arguments for validity.
-    plotting.check_input_args(
+    .check_input_plot_args(
       x_range=x_range,
       y_range=y_range,
       x_breaks=x_breaks,

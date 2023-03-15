@@ -40,7 +40,7 @@ NULL
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -286,7 +286,7 @@ setMethod(
     legend_label <- plotting.create_legend_label(user_label = legend_label)
 
     # Check input arguments for validity.
-    plotting.check_input_args(
+    .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
       x_label = x_label,
       y_label = y_label,

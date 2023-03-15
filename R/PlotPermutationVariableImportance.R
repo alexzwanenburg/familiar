@@ -22,7 +22,7 @@ NULL
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
 #'
 #'@inheritParams as_familiar_collection
-#'@inheritParams plotting.check_input_args
+#'@inheritParams .check_input_plot_args
 #'@inheritParams plotting.check_data_handling
 #'@inheritParams plot_univariate_importance
 #'@inheritDotParams as_familiar_collection -object
@@ -426,7 +426,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Convert to the correct 
               x_range <- lapply(x_range, function(x_range){
-                plotting.check_input_args(x_range=x_range)
+                .check_input_plot_args(x_range=x_range)
                 
                 return(data.table::data.table("min_value"=min(x_range),
                                               "max_value"=max(x_range)))
@@ -434,7 +434,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                 
             } else {
               # For user-provided input.
-              plotting.check_input_args(x_range=x_range)
+              .check_input_plot_args(x_range=x_range)
               
               # Use the same range for each 
               x_range <- lapply(available_metrics, function(metric, x_range){
@@ -450,7 +450,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # x_breaks
             if(is.null(x_breaks)){
-              plotting.check_input_args(x_n_breaks=x_n_breaks)
+              .check_input_plot_args(x_n_breaks=x_n_breaks)
               
               # Create x_breaks.
               x_breaks <- lapply(x_range, function(x_range, x_n_breaks){
@@ -478,10 +478,10 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                                      max=length(available_metrics))
               
               # Check breaks.
-              sapply(x_breaks, function(x_breaks) plotting.check_input_args(x_breaks=x_breaks))
+              sapply(x_breaks, function(x_breaks) .check_input_plot_args(x_breaks=x_breaks))
               
             } else {
-              plotting.check_input_args(x_breaks=x_breaks)
+              .check_input_plot_args(x_breaks=x_breaks)
               
             }
             
@@ -499,7 +499,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             names(x_range) <- available_metrics
             
             # Check general input arguments
-            plotting.check_input_args(y_label=y_label,
+            .check_input_plot_args(y_label=y_label,
                                       legend_label=legend_label,
                                       plot_title=plot_title,
                                       plot_sub_title=plot_sub_title,
@@ -662,7 +662,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   }
   
   # Check the label
-  plotting.check_input_args(x_label=x_label)
+  .check_input_plot_args(x_label=x_label)
   
   # Determine available metrics
   if("metric" %in% color_by | "metric" %in% facet_by){

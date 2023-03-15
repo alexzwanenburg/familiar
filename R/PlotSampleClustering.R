@@ -95,7 +95,7 @@ NULL
 #'@inheritParams export_sample_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
-#'@inheritParams plotting.check_input_args
+#'@inheritParams .check_input_plot_args
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
@@ -407,14 +407,14 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             # x_label_shared
             if(!is.waive(x_label_shared)){
-              plotting.check_input_args(x_label_shared=x_label_shared)
+              .check_input_plot_args(x_label_shared=x_label_shared)
             } else {
               x_label_shared <- "column"
             }
             
             # y_label_shared
             if(!is.waive(y_label_shared)){
-              plotting.check_input_args(y_label_shared=y_label_shared)
+              .check_input_plot_args(y_label_shared=y_label_shared)
             } else {
               y_label_shared <- "row"
             }
@@ -461,7 +461,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # check outcome_legend_label
-            plotting.check_input_label(label_var=outcome_legend_label,
+            .check_input_plot_label(label_var=outcome_legend_label,
                                        var_name="outcome_legend_label")
             
             # x_axis_by & y_axis_by
@@ -558,7 +558,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
             # Check if the dendrogram_height argument is correct.
             if(!is.null(show_sample_dendrogram) | !is.null(show_feature_dendrogram)){
-              plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
+              .check_plot_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
             }
             
             # Check if show_outcome is specified correctly.
@@ -585,7 +585,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # Check if the outcome_height argument is correct.
-            if(!is.null(show_outcome)) plotting.check_grid_unit(x=outcome_height, var_name="outcome_height")
+            if(!is.null(show_outcome)) .check_plot_grid_unit(x=outcome_height, var_name="outcome_height")
             
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
@@ -608,7 +608,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             facet_by <- split_var_list$facet_by
             
             # Check input arguments
-            plotting.check_input_args(facet_wrap_cols=facet_wrap_cols,
+            .check_input_plot_args(facet_wrap_cols=facet_wrap_cols,
                                       x_label=x_label,
                                       y_label=y_label,
                                       legend_label=legend_label,
@@ -1414,7 +1414,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # y_breaks
   if(is.null(dist_breaks)){
-    plotting.check_input_args(y_range=dist_range,
+    .check_input_plot_args(y_range=dist_range,
                               y_n_breaks=dist_n_breaks)
     
     # Create breaks and update y_range
@@ -1426,7 +1426,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     dist_range <- c(head(dist_breaks, n=1), tail(dist_breaks, n=1))
   }
   
-  plotting.check_input_args(y_range=dist_range,
+  .check_input_plot_args(y_range=dist_range,
                             y_breaks=dist_breaks)
   
   # Create basic plot

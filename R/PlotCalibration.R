@@ -33,7 +33,7 @@ NULL
 #'  `show_density` is `FALSE`.
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -324,14 +324,14 @@ setMethod(
 
     # x_label_shared
     if (!is.waive(x_label_shared)) {
-      plotting.check_input_args(x_label_shared = x_label_shared)
+      .check_input_plot_args(x_label_shared = x_label_shared)
     } else {
       x_label_shared <- "column"
     }
 
     # y_label_shared
     if (!is.waive(y_label_shared)) {
-      plotting.check_input_args(y_label_shared = y_label_shared)
+      .check_input_plot_args(y_label_shared = y_label_shared)
     } else {
       y_label_shared <- "row"
     }
@@ -342,7 +342,7 @@ setMethod(
     # x_breaks
     if (is.null(x_breaks)) {
       # Check input arguments.
-      plotting.check_input_args(
+      .check_input_plot_args(
         x_range = x_range,
         x_n_breaks = x_n_breaks)
 
@@ -362,7 +362,7 @@ setMethod(
     # y_breaks
     if (is.null(y_breaks)) {
       # Check input arguments.
-      plotting.check_input_args(
+      .check_input_plot_args(
         y_range = y_range,
         y_n_breaks = y_n_breaks)
 
@@ -484,12 +484,12 @@ setMethod(
       values = c(FALSE, TRUE))
 
     # Check density_plot_height
-    plotting.check_grid_unit(
+    .check_plot_grid_unit(
       x = density_plot_height,
       var_name = "density_plot_height")
 
     # Check input arguments for validity.
-    plotting.check_input_args(
+    .check_input_plot_args(
       x_range = x_range,
       y_range = y_range,
       x_breaks = x_breaks,

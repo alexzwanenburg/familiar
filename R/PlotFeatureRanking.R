@@ -35,7 +35,7 @@ NULL
 #' @inheritParams export_fs_vimp
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -488,7 +488,7 @@ plot_model_signature_variable_importance <- function(...) {
 
   # Set y_breaks
   if (is.null(y_breaks)) {
-    plotting.check_input_args(
+    .check_input_plot_args(
       y_range = y_range,
       y_n_breaks = y_n_breaks)
 
@@ -526,7 +526,7 @@ plot_model_signature_variable_importance <- function(...) {
     color_by = color_by)
 
   # Perform last checks prior to plotting
-  plotting.check_input_args(
+  .check_input_plot_args(
     x_label = x_label,
     y_label = y_label,
     legend_label = legend_label,
@@ -728,7 +728,7 @@ plot_model_signature_variable_importance <- function(...) {
   }
 
   # Perform last checks prior to plotting
-  plotting.check_input_args(
+  .check_input_plot_args(
     y_range = y_range,
     y_breaks = y_breaks)
 

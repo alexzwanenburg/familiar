@@ -38,7 +38,7 @@ NULL
 #'@inheritParams export_univariate_analysis_data
 #'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
-#'@inheritParams plotting.check_input_args
+#'@inheritParams .check_input_plot_args
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
@@ -339,7 +339,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             # x_breaks
             if(is.null(x_breaks)){
-              plotting.check_input_args(x_range=x_range, x_n_breaks=x_n_breaks)
+              .check_input_plot_args(x_range=x_range, x_n_breaks=x_n_breaks)
               
               # Create breaks and update x_range
               x_breaks <- labeling::extended(m=x_n_breaks,
@@ -384,7 +384,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             legend_label <- plotting.create_legend_label(user_label=legend_label, color_by=color_by)
             
             # Check general input arguments
-            plotting.check_input_args(x_range=x_range,
+            .check_input_plot_args(x_range=x_range,
                                       x_breaks=x_breaks,
                                       x_label=x_label,
                                       y_label=y_label,

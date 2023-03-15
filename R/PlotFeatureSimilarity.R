@@ -36,7 +36,7 @@ NULL
 #' @inheritParams export_feature_similarity
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
-#' @inheritParams plotting.check_input_args
+#' @inheritParams .check_input_plot_args
 #' @inheritParams plotting.check_data_handling
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
@@ -286,14 +286,14 @@ setMethod(
 
     # x_label_shared
     if (!is.waive(x_label_shared)) {
-      plotting.check_input_args(x_label_shared = x_label_shared)
+      .check_input_plot_args(x_label_shared = x_label_shared)
     } else {
       x_label_shared <- "column"
     }
 
     # y_label_shared
     if (!is.waive(y_label_shared)) {
-      plotting.check_input_args(y_label_shared = y_label_shared)
+      .check_input_plot_args(y_label_shared = y_label_shared)
     } else {
       y_label_shared <- "row"
     }
@@ -336,7 +336,7 @@ setMethod(
 
     # Check if the dendrogram_height argument is correct.
     if (!is.null(show_dendrogram)) {
-      plotting.check_grid_unit(x = dendrogram_height, var_name = "dendrogram_height")
+      .check_plot_grid_unit(x = dendrogram_height, var_name = "dendrogram_height")
     }
 
     # Add default splitting variables
@@ -360,7 +360,7 @@ setMethod(
     facet_by <- split_var_list$facet_by
 
     # Check input arguments
-    plotting.check_input_args(
+    .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
       x_label = x_label,
       y_label = y_label,
@@ -795,7 +795,7 @@ setMethod(
 
   # y_breaks
   if (is.null(y_breaks)) {
-    plotting.check_input_args(
+    .check_input_plot_args(
       y_range = y_range,
       y_n_breaks = y_n_breaks)
 
@@ -811,7 +811,7 @@ setMethod(
       tail(y_breaks, n = 1))
   }
 
-  plotting.check_input_args(
+  .check_input_plot_args(
     y_range = y_range,
     y_breaks = y_breaks)
 
