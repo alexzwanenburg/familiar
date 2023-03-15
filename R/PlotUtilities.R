@@ -289,9 +289,7 @@ theme_familiar <- function(
 
 
 
-
-
-plotting.parse_facet_by <- function(x, facet_by, facet_wrap_cols) {
+.parse_plot_facet_by <- function(x, facet_by, facet_wrap_cols) {
   if (is.null(facet_by)) {
     return(list())
     

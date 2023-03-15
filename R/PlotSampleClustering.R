@@ -1518,7 +1518,7 @@ setMethod(
 
   # Determine how plots are faceted. The actual facets are created in the
   # calling function, not here.
-  facet_by_list <- plotting.parse_facet_by(
+  facet_by_list <- .parse_plot_facet_by(
     x = x@data,
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols)

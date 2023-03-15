@@ -797,7 +797,7 @@ plot_model_signature_variable_importance <- function(...) {
     limits = y_range)
 
   # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(
+  facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols)

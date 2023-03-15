@@ -1043,7 +1043,7 @@ setMethod(
   p <- p + ggplot2::scale_y_continuous(breaks = y_breaks)
 
   # Determine how things are faceted.
-  facet_by_list <- plotting.parse_facet_by(
+  facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols)
