@@ -669,7 +669,7 @@ theme_familiar <- function(
 
 
 
-plotting.update_plot_layout_table <- function(
+.update_plot_layout_table <- function(
     plot_layout_table,
     grobs,
     x_text_shared = "overall",

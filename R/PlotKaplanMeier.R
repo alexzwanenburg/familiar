@@ -737,7 +737,7 @@ setMethod(
 
   # Update the layout table. Note that the axis text and labels share the same
   # behaviour.
-  plot_layout_table <- plotting.update_plot_layout_table(
+  plot_layout_table <- .update_plot_layout_table(
     plot_layout_table = plot_layout_table,
     grobs = figure_list,
     x_text_shared = x_label_shared,

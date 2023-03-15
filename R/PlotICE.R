@@ -1275,7 +1275,7 @@ setMethod(
   }
 
   # Update the layout table.
-  plot_layout_table <- plotting.update_plot_layout_table(
+  plot_layout_table <- .update_plot_layout_table(
     plot_layout_table = plot_layout_table,
     grobs = figure_list,
     x_text_shared = x_label_shared,
