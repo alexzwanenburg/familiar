@@ -570,7 +570,7 @@ setMethod(
   x_tick_space <- ifelse(rotate_x_tick_labels, longest_element * 0.18, 0.36)
 
   # Obtain facetting dimensions
-  plot_dims <- plotting.get_plot_layout_dims(
+  plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by, 
     facet_wrap_cols = facet_wrap_cols)

@@ -969,7 +969,7 @@ setMethod(
     facet_by, 
     facet_wrap_cols) {
   # Get plot layout dimensions
-  plot_dims <- plotting.get_plot_layout_dims(
+  plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols)

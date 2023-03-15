@@ -579,7 +579,7 @@ theme_familiar <- function(
 
 
 
-plotting.get_plot_layout_dims <- function(plot_layout_table = NULL, ...) {
+.get_plot_layout_dims <- function(plot_layout_table = NULL, ...) {
   # Create the plot_layout_table if it is not provided.
   if (is.null(plot_layout_table)) {
     plot_layout_table <- do.call(
