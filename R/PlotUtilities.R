@@ -938,53 +938,7 @@ theme_familiar <- function(
 
 
 
-plotting.add_global_plot_elements <- function(
-    grobs,
-    element_grobs,
-    plot_layout_table,
-    ggtheme) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  is_present <- NULL
 
-  figure_list <- list()
-
-  # Select a figure that is present.
-  present_figure_id <- plot_layout_table[is_present == TRUE, ]$figure_id[1]
-
-  if (!gtable::is.gtable(grobs)) {
-    ..error_reached_unreachable_code(
-      "plotting.compile_plot_wide_data: grob is not a gtable.")
-  }
-  
-  # Add main grob
-  figure_list$main <- grobs
-
-  # Add guide.
-  figure_list$guide <- element_grobs[[present_figure_id]]$guide
-
-  # Determine if axis labels need to be added.
-  if (all(plot_layout_table$has_axis_label_x == FALSE)) {
-    figure_list$axis_label_b <- element_grobs[[present_figure_id]]$axis_label_b
-    figure_list$axis_label_t <- element_grobs[[present_figure_id]]$axis_label_t
-  }
-
-  if (all(plot_layout_table$has_axis_label_y == FALSE)) {
-    figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
-    figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
-  }
-
-  # Add title, subtitle and caption.
-  figure_list$title <- element_grobs[[present_figure_id]]$title
-  figure_list$subtitle <- element_grobs[[present_figure_id]]$subtitle
-  figure_list$caption <- element_grobs[[present_figure_id]]$caption
-
-  # Insert global elements.
-  g <- plotting.reinsert_plot_elements(
-    grob_list = figure_list,
-    ggtheme = ggtheme)
-
-  return(g)
-}
 
 
 
@@ -1072,7 +1026,7 @@ plotting.arrange_figures <- function(
   }
 
   # Identify data that should be re-inserted.
-  g <- plotting.add_global_plot_elements(
+  g <- ..insert_global_plot_element_grobs(
     grobs = g,
     element_grobs = element_grobs,
     plot_layout_table = plot_layout_table,
@@ -1214,6 +1168,56 @@ plotting.arrange_figures <- function(
   }
   
   return(figure_list)
+}
+
+
+
+..insert_global_plot_element_grobs <- function(
+    grobs,
+    element_grobs,
+    plot_layout_table,
+    ggtheme) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_present <- NULL
+  
+  figure_list <- list()
+  
+  # Select a figure that is present.
+  present_figure_id <- plot_layout_table[is_present == TRUE, ]$figure_id[1]
+  
+  if (!gtable::is.gtable(grobs)) {
+    ..error_reached_unreachable_code(
+      "..insert_global_plot_element_grobs: grob is not a gtable.")
+  }
+  
+  # Add main grob
+  figure_list$main <- grobs
+  
+  # Add guide.
+  figure_list$guide <- element_grobs[[present_figure_id]]$guide
+  
+  # Determine if axis labels need to be added.
+  if (all(plot_layout_table$has_axis_label_x == FALSE)) {
+    figure_list$axis_label_b <- element_grobs[[present_figure_id]]$axis_label_b
+    figure_list$axis_label_t <- element_grobs[[present_figure_id]]$axis_label_t
+  }
+  
+  if (all(plot_layout_table$has_axis_label_y == FALSE)) {
+    figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
+    figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
+  }
+  
+  # Add title, subtitle and caption.
+  figure_list$title <- element_grobs[[present_figure_id]]$title
+  figure_list$subtitle <- element_grobs[[present_figure_id]]$subtitle
+  figure_list$caption <- element_grobs[[present_figure_id]]$caption
+  
+  # Insert global elements.
+  g <- plotting.reinsert_plot_elements(
+    grob_list = figure_list,
+    ggtheme = ggtheme)
+  
+  return(g)
 }
 
 
