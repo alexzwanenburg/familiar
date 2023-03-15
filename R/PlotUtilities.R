@@ -954,7 +954,7 @@ theme_familiar <- function(
 #' @return a single gtable
 #'
 #' @noRd
-plotting.arrange_figures <- function(
+.arrange_plot_grobs <- function(
     grobs,
     plot_layout_table,
     element_grobs,

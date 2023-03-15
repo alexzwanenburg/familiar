@@ -1421,7 +1421,7 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols)
 
   # Combine features.
-  g <- plotting.arrange_figures(
+  g <- .arrange_plot_grobs(
     grobs = figure_list,
     plot_layout_table = plot_layout_table,
     element_grobs = extracted_element_list,
