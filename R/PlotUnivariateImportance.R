@@ -42,7 +42,7 @@ NULL
 #' @inheritParams export_feature_similarity
 #' @inheritParams as_familiar_collection
 #' @inheritParams .check_input_plot_args
-#' @inheritParams plotting.check_data_handling
+#' @inheritParams .check_plot_splitting_variables
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units
 #' @inheritDotParams extract_univariate_analysis -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -verbose
@@ -412,7 +412,7 @@ setMethod(
     }
 
     # Check splitting variables and generate sanitised output.
-    split_var_list <- plotting.check_data_handling(
+    split_var_list <- .check_plot_splitting_variables(
       x = x@data,
       split_by = split_by,
       color_by = color_by,

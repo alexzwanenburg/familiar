@@ -188,7 +188,7 @@ theme_familiar <- function(
 #' @return A sanitized list of splitting variables.
 #' @md
 #' @keywords internal
-plotting.check_data_handling <- function(
+.check_plot_splitting_variables <- function(
     x,
     split_by = NULL,
     color_by = NULL,
