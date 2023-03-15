@@ -862,7 +862,7 @@ setMethod(
       "p: ", as.character(signif(h[risk_group_1 == "all"]$p_value, 2)))
 
     # Obtain default settings.
-    text_settings <- plotting.get_geom_text_settings(ggtheme = ggtheme)
+    text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
 
     # Show in plot
     p <- p + ggplot2::annotate(
@@ -1131,7 +1131,7 @@ setMethod(
   }
 
   # Obtain default settings.
-  text_settings <- plotting.get_geom_text_settings(ggtheme = ggtheme)
+  text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
   fontsize <- text_settings$fontsize
   fontsize_rel <- text_settings$fontsize_rel
   lineheight <- text_settings$lineheight

@@ -844,7 +844,7 @@ setMethod(
       limits = range(gradient_palette_range))
 
     # Obtain default settings.
-    text_settings <- plotting.get_geom_text_settings(ggtheme = ggtheme)
+    text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
 
     # Show performance value as text.
     if (annotate_performance == "value") {

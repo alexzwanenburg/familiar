@@ -1147,7 +1147,7 @@ setMethod(
       label <- paste(label, collapse = "\n")
 
       # Obtain default settings.
-      text_settings <- plotting.get_geom_text_settings(ggtheme = ggtheme)
+      text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
 
       # Show in plot
       p <- p + ggplot2::annotate(

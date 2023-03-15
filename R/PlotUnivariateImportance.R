@@ -679,7 +679,7 @@ setMethod(
   # Show clusters
   if (show_cluster) {
     # Obtain default settings.
-    text_settings <- plotting.get_geom_text_settings(ggtheme = ggtheme)
+    text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
 
     if (is.null(color_by)) {
       p <- p + ggplot2::geom_text(

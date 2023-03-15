@@ -853,6 +853,7 @@ theme_familiar <- function(
 }
 
 
+
 .get_plot_legend_spacing <- function(ggtheme = NULL, axis) {
   # Obtain spacing between legend and the main panel.
   return(..get_plot_element_spacing(
@@ -863,7 +864,7 @@ theme_familiar <- function(
 
 
 
-plotting.get_geom_text_settings <- function(ggtheme = NULL) {
+.get_plot_geom_text_settings <- function(ggtheme = NULL) {
   # Import formatting settings from the provided ggtheme.
 
   # Import default ggtheme in case none is provided.
