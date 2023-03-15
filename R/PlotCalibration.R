@@ -794,7 +794,7 @@ setMethod(
         where = "top",
         ref_element = "panel-main",
         partial_match = TRUE,
-        spacer = list("b" = plotting.get_panel_spacing(ggtheme = ggtheme, axis = "x")))
+        spacer = list("b" = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x")))
     }
 
     # Add combined grob to list

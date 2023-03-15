@@ -844,7 +844,7 @@ theme_familiar <- function(
 
 
 
-plotting.get_panel_spacing <- function(ggtheme = NULL, axis) {
+.get_plot_panel_spacing <- function(ggtheme = NULL, axis) {
   # Obtain spacing between panels. This determines distance between facets.
   return(..get_plot_element_spacing(
     ggtheme = ggtheme,
