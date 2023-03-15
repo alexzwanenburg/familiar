@@ -853,7 +853,7 @@ theme_familiar <- function(
 }
 
 
-plotting.get_legend_spacing <- function(ggtheme = NULL, axis) {
+.get_plot_legend_spacing <- function(ggtheme = NULL, axis) {
   # Obtain spacing between legend and the main panel.
   return(..get_plot_element_spacing(
     ggtheme = ggtheme,
@@ -1186,7 +1186,7 @@ plotting.arrange_figures <- function(
         # First insert a column that spaces the facets.
         g_current_row <- gtable::gtable_add_cols(
           g_current_row,
-          widths = plotting.get_panel_spacing(ggtheme = ggtheme, axis = "x"))
+          widths = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"))
 
         # Add the figure to the current figure.
         g_current_row <- cbind(g_current_row, current_grob)
@@ -1497,7 +1497,7 @@ plotting.reinsert_plot_elements <- function(
             g_new = grob_list$guide,
             ref_element = ref_element,
             along_element = "panel",
-            spacer = list("l" = plotting.get_legend_spacing(ggtheme = ggtheme, axis = "y")),
+            spacer = list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
             where = legend_position,
             partial_match_ref = TRUE,
             partial_match_along = TRUE,
@@ -1521,7 +1521,7 @@ plotting.reinsert_plot_elements <- function(
             g_new = grob_list$guide,
             ref_element = ref_element,
             along_element = "panel",
-            spacer = list("r" = plotting.get_legend_spacing(ggtheme = ggtheme, axis = "y")),
+            spacer = list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
             where = legend_position,
             partial_match_ref = TRUE,
             partial_match_along = TRUE,
@@ -1545,7 +1545,7 @@ plotting.reinsert_plot_elements <- function(
             g_new = grob_list$guide,
             ref_element = ref_element,
             along_element = "panel",
-            spacer = list("t" = plotting.get_legend_spacing(ggtheme = ggtheme, axis = "x")),
+            spacer = list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
             where = legend_position,
             partial_match_ref = TRUE,
             partial_match_along = TRUE,
@@ -1569,7 +1569,7 @@ plotting.reinsert_plot_elements <- function(
             g_new = grob_list$guide,
             ref_element = ref_element,
             along_element = "panel",
-            spacer = list("b" = plotting.get_legend_spacing(ggtheme = ggtheme, axis = "x")),
+            spacer = list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
             where = legend_position,
             partial_match_ref = TRUE,
             partial_match_along = TRUE,
