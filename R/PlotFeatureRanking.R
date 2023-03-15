@@ -720,7 +720,7 @@ plot_model_signature_variable_importance <- function(...) {
 
   # Check if cluster information should be shown:
   if (show_cluster) {
-    x <- plotting.add_cluster_name(
+    x <- .add_plot_cluster_name(
       x = x,
       color_by = color_by,
       facet_by = facet_by

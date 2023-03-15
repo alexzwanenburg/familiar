@@ -392,7 +392,7 @@ theme_familiar <- function(
 
 
 
-plotting.create_subtype <- function(
+.create_plot_subtype <- function(
     x,
     subtype = NULL, 
     split_by = NULL, 
@@ -423,7 +423,7 @@ plotting.create_subtype <- function(
 
 
 
-plotting.add_cluster_name <- function(
+.add_plot_cluster_name <- function(
     x, 
     color_by = NULL, 
     facet_by = NULL, 
@@ -2461,7 +2461,7 @@ plotting.save_plot_to_file <- function(
     
   } else {
     # Set subtype.
-    subtype <- plotting.create_subtype(
+    subtype <- .create_plot_subtype(
       x = x,
       subtype = subtype,
       split_by = split_by,
