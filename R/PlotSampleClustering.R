@@ -1139,7 +1139,7 @@ setMethod(
 
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(
+  plot_layout_table <- .get_plot_layout_table(
     x = x,
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols)

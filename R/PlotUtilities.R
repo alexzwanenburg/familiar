@@ -544,7 +544,7 @@ theme_familiar <- function(
   
   if (is.null(plot_layout_table)) {
     plot_layout_table <- do.call(
-      plotting.get_plot_layout_table,
+      .get_plot_layout_table,
       args = c(
         list("x" = x),
         list(...)))
@@ -583,7 +583,7 @@ theme_familiar <- function(
   # Create the plot_layout_table if it is not provided.
   if (is.null(plot_layout_table)) {
     plot_layout_table <- do.call(
-      plotting.get_plot_layout_table, 
+      .get_plot_layout_table, 
       args = list(...))
   }
 
@@ -595,7 +595,7 @@ theme_familiar <- function(
 
 
 
-plotting.get_plot_layout_table <- function(x, facet_by, facet_wrap_cols) {
+.get_plot_layout_table <- function(x, facet_by, facet_wrap_cols) {
   if (is.null(facet_by)) {
     # Simple 1x1 layout without facets.
     plot_layout_table <- data.table::data.table(
