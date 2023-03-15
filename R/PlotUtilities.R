@@ -938,143 +938,6 @@ theme_familiar <- function(
 
 
 
-plotting.compile_figure_data <- function(
-    grobs,
-    element_grobs,
-    plot_layout_table,
-    keep_axis_text_x = FALSE,
-    keep_axis_text_y = FALSE,
-    ggtheme = NULL) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  figure_id <- is_present <- col_id <- row_id <- NULL
-  
-  # Check whether the plot layout table is empty.
-  if (is_empty(plot_layout_table)) {
-    return(NULL)
-  }
-
-  # Create a placeholder list. This is done to prevent losing a connection
-  # between figure id and the length of the list in case entire columns or rows
-  # were removed from the plot_layout_table.
-  figure_list <- replicate(n = max(plot_layout_table$figure_id), NULL)
-
-  # Iterate over the plot layout table to compile all the data required to
-  # create the sub-figures.
-
-  for (ii in plot_layout_table$figure_id) {
-    removed_axis_text_x <- removed_axis_text_y <- FALSE
-
-    current_figure_list <- list()
-    if (plot_layout_table[figure_id == ii]$is_present) {
-      # Collect the main dataset.
-      current_figure_list$main <- grobs[[ii]]
-
-      # Collect additional plot data.
-      if (plot_layout_table[figure_id == ii]$has_strip_x) {
-        current_figure_list$strip_x <- element_grobs[[ii]]$strip_x
-      }
-      if (plot_layout_table[figure_id == ii]$has_strip_y) {
-        current_figure_list$strip_y <- element_grobs[[ii]]$strip_y
-      }
-
-      # Collect labels for the x-axis
-      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
-        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_b
-        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_t
-      }
-
-      # Collect labels for the y-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
-        current_figure_list$axis_label_l <- element_grobs[[ii]]$axis_label_l
-        current_figure_list$axis_label_r <- element_grobs[[ii]]$axis_label_r
-      }
-
-      # Collect axis text data for the x-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_text_x && !keep_axis_text_x) {
-        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b
-        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t
-        
-      } else if (!keep_axis_text_x) {
-        removed_axis_text_x <- TRUE
-
-        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b_nt
-        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t_nt
-      }
-
-      # Collect axis text data for the y-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_text_y && !keep_axis_text_y) {
-        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l
-        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r
-        
-      } else if (!keep_axis_text_y) {
-        removed_axis_text_y <- TRUE
-
-        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l_nt
-        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r_nt
-      }
-      
-    } else {
-      # In this case the main plot data is not present.
-      replacement_grob <- plotting.create_empty_grob(
-        g = grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]],
-        keep_implicit = TRUE
-      )
-
-      # Identify existing grobs from the same row and from the same column.
-      current_row_id <- plot_layout_table[figure_id == ii]$row_id
-      current_col_id <- plot_layout_table[figure_id == ii]$col_id
-      same_row_figure_id <- plot_layout_table[is_present == TRUE & row_id == current_row_id]$figure_id[1]
-      same_col_figure_id <- plot_layout_table[is_present == TRUE & col_id == current_col_id]$figure_id[1]
-
-      # Set the replacement dataset as the main dataset.
-      current_figure_list$main <- replacement_grob
-
-      if (plot_layout_table[figure_id == ii]$has_strip_x) {
-        current_figure_list$strip_x <- element_grobs[[same_col_figure_id]]$strip_x
-      }
-      if (plot_layout_table[figure_id == ii]$has_strip_y) {
-        current_figure_list$strip_y <- element_grobs[[same_row_figure_id]]$strip_y
-      }
-
-      # Collect labels for the x-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
-        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_b
-        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_t
-      }
-
-      # Collect labels for the y-axis
-      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
-        current_figure_list$axis_label_l <- element_grobs[[same_row_figure_id]]$axis_label_l
-        current_figure_list$axis_label_r <- element_grobs[[same_row_figure_id]]$axis_label_r
-      }
-    }
-
-    # Merge elements with the main element.
-    g <- plotting.reinsert_plot_elements(
-      grob_list = current_figure_list,
-      ggtheme = ggtheme)
-
-    if (removed_axis_text_x) {
-      g <- plotting.update_axis_text_elements(
-        g = g,
-        type = "heights")
-    }
-
-    if (removed_axis_text_y) {
-      g <- plotting.update_axis_text_elements(
-        g = g,
-        type = "widths")
-    }
-
-    # Add data to the figure list.
-    figure_list[[ii]] <- g
-  }
-
-  return(figure_list)
-}
-
-
-
 plotting.add_global_plot_elements <- function(
     grobs,
     element_grobs,
@@ -1145,7 +1008,7 @@ plotting.arrange_figures <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- NULL
 
-  figure_data <- plotting.compile_figure_data(
+  figure_data <- ..arrange_plot_grobs(
     grobs = grobs,
     element_grobs = element_grobs,
     plot_layout_table = plot_layout_table,
@@ -1217,6 +1080,142 @@ plotting.arrange_figures <- function(
 
   return(g)
 }
+
+
+
+..arrange_plot_grobs <- function(
+    grobs,
+    element_grobs,
+    plot_layout_table,
+    keep_axis_text_x = FALSE,
+    keep_axis_text_y = FALSE,
+    ggtheme = NULL) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  figure_id <- is_present <- col_id <- row_id <- NULL
+  
+  # Check whether the plot layout table is empty.
+  if (is_empty(plot_layout_table)) return(NULL)
+  
+  # Create a placeholder list. This is done to prevent losing a connection
+  # between figure id and the length of the list in case entire columns or rows
+  # were removed from the plot_layout_table.
+  figure_list <- replicate(n = max(plot_layout_table$figure_id), NULL)
+  
+  # Iterate over the plot layout table to compile all the data required to
+  # create the sub-figures.
+  
+  for (ii in plot_layout_table$figure_id) {
+    removed_axis_text_x <- removed_axis_text_y <- FALSE
+    
+    current_figure_list <- list()
+    if (plot_layout_table[figure_id == ii]$is_present) {
+      # Collect the main dataset.
+      current_figure_list$main <- grobs[[ii]]
+      
+      # Collect additional plot data.
+      if (plot_layout_table[figure_id == ii]$has_strip_x) {
+        current_figure_list$strip_x <- element_grobs[[ii]]$strip_x
+      }
+      if (plot_layout_table[figure_id == ii]$has_strip_y) {
+        current_figure_list$strip_y <- element_grobs[[ii]]$strip_y
+      }
+      
+      # Collect labels for the x-axis
+      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
+        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_b
+        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_t
+      }
+      
+      # Collect labels for the y-axis.
+      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
+        current_figure_list$axis_label_l <- element_grobs[[ii]]$axis_label_l
+        current_figure_list$axis_label_r <- element_grobs[[ii]]$axis_label_r
+      }
+      
+      # Collect axis text data for the x-axis.
+      if (plot_layout_table[figure_id == ii]$has_axis_text_x && !keep_axis_text_x) {
+        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b
+        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t
+        
+      } else if (!keep_axis_text_x) {
+        removed_axis_text_x <- TRUE
+        
+        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b_nt
+        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t_nt
+      }
+      
+      # Collect axis text data for the y-axis.
+      if (plot_layout_table[figure_id == ii]$has_axis_text_y && !keep_axis_text_y) {
+        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l
+        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r
+        
+      } else if (!keep_axis_text_y) {
+        removed_axis_text_y <- TRUE
+        
+        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l_nt
+        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r_nt
+      }
+      
+    } else {
+      # In this case the main plot data is not present.
+      replacement_grob <- plotting.create_empty_grob(
+        g = grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]],
+        keep_implicit = TRUE
+      )
+      
+      # Identify existing grobs from the same row and from the same column.
+      current_row_id <- plot_layout_table[figure_id == ii]$row_id
+      current_col_id <- plot_layout_table[figure_id == ii]$col_id
+      same_row_figure_id <- plot_layout_table[is_present == TRUE & row_id == current_row_id]$figure_id[1]
+      same_col_figure_id <- plot_layout_table[is_present == TRUE & col_id == current_col_id]$figure_id[1]
+      
+      # Set the replacement dataset as the main dataset.
+      current_figure_list$main <- replacement_grob
+      
+      if (plot_layout_table[figure_id == ii]$has_strip_x) {
+        current_figure_list$strip_x <- element_grobs[[same_col_figure_id]]$strip_x
+      }
+      if (plot_layout_table[figure_id == ii]$has_strip_y) {
+        current_figure_list$strip_y <- element_grobs[[same_row_figure_id]]$strip_y
+      }
+      
+      # Collect labels for the x-axis.
+      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
+        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_b
+        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_t
+      }
+      
+      # Collect labels for the y-axis
+      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
+        current_figure_list$axis_label_l <- element_grobs[[same_row_figure_id]]$axis_label_l
+        current_figure_list$axis_label_r <- element_grobs[[same_row_figure_id]]$axis_label_r
+      }
+    }
+    
+    # Merge elements with the main element.
+    g <- plotting.reinsert_plot_elements(
+      grob_list = current_figure_list,
+      ggtheme = ggtheme)
+    
+    if (removed_axis_text_x) {
+      g <- plotting.update_axis_text_elements(
+        g = g,
+        type = "heights")
+    }
+    
+    if (removed_axis_text_y) {
+      g <- plotting.update_axis_text_elements(
+        g = g,
+        type = "widths")
+    }
+    
+    # Add data to the figure list.
+    figure_list[[ii]] <- g
+  }
+  
+  return(figure_list)
+}
+
 
 
 plotting.rename_plot_elements <- function(g = g, extension = "main") {
