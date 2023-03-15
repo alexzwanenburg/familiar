@@ -1125,7 +1125,7 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols)
 
   # Split data into facets. This is done by row.
-  data_facet_list <- plotting.split_data_by_facet(
+  data_facet_list <- .split_data_by_plot_facet(
     x = x,
     plot_layout_table = plot_layout_table)
 

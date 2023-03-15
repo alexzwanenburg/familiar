@@ -539,7 +539,7 @@ theme_familiar <- function(
 }
 
 
-plotting.split_data_by_facet <- function(x, plot_layout_table = NULL, ...) {
+.split_data_by_plot_facet <- function(x, plot_layout_table = NULL, ...) {
   if (is_empty(x)) return(NULL)
   
   if (is.null(plot_layout_table)) {

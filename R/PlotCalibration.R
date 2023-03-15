@@ -711,16 +711,16 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols)
 
   # Split data into facets. This is done by row.
-  data_facet_list <- plotting.split_data_by_facet(
+  data_facet_list <- .split_data_by_plot_facet(
     x = x,
     plot_layout_table = plot_layout_table)
-  linear_test_facet_list <- plotting.split_data_by_facet(
+  linear_test_facet_list <- .split_data_by_plot_facet(
     x = linear_test,
     plot_layout_table = plot_layout_table)
-  gof_test_facet_list <- plotting.split_data_by_facet(
+  gof_test_facet_list <- .split_data_by_plot_facet(
     x = gof_test,
     plot_layout_table = plot_layout_table)
-  density_facet_list <- plotting.split_data_by_facet(
+  density_facet_list <- .split_data_by_plot_facet(
     x = density,
     plot_layout_table = plot_layout_table)
 
