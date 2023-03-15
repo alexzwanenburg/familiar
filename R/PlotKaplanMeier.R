@@ -503,7 +503,7 @@ setMethod(
       if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
         additional_subtitle <- c(
           additional_subtitle,
-          plotting.add_subtitle_time_point(x_split@time))
+          .add_time_to_plot_subtitle(x_split@time))
       }
 
       if (autogenerate_plot_subtitle) {

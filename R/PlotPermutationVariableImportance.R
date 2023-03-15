@@ -613,7 +613,7 @@ setMethod(
           object@outcome_type %in% c("survival")) {
         additional_subtitle <- c(
           additional_subtitle,
-          plotting.add_subtitle_time_point(x_sub$evaluation_time[1])
+          .add_time_to_plot_subtitle(x_sub$evaluation_time[1])
         )
       }
 

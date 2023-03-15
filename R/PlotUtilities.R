@@ -386,7 +386,7 @@ theme_familiar <- function(
 
 
 
-plotting.add_subtitle_time_point <- function(value) {
+.add_time_to_plot_subtitle <- function(value) {
   return(list("time point" = value))
 }
 
