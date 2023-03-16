@@ -2528,7 +2528,7 @@ theme_familiar <- function(
 
 
 
-plotting.nice_range <- function(input_range, x) {
+.format_plot_number_nice_range <- function(input_range, x) {
   # Shrink input range to first and last value
   input_range <- c(
     head(input_range, n = 1),

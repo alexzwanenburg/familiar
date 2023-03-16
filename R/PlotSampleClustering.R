@@ -1036,7 +1036,7 @@ setMethod(
       gradient_palette_range <- c(-1.0, 0.0, 1.0)
     } else {
       # Find a nice range for missing values of the palette range.
-      gradient_palette_range <- plotting.nice_range(
+      gradient_palette_range <- .format_plot_number_nice_range(
         input_range = gradient_palette_range,
         x = c(
           min(feature_ranges$min_value),
@@ -1124,7 +1124,7 @@ setMethod(
       outcome_palette_range <- c(0.0, 1.0)
     } else {
       # Find a nice range for missing values of the palette range.
-      outcome_palette_range <- plotting.nice_range(
+      outcome_palette_range <- .format_plot_number_nice_range(
         input_range = outcome_palette_range,
         x = c(
           min(outcome_ranges$min_value),
