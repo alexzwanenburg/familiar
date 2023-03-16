@@ -2511,7 +2511,7 @@ theme_familiar <- function(
 
 
 
-plotting.format_number <- function(x, digits = 3) {
+.format_plot_number <- function(x, digits = 3) {
   # Find the base-10 integer of the data.
   x_base <- floor(log10(abs(x)))
   x_base <- x_base[is.finite(x_base)]

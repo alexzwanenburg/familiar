@@ -849,7 +849,7 @@ setMethod(
     # Show performance value as text.
     if (annotate_performance == "value") {
       # Show median value.
-      x_bar[is.finite(median), "performance_text" := plotting.format_number(median)]
+      x_bar[is.finite(median), "performance_text" := .format_plot_number(median)]
 
       # Add to figure.
       p <- p + ggplot2::geom_text(
@@ -866,11 +866,11 @@ setMethod(
     } else if (annotate_performance == "value_ci") {
       # Show median value and credibility interval
       x_bar[is.finite(median), "performance_text" := paste0(
-        plotting.format_number(median),
+        .format_plot_number(median),
         "\n(",
-        plotting.format_number(ci_low),
+        .format_plot_number(ci_low),
         "\u2013",
-        plotting.format_number(ci_up),
+        .format_plot_number(ci_up),
         ")")]
 
       # Add to figure.
