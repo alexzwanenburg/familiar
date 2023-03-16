@@ -1147,7 +1147,7 @@ theme_familiar <- function(
     }
     
     # Merge elements with the main element.
-    g <- plotting.reinsert_plot_elements(
+    g <- .reinsert_plot_grobs(
       grob_list = current_figure_list,
       ggtheme = ggtheme)
     
@@ -1213,7 +1213,7 @@ theme_familiar <- function(
   figure_list$caption <- element_grobs[[present_figure_id]]$caption
   
   # Insert global elements.
-  g <- plotting.reinsert_plot_elements(
+  g <- .reinsert_plot_grobs(
     grob_list = figure_list,
     ggtheme = ggtheme)
   
@@ -1471,7 +1471,7 @@ theme_familiar <- function(
 
 
 
-plotting.reinsert_plot_elements <- function(
+.reinsert_plot_grobs <- function(
     g = NULL, 
     elements = NULL, 
     grob_list, 
