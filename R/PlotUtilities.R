@@ -1152,13 +1152,13 @@ theme_familiar <- function(
       ggtheme = ggtheme)
     
     if (removed_axis_text_x) {
-      g <- plotting.update_axis_text_elements(
+      g <- .update_axis_text_grobs(
         g = g,
         type = "heights")
     }
     
     if (removed_axis_text_y) {
-      g <- plotting.update_axis_text_elements(
+      g <- .update_axis_text_grobs(
         g = g,
         type = "widths")
     }
@@ -1937,7 +1937,7 @@ theme_familiar <- function(
 
 
 
-plotting.update_axis_text_elements <- function(g, type) {
+.update_axis_text_grobs <- function(g, type) {
   if (type == "widths") {
     elements_main <- c("axis-l-main", "axis-r-main")
     elements_side <- c("axis-l", "axis-r")
