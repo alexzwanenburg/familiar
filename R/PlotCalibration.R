@@ -766,7 +766,7 @@ setMethod(
 
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(
-      g = plotting.to_grob(p_calibration),
+      g = .convert_to_grob(p_calibration),
       extension = "main")
 
     if (show_density && 
@@ -783,7 +783,7 @@ setMethod(
 
       # Extract the panel element from the density plot.
       g_margin <- .gtable_extract(
-        g = plotting.to_grob(p_margin),
+        g = .convert_to_grob(p_margin),
         element = c("panel"),
         partial_match = TRUE)
 

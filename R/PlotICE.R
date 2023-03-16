@@ -1262,7 +1262,7 @@ setMethod(
 
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(
-      g = plotting.to_grob(p_main),
+      g = .convert_to_grob(p_main),
       extension = "main")
 
     # Add combined grob to list

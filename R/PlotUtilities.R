@@ -1298,7 +1298,7 @@ theme_familiar <- function(
   element_list <- list()
 
   # Convert to grobs
-  g <- plotting.to_grob(p)
+  g <- .convert_to_grob(p)
 
   # Export list of elements.
   if (is.null(g)) return(element_list)
@@ -1391,7 +1391,7 @@ theme_familiar <- function(
     plot.caption = ggplot2::element_blank())
 
   # Convert to grobs
-  g <- plotting.to_grob(p)
+  g <- .convert_to_grob(p)
 
   # Update the names of the plot elements.
   g <- .rename_plot_grobs(
@@ -1969,7 +1969,7 @@ theme_familiar <- function(
 
 
 
-plotting.to_grob <- function(plots_or_grobs) {
+.convert_to_grob <- function(plots_or_grobs) {
   # Convert to list if the input is a single grob or
   unlist_grobs <- FALSE
   if (grid::is.grob(plots_or_grobs) || ggplot2::is.ggplot(plots_or_grobs)) {

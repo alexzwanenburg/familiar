@@ -569,7 +569,7 @@ setMethod(
 
     # Rename plot elements.
     g_heatmap <- .rename_plot_grobs(
-      g = plotting.to_grob(p_heatmap),
+      g = .convert_to_grob(p_heatmap),
       extension = "main")
 
     # Add dendrogram
@@ -598,7 +598,7 @@ setMethod(
         # Extract dendrogram gtable, which consists of the panel and the height
         # axis.
         g_dendro <- .gtable_extract(
-          g = plotting.to_grob(p_dendro),
+          g = .convert_to_grob(p_dendro),
           element = c("panel", axis_element),
           partial_match = TRUE)
 

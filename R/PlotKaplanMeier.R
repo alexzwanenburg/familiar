@@ -698,7 +698,7 @@ setMethod(
 
     # Rename plot elements.
     g_kaplan_meier <- .rename_plot_grobs(
-      g = plotting.to_grob(p_kaplan_meier),
+      g = .convert_to_grob(p_kaplan_meier),
       extension = "main")
 
     if (show_survival_table && gtable::is.gtable(g_kaplan_meier)) {
@@ -714,7 +714,7 @@ setMethod(
 
       # Extract survival gtable, which consists of the panel and the left axis.
       g_survival_table <- .gtable_extract(
-        g = plotting.to_grob(p_survival_table),
+        g = .convert_to_grob(p_survival_table),
         element = c("panel", "axis-l"),
         partial_match = TRUE)
 

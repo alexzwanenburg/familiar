@@ -1238,7 +1238,7 @@ setMethod(
 
     # Rename plot elements.
     g_heatmap <- .rename_plot_grobs(
-      g = plotting.to_grob(p_heatmap),
+      g = .convert_to_grob(p_heatmap),
       extension = "main")
 
     # Add sample dendogram
@@ -1278,7 +1278,7 @@ setMethod(
         # Extract dendrogram gtable, which consists of the panel and the height
         # axis.
         g_sample_dendro <- .gtable_extract(
-          g = plotting.to_grob(p_dendro),
+          g = .convert_to_grob(p_dendro),
           element = c("panel", axis_element),
           partial_match = TRUE)
 
@@ -1330,7 +1330,7 @@ setMethod(
         # Extract dendodram gtable, which consists of the panel and the height
         # axis.
         g_feature_dendro <- .gtable_extract(
-          g = plotting.to_grob(p_dendro),
+          g = .convert_to_grob(p_dendro),
           element = c("panel", axis_element),
           partial_match = TRUE)
 
@@ -1360,7 +1360,7 @@ setMethod(
         rotate_x_tick_labels = rotate_x_tick_labels)
 
       # Convert to grob
-      g_outcome <- plotting.to_grob(p_outcome)
+      g_outcome <- .convert_to_grob(p_outcome)
 
       # Extract guide from grob
       g_outcome_guide <- .gtable_extract(
