@@ -1112,7 +1112,7 @@ theme_familiar <- function(
       
     } else {
       # In this case the main plot data is not present.
-      replacement_grob <- plotting.create_empty_grob(
+      replacement_grob <- .create_empty_plot_grob(
         g = grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]],
         keep_implicit = TRUE
       )
@@ -1875,7 +1875,7 @@ theme_familiar <- function(
 
 
 
-plotting.create_empty_grob <- function(g, keep_implicit = FALSE) {
+.create_empty_plot_grob <- function(g, keep_implicit = FALSE) {
   repl_grob <- g
 
   # Replace grobs by empty grobs.
