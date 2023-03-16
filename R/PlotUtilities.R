@@ -2708,14 +2708,14 @@ theme_familiar <- function(
 
 
 
-plotting.combine_guides <- function(g, ggtheme, no_empty = TRUE) {
+.combine_guide_grobs <- function(g, ggtheme, no_empty = TRUE) {
   # Find how tables should be organised.
   guide_position <- ggtheme$legend.position
 
   # Check if the guide position can be interpreted
   if (!all(guide_position %in% c("none", "left", "right", "bottom", "top"))) {
     stop(paste0(
-      "plotting.combine_guides: Guide position (legend.position in the ggplot2 ",
+      ".combine_guide_grobs: Guide position (legend.position in the ggplot2 ",
       "theme) is expect to be one of none, left, right, bottom, top."))
   }
 
@@ -2725,7 +2725,7 @@ plotting.combine_guides <- function(g, ggtheme, no_empty = TRUE) {
   if (no_empty) {
     if (!all(sapply(g, gtable::is.gtable))) {
       stop(paste0(
-        "plotting.combine_guides: One of the guides in the g argument ",
+        ".combine_guide_grobs: One of the guides in the g argument ",
         "is not a gtable object."))
     }
   }

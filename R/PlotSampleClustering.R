@@ -1398,7 +1398,7 @@ setMethod(
     }
 
     # Combine main guide with the outcome guide
-    extracted_elements$guide <- plotting.combine_guides(
+    extracted_elements$guide <- .combine_guide_grobs(
       g = list(extracted_elements$guide, g_outcome_guide),
       ggtheme = ggtheme,
       no_empty = FALSE)
