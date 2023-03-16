@@ -622,7 +622,7 @@ setMethod(
     }
 
     # Generate output
-    return(plotting.get_output(
+    return(.get_plot_results(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,

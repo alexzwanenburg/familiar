@@ -2490,7 +2490,7 @@ theme_familiar <- function(
 
 
 
-plotting.get_output <- function(
+.get_plot_results <- function(
     dir_path = NULL,
     plot_list = NULL,
     export_collection = FALSE,

@@ -666,7 +666,7 @@ plot_model_signature_variable_importance <- function(...) {
   }
 
   # Generate output
-  return(plotting.get_output(
+  return(.get_plot_results(
     dir_path = dir_path,
     plot_list = plot_list,
     export_collection = export_collection,
