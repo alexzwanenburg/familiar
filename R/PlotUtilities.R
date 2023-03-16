@@ -1873,31 +1873,6 @@ theme_familiar <- function(
 
 
 
-plotting.replace_missing_grobs <- function(grobs) {
-  # Check which grobs are not gtables.
-  missing_grobs <- !sapply(grobs, inherits, "gtable")
-
-  if (all(missing_grobs)) stop("All grobs were missing.")
-  if (!any(missing_grobs)) return(grobs)
-
-  # Select a replacement grob.
-  replacement_grob <- grobs[[which(!missing_grobs)[1]]]
-
-  # Replace all table elements by zeroGrobs.
-  replacement_grob$grobs <- replicate(
-    length(replacement_grob),
-    ggplot2::zeroGrob(),
-    simplify = FALSE)
-
-  # Insert the empty replacement grob for missing elements.
-  grobs[missing_grobs] <- replicate(
-    sum(missing_grobs),
-    replacement_grob,
-    simplify = FALSE)
-  
-  return(grobs)
-}
-
 
 
 plotting.create_empty_grob <- function(g, keep_implicit = FALSE) {
