@@ -390,7 +390,7 @@ setMethod(
       if (is.null(p)) next
 
       # Draw figure.
-      if (draw) plotting.draw(plot_or_grob = p)
+      if (draw) .draw_plot(plot_or_grob = p)
 
       # Save and export
       if (!is.null(dir_path)) {

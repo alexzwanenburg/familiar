@@ -2360,10 +2360,7 @@ theme_familiar <- function(
 
 
 
-
-
-
-plotting.draw <- function(plot_or_grob) {
+.draw_plot <- function(plot_or_grob) {
   if (ggplot2::is.ggplot(plot_or_grob)) {
     show(plot_or_grob)
     
