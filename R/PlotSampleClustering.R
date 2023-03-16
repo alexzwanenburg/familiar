@@ -1237,7 +1237,7 @@ setMethod(
     p_heatmap <- plotting.remove_plot_elements(p = p_heatmap)
 
     # Rename plot elements.
-    g_heatmap <- plotting.rename_plot_elements(
+    g_heatmap <- .rename_plot_grobs(
       g = plotting.to_grob(p_heatmap),
       extension = "main")
 

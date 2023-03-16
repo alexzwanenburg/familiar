@@ -1222,7 +1222,7 @@ theme_familiar <- function(
 
 
 
-plotting.rename_plot_elements <- function(g = g, extension = "main") {
+.rename_plot_grobs <- function(g = g, extension = "main") {
   if (is.null(g)) return(g)
 
   # Main panel
@@ -1304,7 +1304,7 @@ plotting.extract_plot_elements <- function(p) {
   if (is.null(g)) return(element_list)
 
   # Update the names of the plot elements.
-  g <- plotting.rename_plot_elements(
+  g <- .rename_plot_grobs(
     g = g,
     extension = "main")
 
@@ -1394,7 +1394,7 @@ plotting.extract_plot_elements <- function(p) {
   g <- plotting.to_grob(p)
 
   # Update the names of the plot elements.
-  g <- plotting.rename_plot_elements(
+  g <- .rename_plot_grobs(
     g = g,
     extension = "main")
 

@@ -697,7 +697,7 @@ setMethod(
     p_kaplan_meier <- plotting.remove_plot_elements(p = p_kaplan_meier)
 
     # Rename plot elements.
-    g_kaplan_meier <- plotting.rename_plot_elements(
+    g_kaplan_meier <- .rename_plot_grobs(
       g = plotting.to_grob(p_kaplan_meier),
       extension = "main")
 

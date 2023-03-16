@@ -1261,7 +1261,7 @@ setMethod(
     p_main <- plotting.remove_plot_elements(p = p_main)
 
     # Rename plot elements.
-    g_calibration <- plotting.rename_plot_elements(
+    g_calibration <- .rename_plot_grobs(
       g = plotting.to_grob(p_main),
       extension = "main")
 
