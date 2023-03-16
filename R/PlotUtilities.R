@@ -1026,7 +1026,7 @@ theme_familiar <- function(
   }
 
   # Identify data that should be re-inserted.
-  g <- ..insert_global_plot_element_grobs(
+  g <- ..insert_global_plot_grobs(
     grobs = g,
     element_grobs = element_grobs,
     plot_layout_table = plot_layout_table,
@@ -1172,7 +1172,7 @@ theme_familiar <- function(
 
 
 
-..insert_global_plot_element_grobs <- function(
+..insert_global_plot_grobs <- function(
     grobs,
     element_grobs,
     plot_layout_table,
@@ -1187,7 +1187,7 @@ theme_familiar <- function(
   
   if (!gtable::is.gtable(grobs)) {
     ..error_reached_unreachable_code(
-      "..insert_global_plot_element_grobs: grob is not a gtable.")
+      "..insert_global_plot_grobs: grob is not a gtable.")
   }
   
   # Add main grob
