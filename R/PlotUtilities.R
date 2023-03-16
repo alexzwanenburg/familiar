@@ -2561,7 +2561,7 @@ theme_familiar <- function(
 
 
 
-plotting.dendrogram_as_table <- function(h, similarity_metric) {
+.convert_dendrogram_to_table <- function(h, similarity_metric) {
   # Suppress NOTES due to non-standard evaluation in data.table
   x_1 <- y_1 <- x_2 <- NULL
 

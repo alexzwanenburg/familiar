@@ -1246,7 +1246,7 @@ setMethod(
       if (!is.null(show_sample_dendrogram) &&
           inherits(sample_similarity_split@dendrogram, "hclust")) {
         # Obtain dendogram plotting data as line segments.
-        dendro_data <- plotting.dendrogram_as_table(
+        dendro_data <- .convert_dendrogram_to_table(
           h = sample_similarity_split@dendrogram,
           similarity_metric = sample_similarity_split@similarity_metric)
 
@@ -1298,7 +1298,7 @@ setMethod(
       if (!is.null(show_feature_dendrogram) &&
           inherits(feature_similarity_split@dendrogram, "hclust")) {
         # Obtain dendrogram plotting data as line segments.
-        dendro_data <- plotting.dendrogram_as_table(
+        dendro_data <- .convert_dendrogram_to_table(
           h = feature_similarity_split@dendrogram,
           similarity_metric = feature_similarity_split@similarity_metric)
 

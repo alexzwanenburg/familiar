@@ -575,7 +575,7 @@ setMethod(
     # Add dendrogram
     if (!is.null(show_dendrogram) && inherits(dendrogram, "hclust")) {
       # Obtain dendrogram plotting data as line segments.
-      dendro_data <- plotting.dendrogram_as_table(
+      dendro_data <- .convert_dendrogram_to_table(
         h = dendrogram,
         similarity_metric = x_split@similarity_metric
       )
