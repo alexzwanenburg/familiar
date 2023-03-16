@@ -1234,7 +1234,7 @@ setMethod(
     extracted_elements <- .extract_plot_grobs(p = p_heatmap)
 
     # Remove extracted elements from the heatmap.
-    p_heatmap <- plotting.remove_plot_elements(p = p_heatmap)
+    p_heatmap <- .remove_plot_grobs(p = p_heatmap)
 
     # Rename plot elements.
     g_heatmap <- .rename_plot_grobs(

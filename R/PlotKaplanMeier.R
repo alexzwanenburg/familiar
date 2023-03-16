@@ -694,7 +694,7 @@ setMethod(
     extracted_elements <- .extract_plot_grobs(p = p_kaplan_meier)
 
     # Remove extracted elements from the Kaplan-Meier plot.
-    p_kaplan_meier <- plotting.remove_plot_elements(p = p_kaplan_meier)
+    p_kaplan_meier <- .remove_plot_grobs(p = p_kaplan_meier)
 
     # Rename plot elements.
     g_kaplan_meier <- .rename_plot_grobs(

@@ -1258,7 +1258,7 @@ setMethod(
     extracted_elements <- .extract_plot_grobs(p = p_main)
 
     # Remove extracted elements from the plot.
-    p_main <- plotting.remove_plot_elements(p = p_main)
+    p_main <- .remove_plot_grobs(p = p_main)
 
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(

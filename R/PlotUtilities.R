@@ -1441,7 +1441,7 @@ theme_familiar <- function(
 }
 
 
-plotting.remove_plot_elements <- function(p) {
+.remove_plot_grobs <- function(p) {
   # Remove elements that were extracted as a grob from plots.
 
   # Check whether p is a ggplot.
