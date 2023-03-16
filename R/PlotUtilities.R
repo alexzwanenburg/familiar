@@ -2377,8 +2377,8 @@ theme_familiar <- function(
 
 
 
-plotting.save_plot_to_file <- function(
-    plot_obj,
+.save_plot_to_file <- function(
+    plot_or_grob,
     object,
     dir_path,
     type,
@@ -2392,7 +2392,7 @@ plotting.save_plot_to_file <- function(
   # ... are passed to ggplot2::ggsave
 
   # Check if the plot object exists
-  if (is.null(plot_obj)) return(NULL)
+  if (is.null(plot_or_grob)) return(NULL)
 
   # Check if directory exists
   if (is.encapsulated_path(dir_path)) {
@@ -2472,7 +2472,7 @@ plotting.save_plot_to_file <- function(
           args = c(
             list(
               "filename" = filename,
-              "plot" = plot_obj,
+              "plot" = plot_or_grob,
               "device" = current_device,
               "path" = file_dir),
             list(...)))),

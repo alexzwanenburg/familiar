@@ -641,10 +641,10 @@ setMethod(
 
         # Save to file.
         do.call(
-          plotting.save_plot_to_file,
+          .save_plot_to_file,
           args = c(
             list(
-              "plot_obj" = p,
+              "plot_or_grob" = p,
               "object" = object,
               "dir_path" = dir_path,
               "type" = "calibration",
