@@ -729,7 +729,7 @@ setMethod(
     }
 
     # Create a legend label
-    legend_label <- plotting.create_legend_label(
+    legend_label <- .create_plot_legend_title(
       user_label = legend_label,
       color_by = color_by)
     

@@ -2055,7 +2055,7 @@ theme_familiar <- function(
 }
 
 
-plotting.create_legend_label <- function(
+.create_plot_legend_title <- function(
     user_label, 
     color_by = NULL,
     linetype_by = NULL, 

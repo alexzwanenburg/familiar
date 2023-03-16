@@ -283,7 +283,7 @@ setMethod(
     facet_by <- split_var_list$facet_by
 
     # Create a legend label
-    legend_label <- plotting.create_legend_label(user_label = legend_label)
+    legend_label <- .create_plot_legend_title(user_label = legend_label)
 
     # Check input arguments for validity.
     .check_input_plot_args(

@@ -521,7 +521,7 @@ plot_model_signature_variable_importance <- function(...) {
   facet_by <- split_var_list$facet_by
 
   # legend_label
-  legend_label <- plotting.create_legend_label(
+  legend_label <- .create_plot_legend_title(
     user_label = legend_label,
     color_by = color_by)
 
