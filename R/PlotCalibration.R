@@ -759,7 +759,7 @@ setMethod(
       is_point = is_point)
 
     # Extract plot elements from the main calibration plot.
-    extracted_elements <- plotting.extract_plot_elements(p = p_calibration)
+    extracted_elements <- .extract_plot_grobs(p = p_calibration)
 
     # Remove extracted elements from the plot.
     p_calibration <- plotting.remove_plot_elements(p = p_calibration)

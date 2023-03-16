@@ -1294,7 +1294,7 @@ theme_familiar <- function(
 
 
 
-plotting.extract_plot_elements <- function(p) {
+.extract_plot_grobs <- function(p) {
   element_list <- list()
 
   # Convert to grobs

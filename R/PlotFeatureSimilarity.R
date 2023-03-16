@@ -562,7 +562,7 @@ setMethod(
       similarity_metric = x_split@similarity_metric)
 
     # Extract plot elements from the heatmap.
-    extracted_elements <- plotting.extract_plot_elements(p = p_heatmap)
+    extracted_elements <- .extract_plot_grobs(p = p_heatmap)
 
     # Remove extracted elements from the heatmap.
     p_heatmap <- plotting.remove_plot_elements(p = p_heatmap)

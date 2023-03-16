@@ -1255,7 +1255,7 @@ setMethod(
         "outcome_type" = outcome_type))
     
     # Extract plot elements from the main calibration plot.
-    extracted_elements <- plotting.extract_plot_elements(p = p_main)
+    extracted_elements <- .extract_plot_grobs(p = p_main)
 
     # Remove extracted elements from the plot.
     p_main <- plotting.remove_plot_elements(p = p_main)

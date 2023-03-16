@@ -691,7 +691,7 @@ setMethod(
       show_logrank = show_logrank)
 
     # Extract plot elements from the Kaplan-Meier plot.
-    extracted_elements <- plotting.extract_plot_elements(p = p_kaplan_meier)
+    extracted_elements <- .extract_plot_grobs(p = p_kaplan_meier)
 
     # Remove extracted elements from the Kaplan-Meier plot.
     p_kaplan_meier <- plotting.remove_plot_elements(p = p_kaplan_meier)
