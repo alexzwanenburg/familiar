@@ -2180,7 +2180,7 @@ theme_familiar <- function(
 
 
 
-plotting.create_guide_table <- function(
+.create_plot_guide_table <- function(
     x, 
     color_by = NULL, 
     linetype_by = NULL, 

@@ -582,7 +582,7 @@ setMethod(
   curve_type <- NULL
 
   # Generate a guide table.
-  guide_list <- plotting.create_guide_table(
+  guide_list <- .create_plot_guide_table(
     x = x, color_by = color_by,
     discrete_palette = discrete_palette)
 

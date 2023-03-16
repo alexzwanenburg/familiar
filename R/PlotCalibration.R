@@ -881,11 +881,11 @@ setMethod(
 
 
   # Generate a guide table for the data
-  x_guide_list <- plotting.create_guide_table(
+  x_guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
     discrete_palette = discrete_palette)
-  fit_guide_list <- plotting.create_guide_table(
+  fit_guide_list <- .create_plot_guide_table(
     x = linear_fit,
     color_by = color_by,
     discrete_palette = discrete_palette)

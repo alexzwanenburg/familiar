@@ -790,7 +790,7 @@ setMethod(
   if (!is_empty(h)) h <- h@data
 
   # Generate a guide table to allow integration of guides into a single legend
-  guide_list <- plotting.create_guide_table(
+  guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
     linetype_by = linetype_by,

@@ -1470,7 +1470,7 @@ setMethod(
   # Generate a guide table for ice data to allow integration of guides into a
   # single legend.
   if (show_ice && data_present) {
-    ice_guide_list <- plotting.create_guide_table(
+    ice_guide_list <- .create_plot_guide_table(
       x = ice_data[[1]]@data,
       color_by = color_by,
       discrete_palette = discrete_palette,
@@ -1485,7 +1485,7 @@ setMethod(
   # Generate a guide table for pd data to allow integration of guides into a
   # single legend.
   if (show_pd && data_present) {
-    pd_guide_list <- plotting.create_guide_table(
+    pd_guide_list <- .create_plot_guide_table(
       x = pd_data[[1]]@data,
       color_by = color_by,
       discrete_palette = discrete_palette,
