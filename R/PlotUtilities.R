@@ -423,6 +423,310 @@ theme_familiar <- function(
 
 
 
+.create_plot_legend_title <- function(
+    user_label, 
+    color_by = NULL,
+    linetype_by = NULL, 
+    combine_legend = FALSE) {
+  # Sent for inspection
+  .check_input_plot_args(
+    legend_label = user_label,
+    combine_legend = combine_legend)
+  
+  if (is.null(color_by) && is.null(linetype_by)) {
+    # No splitting variables are used
+    return(list(
+      "guide_color" = NULL,
+      "guide_linetype" = NULL))
+  }
+  
+  # Collect required list entries
+  req_entries <- character(0)
+  if (!is.null(color_by)) {
+    req_entries <- c(req_entries, "guide_color")
+  }
+  if (!is.null(linetype_by)) {
+    req_entries <- c(req_entries, "guide_linetype")
+  }
+  
+  # Waiver: no user input
+  if (is.waive(user_label)) {
+    if (combine_legend) {
+      legend_label <- gsub(
+        x = paste0(unique(c(color_by, linetype_by)), collapse = " & "),
+        pattern = "_",
+        replacement = " ",
+        fixed = TRUE)
+      
+      return(list(
+        "guide_color" = legend_label,
+        "guide_linetype" = legend_label))
+      
+    } else {
+      # Colour labels
+      if (!is.null(color_by)) {
+        color_guide_label <- gsub(
+          x = paste0(color_by, collapse = " & "),
+          pattern = "_",
+          replacement = " ",
+          fixed = TRUE)
+        
+      } else {
+        color_guide_label <- NULL
+      }
+      
+      # Linetype labels
+      if (!is.null(linetype_by)) {
+        linetype_guide_label <- gsub(
+          x = paste0(linetype_by, collapse = " & "),
+          pattern = "_",
+          replacement = " ",
+          fixed = TRUE)
+        
+      } else {
+        linetype_guide_label <- NULL
+      }
+      
+      return(list(
+        "guide_color" = color_guide_label,
+        "guide_linetype" = linetype_guide_label))
+    }
+  } else if (is.null(user_label)) {
+    # NULL input
+    
+    return(list(
+      "guide_color" = NULL,
+      "guide_linetype" = NULL))
+    
+  } else if (is.list(user_label)) {
+    # List input
+    
+    # Check entries for existence
+    for (current_entry in req_entries) {
+      if (!current_entry %in% names(user_label)) {
+        stop(paste0(
+          "A legend name is missing for ", current_entry, 
+          ". Please set this name to a \"", current_entry, 
+          "\" list element, e.g. list(\"",  current_entry, 
+          "\"=\"some name\", ...)."))
+      }
+    }
+    
+    # Select required entries
+    user_label <- user_label[names(user_label) %in% req_entries]
+    
+    # Check that all entries are the same
+    if (combine_legend && length(req_entries) >= 2) {
+      if (!all(sapply(
+        user_label[2:length(user_label)],
+        identical,
+        user_label[[1]]))) {
+        stop(paste0(
+          "Not all provided legend names are identical, but identical legend ",
+          "names are required for combining the legend."))
+      }
+    }
+    
+    return(user_label)
+    
+  } else if (length(req_entries) >= 2 && !combine_legend) {
+    # Single input where multiple is required
+    
+    stop(paste0(
+      "Multiple legend names are required, but only one is provided. ",
+      "Please return a list with ",
+      paste0("\"", req_entries, "\"", collapse = ", "), " elements."))
+    
+  } else {
+    # Single input
+    
+    return(list(
+      "guide_color" = user_label, 
+      "guide_linetype" = user_label))
+  }
+}
+
+
+
+.create_plot_guide_table <- function(
+    x, 
+    color_by = NULL, 
+    linetype_by = NULL, 
+    discrete_palette = NULL, 
+    combine_legend = TRUE) {
+  
+  .get_guide_tables <- function(x, color_by, linetype_by, discrete_palette) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    color_id <- linetype_id <- NULL
+    
+    # Select unique variables
+    unique_vars <- unique(c(color_by, linetype_by))
+    
+    # Check whether there are any unique splitting variables
+    if (is.null(unique_vars)) return(NULL)
+    
+    # Generate a guide table
+    guide_table <- data.table::data.table(expand.grid(lapply(
+      rev(unique_vars), 
+      function(ii, x) (levels(x[[ii]])), 
+      x = x)))
+    
+    # Rename variables
+    data.table::setnames(x = guide_table, rev(unique_vars))
+    
+    # Convert to factors
+    for (ii in unique_vars) {
+      guide_table[[ii]] <- factor(
+        x = guide_table[[ii]],
+        levels = levels(x[[ii]]))
+    }
+    
+    # Order columns according to unique_vars
+    data.table::setcolorder(
+      x = guide_table, 
+      neworder = unique_vars)
+    
+    # Order data set by columns
+    data.table::setorderv(
+      x = guide_table, 
+      cols = unique_vars)
+    
+    # Set breaks
+    breaks <- apply(guide_table, 1, paste, collapse = ", ")
+    
+    # Extend guide table
+    if (!is.null(color_by)) {
+      # Generate breaks
+      guide_table$color_breaks <- factor(
+        x = breaks,
+        levels = breaks)
+      
+      # Define colour groups
+      guide_table[, "color_id" := .GRP, by = color_by]
+      
+      # Get the palette to use.
+      discr_palette <- .get_palette(
+        x = discrete_palette,
+        n = max(guide_table$color_id),
+        palette_type = "qualitative")
+      
+      # Assign colour values
+      guide_table[, "color_values" := discr_palette[color_id]]
+    }
+    
+    if (!is.null(linetype_by)) {
+      # Generate breaks
+      guide_table$linetype_breaks <- factor(
+        x = breaks,
+        levels = breaks)
+      
+      # Define linetype groups
+      guide_table[, "linetype_id" := .GRP, by = linetype_by]
+      
+      # Get the palette to use
+      line_palette <- scales::linetype_pal()(max(guide_table$linetype_id))
+      
+      # Assign linetypes
+      guide_table[, "linetype_values" := line_palette[linetype_id]]
+    }
+    
+    return(guide_table)
+  }
+  
+  if (is_empty(x)) return(list("data" = x))
+  
+  # Extract guide tables
+  if (combine_legend) {
+    guide_list <- list(
+      "guide_color" = .get_guide_tables(
+        x = x, 
+        color_by = color_by, 
+        linetype_by = linetype_by, 
+        discrete_palette = discrete_palette),
+      "guide_linetype" = .get_guide_tables(
+        x = x, 
+        color_by = color_by, 
+        linetype_by = linetype_by, 
+        discrete_palette = discrete_palette))
+    
+  } else {
+    guide_list <- list(
+      "guide_color" = .get_guide_tables(
+        x = x, 
+        color_by = color_by, 
+        linetype_by = NULL, 
+        discrete_palette = discrete_palette),
+      "guide_linetype" = .get_guide_tables(
+        x = x, 
+        color_by = NULL, 
+        linetype_by = linetype_by, 
+        discrete_palette = discrete_palette))
+  }
+  
+  # Filter out lists corresponding to missing split variables
+  guide_list <- guide_list[!sapply(list(color_by, linetype_by), is.null)]
+  
+  if (length(guide_list) == 0) return(list("data" = x))
+  
+  # Initialise return list
+  return_list <- list()
+  
+  # Add break column of the remaining lists to x
+  for (guide_type in names(guide_list)) {
+    if (guide_type == "guide_color") {
+      # Add color_breaks to x
+      if (combine_legend) {
+        x <- merge(
+          x = x,
+          y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "color_breaks"))],
+          by = unique(c(color_by, linetype_by)),
+          all.x = TRUE,
+          all.y = FALSE)
+        
+      } else {
+        x <- merge(
+          x = x,
+          y = guide_list[[guide_type]][, mget(c(color_by, "color_breaks"))],
+          by = color_by,
+          all.x = TRUE, 
+          all.y = FALSE)
+      }
+      
+      # Return guide_color
+      return_list[[guide_type]] <- guide_list[[guide_type]]
+      
+    } else if (guide_type == "guide_linetype") {
+      # Add linetype_breaks to x
+      if (combine_legend) {
+        x <- merge(
+          x = x,
+          y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "linetype_breaks"))],
+          by = unique(c(color_by, linetype_by)),
+          all.x = TRUE, 
+          all.y = FALSE)
+        
+      } else {
+        x <- merge(
+          x = x,
+          y = guide_list[[guide_type]][, mget(c(linetype_by, "linetype_breaks"))],
+          by = linetype_by,
+          all.x = TRUE, 
+          all.y = FALSE)
+      }
+      
+      # Return guide_linetype
+      return_list[[guide_type]] <- guide_list[[guide_type]]
+    }
+  }
+  
+  # Add updated data
+  return_list$data <- x
+  
+  return(return_list)
+}
+
+
+
 .add_plot_cluster_name <- function(
     x, 
     color_by = NULL, 
@@ -2055,307 +2359,8 @@ theme_familiar <- function(
 }
 
 
-.create_plot_legend_title <- function(
-    user_label, 
-    color_by = NULL,
-    linetype_by = NULL, 
-    combine_legend = FALSE) {
-  # Sent for inspection
-  .check_input_plot_args(
-    legend_label = user_label,
-    combine_legend = combine_legend)
-
-  if (is.null(color_by) && is.null(linetype_by)) {
-    # No splitting variables are used
-    return(list(
-      "guide_color" = NULL,
-      "guide_linetype" = NULL))
-  }
-
-  # Collect required list entries
-  req_entries <- character(0)
-  if (!is.null(color_by)) {
-    req_entries <- c(req_entries, "guide_color")
-  }
-  if (!is.null(linetype_by)) {
-    req_entries <- c(req_entries, "guide_linetype")
-  }
-
-  # Waiver: no user input
-  if (is.waive(user_label)) {
-    if (combine_legend) {
-      legend_label <- gsub(
-        x = paste0(unique(c(color_by, linetype_by)), collapse = " & "),
-        pattern = "_",
-        replacement = " ",
-        fixed = TRUE)
-
-      return(list(
-        "guide_color" = legend_label,
-        "guide_linetype" = legend_label))
-      
-    } else {
-      # Colour labels
-      if (!is.null(color_by)) {
-        color_guide_label <- gsub(
-          x = paste0(color_by, collapse = " & "),
-          pattern = "_",
-          replacement = " ",
-          fixed = TRUE)
-        
-      } else {
-        color_guide_label <- NULL
-      }
-
-      # Linetype labels
-      if (!is.null(linetype_by)) {
-        linetype_guide_label <- gsub(
-          x = paste0(linetype_by, collapse = " & "),
-          pattern = "_",
-          replacement = " ",
-          fixed = TRUE)
-        
-      } else {
-        linetype_guide_label <- NULL
-      }
-
-      return(list(
-        "guide_color" = color_guide_label,
-        "guide_linetype" = linetype_guide_label))
-    }
-  } else if (is.null(user_label)) {
-    # NULL input
-
-    return(list(
-      "guide_color" = NULL,
-      "guide_linetype" = NULL))
-    
-  } else if (is.list(user_label)) {
-    # List input
-
-    # Check entries for existence
-    for (current_entry in req_entries) {
-      if (!current_entry %in% names(user_label)) {
-        stop(paste0(
-          "A legend name is missing for ", current_entry, 
-          ". Please set this name to a \"", current_entry, 
-          "\" list element, e.g. list(\"",  current_entry, 
-          "\"=\"some name\", ...)."))
-      }
-    }
-
-    # Select required entries
-    user_label <- user_label[names(user_label) %in% req_entries]
-
-    # Check that all entries are the same
-    if (combine_legend && length(req_entries) >= 2) {
-      if (!all(sapply(
-        user_label[2:length(user_label)],
-        identical,
-        user_label[[1]]))) {
-        stop(paste0(
-          "Not all provided legend names are identical, but identical legend ",
-          "names are required for combining the legend."))
-      }
-    }
-
-    return(user_label)
-    
-  } else if (length(req_entries) >= 2 && !combine_legend) {
-    # Single input where multiple is required
-
-    stop(paste0(
-      "Multiple legend names are required, but only one is provided. ",
-      "Please return a list with ",
-      paste0("\"", req_entries, "\"", collapse = ", "), " elements."))
-    
-  } else {
-    # Single input
-
-    return(list(
-      "guide_color" = user_label, 
-      "guide_linetype" = user_label))
-  }
-}
 
 
-
-.create_plot_guide_table <- function(
-    x, 
-    color_by = NULL, 
-    linetype_by = NULL, 
-    discrete_palette = NULL, 
-    combine_legend = TRUE) {
-
-  .get_guide_tables <- function(x, color_by, linetype_by, discrete_palette) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    color_id <- linetype_id <- NULL
-
-    # Select unique variables
-    unique_vars <- unique(c(color_by, linetype_by))
-
-    # Check whether there are any unique splitting variables
-    if (is.null(unique_vars)) return(NULL)
-
-    # Generate a guide table
-    guide_table <- data.table::data.table(expand.grid(lapply(
-      rev(unique_vars), 
-      function(ii, x) (levels(x[[ii]])), 
-      x = x)))
-
-    # Rename variables
-    data.table::setnames(x = guide_table, rev(unique_vars))
-
-    # Convert to factors
-    for (ii in unique_vars) {
-      guide_table[[ii]] <- factor(
-        x = guide_table[[ii]],
-        levels = levels(x[[ii]]))
-    }
-
-    # Order columns according to unique_vars
-    data.table::setcolorder(
-      x = guide_table, 
-      neworder = unique_vars)
-
-    # Order data set by columns
-    data.table::setorderv(
-      x = guide_table, 
-      cols = unique_vars)
-
-    # Set breaks
-    breaks <- apply(guide_table, 1, paste, collapse = ", ")
-
-    # Extend guide table
-    if (!is.null(color_by)) {
-      # Generate breaks
-      guide_table$color_breaks <- factor(
-        x = breaks,
-        levels = breaks)
-
-      # Define colour groups
-      guide_table[, "color_id" := .GRP, by = color_by]
-
-      # Get the palette to use.
-      discr_palette <- .get_palette(
-        x = discrete_palette,
-        n = max(guide_table$color_id),
-        palette_type = "qualitative")
-
-      # Assign colour values
-      guide_table[, "color_values" := discr_palette[color_id]]
-    }
-
-    if (!is.null(linetype_by)) {
-      # Generate breaks
-      guide_table$linetype_breaks <- factor(
-        x = breaks,
-        levels = breaks)
-
-      # Define linetype groups
-      guide_table[, "linetype_id" := .GRP, by = linetype_by]
-
-      # Get the palette to use
-      line_palette <- scales::linetype_pal()(max(guide_table$linetype_id))
-
-      # Assign linetypes
-      guide_table[, "linetype_values" := line_palette[linetype_id]]
-    }
-
-    return(guide_table)
-  }
-
-  if (is_empty(x)) return(list("data" = x))
-
-  # Extract guide tables
-  if (combine_legend) {
-    guide_list <- list(
-      "guide_color" = .get_guide_tables(
-        x = x, 
-        color_by = color_by, 
-        linetype_by = linetype_by, 
-        discrete_palette = discrete_palette),
-      "guide_linetype" = .get_guide_tables(
-        x = x, 
-        color_by = color_by, 
-        linetype_by = linetype_by, 
-        discrete_palette = discrete_palette))
-    
-  } else {
-    guide_list <- list(
-      "guide_color" = .get_guide_tables(
-        x = x, 
-        color_by = color_by, 
-        linetype_by = NULL, 
-        discrete_palette = discrete_palette),
-      "guide_linetype" = .get_guide_tables(
-        x = x, 
-        color_by = NULL, 
-        linetype_by = linetype_by, 
-        discrete_palette = discrete_palette))
-  }
-
-  # Filter out lists corresponding to missing split variables
-  guide_list <- guide_list[!sapply(list(color_by, linetype_by), is.null)]
-
-  if (length(guide_list) == 0) return(list("data" = x))
-
-  # Initialise return list
-  return_list <- list()
-
-  # Add break column of the remaining lists to x
-  for (guide_type in names(guide_list)) {
-    if (guide_type == "guide_color") {
-      # Add color_breaks to x
-      if (combine_legend) {
-        x <- merge(
-          x = x,
-          y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "color_breaks"))],
-          by = unique(c(color_by, linetype_by)),
-          all.x = TRUE,
-          all.y = FALSE)
-        
-      } else {
-        x <- merge(
-          x = x,
-          y = guide_list[[guide_type]][, mget(c(color_by, "color_breaks"))],
-          by = color_by,
-          all.x = TRUE, 
-          all.y = FALSE)
-      }
-
-      # Return guide_color
-      return_list[[guide_type]] <- guide_list[[guide_type]]
-      
-    } else if (guide_type == "guide_linetype") {
-      # Add linetype_breaks to x
-      if (combine_legend) {
-        x <- merge(
-          x = x,
-          y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "linetype_breaks"))],
-          by = unique(c(color_by, linetype_by)),
-          all.x = TRUE, 
-          all.y = FALSE)
-        
-      } else {
-        x <- merge(
-          x = x,
-          y = guide_list[[guide_type]][, mget(c(linetype_by, "linetype_breaks"))],
-          by = linetype_by,
-          all.x = TRUE, 
-          all.y = FALSE)
-      }
-
-      # Return guide_linetype
-      return_list[[guide_type]] <- guide_list[[guide_type]]
-    }
-  }
-
-  # Add updated data
-  return_list$data <- x
-
-  return(return_list)
-}
 
 
 plotting.draw <- function(plot_or_grob) {
