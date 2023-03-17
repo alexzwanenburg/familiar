@@ -63,7 +63,7 @@ test_all_learners_train_predict_vimp <- function(
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-    no_feature_data <- test.create_no_feature_data_set(outcome_type)
+    no_feature_data <- test_create_data_without_feature(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
@@ -1217,7 +1217,7 @@ test_all_novelty_detectors <- function(detectors,
   one_feature_data <- test.create_one_feature_data_set(outcome_type)
   one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
   empty_data <- test_create_empty_data(outcome_type)
-  no_feature_data <- test.create_no_feature_data_set(outcome_type)
+  no_feature_data <- test_create_data_without_feature(outcome_type)
   bad_data <- test.create_bad_data_set(outcome_type)
   
   # Iterate over learners.
