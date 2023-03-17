@@ -68,7 +68,7 @@ for(archive_file in archive_files){
   config_parameters <- test_generate_experiment_parameters(outcome_type=outcome_type)()
   
   # Recreate data.
-  data <- familiar:::test_create_good_data_set_random_na_data(outcome_type=outcome_type)
+  data <- familiar:::test_create_good_data_random_missing(outcome_type=outcome_type)
   
   #### Test 1: Running the experiment again ------------------------------------
   

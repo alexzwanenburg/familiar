@@ -234,9 +234,7 @@ test_create_good_data_one_censored <- function(outcome_type) {
 
 test_create_good_data_few_censored <- function(outcome_type) {
   # Dataset where a minor fraction of the samples is censored.
-  if (!outcome_type %in% c("survival", "competing_risk")) {
-    return(NULL)
-  }
+  if (!outcome_type %in% c("survival", "competing_risk")) return(NULL)
 
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type = outcome_type)
@@ -252,7 +250,7 @@ test_create_good_data_few_censored <- function(outcome_type) {
 
 
 
-test_create_good_data_set_random_na_data <- function(
+test_create_good_data_random_missing <- function(
     outcome_type,
     n_missing_frac = 0.05,
     seed = 1844,

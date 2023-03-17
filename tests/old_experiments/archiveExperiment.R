@@ -4,7 +4,7 @@
 
 test_run_archive_experiment <- function(parameters){
   # Create data.
-  data <- familiar:::test_create_good_data_set_random_na_data(outcome_type=parameters$outcome_type)
+  data <- familiar:::test_create_good_data_random_missing(outcome_type=parameters$outcome_type)
   
   # Generate the experiment directory.
   experiment_dir <- file.path(tempdir(), familiar:::rstring(8L))
