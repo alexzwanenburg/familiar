@@ -67,7 +67,7 @@ testthat::test_that("Survival models can predict using external data.",{
 ##### Survival data with one instance ------------------------------------------
 
 # Create one-sample dataset.
-data <- familiar:::test.create_one_sample_data_set("survival")
+data <- familiar:::test_create_one_sample_data("survival")
 
 # Default predictions using data object.
 predictions_1 <- familiar::predict(object=fam_model,
@@ -75,7 +75,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=familiar:::test.create_one_sample_data_set("survival", to_data_object=FALSE))
+                                   newdata=familiar:::test_create_one_sample_data("survival", to_data_object=FALSE))
 
 # Survival probability.
 predictions_surv <- familiar::predict(object=fam_model,
@@ -89,7 +89,7 @@ predictions_novelty_1 <- familiar::predict(object=fam_model,
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(object=fam_model@novelty_detector,
-                                           newdata=familiar:::test.create_one_sample_data_set("survival", to_data_object=FALSE))
+                                           newdata=familiar:::test_create_one_sample_data("survival", to_data_object=FALSE))
 
 # Risk stratification.
 predictions_risk <- familiar::predict(object=fam_model,
@@ -171,7 +171,7 @@ testthat::test_that("Binomial models can predict using external data.",{
 ##### Binomial data with one instance ------------------------------------------
 
 # Create one-sample dataset.
-data <- familiar:::test.create_one_sample_data_set("binomial")
+data <- familiar:::test_create_one_sample_data("binomial")
 
 # Default predictions using data object.
 predictions_1 <- familiar::predict(object=fam_model,
@@ -179,7 +179,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=familiar:::test.create_one_sample_data_set("binomial", to_data_object=FALSE))
+                                   newdata=familiar:::test_create_one_sample_data("binomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(object=fam_model,
@@ -188,7 +188,7 @@ predictions_novelty_1 <- familiar::predict(object=fam_model,
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(object=fam_model@novelty_detector,
-                                           newdata=familiar:::test.create_one_sample_data_set("binomial", to_data_object=FALSE))
+                                           newdata=familiar:::test_create_one_sample_data("binomial", to_data_object=FALSE))
 
 testthat::test_that("Binomial models can predict single instances using external data.",{
   
@@ -261,7 +261,7 @@ testthat::test_that("Multinomial models can predict using external data.",{
 ##### Multinomial data with one instance ---------------------------------------
 
 # Create one-sample dataset.
-data <- familiar:::test.create_one_sample_data_set("multinomial")
+data <- familiar:::test_create_one_sample_data("multinomial")
 
 # Default predictions using data object.
 predictions_1 <- familiar::predict(object=fam_model,
@@ -269,7 +269,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=familiar:::test.create_one_sample_data_set("multinomial", to_data_object=FALSE))
+                                   newdata=familiar:::test_create_one_sample_data("multinomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(object=fam_model,
@@ -278,7 +278,7 @@ predictions_novelty_1 <- familiar::predict(object=fam_model,
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(object=fam_model@novelty_detector,
-                                           newdata=familiar:::test.create_one_sample_data_set("multinomial", to_data_object=FALSE))
+                                           newdata=familiar:::test_create_one_sample_data("multinomial", to_data_object=FALSE))
 
 testthat::test_that("Multinomial models can predict single instances using external data.",{
   
@@ -352,7 +352,7 @@ testthat::test_that("Count models can predict using external data.",{
 ##### Count data with one instance ---------------------------------------------
 
 # Create one-sample dataset.
-data <- familiar:::test.create_one_sample_data_set("count")
+data <- familiar:::test_create_one_sample_data("count")
 
 # Default predictions using data object.
 predictions_1 <- familiar::predict(object=fam_model,
@@ -360,7 +360,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=familiar:::test.create_one_sample_data_set("count", to_data_object=FALSE))
+                                   newdata=familiar:::test_create_one_sample_data("count", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(object=fam_model,
@@ -369,7 +369,7 @@ predictions_novelty_1 <- familiar::predict(object=fam_model,
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(object=fam_model@novelty_detector,
-                                           newdata=familiar:::test.create_one_sample_data_set("count", to_data_object=FALSE))
+                                           newdata=familiar:::test_create_one_sample_data("count", to_data_object=FALSE))
 
 testthat::test_that("Count models can predict single instances using external data.",{
   
@@ -443,7 +443,7 @@ testthat::test_that("Continuous models can predict using external data.",{
 ##### Continuous data with one instance ----------------------------------------
 
 # Create one-sample dataset.
-data <- familiar:::test.create_one_sample_data_set("continuous")
+data <- familiar:::test_create_one_sample_data("continuous")
 
 # Default predictions using data object.
 predictions_1 <- familiar::predict(object=fam_model,
@@ -451,7 +451,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=familiar:::test.create_one_sample_data_set("continuous", to_data_object=FALSE))
+                                   newdata=familiar:::test_create_one_sample_data("continuous", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(object=fam_model,
@@ -460,7 +460,7 @@ predictions_novelty_1 <- familiar::predict(object=fam_model,
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(object=fam_model@novelty_detector,
-                                           newdata=familiar:::test.create_one_sample_data_set("continuous", to_data_object=FALSE))
+                                           newdata=familiar:::test_create_one_sample_data("continuous", to_data_object=FALSE))
 
 testthat::test_that("Continuous models can predict single instances using external data.",{
   

@@ -59,7 +59,7 @@ test_all_learners_train_predict_vimp <- function(
     
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
@@ -1213,7 +1213,7 @@ test_all_novelty_detectors <- function(detectors,
   
   # Obtain data.
   full_data <- test_create_good_data(outcome_type)
-  full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+  full_one_sample_data <- test_create_one_sample_data(outcome_type)
   one_feature_data <- test.create_one_feature_data_set(outcome_type)
   one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
   empty_data <- test_create_empty_data(outcome_type)
@@ -1533,7 +1533,7 @@ test_all_vimp_methods <- function(vimp_methods,
     
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     full_one_invariant_data <- test_create_invariant_good_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
@@ -1987,7 +1987,7 @@ test_all_metrics <- function(metrics,
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
@@ -2914,7 +2914,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     # Multi-feature data sets.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     
     # One-feature data sets.
@@ -3485,7 +3485,7 @@ test_plots <- function(plot_function,
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     bootstrapped_data <- test_create_bootstrapped_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
@@ -4407,7 +4407,7 @@ test_export <- function(export_function,
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
-    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    full_one_sample_data <- test_create_one_sample_data(outcome_type)
     bootstrapped_data <- test_create_bootstrapped_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
@@ -5177,7 +5177,7 @@ test_export_specific <- function(export_function,
     data <- switch(use_data_set,
                    "full"=test_create_good_data(outcome_type),
                    "identical"=test.create_all_identical_data_set(outcome_type),
-                   "one_sample"=test.create_one_sample_data_set(outcome_type))
+                   "one_sample"=test_create_one_sample_data(outcome_type))
     
     # Parse hyperparameter list
     hyperparameters <- list("sign_size"=get_n_features(main_data),

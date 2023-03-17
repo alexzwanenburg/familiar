@@ -49,7 +49,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   testthat::test_that(paste0("2. familiarData for the ", outcome_type, " outcome can be created from single-sample data and the model created using the complete data set."), {
     # Test with one-sample dataset.
     fam_data <- familiar::as_familiar_data(object=fam_model,
-                                           data=familiar:::test.create_one_sample_data_set(outcome_type=outcome_type),
+                                           data=familiar:::test_create_one_sample_data(outcome_type=outcome_type),
                                            estimation_type="point",
                                            verbose=FALSE)
     
@@ -143,7 +143,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   testthat::test_that(paste0("8. familiarData for the ", outcome_type, " outcome can be created from single-sample data and the NULL model created using the bad data set."), {
     # Test with one-sample dataset.
     fam_data <- familiar::as_familiar_data(object=fam_model,
-                                           data=familiar:::test.create_one_sample_data_set(outcome_type=outcome_type),
+                                           data=familiar:::test_create_one_sample_data(outcome_type=outcome_type),
                                            estimation_type="point",
                                            verbose=FALSE)
     

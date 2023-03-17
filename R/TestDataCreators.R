@@ -364,7 +364,7 @@ test_create_bootstrapped_data <- function(outcome_type, to_data_object = TRUE) {
 
 
 
-test.create_one_sample_data_set <- function(outcome_type, to_data_object = TRUE) {
+test_create_one_sample_data <- function(outcome_type, to_data_object = TRUE) {
   # Create good dataset first and work from there.
   data <- test_create_good_data(
     outcome_type = outcome_type,
