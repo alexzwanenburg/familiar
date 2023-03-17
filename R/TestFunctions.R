@@ -4046,7 +4046,7 @@ test_hyperparameter_optimisation <- function(
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set.
             testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-          } else if (!.no_hyperparameters | !not_available_no_samples) {
+          } else if (!.no_hyperparameters || !not_available_no_samples) {
             # Test that hyperparameters are set.
             testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
             
@@ -6539,57 +6539,54 @@ test_export <- function(
 
 
 
-test_export_specific <- function(export_function,
-                                 data_element,
-                                 outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
-                                 ...,
-                                 export_args=list(),
-                                 use_data_set="full",
-                                 n_models=1L,
-                                 create_novelty_detector=FALSE,
-                                 debug=FALSE){
-  
-  if(debug){
-    test_fun <- debug_test_that
-    
-  } else {
-    test_fun <- testthat::test_that
-  }
-  
+test_export_specific <- function(
+    export_function,
+    data_element,
+    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    ...,
+    export_args = list(),
+    use_data_set = "full",
+    n_models = 1L,
+    create_novelty_detector = FALSE,
+    debug = FALSE) {
+
   # Create list for output.
   out_elements <- list()
-  
+
   # Iterate over the outcome type.
-  for(outcome_type in outcome_type_available){
-    
+  for (outcome_type in outcome_type_available) {
     # Obtain data.
     main_data <- test_create_good_data(outcome_type)
-    
-    data <- switch(use_data_set,
-                   "full"=test_create_good_data(outcome_type),
-                   "identical"=test_create_all_identical_data(outcome_type),
-                   "one_sample"=test_create_one_sample_data(outcome_type))
-    
+
+    data <- switch(
+      use_data_set,
+      "full" = test_create_good_data(outcome_type),
+      "identical" = test_create_all_identical_data(outcome_type),
+      "one_sample" = test_create_one_sample_data(outcome_type))
+
     # Parse hyperparameter list
-    hyperparameters <- list("sign_size"=get_n_features(main_data),
-                            "family"=switch(outcome_type,
-                                            "continuous"="gaussian",
-                                            "count"="poisson",
-                                            "binomial"="binomial",
-                                            "multinomial"="multinomial",
-                                            "survival"="cox"))
-    
-    if(n_models == 1){
+    hyperparameters <- list(
+      "sign_size" = get_n_features(main_data),
+      "family" = switch(
+        outcome_type,
+        "continuous" = "gaussian",
+        "count" = "poisson",
+        "binomial" = "binomial",
+        "multinomial" = "multinomial",
+        "survival" = "cox"))
+
+    if (n_models == 1) {
       # Train the model.
-      model_full_1 <- suppressWarnings(test_train(data=main_data,
-                                                  cluster_method="none",
-                                                  imputation_method="simple",
-                                                  fs_method="mim",
-                                                  hyperparameter_list=hyperparameters,
-                                                  learner="lasso",
-                                                  time_max=1832,
-                                                  create_novelty_detector=create_novelty_detector))
-      
+      model_full_1 <- suppressWarnings(test_train(
+        data = main_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        fs_method = "mim",
+        hyperparameter_list = hyperparameters,
+        learner = "lasso",
+        time_max = 1832,
+        create_novelty_detector = create_novelty_detector))
+
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
       
@@ -6597,338 +6594,377 @@ test_export_specific <- function(export_function,
       # Train a set of models.
       model_full_1 <- list()
       model_full_2 <- list()
-      
-      for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(test_train(data=main_data,
-                                                    cluster_method="none",
-                                                    imputation_method="simple",
-                                                    fs_method="mim",
-                                                    hyperparameter_list=hyperparameters,
-                                                    learner="lasso",
-                                                    time_max=1832,
-                                                    create_bootstrap=TRUE,
-                                                    create_novelty_detector=create_novelty_detector))
-        
+
+      for (ii in seq_len(n_models)) {
+        temp_model_1 <- suppressWarnings(test_train(
+          data = main_data,
+          cluster_method = "none",
+          imputation_method = "simple",
+          fs_method = "mim",
+          hyperparameter_list = hyperparameters,
+          learner = "lasso",
+          time_max = 1832,
+          create_bootstrap = TRUE,
+          create_novelty_detector = create_novelty_detector))
+
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
-        
+
         model_full_1[[ii]] <- temp_model_1
         model_full_2[[ii]] <- temp_model_2
       }
     }
-    
-    
+
     # Create familiar data objects.
-    data_good_full_1 <- as_familiar_data(object=model_full_1,
-                                         data=data,
-                                         data_element=data_element,
-                                         ...)
-    
-    data_good_full_2 <- as_familiar_data(object=model_full_2,
-                                         data=data,
-                                         data_element=data_element,
-                                         ...)
-    
+    data_good_full_1 <- as_familiar_data(
+      object = model_full_1,
+      data = data,
+      data_element = data_element,
+      ...)
+
+    data_good_full_2 <- as_familiar_data(
+      object = model_full_2,
+      data = data,
+      data_element = data_element,
+      ...)
+
     # Generate data objects and names.
     object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-    object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
-    
+    object <- mapply(
+      set_object_name,
+      object, 
+      c("development_1", "development_2", "validation_1", "validation_2"))
+
     # Process to collect.
-    collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
-    
+    collection <- suppressWarnings(as_familiar_collection(
+      object,
+      familiar_data_names = c("development", "development", "validation", "validation")))
+
     # Create data elements.
-    data_elements <- do.call(export_function, args=c(list("object"=collection),
-                                                     export_args))
+    data_elements <- do.call(
+      export_function,
+      args = c(
+        list("object" = collection),
+        export_args))
     
     # Save data elements and add name.
     current_element <- list(data_elements)
     names(current_element) <- outcome_type
-    
+
     out_elements <- c(out_elements, current_element)
   }
-  
+
   return(out_elements)
 }
 
 
 
-integrated_test <- function(...,
-                            learner=NULL,
-                            hyperparameters=NULL,
-                            outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
-                            warning_good=NULL,
-                            warning_bad=NULL,
-                            debug=FALSE){
-  
-  if(debug){
+integrated_test <- function(
+    ...,
+    learner = NULL,
+    hyperparameters = NULL,
+    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    warning_good = NULL,
+    warning_bad = NULL,
+    debug = FALSE) {
+  if (debug) {
     test_fun <- debug_test_that
     suppress_fun <- identity
-    
   } else {
     test_fun <- testthat::test_that
     suppress_fun <- suppressMessages
   }
-  
+
   # Set flag for missing learner.
   learner_unset <- is.null(learner)
-  
-  for(outcome_type in outcome_type_available){
-    
+
+  for (outcome_type in outcome_type_available) {
     .warning_good <- warning_good
-    if(is.list(warning_good)) .warning_good <- warning_good[[outcome_type]]
-    
+    if (is.list(warning_good)) {
+      .warning_good <- warning_good[[outcome_type]]
+    }
+
     .warning_bad <- warning_bad
-    if(is.list(warning_bad)) .warning_bad <- warning_bad[[outcome_type]]
+    if (is.list(warning_bad)) {
+      .warning_bad <- warning_bad[[outcome_type]]
+    }
+
+    test_fun(
+      paste0(
+        "Experiment for a good dataset with ", outcome_type, 
+        " outcome functions correctly."),
+      {
+        # Create datasets
+        full_data <- test_create_good_data(outcome_type)
+        
+        if (learner_unset) {
+          # Set learner
+          learner <- "lasso"
+          
+          # Parse hyperparameter list
+          hyperparameters <- list(
+            "sign_size" = get_n_features(full_data),
+            "family" = switch(
+              outcome_type,
+              "continuous" = "gaussian",
+              "count" = "poisson",
+              "binomial" = "binomial",
+              "multinomial" = "multinomial",
+              "survival" = "cox"))
+          
+          # Parse as list.
+          hyperparameters <- list("lasso" = hyperparameters)
+        }
+        
+        if (!is.null(.warning_good)) {
+          testthat::expect_warning(
+            output <- suppress_fun(summon_familiar(
+              data = full_data,
+              learner = learner,
+              hyperparameter = hyperparameters,
+              time_max = 1832,
+              verbose = debug,
+              ...)),
+            .warning_good)
+          
+        } else {
+          output <- suppress_fun(summon_familiar(
+            data = full_data,
+            learner = learner,
+            hyperparameter = hyperparameters,
+            time_max = 1832,
+            verbose = debug,
+            ...))
+        }
+        
+        testthat::expect_equal(is.null(output), FALSE)
+      }
+    )
     
-    test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
-      
-      # Create datasets
-      full_data <- test_create_good_data(outcome_type)
-      
-      if(learner_unset){
-        # Set learner
-        learner <- "lasso"
+    test_fun(
+      paste0(
+        "Experiment for a bad dataset with ", outcome_type, 
+        " outcome functions correctly."), 
+      {
+        # Create datasets. We explicitly insert NA data to circumvent an initial
+        # plausibility check.
+        bad_data <- test_create_bad_data(
+          outcome_type = outcome_type,
+          add_na_data = TRUE)
         
-        # Parse hyperparameter list
-        hyperparameters <- list("sign_size"=get_n_features(full_data),
-                                "family"=switch(outcome_type,
-                                                "continuous"="gaussian",
-                                                "count"="poisson",
-                                                "binomial"="binomial",
-                                                "multinomial"="multinomial",
-                                                "survival"="cox"))
+        if (learner_unset) {
+          # Set learner
+          learner <- "lasso"
+          
+          # Parse hyperparameter list
+          hyperparameters <- list(
+            "sign_size" = get_n_features(bad_data),
+            "family" = switch(
+              outcome_type,
+              "continuous" = "gaussian",
+              "count" = "poisson",
+              "binomial" = "binomial",
+              "multinomial" = "multinomial",
+              "survival" = "cox"))
+          
+          # Parse as list.
+          hyperparameters <- list("lasso" = hyperparameters)
+        }
         
-        # Parse as list.
-        hyperparameters <- list("lasso"=hyperparameters)
+        if (!is.null(.warning_bad)) {
+          testthat::expect_warning(
+            output <- suppress_fun(summon_familiar(
+              data = bad_data,
+              learner = learner,
+              hyperparameter = hyperparameters,
+              feature_max_fraction_missing = 0.95,
+              time_max = 1832,
+              verbose = debug,
+              ...)),
+            .warning_bad)
+          
+        } else {
+          # Note that we set a very high feature_max_fraction_missing to deal
+          # with NA rows in the dataset. Also time is explicitly set to prevent
+          # an error.
+          output <- suppress_fun(summon_familiar(
+            data = bad_data,
+            learner = learner,
+            hyperparameter = hyperparameters,
+            feature_max_fraction_missing = 0.95,
+            time_max = 1832,
+            verbose = debug,
+            ...))
+        }
+        
+        testthat::expect_equal(is.null(output), FALSE)
       }
-      
-      if(!is.null(.warning_good)){
-        testthat::expect_warning(output <- suppress_fun(summon_familiar(data=full_data,
-                                                                        learner=learner,
-                                                                        hyperparameter=hyperparameters,
-                                                                        time_max=1832,
-                                                                        verbose=debug,
-                                                                        ...)),
-                                 .warning_good)
-        
-      } else {
-        output <- suppress_fun(summon_familiar(data=full_data,
-                                               learner=learner,
-                                               hyperparameter=hyperparameters,
-                                               time_max=1832,
-                                               verbose=debug,
-                                               ...))
-      }
-      
-      testthat::expect_equal(is.null(output), FALSE)
-    })
-    
-    
-    test_fun(paste0("Experiment for a bad dataset with ", outcome_type, " outcome functions correctly."), {
-      
-      # Create datasets. We explicitly insert NA data to circumvent an initial
-      # plausibility check.
-      bad_data <- test_create_bad_data(outcome_type=outcome_type,
-                                           add_na_data=TRUE)
-      
-      if(learner_unset){
-        # Set learner
-        learner <- "lasso"
-        
-        # Parse hyperparameter list
-        hyperparameters <- list("sign_size"=get_n_features(bad_data),
-                                "family"=switch(outcome_type,
-                                                "continuous"="gaussian",
-                                                "count"="poisson",
-                                                "binomial"="binomial",
-                                                "multinomial"="multinomial",
-                                                "survival"="cox"))
-        
-        # Parse as list.
-        hyperparameters <- list("lasso"=hyperparameters)
-      }
-      
-      if(!is.null(.warning_bad)){
-        testthat::expect_warning(output <- suppress_fun(summon_familiar(data=bad_data,
-                                                                        learner=learner,
-                                                                        hyperparameter=hyperparameters,
-                                                                        feature_max_fraction_missing=0.95,
-                                                                        time_max=1832,
-                                                                        verbose=debug,
-                                                                        ...)),
-                                 .warning_bad)
-        
-      } else {
-        # Note that we set a very high feature_max_fraction_missing to deal with
-        # NA rows in the dataset. Also time is explicitly set to prevent an error.
-        output <- suppress_fun(summon_familiar(data=bad_data,
-                                               learner=learner,
-                                               hyperparameter=hyperparameters,
-                                               feature_max_fraction_missing=0.95,
-                                               time_max=1832,
-                                               verbose=debug,
-                                               ...))
-      }
-      
-      testthat::expect_equal(is.null(output), FALSE) 
-    })
+    )
   }
 }
 
 
 
-debug_test_that <- function(desc, code){
+debug_test_that <- function(desc, code) {
   # This is a drop-in replacement for testthat::test_that that makes it easier
   # to debug errors.
-  
-  if(!is.character(desc) || length(desc) != 1){
+
+  if (!is.character(desc) || length(desc) != 1) {
     stop("\"desc\" should be a character string")
   }
-  
+
   # Execute the code
   code <- substitute(code)
-  eval(code, envir=parent.frame())
+  eval(code, envir = parent.frame())
 }
 
 
 
-test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
+test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   # Test that no deprecation warnings are given.
-  if(length(x) > 0){
-    for(current_string in deprecation_string){
-      testthat::expect_equal(any(grepl(x=x, pattern=current_string, fixed=TRUE)), FALSE)
+  if (length(x) > 0) {
+    for (current_string in deprecation_string) {
+      testthat::expect_equal(
+        any(grepl(
+          x = x, 
+          pattern = current_string, 
+          fixed = TRUE)),
+        FALSE)
     }
   }
 }
 
 
 
-.test_which_plot_present <- function(p){
-  
+.test_which_plot_present <- function(p) {
   # Check if the top element is null or empty.
-  if(is.null(p)) return(FALSE)
-  if(length(p) == 0) return(FALSE)
-  
+  if (is.null(p)) return(FALSE)
+  if (length(p) == 0) return(FALSE)
+
   # Check that the top element is a gtable or ggplot.
-  if(gtable::is.gtable(p) | ggplot2::is.ggplot(p)) return(TRUE)
-  
+  if (gtable::is.gtable(p) || ggplot2::is.ggplot(p)) {
+    return(TRUE)
+  }
+
   plot_present <- sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot)
-  if(any(plot_present)) return(plot_present)
-  
-  if(all(sapply(p, is.null))) return(!sapply(p, is.null))
-  
+  if (any(plot_present)) {
+    return(plot_present)
+  }
+
+  if (all(sapply(p, is.null))) {
+    return(!sapply(p, is.null))
+  }
+
   # If the code gets here, p is a nested list.
-  p <- unlist(p, recursive=FALSE)
-  
-  if(is.null(p)) return(FALSE)
-  if(length(p) == 0) return(FALSE)
-  
+  p <- unlist(p, recursive = FALSE)
+
+  if (is.null(p)) return(FALSE)
+  if (length(p) == 0) return(FALSE)
+
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
 }
 
 
 
-.test_which_data_element_present <- function(x, outcome_type){
-  
+.test_which_data_element_present <- function(x, outcome_type) {
   # Check if the top element is null or empty.
-  if(is_empty(x)) return(FALSE)
-  
+  if (is_empty(x)) return(FALSE)
+
   data_element_present <- !sapply(x, is_empty)
-  if(!any(data_element_present)) return(FALSE)
-  
+  if (!any(data_element_present)) return(FALSE)
+
   return(data_element_present)
 }
 
 
 
-.test_start_cluster <- function(n_cores=NULL){
-  
+.test_start_cluster <- function(n_cores = NULL) {
   # Determine the number of available cores.
   n_cores_available <- parallel::detectCores() - 1L
-  
+
   # Determine the number of available cores.
-  if(is.null(n_cores)) n_cores <- n_cores_available
-  
-  if(n_cores > n_cores_available) n_cores <- n_cores_available
-  
-  if(n_cores < 2) return(NULL)
-  
-  assign("is_external_cluster", FALSE, envir=familiar_global_env)
-  
+  if (is.null(n_cores)) n_cores <- n_cores_available
+  if (n_cores > n_cores_available) n_cores <- n_cores_available
+  if (n_cores < 2) return(NULL)
+
+  assign("is_external_cluster", FALSE, envir = familiar_global_env)
+
   # Start a new cluster
-  cl <- .start_cluster(n_cores=n_cores,
-                       cluster_type="psock")
-  
+  cl <- .start_cluster(
+    n_cores = n_cores,
+    cluster_type = "psock")
+
   # If the cluster doesn't start, return a NULL
-  if(is.null(cl)) return(NULL)
-  
+  if (is.null(cl)) return(NULL)
+
   # Set library paths to avoid issues with non-standard library locations.
   libs <- .libPaths()
-  parallel::clusterExport(cl=cl, varlist="libs", envir=environment())
-  parallel::clusterEvalQ(cl=cl, .libPaths(libs))
-  
+  parallel::clusterExport(cl = cl, varlist = "libs", envir = environment())
+  parallel::clusterEvalQ(cl = cl, .libPaths(libs))
+
   # Load familiar and data.table libraries to each cluster node.
-  parallel::clusterEvalQ(cl=cl, library(familiar))
-  parallel::clusterEvalQ(cl=cl, library(data.table))
-  
+  parallel::clusterEvalQ(cl = cl, library(familiar))
+  parallel::clusterEvalQ(cl = cl, library(data.table))
+
   # Set options on each cluster node.
-  parallel::clusterEvalQ(cl=cl, options(rf.cores=as.integer(1)))
-  parallel::clusterEvalQ(cl=cl, data.table::setDTthreads(1L))
-  
+  parallel::clusterEvalQ(cl = cl, options(rf.cores = as.integer(1)))
+  parallel::clusterEvalQ(cl = cl, data.table::setDTthreads(1L))
+
   return(cl)
 }
 
 
 
-.test_create_hyperparameter_object <- function(data,
-                                               vimp_method,
-                                               learner,
-                                               is_vimp,
-                                               cluster_method="none",
-                                               ...,
-                                               set_signature_feature=FALSE){
-  
-  if(set_signature_feature){
+.test_create_hyperparameter_object <- function(
+    data,
+    vimp_method,
+    learner,
+    is_vimp,
+    cluster_method = "none",
+    ...,
+    set_signature_feature = FALSE) {
+  if (set_signature_feature) {
     signature_features <- get_feature_columns(data)[1:2]
-    
   } else {
     signature_features <- NULL
   }
-  
+
   # Create feature info list.
-  feature_info_list <- create_feature_info(data=data,
-                                           fs_method=vimp_method,
-                                           learner=learner,
-                                           cluster_method=cluster_method,
-                                           imputation_method="simple",
-                                           ...,
-                                           signature=signature_features,
-                                           parallel=FALSE)
-  
+  feature_info_list <- create_feature_info(
+    data = data,
+    fs_method = vimp_method,
+    learner = learner,
+    cluster_method = cluster_method,
+    imputation_method = "simple",
+    ...,
+    signature = signature_features,
+    parallel = FALSE)
+
   # Find required features.
-  required_features <- get_required_features(x=data,
-                                             feature_info_list=feature_info_list)
-  
-  if(is_vimp){
+  required_features <- get_required_features(
+    x = data,
+    feature_info_list = feature_info_list)
+
+  if (is_vimp) {
     # Create the variable importance met hod object or familiar model object
     # to compute variable importance with.
-    object <- promote_vimp_method(object=methods::new("familiarVimpMethod",
-                                                      outcome_type = data@outcome_type,
-                                                      vimp_method = vimp_method,
-                                                      required_features = required_features,
-                                                      feature_info = feature_info_list,
-                                                      outcome_info = data@outcome_info))
+    object <- promote_vimp_method(object = methods::new("familiarVimpMethod",
+      outcome_type = data@outcome_type,
+      vimp_method = vimp_method,
+      required_features = required_features,
+      feature_info = feature_info_list,
+      outcome_info = data@outcome_info))
     
   } else {
     # Create familiar model object.
-    object <- promote_learner(object=methods::new("familiarModel",
-                                                  outcome_type = data@outcome_type,
-                                                  learner = learner,
-                                                  fs_method = vimp_method,
-                                                  required_features =  required_features,
-                                                  feature_info = feature_info_list,
-                                                  outcome_info = data@outcome_info))
+    object <- promote_learner(object = methods::new("familiarModel",
+      outcome_type = data@outcome_type,
+      learner = learner,
+      fs_method = vimp_method,
+      required_features = required_features,
+      feature_info = feature_info_list,
+      outcome_info = data@outcome_info))
   }
-  
+
   return(object)
 }
