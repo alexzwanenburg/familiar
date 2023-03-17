@@ -675,7 +675,7 @@ setMethod("..predict_survival_probability", signature(object="familiarMBoost", d
             # Check that required packages are loaded and installed.
             require_package(object, "predict")
             
-            return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
+            return(.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
 

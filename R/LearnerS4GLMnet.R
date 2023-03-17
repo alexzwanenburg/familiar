@@ -656,7 +656,7 @@ setMethod(
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
-    return(learner.survival_probability_relative_risk(
+    return(.survival_probability_relative_risk(
       object = object,
       data = data,
       time = time))
@@ -926,7 +926,7 @@ setMethod(
     require_package(object, "predict")
 
     # Predict, just to obtain a correctly formatted table.
-    survival_table <- learner.survival_probability_relative_risk(
+    survival_table <- .survival_probability_relative_risk(
       object = object,
       data = data,
       time = time)
@@ -958,7 +958,7 @@ setMethod(
     require_package(object, "predict")
 
     # Predict, just to obtain a correctly formatted table.
-    survival_table <- learner.survival_probability_relative_risk(
+    survival_table <- .survival_probability_relative_risk(
       object = object,
       data = data,
       time = time)
