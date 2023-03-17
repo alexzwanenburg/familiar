@@ -16,7 +16,7 @@
   n_runs <- data.table::uniqueN(vimp_table, by="run_id")
   
   # Calculate occurrence with a rank l.eq rank_threshold
-  vimp_table <- rank.get_feature_occurrence(vimp_table=vimp_table,
+  vimp_table <- .compute_feature_occurrence(vimp_table=vimp_table,
                                             threshold=rank_threshold,
                                             n_runs=n_runs)
   

@@ -800,7 +800,7 @@ setMethod("aggregate_vimp_table", signature(x="list"),
             } else if(aggregation_method %in% c("stability", "exponential")){
               # Perform aggregation using occurence-based methods.
               if(is.null(rank_threshold)) {
-                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=aggregated_vimp_object)
+                rank_threshold <- .optimise_feature_occurrence_threshold(vimp_table=aggregated_vimp_object)
               }
               
               if(aggregation_method == "stability"){
@@ -815,7 +815,7 @@ setMethod("aggregate_vimp_table", signature(x="list"),
             } else if(aggregation_method %in% c("borda", "enhanced_borda", "truncated_borda", "enhanced_truncated_borda")){
               # Perform aggregation using Borda-count based methods
               if(is.null(rank_threshold)) {
-                rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=aggregated_vimp_object)
+                rank_threshold <- .optimise_feature_occurrence_threshold(vimp_table=aggregated_vimp_object)
               }
               
               if(aggregation_method == "borda") {

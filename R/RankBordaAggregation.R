@@ -57,7 +57,7 @@
   if (enhanced) {
     # Enhanced borda methods use the occurrence (as in stability selection) for
     # weighting the borda score.
-    occurrence_table <- rank.get_feature_occurrence(
+    occurrence_table <- .compute_feature_occurrence(
       vimp_table = vimp_table,
       threshold = rank_threshold,
       n_runs = n_runs)
