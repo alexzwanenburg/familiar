@@ -198,9 +198,9 @@ test_create_invariant_good_data <- function(outcome_type) {
 
 
 test_create_good_data_without_censoring <- function(outcome_type) {
-  if (!outcome_type %in% c("survival", "competing_risk")) {
-    return(NULL)
-  }
+  # Dataset where none of the samples is censored.
+  
+  if (!outcome_type %in% c("survival", "competing_risk")) return(NULL)
 
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type = outcome_type)
@@ -213,10 +213,10 @@ test_create_good_data_without_censoring <- function(outcome_type) {
 
 
 
-test.create_good_data_one_censored_set <- function(outcome_type) {
-  if (!outcome_type %in% c("survival", "competing_risk")) {
-    return(NULL)
-  }
+test_create_good_data_one_censored <- function(outcome_type) {
+  # Dataset where just one of the samples is censored.
+  
+  if (!outcome_type %in% c("survival", "competing_risk")) return(NULL)
 
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type = outcome_type)
@@ -233,6 +233,7 @@ test.create_good_data_one_censored_set <- function(outcome_type) {
 
 
 test.create_good_data_few_censored_set <- function(outcome_type) {
+  # Dataset where a minor fraction of the samples is censored.
   if (!outcome_type %in% c("survival", "competing_risk")) {
     return(NULL)
   }
