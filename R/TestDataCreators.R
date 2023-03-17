@@ -195,7 +195,7 @@ test.create_good_data_invariant_set <- function(outcome_type) {
 
 
 
-test.create_good_data_no_censoring_set <- function(outcome_type) {
+test_create_good_data_without_censoring <- function(outcome_type) {
   if (!outcome_type %in% c("survival", "competing_risk")) {
     return(NULL)
   }
