@@ -1536,7 +1536,7 @@ test_all_vimp_methods <- function(vimp_methods,
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
     full_one_invariant_data <- test_create_invariant_good_data(outcome_type)
     one_feature_data <- test_create_single_feature_data(outcome_type)
-    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
@@ -1990,7 +1990,7 @@ test_all_metrics <- function(metrics,
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
-    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
@@ -2920,7 +2920,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     # One-feature data sets.
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
-    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     
     # Set exceptions per outcome type.
     .not_available_no_samples <- not_available_no_samples
@@ -3489,7 +3489,7 @@ test_plots <- function(plot_function,
     bootstrapped_data <- test_create_bootstrapped_data(outcome_type)
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
-    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     
@@ -4411,7 +4411,7 @@ test_export <- function(export_function,
     bootstrapped_data <- test_create_bootstrapped_data(outcome_type)
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
-    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     

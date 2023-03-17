@@ -556,7 +556,7 @@ test_create_single_feature_one_sample_data <- function(outcome_type) {
 
 
 
-test.create_one_feature_invariant_data_set <- function(outcome_type) {
+test_create_single_feature_invariant_data <- function(outcome_type) {
   # Create good dataset first and work from there.
   data <- test_create_single_feature_data(outcome_type = outcome_type)
 
