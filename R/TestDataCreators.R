@@ -158,7 +158,7 @@ test_create_good_data <- function(outcome_type, to_data_object = TRUE) {
 
 
 
-test.create_small_good_data_set <- function(outcome_type) {
+test_create_small_good_data <- function(outcome_type) {
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type = outcome_type)
 
@@ -171,6 +171,7 @@ test.create_small_good_data_set <- function(outcome_type) {
 
   return(data)
 }
+
 
 
 test.create_good_data_invariant_set <- function(outcome_type) {

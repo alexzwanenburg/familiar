@@ -2,7 +2,7 @@
 testthat::skip_on_cran()
 
 # Create a dataset using the good dataset.
-data <- familiar:::test.create_small_good_data_set("survival")
+data <- familiar:::test_create_small_good_data("survival")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::test_train(data=data,
