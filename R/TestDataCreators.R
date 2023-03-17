@@ -989,7 +989,7 @@ test_create_prospective_data <- function(outcome_type) {
 
 
 
-test.create_partially_prospective_data_set <- function(outcome_type) {
+test_create_partially_prospective_data <- function(outcome_type) {
   # Prospective data has NA for outcome for a few samples, but not all.
 
   data <- test_create_good_data(outcome_type = outcome_type)
