@@ -1007,7 +1007,7 @@ test_create_partially_prospective_data <- function(outcome_type) {
 
 
 
-test.create_mostly_prospective_data_set <- function(outcome_type) {
+test_create_mostly_prospective_data <- function(outcome_type) {
   # Prospective data has NA for all but one sample.
 
   # Suppress NOTES due to non-standard evaluation in data.table

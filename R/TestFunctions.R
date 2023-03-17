@@ -68,7 +68,7 @@ test_all_learners_train_predict_vimp <- function(
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
     
     # Iterate over learners.
@@ -1543,7 +1543,7 @@ test_all_vimp_methods <- function(vimp_methods,
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
     
     # Iterate over variable importance methods.
@@ -2001,7 +2001,7 @@ test_all_metrics <- function(metrics,
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
     
     
@@ -3500,7 +3500,7 @@ test_plots <- function(plot_function,
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
     
     # Set exceptions per outcome type.
@@ -4422,7 +4422,7 @@ test_export <- function(export_function,
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
     
     # Set exceptions per outcome type.
