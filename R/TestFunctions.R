@@ -67,7 +67,7 @@ test_all_learners_train_predict_vimp <- function(
     bad_data <- test_create_bad_data(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
     partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     
@@ -1542,7 +1542,7 @@ test_all_vimp_methods <- function(vimp_methods,
     bad_data <- test_create_bad_data(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
     partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     
@@ -2000,7 +2000,7 @@ test_all_metrics <- function(metrics,
     few_censored_data <- test_create_good_data_few_censored(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
     partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     
@@ -3499,7 +3499,7 @@ test_plots <- function(plot_function,
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
     partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     
@@ -4421,7 +4421,7 @@ test_export <- function(export_function,
     few_censored_data <- test_create_good_data_few_censored(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
     partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     

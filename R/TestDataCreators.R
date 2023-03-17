@@ -971,7 +971,7 @@ test_create_small_bad_data <- function(outcome_type) {
 
 
 
-test.create_prospective_data_set <- function(outcome_type) {
+test_create_prospective_data <- function(outcome_type) {
   # Prospective data has NA for outcome.
   
   data <- test_create_good_data(outcome_type = outcome_type)
