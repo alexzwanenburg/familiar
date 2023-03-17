@@ -1534,7 +1534,7 @@ test_all_vimp_methods <- function(vimp_methods,
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
-    full_one_invariant_data <- test.create_good_data_invariant_set(outcome_type)
+    full_one_invariant_data <- test_create_invariant_good_data(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
