@@ -878,7 +878,7 @@ test_all_learners_train_predict_vimp <- function(
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
-        few_censoring_data <- test.create_good_data_few_censored_set(outcome_type)
+        few_censoring_data <- test_create_good_data_few_censored(outcome_type)
         
         # Train the model.
         model <- suppressWarnings(test_train(data=few_censoring_data,
@@ -1754,7 +1754,7 @@ test_all_vimp_methods <- function(vimp_methods,
         
         #####Dataset with few censored instances################################
         
-        few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+        few_censored_data <- test_create_good_data_few_censored(outcome_type)
         
         # Process dataset.
         vimp_object <- prepare_vimp_object(data=few_censored_data,
@@ -1997,7 +1997,7 @@ test_all_metrics <- function(metrics,
     # Data with different degrees of censoring.
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     one_censored_data <- test_create_good_data_one_censored(outcome_type)
-    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+    few_censored_data <- test_create_good_data_few_censored(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test.create_prospective_data_set(outcome_type)
@@ -3495,7 +3495,7 @@ test_plots <- function(plot_function,
     
     # Data with different degrees of censoring.
     one_censored_data <- test_create_good_data_one_censored(outcome_type)
-    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+    few_censored_data <- test_create_good_data_few_censored(outcome_type)
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
@@ -4418,7 +4418,7 @@ test_export <- function(export_function,
     # Data with different degrees of censoring.
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     one_censored_data <- test_create_good_data_one_censored(outcome_type)
-    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+    few_censored_data <- test_create_good_data_few_censored(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test.create_prospective_data_set(outcome_type)

@@ -232,7 +232,7 @@ test_create_good_data_one_censored <- function(outcome_type) {
 
 
 
-test.create_good_data_few_censored_set <- function(outcome_type) {
+test_create_good_data_few_censored <- function(outcome_type) {
   # Dataset where a minor fraction of the samples is censored.
   if (!outcome_type %in% c("survival", "competing_risk")) {
     return(NULL)
