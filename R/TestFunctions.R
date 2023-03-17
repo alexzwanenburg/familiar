@@ -1,36 +1,37 @@
-test_all_learners_available <- function(learners){
-  
+test_all_learners_available <- function(learners) {
   # Create placeholder flags.
   learner_available <- logical(length(learners))
   names(learner_available) <- learners
-  
+
   # Iterate over learners.
-  for(learner in learners){
-    
+  for (learner in learners) {
     # Determine if the learner is available for any outcome.
-    for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival", "competing_risk")){
-      
+    for (outcome_type in c(
+      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
       object <- methods::new("familiarModel",
-                             outcome_type=outcome_type,
-                             learner=learner)
-      
+        outcome_type = outcome_type,
+        learner = learner)
+
       # Promote the learner to the right class.
-      object <- promote_learner(object=object)
-      
+      object <- promote_learner(object = object)
+
       # Check if the learner is available for the outcome.
-      if(is_available(object)){
+      if (is_available(object)) {
         learner_available[learner] <- TRUE
-        break()
+        break
       }
     }
   }
-  
+
   # Iterate over learners
-  for(learner in learners){
-    testthat::test_that(paste0(learner, " is available."), {
-      testthat::expect_equal(unname(learner_available[learner]), TRUE)
-    })
+  for (learner in learners) {
+    testthat::test_that(
+      paste0(learner, " is available."), 
+      {
+        testthat::expect_equal(unname(learner_available[learner]), TRUE)
+      }
+    )
   }
 }
 
