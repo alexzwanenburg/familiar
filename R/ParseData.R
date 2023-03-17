@@ -6,17 +6,17 @@
     ...) {
   # Parse the input sample_id_column
   if (!is.null(sample_id_column)) {
-    sample_id_column <- check_column_name(sample_id_column)
+    sample_id_column <- .replace_illegal_column_name(sample_id_column)
   }
 
   # Parse the input batch_id_column
   if (!is.null(batch_id_column)) {
-    batch_id_column <- check_column_name(batch_id_column)
+    batch_id_column <- .replace_illegal_column_name(batch_id_column)
   }
 
   # Parse the input series_id_column
   if (!is.null(series_id_column)) {
-    series_id_column <- check_column_name(series_id_column)
+    series_id_column <- .replace_illegal_column_name(series_id_column)
   }
 
   if (data.table::is.data.table(data)) {
@@ -24,14 +24,14 @@
     data <- data.table::copy(data)
 
     # Update column names using a fixed routine
-    data.table::setnames(data, check_column_name(colnames(data)))
+    data.table::setnames(data, .replace_illegal_column_name(colnames(data)))
   } else if (is.data.frame(data)) {
     
     # Convert to data.table
     data <- data.table::as.data.table(data)
 
     # Update column names using a fixed routine
-    data.table::setnames(data, check_column_name(colnames(data)))
+    data.table::setnames(data, .replace_illegal_column_name(colnames(data)))
   } else if (is.character(data) && length(data) == 1) {
     
     # Read from path
@@ -55,7 +55,7 @@
     }
 
     # Update column names using a fixed routine
-    data.table::setnames(data, check_column_name(colnames(data)))
+    data.table::setnames(data, .replace_illegal_column_name(colnames(data)))
     
   } else if ((is.atomic(data) && length(data) > 1) || (is.list(data))) {
     

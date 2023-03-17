@@ -175,7 +175,7 @@ setMethod("get_class_probability_name", signature(x="data.table"), function(x, o
 
 setMethod("get_class_probability_name", signature(x="character"), function(x){
   # Create column names
-  class_probability_columns <- check_column_name(column_name=paste0("predicted_class_probability_", x))
+  class_probability_columns <- .replace_illegal_column_name(column_name=paste0("predicted_class_probability_", x))
   
   return(class_probability_columns)
 })
@@ -484,7 +484,7 @@ setMethod("encode_categorical_variables", signature(data="data.table", object="A
                 curr_contrast_list  <- lapply(level_names, function(ii, x) (as.numeric(x==ii)), x=x)
                 
                 # Check level_names for inconsistencies (i.e. spaces etc)
-                contrast_names <- check_column_name(column_name=paste0(current_col, "_", level_names))
+                contrast_names <- .replace_illegal_column_name(column_name=paste0(current_col, "_", level_names))
                 names(curr_contrast_list) <- contrast_names
                 
               } else if(encoding_method=="dummy"){
@@ -492,7 +492,7 @@ setMethod("encode_categorical_variables", signature(data="data.table", object="A
                 curr_contrast_list  <- lapply(level_names[2:level_count], function(ii, x) (as.numeric(x==ii)), x=x)
                 
                 # Check level_names for inconsistencies (i.e. spaces etc)
-                contrast_names <- check_column_name(column_name=paste0(current_col, "_", level_names[2:level_count]))
+                contrast_names <- .replace_illegal_column_name(column_name=paste0(current_col, "_", level_names[2:level_count]))
                 names(curr_contrast_list) <- contrast_names
                 
               } else if(encoding_method=="numeric"){

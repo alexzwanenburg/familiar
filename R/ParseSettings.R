@@ -785,7 +785,7 @@
 
   # Update column name
   if (!is.null(settings$sample_col)) {
-    settings$sample_col <- check_column_name(settings$sample_col)
+    settings$sample_col <- .replace_illegal_column_name(settings$sample_col)
   }
 
   # batch_id_column ------------------------------------------------------------
@@ -800,7 +800,7 @@
 
   # Update column name
   if (!is.null(settings$batch_col)) {
-    settings$batch_col <- check_column_name(settings$batch_col)
+    settings$batch_col <- .replace_illegal_column_name(settings$batch_col)
   }
 
   # series_id_column -----------------------------------------------------------
@@ -814,7 +814,7 @@
     default = NULL)
 
   if (!is.null(settings$series_col)) {
-    settings$series_col <- check_column_name(settings$series_col)
+    settings$series_col <- .replace_illegal_column_name(settings$series_col)
   }
 
   # development_batch_id -------------------------------------------------------
@@ -848,7 +848,7 @@
     default = NULL)
 
   if (!is.null(settings$outcome_col)) {
-    settings$outcome_col <- check_column_name(settings$outcome_col)
+    settings$outcome_col <- .replace_illegal_column_name(settings$outcome_col)
   }
 
   # outcome_type ---------------------------------------------------------------
@@ -923,7 +923,7 @@
     default = NULL)
 
   if (!is.null(settings$signature)) {
-    settings$signature <- check_column_name(settings$signature)
+    settings$signature <- .replace_illegal_column_name(settings$signature)
   }
 
   # novelty_features -----------------------------------------------------------
@@ -937,7 +937,7 @@
     default = NULL)
 
   if (!is.null(settings$novelty_features)) {
-    settings$novelty_features <- check_column_name(settings$novelty_features)
+    settings$novelty_features <- .replace_illegal_column_name(settings$novelty_features)
   }
 
   # include_features -----------------------------------------------------------
@@ -951,7 +951,7 @@
     default = NULL)
 
   if (!is.null(settings$include_features)) {
-    settings$include_features <- check_column_name(settings$include_features)
+    settings$include_features <- .replace_illegal_column_name(settings$include_features)
   }
 
   # exclude_features -----------------------------------------------------------
@@ -965,7 +965,7 @@
     default = NULL)
 
   if (!is.null(settings$exclude_features)) {
-    settings$exclude_features <- check_column_name(settings$exclude_features)
+    settings$exclude_features <- .replace_illegal_column_name(settings$exclude_features)
   }
 
 

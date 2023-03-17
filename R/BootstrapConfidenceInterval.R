@@ -63,7 +63,7 @@
     
     # Set percentile names by passing them through the column name
     # checker.
-    percentile_names <- check_column_name(
+    percentile_names <- .replace_illegal_column_name(
       paste0("q_", format(percentiles, nsmall = percentile_names_digits)))
   }
   

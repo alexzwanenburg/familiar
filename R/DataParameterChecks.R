@@ -25,8 +25,8 @@
     term_object <- stats::terms(formula, data = data)
 
     # Derive predictors
-    predictor_vars <- check_column_name(attributes(term_object)$term.labels)
-    all_vars <- check_column_name(all.vars(stats::terms(term_object)))
+    predictor_vars <- .replace_illegal_column_name(attributes(term_object)$term.labels)
+    all_vars <- .replace_illegal_column_name(all.vars(stats::terms(term_object)))
     outcome_col <- all_vars[!all_vars %in% predictor_vars]
     
     # Set outcome_col if it was previously unknown

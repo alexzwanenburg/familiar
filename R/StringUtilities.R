@@ -1,4 +1,4 @@
-check_column_name <- function(column_name) {
+.replace_illegal_column_name <- function(column_name) {
   # Remove spaces
   column_name <- gsub(pattern = " ", replacement = "_", column_name)
 
