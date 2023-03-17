@@ -345,11 +345,6 @@ setMethod(
     # Push settings to the backend.
     .assign_settings_to_global(settings = settings)
 
-    # Prepare outcome_info -----------------------------------------------------
-
-    # Create a generic outcome object
-    outcome_info <- data_bypass@outcome_info
-
     # Prepare featureInfo objects ----------------------------------------------
 
     # Create a list of featureInfo objects.
