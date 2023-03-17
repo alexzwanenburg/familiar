@@ -54,7 +54,7 @@ for(stratification_method in stratification_methods){
 # Test for dataset with only one value for a feature.
 for(stratification_method in stratification_methods){
   # Create a dataset with a feature that only has two values.
-  data <- familiar:::test.create_one_feature_two_values_data_set("survival")
+  data <- familiar:::test_create_single_feature_two_values_data("survival")
   
   # Train a simple linear GLM using the feature set that only has two values.
   fam_model <- familiar:::test_train(data=data,

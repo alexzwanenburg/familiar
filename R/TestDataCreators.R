@@ -571,7 +571,7 @@ test_create_single_feature_invariant_data <- function(outcome_type) {
 
 
 
-test.create_one_feature_two_values_data_set <- function(outcome_type) {
+test_create_single_feature_two_values_data <- function(outcome_type) {
   # Create good dataset first.
   data <- test_create_single_feature_data(outcome_type = outcome_type)
 
