@@ -1073,7 +1073,7 @@ setMethod(
     if (object@outcome_type %in% c("survival", "competing_risk") &&
         model_is_trained(object)) {
       
-      object@km_info <- learner.find_survival_grouping_thresholds(
+      object@km_info <- .find_survival_grouping_thresholds(
         object = object,
         data = data)
       

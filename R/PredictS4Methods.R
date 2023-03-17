@@ -715,7 +715,7 @@ setMethod(
     }
 
     # Find risk groups for each instance.
-    assigned_risk_group <- learner.apply_risk_threshold(
+    assigned_risk_group <- .apply_risk_threshold(
       object = object,
       predicted_values = predictions$predicted_outcome,
       cutoff = stratification_threshold)

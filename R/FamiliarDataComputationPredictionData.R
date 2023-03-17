@@ -551,7 +551,7 @@ setMethod(
   # Create risk groups according to the corresponding method.
   if (ensemble_method == "mean") {
     prediction_data <- data[, list(
-      "risk_group" = learner.get_mean_risk_group(risk_group)),
+      "risk_group" = get_mean_risk_group(risk_group)),
       by = c(grouping_column)]
     
   } else if (ensemble_method == "median") {
