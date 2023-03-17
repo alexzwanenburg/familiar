@@ -2435,22 +2435,20 @@ test_all_metrics_available <- function(metrics) {
 
 
 
-test_all_metrics <- function(metrics,
-                             not_available_single_sample=FALSE,
-                             not_available_all_samples_identical=FALSE,
-                             not_available_all_predictions_identical=FALSE,
-                             debug=FALSE){
-  
-  if(debug){
+test_all_metrics <- function(
+    metrics,
+    not_available_single_sample = FALSE,
+    not_available_all_samples_identical = FALSE,
+    not_available_all_predictions_identical = FALSE,
+    debug = FALSE) {
+  if (debug) {
     test_fun <- debug_test_that
-    
   } else {
     test_fun <- testthat::test_that
   }
-  
+
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-    
+  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test_create_all_identical_data(outcome_type)
@@ -2460,852 +2458,1064 @@ test_all_metrics <- function(metrics,
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test_create_bad_data(outcome_type)
-    
+
     # Data with different degrees of censoring.
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     one_censored_data <- test_create_good_data_one_censored(outcome_type)
     few_censored_data <- test_create_good_data_few_censored(outcome_type)
-    
+
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
-    
-    
+
     # Set exceptions per outcome type.
     .not_available_single_sample <- not_available_single_sample
-    if(is.character(.not_available_single_sample)) .not_available_single_sample <- any(.not_available_single_sample == outcome_type)
-    
+    if (is.character(.not_available_single_sample)) {
+      .not_available_single_sample <- any(
+        .not_available_single_sample == outcome_type)
+    }
+
     .not_available_all_samples_identical <- not_available_all_samples_identical
-    if(is.character(.not_available_all_samples_identical)) .not_available_all_samples_identical <- any(.not_available_all_samples_identical == outcome_type)
-    
+    if (is.character(.not_available_all_samples_identical)) {
+      .not_available_all_samples_identical <- any(
+        .not_available_all_samples_identical == outcome_type)
+    }
+
     .not_available_all_predictions_identical <- not_available_all_predictions_identical
-    if(is.character(.not_available_all_predictions_identical)) .not_available_all_predictions_identical <- any(.not_available_all_predictions_identical == outcome_type)
-    
+    if (is.character(.not_available_all_predictions_identical)) {
+      .not_available_all_predictions_identical <- any(
+        .not_available_all_predictions_identical == outcome_type)
+    }
+
     # Iterate over metrics
-    for(metric in metrics){
-      
+    for (metric in metrics) {
       # Check if the metric is available for the current outcome type, and skip
       # otherwise.
-      if(!.check_metric_outcome_type(metric=metric, outcome_type=outcome_type, as_flag=TRUE)) break()
-      
+      if (!.check_metric_outcome_type(
+        metric = metric, 
+        outcome_type = outcome_type, 
+        as_flag = TRUE)) {
+        break
+      }
+
       # Parse hyperparameter list
-      hyperparameters <- list("sign_size"=get_n_features(full_data),
-                              "family"=switch(outcome_type,
-                                              "continuous"="gaussian",
-                                              "count"="poisson",
-                                              "binomial"="logistic",
-                                              "multinomial"="multinomial",
-                                              "survival"="cox"))
-      
+      hyperparameters <- list(
+        "sign_size" = get_n_features(full_data),
+        "family" = switch(
+          outcome_type,
+          "continuous" = "gaussian",
+          "count" = "poisson",
+          "binomial" = "logistic",
+          "multinomial" = "multinomial",
+          "survival" = "cox"))
+
       # Parse hyperparameter list for glmnet test.
-      hyperparameters_lasso <- list("sign_size"=get_n_features(full_data),
-                                    "family"=switch(outcome_type,
-                                                    "continuous"="gaussian",
-                                                    "count"="poisson",
-                                                    "binomial"="binomial",
-                                                    "multinomial"="multinomial",
-                                                    "survival"="cox"))
-      
-      #####Full dataset#########################################################
-      
+      hyperparameters_lasso <- list(
+        "sign_size" = get_n_features(full_data),
+        "family" = switch(
+          outcome_type,
+          "continuous" = "gaussian",
+          "count" = "poisson",
+          "binomial" = "binomial",
+          "multinomial" = "multinomial",
+          "survival" = "cox"))
+
+      # Full dataset -----------------------------------------------------------
+
       # Train the model.
-      model <- suppressWarnings(test_train(data=full_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="glm",
-                                           time_max=1832))
-      
+      model <- suppressWarnings(test_train(
+        data = full_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters,
+        learner = "glm",
+        time_max = 1832))
+
       # Create metric object
-      metric_object <- as_metric(metric=metric,
-                                 object=model)
-      
+      metric_object <- as_metric(
+        metric = metric,
+        object = model)
+
       # Test that metric values can be computed for the full model.
-      test_fun(paste0("1A. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a complete dataset."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=full_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number.
-                        testthat::expect_equal(data.table::between(score,
-                                                                   lower=metric_object@value_range[1],
-                                                                   upper=metric_object@value_range[2]),
-                                               TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(data.table::between(objective_score,
-                                                                   lower=-1.0,
-                                                                   upper=1.0),
-                                               TRUE)
-                      })
-      
-      if(outcome_type %in% c("survival", "competing_risk")){
+      test_fun(
+        paste0(
+          "1A. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a complete dataset."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = full_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is
+            # a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same
+            # as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number.
+          testthat::expect_equal(
+            data.table::between(
+              score,
+              lower = metric_object@value_range[1],
+              upper = metric_object@value_range[2]),
+            TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(
+            data.table::between(
+              objective_score,
+              lower = -1.0,
+              upper = 1.0),
+            TRUE)
+        }
+      )
+
+      if (outcome_type %in% c("survival", "competing_risk")) {
         # Test that metric values can be computed for the full model, but with
         # data without censored instances.
-        test_fun(paste0("1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                        metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."), {
-                          
-                          # Expect predictions to be made.
-                          prediction_table <- suppressWarnings(.predict(model, data=no_censoring_data))
-                          
-                          # Test that the predictions were successfully made.
-                          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                          
-                          if(outcome_type %in% c("binomial", "multinomial")){
-                            # Expect that the predicted_class column is
-                            # a factor.
-                            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                            
-                            # Expect that the class levels are the same
-                            # as those in the model.
-                            testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                          }
-                          
-                          # Compute a score.
-                          score <- compute_metric_score(metric=metric_object,
-                                                        data=prediction_table,
-                                                        object=model)
-                          
-                          # Compute an objective score.
-                          objective_score <- compute_objective_score(metric=metric_object,
-                                                                     data=prediction_table,
-                                                                     object=model)
-                          
-                          # Expect that the score is a finite,
-                          # non-missing number.
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                          
-                          # Expect that the objective score is a
-                          # non-missing number in the range [-1, 1].
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        })
+        test_fun(
+          paste0(
+          "1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."),
+          {
+            # Expect predictions to be made.
+            prediction_table <- suppressWarnings(.predict(
+              model,
+              data = no_censoring_data))
+            
+            # Test that the predictions were successfully made.
+            testthat::expect_equal(
+              any_predictions_valid(prediction_table, outcome_type),
+              TRUE)
+            
+            if (outcome_type %in% c("binomial", "multinomial")) {
+              # Expect that the predicted_class column is
+              # a factor.
+              testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+              
+              # Expect that the class levels are the same
+              # as those in the model.
+              testthat::expect_equal(
+                levels(prediction_table$predicted_class),
+                get_outcome_class_levels(model))
+            }
+            
+            # Compute a score.
+            score <- compute_metric_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Compute an objective score.
+            objective_score <- compute_objective_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Expect that the score is a finite, non-missing number.
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+            
+            # Expect that the objective score is a non-missing number in the
+            # range [-1, 1].
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        )
         
         # Test that metric values can be computed for the full model, but with
         # data with one censored instance.
-        test_fun(paste0("1C. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                        metric_object@name, " (", metric_object@metric, ") metric for a dataset with one censored instances."), {
-                          
-                          # Expect predictions to be made.
-                          prediction_table <- suppressWarnings(.predict(model, data=one_censored_data))
-                          
-                          # Test that the predictions were successfully made.
-                          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                          
-                          if(outcome_type %in% c("binomial", "multinomial")){
-                            # Expect that the predicted_class column is
-                            # a factor.
-                            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                            
-                            # Expect that the class levels are the same
-                            # as those in the model.
-                            testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                          }
-                          
-                          # Compute a score.
-                          score <- compute_metric_score(metric=metric_object,
-                                                        data=prediction_table,
-                                                        object=model)
-                          
-                          # Compute an objective score.
-                          objective_score <- compute_objective_score(metric=metric_object,
-                                                                     data=prediction_table,
-                                                                     object=model)
-                          
-                          # Expect that the score is a finite,
-                          # non-missing number.
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                          
-                          # Expect that the objective score is a
-                          # non-missing number in the range [-1, 1].
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        })
-        
+        test_fun(
+          paste0(
+            "1C. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+            metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
+            "with one censored instances."),
+          {
+            # Expect predictions to be made.
+            prediction_table <- suppressWarnings(.predict(
+              model,
+              data = one_censored_data))
+            
+            # Test that the predictions were successfully made.
+            testthat::expect_equal(
+              any_predictions_valid(prediction_table, outcome_type),
+              TRUE)
+            
+            if (outcome_type %in% c("binomial", "multinomial")) {
+              # Expect that the predicted_class column is
+              # a factor.
+              testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+              
+              # Expect that the class levels are the same
+              # as those in the model.
+              testthat::expect_equal(
+                levels(prediction_table$predicted_class),
+                get_outcome_class_levels(model))
+            }
+            
+            # Compute a score.
+            score <- compute_metric_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Compute an objective score.
+            objective_score <- compute_objective_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Expect that the score is a finite, non-missing number.
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+            
+            # Expect that the objective score is a non-missing number in the
+            # range [-1, 1].
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        )
+
         # Test that metric values can be computed for the full model, but with
         # data with few censored instances.
-        test_fun(paste0("1D. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                        metric_object@name, " (", metric_object@metric, ") metric for a dataset with few censored samples."), {
-                          
-                          # Expect predictions to be made.
-                          prediction_table <- suppressWarnings(.predict(model, data=few_censored_data))
-                          
-                          # Test that the predictions were successfully made.
-                          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                          
-                          if(outcome_type %in% c("binomial", "multinomial")){
-                            # Expect that the predicted_class column is
-                            # a factor.
-                            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                            
-                            # Expect that the class levels are the same
-                            # as those in the model.
-                            testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                          }
-                          
-                          # Compute a score.
-                          score <- compute_metric_score(metric=metric_object,
-                                                        data=prediction_table,
-                                                        object=model)
-                          
-                          # Compute an objective score.
-                          objective_score <- compute_objective_score(metric=metric_object,
-                                                                     data=prediction_table,
-                                                                     object=model)
-                          
-                          # Expect that the score is a finite,
-                          # non-missing number.
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                          
-                          # Expect that the objective score is a
-                          # non-missing number in the range [-1, 1].
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        })
+        test_fun(
+          paste0(
+            "1D. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+            metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
+            "with few censored samples."),
+          {
+            # Expect predictions to be made.
+            prediction_table <- suppressWarnings(.predict(
+              model, 
+              data = few_censored_data))
+            
+            # Test that the predictions were successfully made.
+            testthat::expect_equal(
+              any_predictions_valid(prediction_table, outcome_type),
+              TRUE)
+            
+            if (outcome_type %in% c("binomial", "multinomial")) {
+              # Expect that the predicted_class column is
+              # a factor.
+              testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+              
+              # Expect that the class levels are the same
+              # as those in the model.
+              testthat::expect_equal(
+                levels(prediction_table$predicted_class),
+                get_outcome_class_levels(model))
+            }
+            
+            # Compute a score.
+            score <- compute_metric_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Compute an objective score.
+            objective_score <- compute_objective_score(
+              metric = metric_object,
+              data = prediction_table,
+              object = model)
+            
+            # Expect that the score is a finite, non-missing number.
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+            
+            # Expect that the objective score is a non-missing number in the
+            # range [-1, 1].
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        )
       }
-      
-      
+
       # Test that metric values can be computed for the full model.
-      test_fun(paste0("1E. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a dataset with some missing outcome values."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=partially_prospective_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number.
-                        testthat::expect_equal(data.table::between(score,
-                                                                   lower=metric_object@value_range[1],
-                                                                   upper=metric_object@value_range[2]),
-                                               TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(data.table::between(objective_score,
-                                                                   lower=-1.0,
-                                                                   upper=1.0),
-                                               TRUE)
-                      })
-      
-      
+      test_fun(
+        paste0(
+          "1E. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
+          "with some missing outcome values."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model, 
+            data = partially_prospective_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is
+            # a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number.
+          testthat::expect_equal(
+            data.table::between(
+              score,
+              lower = metric_object@value_range[1],
+              upper = metric_object@value_range[2]),
+            TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(
+            data.table::between(
+              objective_score,
+              lower = -1.0,
+              upper = 1.0),
+            TRUE)
+        }
+      )
+
       # Test for a dataset with fully missing outcomes.
-      test_fun(paste0("1F. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a dataset that misses observed outcomes."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=fully_prospective_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is NA.
-                        testthat::expect_equal(is.na(score), TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(is.na(objective_score), TRUE)
-                      })
-      
-      
-      # Test that metric values cannot be computed for a one-sample dataset.
-      test_fun(paste0("2A. Model performance for ", outcome_type, " outcomes ",
-                      ifelse(.not_available_single_sample, "cannot", "can"),
-                      " be assessed by the ", metric_object@name,
-                      " (", metric_object@metric, ") metric for a one-sample data set."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number, and NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                        }
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1] and
-                        # NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(objective_score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        }
-                      })
-      
-      test_fun(paste0("2B. Model performance for ", outcome_type, " outcomes ",
-                      ifelse(.not_available_single_sample, "cannot", "can"),
-                      " be assessed by the ", metric_object@name,
-                      " (", metric_object@metric, ") metric for a dataset with only one instance with known outcomes."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=mostly_prospective_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number, and NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                        }
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1] and
-                        # NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(objective_score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        }
-                      })
+      test_fun(
+        paste0(
+          "1F. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
+          "that misses observed outcomes."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = fully_prospective_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is
+            # a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is NA.
+          testthat::expect_equal(is.na(score), TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(is.na(objective_score), TRUE)
+        }
+      )
+
+      # Test that metric values can/cannot be computed for a one-sample dataset.
+      test_fun(
+        paste0(
+          "2A. Model performance for ", outcome_type, " outcomes ",
+          ifelse(.not_available_single_sample, "cannot", "can"),
+          " be assessed by the ", metric_object@name,
+          " (", metric_object@metric, ") metric for a one-sample data set."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = full_one_sample_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is
+            # a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number, and NA
+          # otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+          }
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1] and NA otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(objective_score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        }
+      )
+
+      test_fun(
+        paste0(
+          "2B. Model performance for ", outcome_type, " outcomes ",
+          ifelse(.not_available_single_sample, "cannot", "can"),
+          " be assessed by the ", metric_object@name,
+          " (", metric_object@metric, ") metric for a dataset with only ",
+          "one instance with known outcomes."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model, 
+            data = mostly_prospective_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is
+            # a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number, and NA
+          # otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+          }
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1] and NA otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(objective_score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        }
+      )
       
       
       # Test that metric values cannot be computed for the empty model.
-      test_fun(paste0("3. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for an empty dataset."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=empty_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is NA.
-                        testthat::expect_equal(is.na(score), TRUE)
-                        
-                        # Expect that the objective score is NA.
-                        testthat::expect_equal(is.na(objective_score), TRUE)
-                      })
+      test_fun(
+        paste0(
+          "3. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for an empty dataset."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = empty_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            FALSE)
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is NA.
+          testthat::expect_equal(is.na(score), TRUE)
+          
+          # Expect that the objective score is NA.
+          testthat::expect_equal(is.na(objective_score), TRUE)
+        }
+      )
       
+      # Test that metric values can be computed for a dataset where are samples
+      # identical.
+      test_fun(paste0(
+        "4. Model performance for ", outcome_type, " outcomes ",
+        ifelse(.not_available_all_samples_identical, "cannot", "can"),
+        " be assessed by the ",
+        metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
+        "with identical samples."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = identical_sample_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number.
+          if (.not_available_all_samples_identical) {
+            testthat::expect_equal(is.na(score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+          }
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          if (.not_available_all_samples_identical) {
+            testthat::expect_equal(is.na(objective_score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        }
+      )
       
-      # Test that metric values can be computed for a dataset where are samples identical.
-      test_fun(paste0("4. Model performance for ", outcome_type, " outcomes ",
-                      ifelse(.not_available_all_samples_identical, "cannot", "can"),
-                      " be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a dataset with identical samples."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=identical_sample_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number.
-                        if(.not_available_all_samples_identical){
-                          testthat::expect_equal(is.na(score), TRUE)
-                          
-                        } else {
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                        }
-                        
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        if(.not_available_all_samples_identical){
-                          testthat::expect_equal(is.na(objective_score), TRUE)
-                          
-                        } else {
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        }
-                      })
-      
-      
-      
-      #####One-feature data set#################################################
+      # One-feature data set ---------------------------------------------------
       # Train the model.
-      model <- suppressWarnings(test_train(data=one_feature_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="glm",
-                                           time_max=1832))
-      
+      model <- suppressWarnings(test_train(
+        data = one_feature_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters,
+        learner = "glm",
+        time_max = 1832))
+
       # Create metric object
-      metric_object <- as_metric(metric=metric,
-                                 object=model)
+      metric_object <- as_metric(
+        metric = metric,
+        object = model)
       
       # Test that metric values can be computed for the one-feature model.
-      test_fun(paste0("5. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a one-feature dataset."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=one_feature_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number.
-                        testthat::expect_equal(data.table::between(score,
-                                                                   lower=metric_object@value_range[1],
-                                                                   upper=metric_object@value_range[2]),
-                                               TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(data.table::between(objective_score,
-                                                                   lower=-1.0,
-                                                                   upper=1.0),
-                                               TRUE)
-                      })
-      
-      
+      test_fun(
+        paste0(
+          "5. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a one-feature dataset."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = one_feature_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number.
+          testthat::expect_equal(
+            data.table::between(
+              score,
+              lower = metric_object@value_range[1],
+              upper = metric_object@value_range[2]),
+            TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(
+            data.table::between(
+              objective_score,
+              lower = -1.0,
+              upper = 1.0),
+            TRUE)
+        }
+      )
+
       # Test that metric values cannot be computed for a one-sample dataset.
-      test_fun(paste0("6. Model performance for ", outcome_type, " outcomes ",
-                      ifelse(.not_available_single_sample, "cannot", "can"),
-                      " be assessed by the ", metric_object@name,
-                      " (", metric_object@metric, ") metric for a one-feature, one-sample dataset."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number, and NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                        }
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1] and
-                        # NA otherwise.
-                        if(.not_available_single_sample){
-                          testthat::expect_equal(is.na(objective_score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        }
-                      })
-      
-      
+      test_fun(
+        paste0(
+          "6. Model performance for ", outcome_type, " outcomes ",
+          ifelse(.not_available_single_sample, "cannot", "can"),
+          " be assessed by the ", metric_object@name,
+          " (", metric_object@metric, ") metric for a one-feature, one-sample dataset."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = one_feature_one_sample_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number, and NA
+          # otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+          }
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1] and NA otherwise.
+          if (.not_available_single_sample) {
+            testthat::expect_equal(is.na(objective_score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        }
+      )
+
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
-      test_fun(paste0("7. Model performance for ", outcome_type, " outcomes ",
-                      ifelse(.not_available_all_predictions_identical, "can", "cannot"),
-                      " be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a one-feature dataset with identical predictions."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=one_feature_invariant_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is a finite,
-                        # non-missing number, and NA otherwise.
-                        if(.not_available_all_predictions_identical){
-                          testthat::expect_equal(is.na(score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(score,
-                                                                     lower=metric_object@value_range[1],
-                                                                     upper=metric_object@value_range[2]),
-                                                 TRUE)
-                        }
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1] and
-                        # NA otherwise.
-                        if(.not_available_all_predictions_identical){
-                          testthat::expect_equal(is.na(objective_score), TRUE)
-                        } else {
-                          testthat::expect_equal(data.table::between(objective_score,
-                                                                     lower=-1.0,
-                                                                     upper=1.0),
-                                                 TRUE)
-                        }
-                      })
-      
-      
-      #####Bad data-set#########################################################
+      test_fun(
+        paste0(
+          "7. Model performance for ", outcome_type, " outcomes ",
+          ifelse(.not_available_all_predictions_identical, "can", "cannot"),
+          " be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a ",
+          "one-feature dataset with identical predictions."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = one_feature_invariant_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            TRUE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is a finite, non-missing number, and NA
+          # otherwise.
+          if (.not_available_all_predictions_identical) {
+            testthat::expect_equal(is.na(score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                score,
+                lower = metric_object@value_range[1],
+                upper = metric_object@value_range[2]),
+              TRUE)
+          }
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1] and NA otherwise.
+          if (.not_available_all_predictions_identical) {
+            testthat::expect_equal(is.na(objective_score), TRUE)
+          } else {
+            testthat::expect_equal(
+              data.table::between(
+                objective_score,
+                lower = -1.0,
+                upper = 1.0),
+              TRUE)
+          }
+        }
+      )
+
+      # Bad dataset ------------------------------------------------------------
       # Train the model.
-      model <- suppressWarnings(test_train(data=bad_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="glm",
-                                           time_max=1832))
-      
+      model <- suppressWarnings(test_train(
+        data = bad_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters,
+        learner = "glm",
+        time_max = 1832))
+
       # Create metric object
-      metric_object <- as_metric(metric=metric,
-                                 object=model)
-      
+      metric_object <- as_metric(
+        metric = metric,
+        object = model)
+
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
-      test_fun(paste0("8. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a bad dataset where the model fails to train."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=bad_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is NA.
-                        testthat::expect_equal(is.na(score), TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(is.na(objective_score), TRUE)
-                      })
+      test_fun(
+        paste0(
+          "8. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a bad ",
+          "dataset where the model fails to train."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model, 
+            data = bad_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            FALSE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class), 
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is NA.
+          testthat::expect_equal(is.na(score), TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(is.na(objective_score), TRUE)
+        }
+      )
       
-      ##### Model cannot provide valid values ----------------------------------
-      model <- suppressWarnings(test_train(data=bad_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters_lasso,
-                                           learner="lasso_test_all_fail",
-                                           time_max=1832))
+      # Without any valid predictions ------------------------------------------
+      model <- suppressWarnings(test_train(
+        data = bad_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters_lasso,
+        learner = "lasso_test_all_fail",
+        time_max = 1832))
+
+      # Create metric object
+      metric_object <- as_metric(
+        metric = metric,
+        object = model)
+
+      test_fun(
+        paste0(
+          "9. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a model ",
+          "that only produces invalid predictions."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model, 
+            data = full_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            FALSE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is NA.
+          testthat::expect_equal(is.na(score), TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(is.na(objective_score), TRUE)
+        }
+      )
+      
+      # With some invalid predictions ------------------------------------------
+      model <- suppressWarnings(test_train(
+        data = bad_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters_lasso,
+        learner = "lasso_test_some_fail",
+        time_max = 1832))
       
       # Create metric object
-      metric_object <- as_metric(metric=metric,
-                                 object=model)
+      metric_object <- as_metric(
+        metric = metric,
+        object = model)
       
-      test_fun(paste0("9. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a model that only produces invalid predictions."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=full_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is NA.
-                        testthat::expect_equal(is.na(score), TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(is.na(objective_score), TRUE)
-                      })
-      
-      
-      ##### Model cannot provide valid values for some instances ---------------
-      model <- suppressWarnings(test_train(data=bad_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters_lasso,
-                                           learner="lasso_test_some_fail",
-                                           time_max=1832))
-      
-      # Create metric object
-      metric_object <- as_metric(metric=metric,
-                                 object=model)
-      
-      test_fun(paste0("10. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-                      metric_object@name, " (", metric_object@metric, ") metric for a model that produces some invalid predictions."), {
-                        
-                        # Expect predictions to be made.
-                        prediction_table <- suppressWarnings(.predict(model, data=full_data))
-                        
-                        # Test that the predictions were successfully made.
-                        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
-                        
-                        if(outcome_type %in% c("binomial", "multinomial")){
-                          # Expect that the predicted_class column is
-                          # a factor.
-                          testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-                          
-                          # Expect that the class levels are the same
-                          # as those in the model.
-                          testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
-                        }
-                        
-                        # Compute a score.
-                        score <- compute_metric_score(metric=metric_object,
-                                                      data=prediction_table,
-                                                      object=model)
-                        
-                        # Compute an objective score.
-                        objective_score <- compute_objective_score(metric=metric_object,
-                                                                   data=prediction_table,
-                                                                   object=model)
-                        
-                        # Expect that the score is NA.
-                        testthat::expect_equal(is.na(score), TRUE)
-                        
-                        # Expect that the objective score is a
-                        # non-missing number in the range [-1, 1].
-                        testthat::expect_equal(is.na(objective_score), TRUE)
-                      })
+      test_fun(
+        paste0(
+          "10. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
+          metric_object@name, " (", metric_object@metric, ") metric for a model ",
+          "that produces some invalid predictions."),
+        {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(
+            model, 
+            data = full_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_table, outcome_type),
+            FALSE)
+          
+          if (outcome_type %in% c("binomial", "multinomial")) {
+            # Expect that the predicted_class column is a factor.
+            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            
+            # Expect that the class levels are the same as those in the model.
+            testthat::expect_equal(
+              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(model))
+          }
+          
+          # Compute a score.
+          score <- compute_metric_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Compute an objective score.
+          objective_score <- compute_objective_score(
+            metric = metric_object,
+            data = prediction_table,
+            object = model)
+          
+          # Expect that the score is NA.
+          testthat::expect_equal(is.na(score), TRUE)
+          
+          # Expect that the objective score is a non-missing number in the range
+          # [-1, 1].
+          testthat::expect_equal(is.na(objective_score), TRUE)
+        }
+      )
     }
   }
 }
