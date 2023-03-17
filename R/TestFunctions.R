@@ -1286,128 +1286,157 @@ test_all_learners_train_predict_vimp <- function(
 
 
 
-test_all_learners_parallel_train_predict_vimp <- function(learners,
-                                                          hyperparameter_list=NULL,
-                                                          has_vimp=TRUE){
+test_all_learners_parallel_train_predict_vimp <- function(
+    learners,
+    hyperparameter_list = NULL,
+    has_vimp = TRUE) {
   # This function serves to test whether packages are loaded correctly for model
   # training, variable importance and so forth.
   
   # Disable randomForestSRC OpenMP core use.
-  options(rf.cores=as.integer(1))
-  on.exit(options(rf.cores=-1L), add=TRUE)
-  
+  options(rf.cores = as.integer(1))
+  on.exit(options(rf.cores = -1L), add = TRUE)
+
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
-  on.exit(data.table::setDTthreads(0L), add=TRUE)
-  
+  on.exit(data.table::setDTthreads(0L), add = TRUE)
+
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-    
+  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-    
+
     # Iterate over learners.
-    for(learner in learners){
-      
-      if(!.check_learner_outcome_type(learner=learner,
-                                      outcome_type=outcome_type,
-                                      as_flag=TRUE)){
-        next()
+    for (learner in learners) {
+      if (!.check_learner_outcome_type(
+        learner = learner,
+        outcome_type = outcome_type,
+        as_flag = TRUE)) {
+        next
       }
-      
+
       # Parse hyperparameter list
-      hyperparameters <- c(hyperparameter_list[[outcome_type]],
-                           list("sign_size"=get_n_features(full_data)))
-      
+      hyperparameters <- c(
+        hyperparameter_list[[outcome_type]],
+        list("sign_size" = get_n_features(full_data)))
+
       # Find required hyperparameters
-      learner_hyperparameters <- .get_preset_hyperparameters(learner=learner,
-                                                             outcome_type=outcome_type,
-                                                             names_only=TRUE)
-      
+      learner_hyperparameters <- .get_preset_hyperparameters(
+        learner = learner,
+        outcome_type = outcome_type,
+        names_only = TRUE)
+
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
-      
-      ##### Train models -------------------------------------------------------
-      cl_train <- .test_start_cluster(n_cores=2L)
-      
+
+      # Train models -----------------------------------------------------------
+      cl_train <- .test_start_cluster(n_cores = 2L)
+
       # Train the models.
-      model_list <- parallel::parLapply(cl=cl_train,
-                                        list("1"=full_data, "2"=full_data),
-                                        test_train,
-                                        cluster_method="none",
-                                        imputation_method="simple",
-                                        hyperparameter_list=hyperparameters,
-                                        learner=learner,
-                                        time_max=1832,
-                                        trim_model = FALSE)
-      
+      model_list <- parallel::parLapply(
+        cl = cl_train,
+        list("1" = full_data, "2" = full_data),
+        test_train,
+        cluster_method = "none",
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameters,
+        learner = learner,
+        time_max = 1832,
+        trim_model = FALSE)
+
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete dataset."), {
-        
-        # Test that the model was successfully created.
-        testthat::expect_equal(model_is_trained(model_list[[1]]), TRUE)
-        testthat::expect_equal(model_is_trained(model_list[[2]]), TRUE)
-      })
+      testthat::test_that(
+        paste0(
+          "Model for ", outcome_type, " can be created using ",
+          learner, " using a complete dataset."),
+        {
+          # Test that the model was successfully created.
+          testthat::expect_equal(model_is_trained(model_list[[1]]), TRUE)
+          testthat::expect_equal(model_is_trained(model_list[[2]]), TRUE)
+        }
+      )
       
       # Terminate cluster.
       cl_train <- .terminate_cluster(cl_train)
-      
-      ##### Variable importance ------------------------------------------------
-      cl_vimp <- .test_start_cluster(n_cores=2L)
-      
+
+      # Variable importance ----------------------------------------------------
+      cl_vimp <- .test_start_cluster(n_cores = 2L)
+
       # Extract variable importance objects.
-      vimp_table_list <- parallel::parLapply(cl=cl_vimp,
-                                             model_list,
-                                             .vimp,
-                                             data=full_data)
-      
+      vimp_table_list <- parallel::parLapply(
+        cl = cl_vimp,
+        model_list,
+        .vimp,
+        data = full_data)
+
       # Extract the variable importance tables themselves.
       vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
-      
+
       # Test that the model has variable importance.
-      testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
-        
-        if(has_vimp){
-          # Get the number of features
-          n_features <- get_n_features(full_data)
-          
-          # Expect that the vimp table has two rows.
-          testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
-          testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
-          
-          # Expect that the names in the vimp table correspond to those of the
-          # features.
-          testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
-          testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
-          
-        } else {
-          # Expect that the vimp table has no rows.
-          testthat::expect_equal(is_empty(vimp_table_list[[1]]), TRUE)
-          testthat::expect_equal(is_empty(vimp_table_list[[2]]), TRUE)
+      testthat::test_that(
+        paste0(
+          "Model has variable importance for ", outcome_type, " and ",
+          learner, " for the complete dataset."),
+        {
+          if (has_vimp) {
+            # Get the number of features
+            n_features <- get_n_features(full_data)
+            
+            # Expect that the vimp table has two rows.
+            testthat::expect_equal(
+              nrow(vimp_table_list[[1]]) > 0 && nrow(vimp_table_list[[1]]) <= n_features,
+              TRUE)
+            testthat::expect_equal(
+              nrow(vimp_table_list[[2]]) > 0 && nrow(vimp_table_list[[2]]) <= n_features,
+              TRUE)
+            
+            # Expect that the names in the vimp table correspond to those of the
+            # features.
+            testthat::expect_equal(
+              all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)),
+              TRUE)
+            testthat::expect_equal(
+              all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)),
+              TRUE)
+            
+          } else {
+            # Expect that the vimp table has no rows.
+            testthat::expect_equal(is_empty(vimp_table_list[[1]]), TRUE)
+            testthat::expect_equal(is_empty(vimp_table_list[[2]]), TRUE)
+          }
         }
-      })
-      
+      )
+
       # Terminate cluster.
       cl_vimp <- .terminate_cluster(cl_vimp)
-      
-      ##### Predictions --------------------------------------------------------
-      cl_predict <- .test_start_cluster(n_cores=2L)
-      
+
+      # Predictions ------------------------------------------------------------
+      cl_predict <- .test_start_cluster(n_cores = 2L)
+
       # Extract predictions.
-      prediction_list <- parallel::parLapply(cl=cl_predict,
-                                             model_list,
-                                             .predict,
-                                             data=full_data)
-      
+      prediction_list <- parallel::parLapply(
+        cl = cl_predict,
+        model_list,
+        .predict,
+        data = full_data)
+
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_list[[1]], outcome_type), TRUE)
-        testthat::expect_equal(any_predictions_valid(prediction_list[[2]], outcome_type), TRUE)
-      })
+      testthat::test_that(
+        paste0(
+          "Sample predictions for ", outcome_type, " can be made using ",
+          learner, " for a complete dataset."),
+        {
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(
+            any_predictions_valid(prediction_list[[1]], outcome_type),
+            TRUE)
+          testthat::expect_equal(
+            any_predictions_valid(prediction_list[[2]], outcome_type), 
+            TRUE)
+        }
+      )
       
       # Terminate cluster.
       cl_predict <- .terminate_cluster(cl_predict)
