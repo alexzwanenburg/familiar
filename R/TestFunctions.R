@@ -1767,18 +1767,18 @@ test_all_novelty_detectors_parallel <- function(
     hyperparameter_list = NULL) {
   # This function serves to test whether packages are loaded correctly for
   # novelty detection.
-
+  
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+  
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
-
+  
   # Obtain data.
   full_data <- test_create_good_data(outcome_type)
-
+  
   # Iterate over detectors.
   for (detector in detectors) {
     if (!.check_novelty_detector_available(
@@ -1786,10 +1786,10 @@ test_all_novelty_detectors_parallel <- function(
       as_flag = TRUE)) {
       next
     }
-
+    
     # Train models -------------------------------------------------------------
     cl_train <- .test_start_cluster(n_cores = 2L)
-
+    
     # Train the models.
     model_list <- parallel::parLapply(
       cl = cl_train,
@@ -1799,7 +1799,7 @@ test_all_novelty_detectors_parallel <- function(
       imputation_method = "simple",
       detector = detector,
       hyperparameter_list = hyperparameter_list)
-
+    
     # Test that models can be created.
     testthat::test_that(
       paste0("Novelty detector can be created using ", detector, " and a complete dataset."),
@@ -1816,17 +1816,17 @@ test_all_novelty_detectors_parallel <- function(
     
     # Terminate cluster.
     cl_train <- .terminate_cluster(cl_train)
-
+    
     # Predictions --------------------------------------------------------------
     cl_predict <- .test_start_cluster(n_cores = 2L)
-
+    
     # Extract predictions.
     prediction_list <- parallel::parLapply(
       cl = cl_predict,
       model_list,
       .predict,
       data = full_data)
-
+    
     # Test that models can be used to assess novelty.
     testthat::test_that(
       paste0("Sample predictions can be made using ", detector, " for a complete dataset."),
@@ -1840,7 +1840,7 @@ test_all_novelty_detectors_parallel <- function(
           !detector %in% c(except_train, except_predict))
       }
     )
-
+    
     # Terminate cluster.
     cl_predict <- .terminate_cluster(cl_predict)
   }
@@ -1849,36 +1849,35 @@ test_all_novelty_detectors_parallel <- function(
 
 
 
-test_all_vimp_methods_available <- function(vimp_methods){
-  
+test_all_vimp_methods_available <- function(vimp_methods) {
   # Create placeholder flags.
   vimp_method_available <- logical(length(vimp_methods))
   names(vimp_method_available) <- vimp_methods
-  
+
   # Iterate over learners.
-  for(vimp_method in vimp_methods){
-    
+  for (vimp_method in vimp_methods) {
     # Determine if the learner is available for any outcome.
-    for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival", "competing_risk")){
-      
+    for (outcome_type in c(
+      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
       object <- methods::new("familiarVimpMethod",
-                             outcome_type=outcome_type,
-                             vimp_method=vimp_method)
-      
+        outcome_type = outcome_type,
+        vimp_method = vimp_method
+      )
+
       # Promote the learner to the right class.
-      object <- promote_vimp_method(object=object)
-      
+      object <- promote_vimp_method(object = object)
+
       # Check if the learner is available for the outcome.
-      if(is_available(object)){
+      if (is_available(object)) {
         vimp_method_available[vimp_method] <- TRUE
         break
       }
     }
   }
-  
+
   # Iterate over learners
-  for(vimp_method in vimp_methods){
+  for (vimp_method in vimp_methods) {
     testthat::test_that(paste0(vimp_method, " is available."), {
       testthat::expect_equal(unname(vimp_method_available[vimp_method]), TRUE)
     })
