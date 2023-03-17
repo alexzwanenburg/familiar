@@ -129,24 +129,29 @@ from biopsies, which constitutes a classification problem.
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="breast-data-preparation"}
 
 # Get a dataset.
-binomial_data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+binomial_data <- familiar:::test_create_good_data(outcome_type="binomial")
 
-# Call familiar to create models. Note that we skip hyperparameter optimisation by manually defining the hyperparameters, and that we skip evaluation steps. This is to save time when creating the vignette.
-familiar::summon_familiar(data=binomial_data,
-                          project_dir=file.path(tempdir()),
-                          experiment_dir="binomial",
-                          experimental_design="fs+mb",
-                          cluster_method="none",
-                          fs_method="none",
-                          hyperparameter=list("random_forest_ranger"=
-                                                list("n_tree"=4,
-                                                     "sample_size"=0.7,
-                                                     "m_try"=0.5,
-                                                     "node_size"=20,
-                                                     "tree_depth"=3)),
-                          learner="random_forest_ranger",
-                          parallel=FALSE,
-                          skip_evaluation_elements="all")
+# Call familiar to create models. Note that we skip hyperparameter optimisation
+# by manually defining the hyperparameters, and that we skip evaluation steps.
+# This is to save time when creating the vignette.
+familiar::summon_familiar(
+  data=binomial_data,
+  project_dir=file.path(tempdir()),
+  experiment_dir="binomial",
+  experimental_design="fs+mb",
+  cluster_method="none",
+  fs_method="none",
+  hyperparameter=list(
+    "random_forest_ranger"=
+      list(
+        "n_tree"=4,
+        "sample_size"=0.7,
+        "m_try"=0.5,
+        "node_size"=20,
+        "tree_depth"=3)),
+  learner="random_forest_ranger",
+  parallel=FALSE,
+  skip_evaluation_elements="all")
 
 # Create path to the directory containing the models.
 model_directory_path <- file.path(tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
@@ -163,22 +168,26 @@ survival after treatment.
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-data-preparation"}
 
 # Get a dataset.
-survival_data <- familiar:::test.create_good_data_set(outcome_type="survival")
+survival_data <- familiar:::test_create_good_data(outcome_type="survival")
 
-# Call familiar to create models. Note that we skip hyperparameter optimisation by manually defining the hyperparameters, and that we skip evaluation steps. This is to save time when creating the vignette.
+# Call familiar to create models. Note that we skip hyperparameter optimisation
+# by manually defining the hyperparameters, and that we skip evaluation steps.
+# This is to save time when creating the vignette.
 familiar::summon_familiar(data=survival_data,
                           project_dir=file.path(tempdir()),
                           experiment_dir="survival",
                           experimental_design="fs+mb",
                           cluster_method="none",
                           fs_method="none",
-                          hyperparameter=list("random_forest_ranger"=
-                                                list("n_tree"=9,
-                                                     "sample_size"=0.95,
-                                                     "m_try"=0.68,
-                                                     "node_size"=30,
-                                                     "tree_depth"=2,
-                                                     "alpha"=0.25)),
+                          hyperparameter=list(
+                            "random_forest_ranger"=
+                              list(
+                                "n_tree"=9,
+                                "sample_size"=0.95,
+                                "m_try"=0.68,
+                                "node_size"=30,
+                                "tree_depth"=2,
+                                "alpha"=0.25)),
                           learner="random_forest_ranger",
                           parallel=FALSE,
                           skip_evaluation_elements="all")

@@ -22,7 +22,7 @@ familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_multivariate
 
 
 ##### Count outcome #####
-data <- familiar:::test.create_good_data_set("count")
+data <- familiar:::test_create_good_data("count")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -44,7 +44,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks count data."
 
 
 ##### Continuous outcome #####
-data <- familiar:::test.create_good_data_set("continuous")
+data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -65,7 +65,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks continuous d
 
 
 ##### Binomial outcome #####
-data <- familiar:::test.create_good_data_set("binomial")
+data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -86,7 +86,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks binomial dat
 
 
 ##### Multinomial outcome #####
-data <- familiar:::test.create_good_data_set("multinomial")
+data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -107,7 +107,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks multinomial 
 
 
 ##### Survival outcome #####
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,

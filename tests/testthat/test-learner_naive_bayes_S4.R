@@ -17,7 +17,7 @@ familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.ge
 #####Binomial tests-------------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("binomial")
+good_data <- familiar:::test_create_good_data("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
@@ -80,7 +80,7 @@ testthat::test_that("Naive Bayes model can train on wide data", {
 #####Multinomial tests----------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("multinomial")
+good_data <- familiar:::test_create_good_data("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.

@@ -3,7 +3,7 @@ outcome_type <- "multinomial"
 for(outcome_type in c("continuous", "multinomial",  "survival")){
   
   # Get data.
-  data <- familiar:::test.create_good_data_set(outcome_type = outcome_type)
+  data <- familiar:::test_create_good_data(outcome_type = outcome_type)
   
   # Select simple regression models to train with.
   learner <- switch(

@@ -1,5 +1,5 @@
 # Create test dataset.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+data <- familiar:::test_create_good_data(outcome_type="binomial")
 
 weights <- familiar:::create_instance_weights(data=data,
                                               method="inverse_number_of_samples")

@@ -1,7 +1,7 @@
 testthat::skip_on_cran()
 
 # Train a model to transfer settings.
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::test_train(data=data,
@@ -12,7 +12,7 @@ fam_model <- familiar:::test_train(data=data,
                                    create_novelty_detector=TRUE)
 
 ##### Feature levels are correctly ordered -------------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Change order of features.
 data$rx <- factor(data$rx, levels=c("Lev", "Lev+5FU", "Obs"))
@@ -28,7 +28,7 @@ testthat::test_that("Feature levels are correctly ordered", {
 })
 
 
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Keep features as characters,
 data$rx <- as.character(data$rx)
@@ -46,7 +46,7 @@ testthat::test_that("Feature levels are correctly set", {
 
 
 ##### Ordered features are correctly set ---------------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Change order of features.
 data$adhere <- factor(data$adhere, levels=c("TRUE", "FALSE"), ordered=TRUE)
@@ -63,7 +63,7 @@ testthat::test_that("Feature levels are correctly ordered", {
 })
 
 
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Keep features as characters,
 data$adhere <- as.character(data$adhere)
@@ -82,7 +82,7 @@ testthat::test_that("Feature levels are correctly set", {
 
 ##### Missing levels in categorical features -----------------------------------
 
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Remove a feature level.
 data[rx == "Lev+5FU", "rx":="Lev"]
@@ -99,7 +99,7 @@ testthat::test_that("Feature levels are correctly ordered", {
 
 
 ##### Additional levels in categorical features --------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Add new level to categorical features.
 data[c(1, 2, 3), "rx":="Cisplatin"]
@@ -114,7 +114,7 @@ testthat::test_that("Extra levels are detected", {
 
 
 #### Test methods to set reference levels --------------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 data$rx <- stats::relevel(data$rx, ref="Lev")
 original_TRUE <- data$adhere == "TRUE"
 data[adhere == "FALSE", "adhere":="TRUE"]
@@ -163,7 +163,7 @@ testthat::test_that("Never-method does not re-order existing levels.", {
 })
 
 # Now for automatic conversion of categorical variables.
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 data$rx <- as.character(data$rx)
 data$adhere <- as.logical(data$adhere)
 
@@ -211,7 +211,7 @@ testthat::test_that("Never-method sorts existing levels.", {
 
 
 ##### Censoring and event identifiers are set ----------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 testthat::test_that("Censoring is correctly transferred", {
   for(strictness in c("strict", "external_warn", "external")){
@@ -225,8 +225,8 @@ testthat::test_that("Censoring is correctly transferred", {
 
 
 ##### Manual censoring and event identifiers -----------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
-manual_data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
+manual_data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Update status column to specific 
 manual_data$status <- as.character(data$status)
@@ -253,7 +253,7 @@ testthat::test_that("Censoring and event identifiers can be manually set", {
 
 
 ##### Unknown censoring and event identifiers ----------------------------------
-data <- familiar:::test.create_good_data_set("survival", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("survival", to_data_object=FALSE)
 
 # Update status column to specific 
 data$status <- as.character(data$status)
@@ -291,7 +291,7 @@ testthat::test_that("Censoring and event identifiers are not known", {
 
 ##### Non-standard censoring and event identifiers are correctly propagated ----
 # Train a model to transfer settings.
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::test_train(data=data,
@@ -316,7 +316,7 @@ testthat::test_that("Non-standard censoring and event identifiers are automatica
 
 ##### Class levels are correctly ordered ---------------------------------------
 # Train a model to transfer settings.
-data <- familiar:::test.create_good_data_set("binomial")
+data <- familiar:::test_create_good_data("binomial")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::test_train(data=data,
@@ -327,7 +327,7 @@ fam_model <- familiar:::test_train(data=data,
                                    create_novelty_detector=TRUE)
 
 # Create test dataset.
-data <- familiar:::test.create_good_data_set("binomial", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("binomial", to_data_object=FALSE)
 
 testthat::test_that("Class levels are correctly ordered",{
   for(strictness in c("strict", "external_warn", "external")){
@@ -341,7 +341,7 @@ testthat::test_that("Class levels are correctly ordered",{
 
 
 ##### Class levels are restored to expected order ------------------------------
-data <- familiar:::test.create_good_data_set("binomial", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("binomial", to_data_object=FALSE)
 
 # Reorder class levels
 data$cell_malignancy <- factor(data$cell_malignancy, levels=c("malignant", "benign"))
@@ -358,7 +358,7 @@ testthat::test_that("Class levels are ordered according to expectations",{
 
 
 ##### Missing class levels -----------------------------------------------------
-data <- familiar:::test.create_good_data_set("binomial", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("binomial", to_data_object=FALSE)
 data[cell_malignancy == "benign", cell_malignancy:="malignant"]
 
 testthat::test_that("Class levels are ordered according to expectations",{
@@ -383,7 +383,7 @@ testthat::test_that("Class levels are ordered according to expectations",{
 
 
 ##### Additional class levels --------------------------------------------------
-data <- familiar:::test.create_good_data_set("binomial", to_data_object=FALSE)
+data <- familiar:::test_create_good_data("binomial", to_data_object=FALSE)
 
 # Add new level
 data[c(1, 2, 3), "cell_malignancy":="unknown"]

@@ -34,7 +34,7 @@ familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_gain_ratio_
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
 
 ##### Count outcome #####
-data <- familiar:::test.create_good_data_set("count")
+data <- familiar:::test_create_good_data("count")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -55,7 +55,7 @@ testthat::test_that(paste0("RReliefF exponentially decreasing ranks method corre
 
 
 ##### Continuous outcome #####
-data <- familiar:::test.create_good_data_set("continuous")
+data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -76,7 +76,7 @@ testthat::test_that(paste0("RReliefF exponentially decreasing ranks method corre
 
 
 ##### Binomial outcome #####
-data <- familiar:::test.create_good_data_set("binomial")
+data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -147,7 +147,7 @@ testthat::test_that(paste0("The MDL method correctly ranks binomial data."), {
 
 
 ##### Multinomial outcome #####
-data <- familiar:::test.create_good_data_set("multinomial")
+data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,

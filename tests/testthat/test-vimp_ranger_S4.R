@@ -86,7 +86,7 @@ familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_ranger_vimp_
                                                                                    "alpha"=0.1)))
 
 ##### Count outcome #####
-data <- familiar:::test.create_good_data_set("count")
+data <- familiar:::test_create_good_data("count")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -160,7 +160,7 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
 
 
 ##### Continuous outcome #####
-data <- familiar:::test.create_good_data_set("continuous")
+data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -228,7 +228,7 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
 
 
 ##### Binomial outcome #####
-data <- familiar:::test.create_good_data_set("binomial")
+data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -300,7 +300,7 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
 })
 
 ##### Multinomial outcome #####
-data <- familiar:::test.create_good_data_set("multinomial")
+data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -369,7 +369,7 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
 
 
 ##### Survival outcome #####
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,

@@ -2,7 +2,7 @@
 testthat::skip_on_cran()
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Create data assignment object.

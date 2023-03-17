@@ -1,4 +1,4 @@
-test.create_good_data_set <- function(outcome_type, to_data_object = TRUE) {
+test_create_good_data <- function(outcome_type, to_data_object = TRUE) {
   # Suppress NOTES due to non-standard evaluation in data.table
   etype <- median_house_value <- NULL
 
@@ -160,7 +160,7 @@ test.create_good_data_set <- function(outcome_type, to_data_object = TRUE) {
 
 test.create_small_good_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Now select a subset of the data.
   data@data <- data@data[fam_sample(
@@ -175,7 +175,7 @@ test.create_small_good_data_set <- function(outcome_type) {
 
 test.create_good_data_invariant_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type == "survival") {
     data@data[, "nodes" := 4.0]
@@ -200,7 +200,7 @@ test.create_good_data_no_censoring_set <- function(outcome_type) {
   }
 
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
   data@data[, "outcome_event" := 1]
@@ -216,7 +216,7 @@ test.create_good_data_one_censored_set <- function(outcome_type) {
   }
 
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
   data@data[, "outcome_event" := 1]
@@ -235,7 +235,7 @@ test.create_good_data_few_censored_set <- function(outcome_type) {
   }
 
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
   data@data[, "outcome_event" := 1]
@@ -259,7 +259,7 @@ test_create_good_data_set_random_na_data <- function(
   }
 
   # Create test data.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Get the number of rows and feature columns.
   n_rows <- nrow(data@data)
@@ -308,7 +308,7 @@ test_create_good_data_set_random_na_data <- function(
 
 test.create_empty_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Now empty the data.
   data@data <- head(data@data, n = 0)
@@ -320,7 +320,7 @@ test.create_empty_data_set <- function(outcome_type) {
 
 test.create_no_feature_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type)
+  data <- test_create_good_data(outcome_type)
 
   # Remove features.
   data@data <- data@data[, mget(get_non_feature_columns(outcome_type))]
@@ -335,7 +335,7 @@ test.create_bootstrapped_data_set <- function(outcome_type, to_data_object = TRU
   sample_id <- NULL
 
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(
+  data <- test_create_good_data(
     outcome_type = outcome_type,
     to_data_object = to_data_object)
 
@@ -364,7 +364,7 @@ test.create_bootstrapped_data_set <- function(outcome_type, to_data_object = TRU
 
 test.create_one_sample_data_set <- function(outcome_type, to_data_object = TRUE) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(
+  data <- test_create_good_data(
     outcome_type = outcome_type,
     to_data_object = to_data_object)
 
@@ -382,7 +382,7 @@ test.create_one_sample_data_set <- function(outcome_type, to_data_object = TRUE)
 
 test.create_all_identical_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   # Now keep only the first sample.
   data@data <- head(data@data, n = 1)
@@ -888,7 +888,7 @@ test.create_bad_data_set <- function(outcome_type, add_na_data = FALSE) {
   outcome <- NULL
 
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type == "survival") {
     # For survival data it would be really bad if all data are censored.
@@ -972,7 +972,7 @@ test.create_small_bad_data_set <- function(outcome_type) {
 test.create_prospective_data_set <- function(outcome_type) {
   # Prospective data has NA for outcome.
   
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
   
   if (outcome_type %in% c("survival", "competing_risk")) {
     data@data[, ":="(
@@ -990,7 +990,7 @@ test.create_prospective_data_set <- function(outcome_type) {
 test.create_partially_prospective_data_set <- function(outcome_type) {
   # Prospective data has NA for outcome for a few samples, but not all.
 
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type %in% c("survival", "competing_risk")) {
     data@data[c(1, 2), ":="(
@@ -1011,7 +1011,7 @@ test.create_mostly_prospective_data_set <- function(outcome_type) {
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- NULL
 
-  data <- test.create_good_data_set(outcome_type = outcome_type)
+  data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type %in% c("survival", "competing_risk")) {
     data@data[sample_id > 1L, ":="(

@@ -2,7 +2,7 @@ testthat::skip_on_cran()
 
 ##### binomial -----------------------------------------------------------------
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -33,7 +33,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
 
 ##### multinomial --------------------------------------------------------------
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="multinomial",
+data <- familiar:::test_create_good_data(outcome_type="multinomial",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -60,7 +60,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
 ##### count --------------------------------------------------------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="count",
+data <- familiar:::test_create_good_data(outcome_type="count",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -86,7 +86,7 @@ testthat::test_that("Poisson model can be trained using train_familiar", {
 ##### continuous ---------------------------------------------------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="continuous",
+data <- familiar:::test_create_good_data(outcome_type="continuous",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -111,7 +111,7 @@ testthat::test_that("Gaussian model can be trained using train_familiar", {
 ##### survival -----------------------------------------------------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="survival",
+data <- familiar:::test_create_good_data(outcome_type="survival",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -136,7 +136,7 @@ testthat::test_that("Cox proportional hazards model can be trained using train_f
 
 ##### Use experiment data ------------------------------------------------------
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Create data assignment.
@@ -173,7 +173,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
 #### Check "none" variable importance method -----------------------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -198,7 +198,7 @@ testthat::test_that("Assert that all features are used for \"none\" variable imp
 #### Check "signature_only" variable importance method -----------------------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.
@@ -225,7 +225,7 @@ testthat::test_that("Assert that all features are used for \"signature_only\" va
 #### Check interaction between signature and other features---------------------
 
 # Create data.table.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial",
+data <- familiar:::test_create_good_data(outcome_type="binomial",
                                              to_data_object=FALSE)
 
 # Check that train_familiar functions correctly.

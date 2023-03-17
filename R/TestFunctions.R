@@ -58,7 +58,7 @@ test_all_learners_train_predict_vimp <- function(
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
@@ -1049,7 +1049,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     
     # Iterate over learners.
     for(learner in learners){
@@ -1212,7 +1212,7 @@ test_all_novelty_detectors <- function(detectors,
   outcome_type <- "continuous"
   
   # Obtain data.
-  full_data <- test.create_good_data_set(outcome_type)
+  full_data <- test_create_good_data(outcome_type)
   full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
   one_feature_data <- test.create_one_feature_data_set(outcome_type)
   one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
@@ -1419,7 +1419,7 @@ test_all_novelty_detectors_parallel <- function(detectors,
   outcome_type <- "continuous"
   
   # Obtain data.
-  full_data <- test.create_good_data_set(outcome_type)
+  full_data <- test_create_good_data(outcome_type)
   
   # Iterate over detectors.
   for(detector in detectors){
@@ -1532,7 +1532,7 @@ test_all_vimp_methods <- function(vimp_methods,
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     full_one_invariant_data <- test.create_good_data_invariant_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
@@ -1859,7 +1859,7 @@ test_all_vimp_methods_parallel <- function(vimp_methods,
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     
     for(vimp_method in vimp_methods){
       
@@ -1985,7 +1985,7 @@ test_all_metrics <- function(metrics,
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
@@ -2912,7 +2912,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
   for(outcome_type in outcome_type_available){
     
     # Multi-feature data sets.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
@@ -3483,7 +3483,7 @@ test_plots <- function(plot_function,
   for(outcome_type in c("count", "continuous", "survival", "binomial", "multinomial")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     bootstrapped_data <- test.create_bootstrapped_data_set(outcome_type)
@@ -4214,7 +4214,7 @@ test_plot_ordering <- function(
   for(outcome_type in outcome_type_available){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     
     ##### Train the lasso model ################################################
@@ -4405,7 +4405,7 @@ test_export <- function(export_function,
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     # Obtain data.
-    full_data <- test.create_good_data_set(outcome_type)
+    full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     bootstrapped_data <- test.create_bootstrapped_data_set(outcome_type)
@@ -5172,10 +5172,10 @@ test_export_specific <- function(export_function,
   for(outcome_type in outcome_type_available){
     
     # Obtain data.
-    main_data <- test.create_good_data_set(outcome_type)
+    main_data <- test_create_good_data(outcome_type)
     
     data <- switch(use_data_set,
-                   "full"=test.create_good_data_set(outcome_type),
+                   "full"=test_create_good_data(outcome_type),
                    "identical"=test.create_all_identical_data_set(outcome_type),
                    "one_sample"=test.create_one_sample_data_set(outcome_type))
     
@@ -5292,7 +5292,7 @@ integrated_test <- function(...,
     test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
       
       # Create datasets
-      full_data <- test.create_good_data_set(outcome_type)
+      full_data <- test_create_good_data(outcome_type)
       
       if(learner_unset){
         # Set learner

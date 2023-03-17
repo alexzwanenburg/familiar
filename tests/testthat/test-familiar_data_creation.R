@@ -24,7 +24,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   
   
   # Create a dataset using the good dataset.
-  data <- familiar:::test.create_good_data_set(outcome_type)
+  data <- familiar:::test_create_good_data(outcome_type)
   
   # Train a simple linear GLM using the good dataset.
   fam_model <- suppressWarnings(familiar:::test_train(data=data,

@@ -55,7 +55,7 @@ familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
 
 
 # Create dataset.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+data <- familiar:::test_create_good_data(outcome_type="binomial")
 
 ##### Test that "none" feature selection keeps all features. ###################
 
@@ -187,7 +187,7 @@ testthat::test_that("Test that \"signature_only\" feature selection keeps only s
 ##### Test exploration methods #################################################
 
 # Create dataset.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+data <- familiar:::test_create_good_data(outcome_type="binomial")
 
 # Create object.
 object <- familiar:::.test_create_hyperparameter_object(
@@ -310,7 +310,7 @@ testthat::test_that("Test that \"single_shot\" exploration method does not prune
 ##### Test time truncation -----------------------------------------------------
 
 # Create dataset.
-data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+data <- familiar:::test_create_good_data(outcome_type="binomial")
 
 # Create object.
 object <- familiar:::.test_create_hyperparameter_object(data=data,

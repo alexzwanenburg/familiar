@@ -10,7 +10,7 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
 familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("survival")
+good_data <- familiar:::test_create_good_data("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.

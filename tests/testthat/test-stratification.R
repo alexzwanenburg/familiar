@@ -4,7 +4,7 @@ stratification_methods <- familiar:::.get_available_stratification_methods()
 # Test for good dataset.
 for(stratification_method in stratification_methods){
   # Create a dataset using the good dataset.
-  data <- familiar:::test.create_good_data_set("survival")
+  data <- familiar:::test_create_good_data("survival")
   
   # Train a simple linear GLM using the good dataset.
   fam_model <- familiar:::test_train(data=data,
@@ -80,7 +80,7 @@ for(stratification_method in stratification_methods){
 # Test that multiple risk stratifications methods can be applied simultaneously.
 
 # Create a dataset using the good dataset.
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::test_train(data=data,
@@ -107,7 +107,7 @@ for(stratification_method in stratification_methods){
 for(stratification_method in stratification_methods){
   
   # Create a dataset using the good dataset.
-  data <- familiar:::test.create_good_data_set("survival")
+  data <- familiar:::test_create_good_data("survival")
   
   # Train a simple linear GLM using the good dataset.
   fam_model <- familiar:::test_train(data=data,
@@ -134,7 +134,7 @@ for(stratification_method in stratification_methods){
 for(stratification_method in stratification_methods){
   
   # Create a dataset using the good dataset.
-  data <- familiar:::test.create_good_data_set("survival")
+  data <- familiar:::test_create_good_data("survival")
   
   # Train a simple linear GLM using the good dataset.
   fam_model <- familiar:::test_train(data=data,

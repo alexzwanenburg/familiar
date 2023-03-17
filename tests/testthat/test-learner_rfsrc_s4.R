@@ -61,7 +61,7 @@ familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.ge
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("count")
+good_data <- familiar:::test_create_good_data("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
@@ -141,7 +141,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
 #####Continuous outcome tests-------------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("continuous")
+good_data <- familiar:::test_create_good_data("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
@@ -218,7 +218,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
 #####Binomial tests-------------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("binomial")
+good_data <- familiar:::test_create_good_data("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
@@ -297,7 +297,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
 #####Multinomial tests----------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("multinomial")
+good_data <- familiar:::test_create_good_data("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
@@ -377,7 +377,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
 #####Survival tests-------------------------------------------------------------
 
 # Create test data sets.
-good_data <- familiar:::test.create_good_data_set("survival")
+good_data <- familiar:::test_create_good_data("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.

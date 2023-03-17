@@ -82,7 +82,7 @@ familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_rfsrc_vimp_m
                                                                                    "fs_vh_n_rep"=2)))
 
 ##### Count outcome #####
-data <- familiar:::test.create_good_data_set("count")
+data <- familiar:::test_create_good_data("count")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -175,7 +175,7 @@ testthat::test_that(paste0("The RFSRC random forest variable hunting method corr
 
 
 ##### Continuous outcome #####
-data <- familiar:::test.create_good_data_set("continuous")
+data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -261,7 +261,7 @@ testthat::test_that(paste0("The RFSRC random forest variable hunting method corr
 
 
 ##### Binomial outcome #####
-data <- familiar:::test.create_good_data_set("binomial")
+data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -352,7 +352,7 @@ testthat::test_that(paste0("The RFSRC random forest variable hunting method corr
 
 
 ##### Multinomial outcome #####
-data <- familiar:::test.create_good_data_set("multinomial")
+data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
@@ -441,7 +441,7 @@ testthat::test_that(paste0("The RFSRC random forest variable hunting method corr
 
 
 ##### Survival outcome #####
-data <- familiar:::test.create_good_data_set("survival")
+data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
