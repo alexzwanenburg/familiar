@@ -9,6 +9,8 @@ test_all_learners_available <- function(learners) {
     for (outcome_type in c(
       "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
+      object <- methods::new(
+        "familiarModel",
         outcome_type = outcome_type,
         learner = learner)
 
@@ -1480,24 +1482,23 @@ test_all_novelty_detectors_available <- function(detectors) {
 
 
 
-test_all_novelty_detectors <- function(detectors,
-                                       hyperparameter_list=NULL,
-                                       except_train=NULL,
-                                       except_predict=NULL,
-                                       except_predict_survival=NULL,
-                                       can_trim=TRUE,
-                                       debug=FALSE){
-  
-  if(debug){
+test_all_novelty_detectors <- function(
+    detectors,
+    hyperparameter_list = NULL,
+    except_train = NULL,
+    except_predict = NULL,
+    except_predict_survival = NULL,
+    can_trim = TRUE,
+    debug = FALSE) {
+  if (debug) {
     test_fun <- debug_test_that
-    
   } else {
     test_fun <- testthat::test_that
   }
-  
+
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
-  
+
   # Obtain data.
   full_data <- test_create_good_data(outcome_type)
   full_one_sample_data <- test_create_one_sample_data(outcome_type)
@@ -1506,186 +1507,255 @@ test_all_novelty_detectors <- function(detectors,
   empty_data <- test_create_empty_data(outcome_type)
   no_feature_data <- test_create_data_without_feature(outcome_type)
   bad_data <- test_create_bad_data(outcome_type)
-  
+
   # Iterate over learners.
-  for(detector in detectors){
-    
+  for (detector in detectors) {
     # Create a familiarNoveltyDetector object.
-    object <- methods::new("familiarNoveltyDetector",
-                           learner=detector)
-    
+    object <- methods::new(
+      "familiarNoveltyDetector",
+      learner = detector)
+
     # Promote the novelty detector to the right class.
-    object <- promote_detector(object=object)
-    
+    object <- promote_detector(object = object)
+
     # Test if the detector is available.
-    if(!is_available(object)) next()
-    
-    
-    #####Full dataset#########################################################
-    
+    if (!is_available(object)) next
+
+    # Full dataset -------------------------------------------------------------
+
     # Train the novelty detector.
-    model <- suppressWarnings(test_train_novelty_detector(data=full_data,
-                                                          cluster_method="none",
-                                                          imputation_method="simple",
-                                                          hyperparameter_list=hyperparameter_list,
-                                                          detector=detector))
-    
+    model <- suppressWarnings(test_train_novelty_detector(
+      data = full_data,
+      cluster_method = "none",
+      imputation_method = "simple",
+      hyperparameter_list = hyperparameter_list,
+      detector = detector))
+
     # Create a trimmed detector.
-    trimmed_model <- trim_model(model, timeout=Inf)
-    
+    trimmed_model <- trim_model(model, timeout = Inf)
+
     # Check that the the novelty detector can be trimmed.
-    test_fun(paste0("Detector created using the ", detector, " algorithm can be trimmed."), {
-      if(can_trim){
-        testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
-        
-      } else {
-        testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+    test_fun(
+      paste0("Detector created using the ", detector, " algorithm can be trimmed."),
+      {
+        if (can_trim) {
+          testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
+        } else {
+          testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+        }
       }
-    })
+    )
     
     # Test that the novelty detector can be created.
-    test_fun(paste0("Detector can be created using the ", detector, " algorithm using a complete dataset."), {
-      
-      # Test that the novelty detector was successfully created.
-      testthat::expect_equal(model_is_trained(model),
-                             ifelse(detector %in% except_train, FALSE, TRUE))
-    })
-    
+    test_fun(
+      paste0(
+        "Detector can be created using the ", detector,
+        " algorithm using a complete dataset."),
+      {
+        # Test that the novelty detector was successfully created.
+        testthat::expect_equal(
+          model_is_trained(model),
+          !detector %in% except_train)
+      }
+    )
+
     # Test that the novelty detector can be used to predict the outcome.
-    test_fun(paste0("Novely predictions can be made using the ", detector, " algorithm for a complete dataset."), {
-      # Expect predictions to be made.
-      prediction_table <- suppressWarnings(.predict(model, data=full_data))
-      
-      # Test that the predictions were successfully made.
-      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-      
-      # Expect that the trimmed novelty detector produces the same predictions.
-      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                         data=full_data))
-      
-      testthat::expect_equal(prediction_table,
-                             prediction_table_trim,
-                             ignore_attr=TRUE)
-    })
-    
+    test_fun(
+      paste0(
+        "Novely predictions can be made using the ", detector, 
+        " algorithm for a complete dataset."), 
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = full_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, type = "novelty"),
+          !detector %in% c(except_train, except_predict))
+        
+        # Expect that the trimmed novelty detector produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(
+          trimmed_model,
+          data = full_data))
+        
+        testthat::expect_equal(
+          prediction_table,
+          prediction_table_trim,
+          ignore_attr = TRUE)
+      }
+    )
+
     # Test that the novelty detector can be used to predict the outcome.
-    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-sample dataset."), {
-      # Expect predictions to be made.
-      prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
-      
-      # Test that the predictions were successfully made.
-      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-      
-      # Expect that the trimmed novelty detector produces the same predictions.
-      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                         data=full_one_sample_data))
-      
-      testthat::expect_equal(prediction_table,
-                             prediction_table_trim,
-                             ignore_attr=TRUE)
-    })
+    test_fun(
+      paste0(
+        "Novelty predictions can be made using the ", detector, 
+        " algorithm for a one-sample dataset."),
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = full_one_sample_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, type = "novelty"),
+          !detector %in% c(except_train, except_predict))
+        
+        # Expect that the trimmed novelty detector produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(
+          trimmed_model,
+          data = full_one_sample_data))
+        
+        testthat::expect_equal(
+          prediction_table,
+          prediction_table_trim,
+          ignore_attr = TRUE)
+      }
+    )
     
     # Test that the novelty detector cannot predict for empty datasets.
-    test_fun(paste0("Novelty predictions can not be made using the ", detector, " algorithm for an empty dataset."), {
-      # Expect predictions to be made.
-      prediction_table <- suppressWarnings(.predict(model, data=empty_data))
-      
-      # Test that the predictions were successfully made.
-      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"), FALSE)
-    })
+    test_fun(paste0(
+      "Novelty predictions can not be made using the ", detector,
+      " algorithm for an empty dataset."),
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = empty_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, type = "novelty"),
+          FALSE)
+      }
+    )
     
-    
-    #####One-feature dataset##################################################
+    # One-feature dataset ------------------------------------------------------
     # Train the novelty detector.
-    model <- suppressWarnings(test_train_novelty_detector(data=one_feature_data,
-                                                          cluster_method="none",
-                                                          imputation_method="simple",
-                                                          hyperparameter_list=hyperparameter_list,
-                                                          detector=detector))
+    model <- suppressWarnings(test_train_novelty_detector(
+      data = one_feature_data,
+      cluster_method = "none",
+      imputation_method = "simple",
+      hyperparameter_list = hyperparameter_list,
+      detector = detector))
     
     # Create a trimmed novelty detector.
-    trimmed_model <- trim_model(model, timeout=Inf)
+    trimmed_model <- trim_model(model, timeout = Inf)
     
     # Test that the novelty detector can be created.
-    test_fun(paste0("Detector can be created using the ", detector, " algorithm using a one-feature dataset."), {
-      
-      # Test that the novelty detector was successfully created.
-      testthat::expect_equal(model_is_trained(model),
-                             ifelse(detector %in% except_train, FALSE, TRUE))
-    })
+    test_fun(
+      paste0(
+        "Detector can be created using the ", detector,
+        " algorithm using a one-feature dataset."),
+      {
+        # Test that the novelty detector was successfully created.
+        testthat::expect_equal(
+          model_is_trained(model),
+          !detector %in% except_train)
+      }
+    )
     
     # Test that the novelty detector can be used to predict the outcome.
-    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature dataset."), {
-      # Expect predictions to be made.
-      prediction_table <- suppressWarnings(.predict(model,
-                                                    data=one_feature_data))
-      
-      # Test that the predictions were successfully made.
-      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-      
-      # Expect that the trimmed novelty detector produces the same predictions.
-      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                         data=one_feature_data))
-      
-      testthat::expect_equal(prediction_table,
-                             prediction_table_trim,
-                             ignore_attr=TRUE)
-    })
+    test_fun(
+      paste0(
+        "Novelty predictions can be made using the ", detector,
+        " algorithm for a one-feature dataset."), 
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = one_feature_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, type = "novelty"),
+          !detector %in% c(except_train, except_predict))
+        
+        # Expect that the trimmed novelty detector produces the same
+        # predictions.
+        prediction_table_trim <- suppressWarnings(.predict(
+          trimmed_model,
+          data = one_feature_data))
+        
+        testthat::expect_equal(
+          prediction_table,
+          prediction_table_trim,
+          ignore_attr = TRUE)
+      }
+    )
     
     # Test that the novelty detector can be used to predict the outcome.
-    test_fun(paste0("Novelty predictions can be made using the ", detector, " algorithm for a one-feature, one-sample dataset."), {
-      # Expect predictions to be made.
-      prediction_table <- suppressWarnings(.predict(model,
-                                                    data=one_feature_one_sample_data))
-      
-      # Test that the predictions were successfully made.
-      testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
-                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
-      
-      # Expect that the trimmed novelty detector produces the same predictions.
-      prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
-                                                         data=one_feature_one_sample_data))
-      
-      testthat::expect_equal(prediction_table,
-                             prediction_table_trim,
-                             ignore_attr=TRUE)
-    })
+    test_fun(
+      paste0(
+        "Novelty predictions can be made using the ", detector, 
+        " algorithm for a one-feature, one-sample dataset."),
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = one_feature_one_sample_data))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_equal(
+          any_predictions_valid(prediction_table, type = "novelty"),
+          !detector %in% c(except_train, except_predict))
+        
+        # Expect that the trimmed novelty detector produces the same
+        # predictions.
+        prediction_table_trim <- suppressWarnings(.predict(
+          trimmed_model,
+          data = one_feature_one_sample_data))
+        
+        testthat::expect_equal(
+          prediction_table,
+          prediction_table_trim,
+          ignore_attr = TRUE)
+      }
+    )
     
-    
-    #####Bad dataset with one sample##########################################
+    # Bad dataset with one sample ----------------------------------------------
     # Train the novelty detector.
-    model <- suppressWarnings(test_train_novelty_detector(data=full_one_sample_data,
-                                                          data_bypass=full_data,
-                                                          cluster_method="none",
-                                                          imputation_method="simple",
-                                                          hyperparameter_list=hyperparameter_list,
-                                                          detector=detector))
+    model <- suppressWarnings(test_train_novelty_detector(
+      data = full_one_sample_data,
+      data_bypass = full_data,
+      cluster_method = "none",
+      imputation_method = "simple",
+      hyperparameter_list = hyperparameter_list,
+      detector = detector))
+
+    # Test that the novelty detector can be created.
+    test_fun(
+      paste0(
+        "Detector can not be created using the ", detector,
+        " algorithm using a bad dataset."), 
+      {
+        # Test that the novelty detector was successfully created.
+        testthat::expect_equal(model_is_trained(model), FALSE)
+      }
+    )
+    
+    # Bad dataset without features -----------------------------------------------
+    # Train the novelty detector.
+    model <- suppressWarnings(test_train_novelty_detector(
+      data = no_feature_data,
+      data_bypass = full_data,
+      imputation_method = "simple",
+      hyperparameter_list = hyperparameter_list,
+      detector = detector))
     
     # Test that the novelty detector can be created.
-    test_fun(paste0("Detector can not be created using the ", detector, " algorithm using a bad dataset."), {
-      
-      # Test that the novelty detector was successfully created.
-      testthat::expect_equal(model_is_trained(model), FALSE)
-    })
+    test_fun(
+      paste0(
+        "Detector can not be created using the ", detector,
+        " algorithm using a dataset without features."), 
+      {
+        # Test that the novelty detector was successfully created.
+        testthat::expect_equal(model_is_trained(model), FALSE)
+      }
+    )
   }
-  
-  ##### Bad dataset without features #########################################
-  # Train the novelty detector.
-  model <- suppressWarnings(test_train_novelty_detector(data=no_feature_data,
-                                                        data_bypass=full_data,
-                                                        imputation_method="simple",
-                                                        hyperparameter_list=hyperparameter_list,
-                                                        detector=detector))
-  
-  # Test that the novelty detector can be created.
-  test_fun(paste0("Detector can not be created using the ", detector, " algorithm using a dataset without features."), {
-    
-    # Test that the novelty detector was successfully created.
-    testthat::expect_equal(model_is_trained(model), FALSE)
-  })
 }
 
 
