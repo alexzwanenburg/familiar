@@ -956,7 +956,7 @@ test_create_bad_data <- function(outcome_type, add_na_data = FALSE) {
 }
 
 
-test.create_small_bad_data_set <- function(outcome_type) {
+test_create_small_bad_data <- function(outcome_type) {
   # Create good dataset first and work from there.
   data <- test_create_bad_data(outcome_type = outcome_type)
 

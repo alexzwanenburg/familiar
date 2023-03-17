@@ -73,7 +73,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   testthat::test_that(paste0("4. familiarData for the ", outcome_type, " outcome can be created from the bad dataset and the model created using the complete data set."), {
     # Test with bad dataset
     fam_data <- suppressWarnings(familiar::as_familiar_data(object=fam_model,
-                                                            data=familiar:::test.create_small_bad_data_set(outcome_type=outcome_type),
+                                                            data=familiar:::test_create_small_bad_data(outcome_type=outcome_type),
                                                             estimation_type="point",
                                                             verbose=FALSE))
     
