@@ -2293,6 +2293,8 @@ test_all_vimp_methods <- function(
 
 
 test_all_vimp_methods_parallel <- function(
+    vimp_methods,
+    hyperparameter_list = NULL) {
   # This function serves to test whether packages are loaded correctly for
   # assessing variable importance.
 
@@ -2397,35 +2399,37 @@ test_all_vimp_methods_parallel <- function(
 
 
 
-test_all_metrics_available <- function(metrics){
-  
+test_all_metrics_available <- function(metrics) {
   # Create placeholder flags.
   metric_available <- logical(length(metrics))
   names(metric_available) <- metrics
-  
+
   # Iterate over metrics
-  for(metric in metrics){
-    
+  for (metric in metrics) {
     # Determine if the metric is available for any outcome.
-    for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival", "competing_risk")){
-      
+    for (outcome_type in c(
+      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a metric object
-      object <- as_metric(metric=metric,
-                          outcome_type=outcome_type)
-      
+      object <- as_metric(
+        metric = metric,
+        outcome_type = outcome_type)
+
       # Check if the learner is available for the outcome.
-      if(is_available(object)){
+      if (is_available(object)) {
         metric_available[metric] <- TRUE
         break
       }
     }
   }
-  
+
   # Iterate over learners
-  for(metric in metrics){
-    testthat::test_that(paste0(metric, " is available."), {
-      testthat::expect_equal(unname(metric_available[metric]), TRUE)
-    })
+  for (metric in metrics) {
+    testthat::test_that(
+      paste0(metric, " is available."),
+      {
+        testthat::expect_equal(unname(metric_available[metric]), TRUE)
+      }
+    )
   }
 }
 
