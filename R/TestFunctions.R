@@ -62,7 +62,7 @@ test_all_learners_train_predict_vimp <- function(
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     no_feature_data <- test.create_no_feature_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
@@ -1216,7 +1216,7 @@ test_all_novelty_detectors <- function(detectors,
   full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
   one_feature_data <- test.create_one_feature_data_set(outcome_type)
   one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
-  empty_data <- test.create_empty_data_set(outcome_type)
+  empty_data <- test_create_empty_data(outcome_type)
   no_feature_data <- test.create_no_feature_data_set(outcome_type)
   bad_data <- test.create_bad_data_set(outcome_type)
   
@@ -1538,7 +1538,7 @@ test_all_vimp_methods <- function(vimp_methods,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
@@ -1991,7 +1991,7 @@ test_all_metrics <- function(metrics,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
     # Data with different degrees of censoring.
@@ -2915,7 +2915,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     
     # One-feature data sets.
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
@@ -3490,7 +3490,7 @@ test_plots <- function(plot_function,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     
     # Data with different degrees of censoring.
@@ -4215,7 +4215,7 @@ test_plot_ordering <- function(
     
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     
     ##### Train the lasso model ################################################
     # Parse hyperparameter list
@@ -4412,7 +4412,7 @@ test_export <- function(export_function,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
-    empty_data <- test.create_empty_data_set(outcome_type)
+    empty_data <- test_create_empty_data(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     
     # Data with different degrees of censoring.

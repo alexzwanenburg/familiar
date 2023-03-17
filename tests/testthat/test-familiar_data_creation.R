@@ -61,7 +61,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   testthat::test_that(paste0("3. familiarData for the ", outcome_type, " outcome can be created from empty data and the model created using the complete data set."), {
     # Test with empty dataset
     fam_data <- familiar::as_familiar_data(object=fam_model,
-                                           data=familiar:::test.create_empty_data_set(outcome_type=outcome_type),
+                                           data=familiar:::test_create_empty_data(outcome_type=outcome_type),
                                            estimation_type="point",
                                            verbose=FALSE)
     
@@ -155,7 +155,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   testthat::test_that(paste0("9. familiarData for the ", outcome_type, " outcome can be created from empty data and the NULL model created using the bad data set."), {
     # Test with empty dataset
     fam_data <- familiar::as_familiar_data(object=fam_model,
-                                           data=familiar:::test.create_empty_data_set(outcome_type=outcome_type),
+                                           data=familiar:::test_create_empty_data(outcome_type=outcome_type),
                                            estimation_type="point",
                                            verbose=FALSE)
     

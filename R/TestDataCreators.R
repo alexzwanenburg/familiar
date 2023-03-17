@@ -308,7 +308,7 @@ test_create_good_data_random_missing <- function(
 }
 
 
-test.create_empty_data_set <- function(outcome_type) {
+test_create_empty_data <- function(outcome_type) {
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type = outcome_type)
 
