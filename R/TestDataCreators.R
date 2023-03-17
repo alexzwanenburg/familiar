@@ -589,7 +589,7 @@ test_create_single_feature_two_values_data <- function(outcome_type) {
 
 
 
-test.create_wide_data_set <- function(outcome_type) {
+test_create_wide_data <- function(outcome_type) {
   # Suppress NOTES due to non-standard evaluation in data.table
   etype <- median_house_value <- NULL
 

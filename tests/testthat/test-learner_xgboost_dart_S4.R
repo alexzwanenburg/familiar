@@ -113,7 +113,7 @@ familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.ge
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("count")
-wide_data <- familiar:::test.create_wide_data_set("count")
+wide_data <- familiar:::test_create_wide_data("count")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(data=good_data,
@@ -202,7 +202,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("continuous")
-wide_data <- familiar:::test.create_wide_data_set("continuous")
+wide_data <- familiar:::test_create_wide_data("continuous")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(data=good_data,
@@ -291,7 +291,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("binomial")
-wide_data <- familiar:::test.create_wide_data_set("binomial")
+wide_data <- familiar:::test_create_wide_data("binomial")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(data=good_data,
@@ -380,7 +380,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("multinomial")
-wide_data <- familiar:::test.create_wide_data_set("multinomial")
+wide_data <- familiar:::test_create_wide_data("multinomial")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(data=good_data,
@@ -469,7 +469,7 @@ testthat::test_that("Extreme gradient boosting dart tree model can train on wide
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("survival")
-wide_data <- familiar:::test.create_wide_data_set("survival")
+wide_data <- familiar:::test_create_wide_data("survival")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(data=good_data,
