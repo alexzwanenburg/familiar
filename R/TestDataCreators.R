@@ -332,7 +332,7 @@ test_create_data_without_feature <- function(outcome_type) {
 
 
 
-test.create_bootstrapped_data_set <- function(outcome_type, to_data_object = TRUE) {
+test_create_bootstrapped_data <- function(outcome_type, to_data_object = TRUE) {
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- NULL
 
