@@ -5256,190 +5256,182 @@ test_plots <- function(
 test_plot_ordering <- function(
     plot_function,
     data_element,
-    outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
     ...,
-    experiment_args=list(),
-    plot_args=list(),
-    create_novelty_detector=FALSE,
-    debug=FALSE,
-    parallel=waiver()){
-  
+    experiment_args = list(),
+    plot_args = list(),
+    create_novelty_detector = FALSE,
+    debug = FALSE,
+    parallel = waiver()) {
   # Set debug options.
-  if(debug){
+  if (debug) {
     test_fun <- debug_test_that
     plot_args$draw <- TRUE
-    
   } else {
     test_fun <- testthat::test_that
   }
-  
+
   # Set parallelisation.
-  if(is.waive(parallel)) parallel <- !debug
-  
-  if(parallel){
+  if (is.waive(parallel)) parallel <- !debug
+
+  if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores=as.integer(1))
-    on.exit(options(rf.cores=-1L), add=TRUE)
-    
+    options(rf.cores = as.integer(1))
+    on.exit(options(rf.cores = -1L), add = TRUE)
+
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
-    on.exit(data.table::setDTthreads(0L), add=TRUE)
-    
+    on.exit(data.table::setDTthreads(0L), add = TRUE)
+
     # Start local cluster in the overall process.
-    cl <- .test_start_cluster(n_cores=2L)
-    on.exit(.terminate_cluster(cl), add=TRUE)
-    
+    cl <- .test_start_cluster(n_cores = 2L)
+    on.exit(.terminate_cluster(cl), add = TRUE)
   } else {
     cl <- NULL
   }
-  
-  if(is.null(experiment_args$imputation_method)) experiment_args$imputation_method <- "simple"
-  if(is.null(experiment_args$cluster_method)) experiment_args$cluster_method <- "none"
-  if(is.null(experiment_args$fs_method)) experiment_args$fs_method <- "mim"
-  if(is.null(experiment_args$time_max)) experiment_args$time_max <- 1832
-  
+
+  if (is.null(experiment_args$imputation_method)) experiment_args$imputation_method <- "simple"
+  if (is.null(experiment_args$cluster_method)) experiment_args$cluster_method <- "none"
+  if (is.null(experiment_args$fs_method)) experiment_args$fs_method <- "mim"
+  if (is.null(experiment_args$time_max)) experiment_args$time_max <- 1832
+
   # Iterate over the outcome type.
-  for(outcome_type in outcome_type_available){
-    
+  for (outcome_type in outcome_type_available) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-    
-    ##### Train the lasso model ################################################
+
+    # Lasso model --------------------------------------------------------------
     # Parse hyperparameter list
     hyperparameters_lasso <- list(
-      "sign_size"=get_n_features(full_data),
-      "family"=switch(
+      "sign_size" = get_n_features(full_data),
+      "family" = switch(
         outcome_type,
-        "continuous"="gaussian",
-        "count"="poisson",
-        "binomial"="binomial",
-        "multinomial"="multinomial",
-        "survival"="cox"))
-    
+        "continuous" = "gaussian",
+        "count" = "poisson",
+        "binomial" = "binomial",
+        "multinomial" = "multinomial",
+        "survival" = "cox"))
+
     # Train the lasso model.
-    model_full_lasso_1 <- suppressWarnings(
-      do.call(
-        test_train,
-        args=c(
-          list(
-            "data"=full_data,
-            "hyperparameter_list"=hyperparameters_lasso,
-            "learner"="lasso",
-            "create_novelty_detector"=create_novelty_detector),
-          experiment_args)))
+    model_full_lasso_1 <- suppressWarnings(do.call(
+      test_train,
+      args = c(
+        list(
+          "data" = full_data,
+          "hyperparameter_list" = hyperparameters_lasso,
+          "learner" = "lasso",
+          "create_novelty_detector" = create_novelty_detector),
+        experiment_args)))
     
     model_full_lasso_2 <- model_full_lasso_1
     model_full_lasso_2@fs_method <- "mifs"
-    
-    ##### Train the glm model ##################################################
+
+    # GLM model ----------------------------------------------------------------
     # Parse hyperparameter list
     hyperparameters_glm <- list(
-      "sign_size"=get_n_features(full_data),
-      "family"=switch(
+      "sign_size" = get_n_features(full_data),
+      "family" = switch(
         outcome_type,
-        "continuous"="gaussian",
-        "count"="poisson",
-        "binomial"="logistic",
-        "multinomial"="multinomial",
-        "survival"="cox"))
-    
+        "continuous" = "gaussian",
+        "count" = "poisson",
+        "binomial" = "logistic",
+        "multinomial" = "multinomial",
+        "survival" = "cox"))
+
     # Train the lasso model.
-    model_full_glm_1 <- suppressWarnings(
-      do.call(
-        test_train,
-        args=c(
-          list(
-            "data"=full_data,
-            "hyperparameter_list"=hyperparameters_glm,
-            "learner"="glm",
-            "create_novelty_detector"=create_novelty_detector),
-          experiment_args)))
+    model_full_glm_1 <- suppressWarnings(do.call(
+      test_train,
+      args = c(
+        list(
+          "data" = full_data,
+          "hyperparameter_list" = hyperparameters_glm,
+          "learner" = "glm",
+          "create_novelty_detector" = create_novelty_detector),
+        experiment_args)))
     
     model_full_glm_2 <- model_full_glm_1
     model_full_glm_2@fs_method <- "mifs"
-    
-    ##### Create the plot ######################################################
-    
+
+    # Create plot --------------------------------------------------------------
+
     # Create familiar data objects.
     data_good_full_lasso_1 <- as_familiar_data(
-      object=model_full_lasso_1,
-      data=full_data,
-      data_element=data_element,
-      cl=cl,
+      object = model_full_lasso_1,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
       ...)
-    
     data_good_full_lasso_2 <- as_familiar_data(
-      object=model_full_lasso_2,
-      data=full_data,
-      data_element=data_element,
-      cl=cl,
+      object = model_full_lasso_2,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
       ...)
-    
     data_good_full_glm_1 <- as_familiar_data(
-      object=model_full_glm_1,
-      data=full_data, 
-      data_element=data_element,
-      cl=cl,
+      object = model_full_glm_1,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
       ...)
-    
     data_good_full_glm_2 <- as_familiar_data(
-      object=model_full_glm_2,
-      data=full_data,
-      data_element=data_element,
-      cl=cl,
+      object = model_full_glm_2,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
       ...)
-    
     data_empty_glm_1 <- as_familiar_data(
-      object=model_full_glm_1,
-      data=empty_data, 
-      data_element=data_element,
-      cl=cl,
+      object = model_full_glm_1,
+      data = empty_data,
+      data_element = data_element,
+      cl = cl,
       ...)
-    
     data_empty_lasso_2 <- as_familiar_data(
-      object=model_full_lasso_2,
-      data=empty_data,
-      data_element=data_element,
-      cl=cl,
+      object = model_full_lasso_2,
+      data = empty_data,
+      data_element = data_element,
+      cl = cl,
       ...)
     
     # Create a test dataset with multiple components
-    test_fun(paste0("Plots for ", outcome_type, " outcomes can be created."), {
-      
-      object <- list(
-        data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
-        data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
-      
-      object <- mapply(
-        set_object_name,
-        object,
-        c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
-          "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
-      
-      collection <- suppressWarnings(as_familiar_collection(
-        object,
-        familiar_data_names=c(
-          "development", "development", "validation", "validation",
-          "development", "development", "validation", "validation")))
-      
-      plot_list <- do.call(
-        plot_function,
-        args=c(
-          list("object"=collection),
-          plot_args))
-      
-      which_present <- .test_which_plot_present(plot_list)
-      
-      if(outcome_type %in% outcome_type_available){
-        testthat::expect_equal(all(which_present), TRUE) 
+    test_fun(
+      paste0("Plots for ", outcome_type, " outcomes can be created."),
+      {
+        object <- list(
+          data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
+          data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
         
-      } else {
-        testthat::expect_equal(all(!which_present), TRUE)
+        object <- mapply(
+          set_object_name,
+          object,
+          c(
+            "development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
+            "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+        
+        collection <- suppressWarnings(as_familiar_collection(
+          object,
+          familiar_data_names = c(
+            "development", "development", "validation", "validation",
+            "development", "development", "validation", "validation")))
+        
+        plot_list <- do.call(
+          plot_function,
+          args = c(
+            list("object" = collection),
+            plot_args))
+        
+        which_present <- .test_which_plot_present(plot_list)
+        
+        if (outcome_type %in% outcome_type_available) {
+          testthat::expect_equal(all(which_present), TRUE)
+          
+        } else {
+          testthat::expect_equal(all(!which_present), TRUE)
+        }
       }
-    })
+    )
   }
 }
 
