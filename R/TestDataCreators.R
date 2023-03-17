@@ -400,7 +400,7 @@ test_create_all_identical_data <- function(outcome_type) {
 
 
 
-test.create_one_feature_data_set <- function(outcome_type) {
+test_create_single_feature_data <- function(outcome_type) {
   # Suppress NOTES due to non-standard evaluation in data.table
   etype <- median_house_value <- NULL
 
@@ -546,7 +546,7 @@ test.create_one_feature_data_set <- function(outcome_type) {
 
 test.create_one_feature_one_sample_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_one_feature_data_set(outcome_type = outcome_type)
+  data <- test_create_single_feature_data(outcome_type = outcome_type)
 
   # Now keep only the first sample.
   data@data <- head(data@data, n = 1)
@@ -558,7 +558,7 @@ test.create_one_feature_one_sample_data_set <- function(outcome_type) {
 
 test.create_one_feature_invariant_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_one_feature_data_set(outcome_type = outcome_type)
+  data <- test_create_single_feature_data(outcome_type = outcome_type)
 
   # Get the feature column
   feature_column <- get_feature_columns(data)
@@ -573,7 +573,7 @@ test.create_one_feature_invariant_data_set <- function(outcome_type) {
 
 test.create_one_feature_two_values_data_set <- function(outcome_type) {
   # Create good dataset first.
-  data <- test.create_one_feature_data_set(outcome_type = outcome_type)
+  data <- test_create_single_feature_data(outcome_type = outcome_type)
 
   # Get the feature columns
   feature_column <- get_feature_columns(data)

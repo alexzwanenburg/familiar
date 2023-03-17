@@ -29,7 +29,7 @@ for(stratification_method in stratification_methods){
 # Test for single-feature dataset.
 for(stratification_method in stratification_methods){
   # Create a dataset using the single-feature dataset.
-  data <- familiar:::test.create_one_feature_data_set("survival")
+  data <- familiar:::test_create_single_feature_data("survival")
   
   # Train a simple linear GLM using the good dataset.
   fam_model <- familiar:::test_train(data=data,

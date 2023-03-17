@@ -83,7 +83,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   
   
   # Create a dataset using the one-feature dataset.
-  data <- familiar:::test.create_one_feature_data_set(outcome_type=outcome_type)
+  data <- familiar:::test_create_single_feature_data(outcome_type=outcome_type)
   
   # Train a simple linear GLM using the one feature dataset.
   fam_model <- suppressWarnings(familiar:::test_train(data=data,
