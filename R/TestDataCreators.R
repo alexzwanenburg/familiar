@@ -880,7 +880,7 @@ test_create_wide_data <- function(outcome_type) {
 
 
 
-test.create_bad_data_set <- function(outcome_type, add_na_data = FALSE) {
+test_create_bad_data <- function(outcome_type, add_na_data = FALSE) {
   # add_na_data argument is intended for integration tests, where we have to
   # circumvent a check on the outcome classes. We do this by keeping these
   # classes in, and assigning NA to rows of one class, causing the data to pass
@@ -958,7 +958,7 @@ test.create_bad_data_set <- function(outcome_type, add_na_data = FALSE) {
 
 test.create_small_bad_data_set <- function(outcome_type) {
   # Create good dataset first and work from there.
-  data <- test.create_bad_data_set(outcome_type = outcome_type)
+  data <- test_create_bad_data(outcome_type = outcome_type)
 
   # Now select a subset of the data.
   data@data <- data@data[fam_sample(seq_len(nrow(data@data)),

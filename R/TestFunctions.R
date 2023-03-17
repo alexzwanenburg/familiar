@@ -64,7 +64,7 @@ test_all_learners_train_predict_vimp <- function(
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     no_feature_data <- test_create_data_without_feature(outcome_type)
-    bad_data <- test.create_bad_data_set(outcome_type)
+    bad_data <- test_create_bad_data(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test.create_prospective_data_set(outcome_type)
@@ -1218,7 +1218,7 @@ test_all_novelty_detectors <- function(detectors,
   one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
   empty_data <- test_create_empty_data(outcome_type)
   no_feature_data <- test_create_data_without_feature(outcome_type)
-  bad_data <- test.create_bad_data_set(outcome_type)
+  bad_data <- test_create_bad_data(outcome_type)
   
   # Iterate over learners.
   for(detector in detectors){
@@ -1539,7 +1539,7 @@ test_all_vimp_methods <- function(vimp_methods,
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-    bad_data <- test.create_bad_data_set(outcome_type)
+    bad_data <- test_create_bad_data(outcome_type)
     
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test.create_prospective_data_set(outcome_type)
@@ -1992,7 +1992,7 @@ test_all_metrics <- function(metrics,
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-    bad_data <- test.create_bad_data_set(outcome_type)
+    bad_data <- test_create_bad_data(outcome_type)
     
     # Data with different degrees of censoring.
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
@@ -5337,7 +5337,7 @@ integrated_test <- function(...,
       
       # Create datasets. We explicitly insert NA data to circumvent an initial
       # plausibility check.
-      bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
+      bad_data <- test_create_bad_data(outcome_type=outcome_type,
                                            add_na_data=TRUE)
       
       if(learner_unset){

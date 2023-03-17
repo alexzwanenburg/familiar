@@ -118,7 +118,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
   
   
   # Create a dataset using the bad dataset.
-  data <- familiar:::test.create_bad_data_set(outcome_type=outcome_type)
+  data <- familiar:::test_create_bad_data(outcome_type=outcome_type)
   
   # Train a simple linear GLM using the bad dataset. The model will fail to build
   fam_model <- suppressWarnings(familiar:::test_train(data=data,
