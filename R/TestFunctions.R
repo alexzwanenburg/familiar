@@ -3522,589 +3522,714 @@ test_all_metrics <- function(
 
 
 
-test_hyperparameter_optimisation <- function(vimp_methods=NULL,
-                                             learners=NULL,
-                                             outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
-                                             not_available_no_samples=TRUE,
-                                             n_max_bootstraps=25L,
-                                             n_max_optimisation_steps=3L,
-                                             n_max_intensify_steps=2L,
-                                             n_random_sets=20L,
-                                             n_challengers=10L,
-                                             ...,
-                                             test_specific_config=FALSE,
-                                             debug=FALSE,
-                                             parallel=waiver()){
-  
-  if(debug){
+test_hyperparameter_optimisation <- function(
+    vimp_methods = NULL,
+    learners = NULL,
+    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    not_available_no_samples = TRUE,
+    n_max_bootstraps = 25L,
+    n_max_optimisation_steps = 3L,
+    n_max_intensify_steps = 2L,
+    n_random_sets = 20L,
+    n_challengers = 10L,
+    ...,
+    test_specific_config = FALSE,
+    debug = FALSE,
+    parallel = waiver()) {
+  if (debug) {
     test_fun <- debug_test_that
     verbose <- TRUE
   } else {
     test_fun <- testthat::test_that
     verbose <- FALSE
   }
-  
+
   # Set parallelisation.
-  if(is.waive(parallel)) parallel <- !debug
-  
-  if(parallel){
+  if (is.waive(parallel)) parallel <- !debug
+
+  if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores=as.integer(1))
-    on.exit(options(rf.cores=-1L), add=TRUE)
-    
+    options(rf.cores = as.integer(1))
+    on.exit(options(rf.cores = -1L), add = TRUE)
+
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
-    on.exit(data.table::setDTthreads(0L), add=TRUE)
-    
+    on.exit(data.table::setDTthreads(0L), add = TRUE)
+
     # Start local cluster in the overall process.
-    cl <- .test_start_cluster(n_cores=2L)
-    on.exit(.terminate_cluster(cl), add=TRUE)
+    cl <- .test_start_cluster(n_cores = 2L)
+    on.exit(.terminate_cluster(cl), add = TRUE)
     
   } else {
     cl <- NULL
   }
-  
+
   # Clean up dots
   dots <- list(...)
   dots$cl <- NULL
   dots$verbose <- NULL
-  
-  
-  if(is.null(learners)){
+
+  if (is.null(learners)) {
     is_vimp <- TRUE
     method_pool <- vimp_methods
-    
-    if(is.null(learners)) learners <- "glm"
-    
+
+    if (is.null(learners)) learners <- "glm"
   } else {
     is_vimp <- FALSE
     method_pool <- learners
-    
-    if(is.null(vimp_methods)) vimp_methods <- "mim"
+
+    if (is.null(vimp_methods)) vimp_methods <- "mim"
   }
-  
+
   # Iterate over the outcome type.
-  for(outcome_type in outcome_type_available){
-    
+  for (outcome_type in outcome_type_available) {
     # Multi-feature data sets.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test_create_all_identical_data(outcome_type)
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-    
+
     # One-feature data sets.
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
-    
+
     # Set exceptions per outcome type.
     .not_available_no_samples <- not_available_no_samples
-    if(is.character(.not_available_no_samples)) .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
-    
+    if (is.character(.not_available_no_samples)) {
+      .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
+    }
+
     .not_available_invariant_data <- FALSE
-    if(is.character(.not_available_invariant_data)) .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
-    
-    # Iterate over learners or variable importance methods..
-    for(current_method in method_pool){
-      
-      if(is_vimp){
+    if (is.character(.not_available_invariant_data)) {
+      .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
+    }
+
+    # Iterate over learners or variable importance methods.
+    for (current_method in method_pool) {
+      if (is_vimp) {
         learner <- learners
         vimp_method <- current_method
-        
       } else {
         learner <- current_method
         vimp_method <- vimp_methods
       }
+
+      if (!.check_learner_outcome_type(
+        learner = learner,
+        outcome_type = outcome_type,
+        as_flag = TRUE)) { 
+        next 
+      }
       
+      if (!.check_vimp_outcome_type(
+        method = vimp_method, 
+        outcome_type = outcome_type,
+        as_flag = TRUE)) {
+        next
+      }
       
-      if(!.check_learner_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
-      if(!.check_vimp_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
-      
-      
-      
-      #####Full data set--------------------------------------------------------
-      
+      # Full data set-----------------------------------------------------------
+
       # Create object
-      object <- .test_create_hyperparameter_object(data=full_data,
-                                                   vimp_method=vimp_method,
-                                                   learner=learner,
-                                                   is_vimp=is_vimp,
-                                                   set_signature_feature=TRUE)
-      
+      object <- .test_create_hyperparameter_object(
+        data = full_data,
+        vimp_method = vimp_method,
+        learner = learner,
+        is_vimp = is_vimp,
+        set_signature_feature = TRUE)
+
       # Check that object is available for the outcome.
-      if(!is_available(object)) next()
-      
+      if (!is_available(object)) next
+
       .not_available_invariant_data <- FALSE
       .no_hyperparameters <- FALSE
-      
+
       # Check default parameters
-      default_hyperparameters <- get_default_hyperparameters(object, data=full_data)
-      if(length(default_hyperparameters) > 0){
+      default_hyperparameters <- get_default_hyperparameters(
+        object,
+        data = full_data)
+      
+      if (length(default_hyperparameters) > 0) {
         randomised_hyperparameters <- sapply(default_hyperparameters, function(x) x$randomise)
-        
-        if("sign_size" %in% names(randomised_hyperparameters)){
-          .not_available_invariant_data <- sum(randomised_hyperparameters) > 1L || !randomised_hyperparameters["sign_size"]
-          
+
+        if ("sign_size" %in% names(randomised_hyperparameters)) {
+          .not_available_invariant_data <- sum(randomised_hyperparameters) > 1L ||
+            !randomised_hyperparameters["sign_size"]
         } else {
           .not_available_invariant_data <- sum(randomised_hyperparameters) > 0L
         }
-        
       } else {
         .no_hyperparameters <- TRUE
         .not_available_invariant_data <- TRUE
       }
-      
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a complete data set."))
-      
+
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a complete data set."))
+      }
+
       # Hyperparameter optimisation on a full dataset.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=full_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
-      
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = full_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
+
       # Test that hyperparameters were set.
-      test_fun(paste0("1. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a complete data set."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!.no_hyperparameters | !not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp){
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
-                              
-                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_none_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
-                              }
-                            }
-                          }
-                        }
-                      })
+      test_fun(
+        paste0(
+          "1. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a complete data set."),
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            
+          } else if (!.no_hyperparameters || !not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make
+                # sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
+                  TRUE)
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), 
+                  TRUE)
+                
+                if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_none_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_no_features_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
+                    TRUE)
+                }
+              }
+            }
+          }
+        }
+      )
       
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a data set with only identical entries."))
-      
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a data set with only identical entries."))
+      }
+
       # Optimise for data that are completely identical.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=identical_sample_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
-      
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = identical_sample_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
+
       # Test that hyperparameters were set.
-      test_fun(paste0("2. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a data set with only identical entries."), {
-                        
-                        if(.no_hyperparameters | .not_available_invariant_data){
-                          # Test that no hyperparameters are set. Models cannot
-                          # train on completely invariant data.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!.not_available_invariant_data){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp){
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
-                              
-                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_none_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
-                              }
-                            }
-                          }
-                        }
-                      })
+      test_fun(
+        paste0(
+          "2. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a data set with only identical entries."),
+        {
+          if (.no_hyperparameters || .not_available_invariant_data) {
+            # Test that no hyperparameters are set. Models cannot
+            # train on completely invariant data.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+          } else if (!.not_available_invariant_data) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make
+                # sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
+                  TRUE)
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)),
+                  TRUE)
+                
+                if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2),
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_none_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_no_features_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
+                    TRUE)
+                }
+              }
+            }
+          }
+        }
+      )
       
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a data set with only one entry."))
-      
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a data set with only one entry."))
+      }
+
       # Optimise for data that consist of only one sample.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=full_one_sample_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = full_one_sample_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
       
       # Test.
-      test_fun(paste0("3. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a data set with only one entry."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set. Single entry
-                          # data cannot be used to generate hyperparameter sets
-                          # unless they are always available.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp) {
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2), TRUE)
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), TRUE)
-                              
-                              if(vimp_method %in% .get_available_signature_only_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_none_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)), TRUE)
-                              }
-                              
-                              if(vimp_method %in% .get_available_no_features_vimp_methods()){
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 0), TRUE)
-                              }
-                            }
-                          }
-                          
-                        } else {
-                          # Not always available, but with hyperparameters. For
-                          # some methods all hyperparameters can still be set,
-                          # i.e. all typically randomised hyperparameters depend
-                          # only on the number of features. Therefore, this is a
-                          # softer check.
-                          
-                          if(!is.null(new_object@hyperparameters)){
-                            # Test that all hyperparameters are set.
-                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                            
-                            if(!is_vimp){
-                              if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                                # Test that sign_size hyperparameters make
-                                # sense. 
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
-                              }
-                            }
-                            
-                          } else {
-                            # Bogus test to prevent skipping.
-                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          }
-                        }
-                      })
+      test_fun(
+        paste0(
+          "3. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a data set with only one entry."),
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set. Single entry data cannot be
+            # used to generate hyperparameter sets unless they are always
+            # available.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            
+          } else if (!not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make
+                # sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
+                  TRUE)
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)),
+                  TRUE)
+                
+                if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_none_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
+                    TRUE)
+                }
+                
+                if (vimp_method %in% .get_available_no_features_vimp_methods()) {
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
+                    TRUE)
+                }
+              }
+            }
+            
+          } else {
+            # Not always available, but with hyperparameters. For some methods
+            # all hyperparameters can still be set, i.e. all typically
+            # randomised hyperparameters depend only on the number of features.
+            # Therefore, this is a softer check.
+            
+            if (!is.null(new_object@hyperparameters)) {
+              # Test that all hyperparameters are set.
+              testthat::expect_setequal(
+                names(new_object@hyperparameters), 
+                names(get_default_hyperparameters(object)))
+              
+              if (!is_vimp) {
+                if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                  # Test that sign_size hyperparameters make
+                  # sense.
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2),
+                    TRUE)
+                }
+              }
+              
+            } else {
+              # Bogus test to prevent skipping.
+              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            }
+          }
+        }
+      )
       
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for an empty data set."))
-      
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for an empty data set."))
+      }
+
       # Optimise when data is missing.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=empty_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = empty_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
       
       # Test.
-      test_fun(paste0("4. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes ",
-                      ifelse(!not_available_no_samples, "can", "cannot"),
-                      " be created for an empty data set."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set. Empty datasets
-                          # cannot be used to create hyperparameters.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                        } else {
-                          # Not always available, but with hyperparameters. For
-                          # some methods all hyperparameters can still be set,
-                          # i.e. all typically randomised hyperparameters depend
-                          # only on the number of features. Therefore, this is a
-                          # softer check.
-                          
-                          if(!is.null(new_object@hyperparameters)){
-                            # Test that all hyperparameters are set.
-                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                            
-                            if(!is_vimp & !is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2), TRUE)
-                            }
-                            
-                          } else {
-                            # Bogus test to prevent skipping.
-                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          }
-                        }
-                      })
-      
-      
-      
-      #####One-feature data set-------------------------------------------------
+      test_fun(
+        paste0(
+          "4. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes ",
+          ifelse(!not_available_no_samples, "can", "cannot"),
+          " be created for an empty data set."), 
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set. Empty datasets cannot be
+            # used to create hyperparameters.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            
+          } else if (!not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+          } else {
+            # Not always available, but with hyperparameters. For some methods
+            # all hyperparameters can still be set, i.e. all typically
+            # randomised hyperparameters depend only on the number of features.
+            # Therefore, this is a softer check.
+            
+            if (!is.null(new_object@hyperparameters)) {
+              # Test that all hyperparameters are set.
+              testthat::expect_setequal(
+                names(new_object@hyperparameters),
+                names(get_default_hyperparameters(object)))
+              
+              if (!is_vimp && !is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make
+                # sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
+                  TRUE)
+              }
+              
+            } else {
+              # Bogus test to prevent skipping.
+              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            }
+          }
+        }
+      )
+
+      # One-feature data set ---------------------------------------------------
       # Create object
-      object <- .test_create_hyperparameter_object(data=one_feature_data,
-                                                   vimp_method=vimp_method,
-                                                   learner=learner,
-                                                   is_vimp=is_vimp,
-                                                   set_signature_feature=FALSE)
-      
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a data set with only one feature."))
-      
+      object <- .test_create_hyperparameter_object(
+        data = one_feature_data,
+        vimp_method = vimp_method,
+        learner = learner,
+        is_vimp = is_vimp,
+        set_signature_feature = FALSE)
+
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a data set with only one feature."))
+      }
+
       # Optimise parameters for a dataset with only one feature.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=one_feature_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = one_feature_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
       
-      test_fun(paste0("5. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a data set with only one feature."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!.no_hyperparameters | !not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp){
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-                            }
-                          }
-                        }
-                      })
+      test_fun(
+        paste0(
+          "5. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a data set with only one feature."),
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+          } else if (!.no_hyperparameters | !not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
+                  TRUE)
+              }
+            }
+          }
+        }
+      )
       
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a data set with only one feature and sample."))
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a data set with only one feature and sample."))
+      }
       
       # Optimise parameters for a dataset with only one feature and sample.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=one_feature_one_sample_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = one_feature_one_sample_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
       
-      test_fun(paste0("6. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a data set with only one feature and sample."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set.
-                          # Hyperparameters cannot be set for datasets with only
-                          # a single sample.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp){
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-                            }
-                          }
-                          
-                        } else {
-                          # Not always available, but with hyperparameters. For
-                          # some methods all hyperparameters can still be set,
-                          # i.e. all typically randomised hyperparameters depend
-                          # only on the number of features. Therefore, this is a
-                          # softer check.
-                          
-                          if(!is.null(new_object@hyperparameters)){
-                            # Test that all hyperparameters are set.
-                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                            
-                            if(!is_vimp){
-                              if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                                # Test that sign_size hyperparameters make
-                                # sense. 
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-                              }
-                            }
-                            
-                          } else {
-                            # Bogus test to prevent skipping.
-                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          }
-                        } 
-                      })
+      test_fun(
+        paste0(
+          "6. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a data set with only one feature and sample."),
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set. Hyperparameters cannot be
+            # set for datasets with only a single sample.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            
+          } else if (!not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
+                  TRUE)
+              }
+            }
+            
+          } else {
+            # Not always available, but with hyperparameters. For some methods
+            # all hyperparameters can still be set, i.e. all typically
+            # randomised hyperparameters depend only on the number of features.
+            # Therefore, this is a softer check.
+            
+            if (!is.null(new_object@hyperparameters)) {
+              # Test that all hyperparameters are set.
+              testthat::expect_setequal(
+                names(new_object@hyperparameters),
+                names(get_default_hyperparameters(object)))
+              
+              if (!is_vimp) {
+                if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                  # Test that sign_size hyperparameters make sense.
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
+                    TRUE)
+                }
+              }
+            } else {
+              # Bogus test to prevent skipping.
+              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            }
+          }
+        }
+      )
       
-      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
-                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                                 outcome_type, " outcomes for a data set with only one, invariant feature."))
+      if (verbose) {
+        message(paste0(
+          "\nComputing hyperparameters for ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes for a data set with only one, invariant feature."))
+      }
       
       # Optimise parameters for a dataset with only one, invariant feature.
-      new_object <- do.call(optimise_hyperparameters,
-                            args=c(list("object"=object,
-                                        "data"=one_feature_invariant_data,
-                                        "cl"=cl,
-                                        "n_max_bootstraps"=n_max_bootstraps,
-                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
-                                        "n_max_intensify_steps"=n_max_intensify_steps,
-                                        "n_random_sets"=n_random_sets,
-                                        "n_challengers"=n_challengers,
-                                        "is_vimp"=is_vimp,
-                                        "verbose"=verbose),
-                                   dots))
+      new_object <- do.call(
+        optimise_hyperparameters,
+        args = c(
+          list(
+            "object" = object,
+            "data" = one_feature_invariant_data,
+            "cl" = cl,
+            "n_max_bootstraps" = n_max_bootstraps,
+            "n_max_optimisation_steps" = n_max_optimisation_steps,
+            "n_max_intensify_steps" = n_max_intensify_steps,
+            "n_random_sets" = n_random_sets,
+            "n_challengers" = n_challengers,
+            "is_vimp" = is_vimp,
+            "verbose" = verbose),
+          dots))
       
-      test_fun(paste0("7. Hyperparameters for the ", current_method,
-                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
-                      outcome_type, " outcomes can be created for a data set with only one, invariant feature."), {
-                        
-                        if(.no_hyperparameters){
-                          # Test that no hyperparameters are set.
-                          # Hyperparameters cannot be set for datasets with
-                          # invariant features.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          
-                        } else if(!not_available_no_samples){
-                          # Test that hyperparameters are set.
-                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
-                          
-                          # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                          
-                          if(!is_vimp){
-                            if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-                            }
-                          }
-                          
-                        } else {
-                          # Not always available, but with hyperparameters. For
-                          # some methods all hyperparameters can still be set,
-                          # i.e. all typically randomised hyperparameters depend
-                          # only on the number of features. Therefore, this is a
-                          # softer check.
-                          
-                          if(!is.null(new_object@hyperparameters)){
-                            # Test that all hyperparameters are set.
-                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
-                            
-                            if(!is_vimp){
-                              if(!is.null(new_object@hyperparameter_data$parameter_table)){
-                                # Test that sign_size hyperparameters make
-                                # sense. 
-                                testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-                              }
-                            }                            
-                          } else {
-                            # Bogus test to prevent skipping.
-                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
-                          }
-                        }
-                      })
-    }   
+      test_fun(
+        paste0(
+          "7. Hyperparameters for the ", current_method,
+          ifelse(is_vimp, " variable importance method", " learner"), " and ",
+          outcome_type, " outcomes can be created for a data set with ",
+          "only one, invariant feature."),
+        {
+          if (.no_hyperparameters) {
+            # Test that no hyperparameters are set. Hyperparameters cannot be
+            # set for datasets with invariant features.
+            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            
+          } else if (!not_available_no_samples) {
+            # Test that hyperparameters are set.
+            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            
+            # Test that all hyperparameters are set.
+            testthat::expect_setequal(
+              names(new_object@hyperparameters),
+              names(get_default_hyperparameters(object)))
+            
+            if (!is_vimp) {
+              if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                # Test that sign_size hyperparameters make sense.
+                testthat::expect_equal(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
+                  TRUE)
+              }
+            }
+            
+          } else {
+            # Not always available, but with hyperparameters. For some methods
+            # all hyperparameters can still be set, i.e. all typically
+            # randomised hyperparameters depend only on the number of features.
+            # Therefore, this is a softer check.
+            
+            if (!is.null(new_object@hyperparameters)) {
+              # Test that all hyperparameters are set.
+              testthat::expect_setequal(
+                names(new_object@hyperparameters),
+                names(get_default_hyperparameters(object)))
+              
+              if (!is_vimp) {
+                if (!is.null(new_object@hyperparameter_data$parameter_table)) {
+                  # Test that sign_size hyperparameters make sense.
+                  testthat::expect_equal(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
+                    TRUE)
+                }
+              }
+            } else {
+              # Bogus test to prevent skipping.
+              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            }
+          }
+        }
+      )
+    }
   }
 }
 
