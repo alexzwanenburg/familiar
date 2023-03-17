@@ -9,7 +9,6 @@ test_all_learners_available <- function(learners) {
     for (outcome_type in c(
       "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
-      object <- methods::new("familiarModel",
         outcome_type = outcome_type,
         learner = learner)
 
@@ -72,7 +71,8 @@ test_all_learners_train_predict_vimp <- function(
     # Iterate over learners.
     for (learner in learners) {
       # Create a familiarModel object.
-      object <- methods::new("familiarModel",
+      object <- methods::new(
+        "familiarModel",
         outcome_type = outcome_type,
         learner = learner)
 
@@ -1446,33 +1446,35 @@ test_all_learners_parallel_train_predict_vimp <- function(
 
 
 
-test_all_novelty_detectors_available <- function(detectors){
-  
+test_all_novelty_detectors_available <- function(detectors) {
   # Create placeholder flags.
   detector_available <- logical(length(detectors))
   names(detector_available) <- detectors
-  
+
   # Iterate over learners.
-  for(detector in detectors){
-    
+  for (detector in detectors) {
     # Create a familiarModel object.
-    object <- methods::new("familiarNoveltyDetector",
-                           learner=detector)
-    
+    object <- methods::new(
+      "familiarNoveltyDetector",
+      learner = detector)
+
     # Promote the learner to the right class.
-    object <- promote_detector(object=object)
-    
+    object <- promote_detector(object = object)
+
     # Check if the learner is available for the outcome.
-    if(is_available(object)){
+    if (is_available(object)) {
       detector_available[detector] <- TRUE
     }
   }
-  
+
   # Iterate over learners
-  for(detector in detectors){
-    testthat::test_that(paste0(detector, " is available."), {
-      testthat::expect_equal(unname(detector_available[detector]), TRUE)
-    })
+  for (detector in detectors) {
+    testthat::test_that(
+      paste0(detector, " is available."), 
+      {
+        testthat::expect_equal(unname(detector_available[detector]), TRUE)
+      }
+    )
   }
 }
 
