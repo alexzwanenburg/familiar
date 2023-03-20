@@ -142,9 +142,9 @@ testthat::test_that("Extra levels are detected", {
 # Test methods to set reference levels -----------------------------------------
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 data$rx <- stats::relevel(data$rx, ref = "Lev")
-original_TRUE <- data$adhere == "TRUE"
+original_true <- data$adhere == "TRUE"
 data[adhere == "FALSE", "adhere" := "TRUE"]
-data[original_TRUE, "adhere" := "FALSE"]
+data[original_true, "adhere" := "FALSE"]
 
 testthat::test_that("Auto-method does not re-order existing levels.", {
   parsed_data <- familiar::as_data_object(
