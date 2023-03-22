@@ -73,7 +73,7 @@ data_list <- list(
 familiar:::test_all_metrics_available(metrics = familiar:::.get_available_brier_metrics())
 familiar:::test_all_metrics(metrics = familiar:::.get_available_brier_metrics())
 
-##### Area under the curve #####################################################
+# Brier score ------------------------------------------------------------------
 testthat::test_that("Brier score is correct", {
   expected_score <- c(0.0, 1 / 4, 0.18, 1.0, 0.0, 1 / 3, 391 / 2000, 1.0)
   expected_objective <- c(1.0, 3 / 4, 0.82, 0.0, 1.0, 2 / 3, 1609 / 2000, 0.0)
