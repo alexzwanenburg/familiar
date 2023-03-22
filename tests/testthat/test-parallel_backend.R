@@ -24,7 +24,7 @@ familiar:::integrated_test(
   skip_evaluation_elements = "all"
 )
 
-# Test external
+# Test use of externally started cluster.
 
 # Start cluster
 cl <- familiar:::.start_cluster(n_cores = 2L, cluster_type = "psock")

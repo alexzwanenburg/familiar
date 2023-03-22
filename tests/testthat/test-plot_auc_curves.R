@@ -65,7 +65,7 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
-##### AUC precision-recall plots ###############################################
+# AUC precision-recall plots ---------------------------------------------------
 
 familiar:::test_plots(
   plot_function = familiar::plot_auc_precision_recall_curve,
