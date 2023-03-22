@@ -199,7 +199,7 @@ wide_model <- familiar:::test_train(
     "m_try" = 0.3,
     "node_size" = 5,
     "tree_depth" = 5),
-  learner = "random_forest_rfsrc"s)
+  learner = "random_forest_rfsrc")
 
 testthat::test_that("Random forest SRC model trained correctly", {
   # Model trained
