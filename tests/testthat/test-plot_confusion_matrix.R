@@ -1,4 +1,5 @@
-# Don't perform any further tests on CRAN due to time of running the complete test.
+# Don't perform any further tests on CRAN due to time of running the complete
+# test.
 testthat::skip_on_cran()
 
 debug_flag <- FALSE
