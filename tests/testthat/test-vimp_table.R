@@ -151,8 +151,7 @@ testthat::test_that("Test that the re-clustered variable importance table in its
 data_2 <- familiar:::test_create_synthetic_correlated_data(
   outcome_type = "continuous",
   n_numeric = 2,
-  cluster_size = c(1, 1, 4, 2)
-)
+  cluster_size = c(1, 1, 4, 2))
 
 vimp_object_2 <- familiar:::prepare_vimp_object(
   data = data_2,
@@ -164,16 +163,15 @@ vimp_object_2 <- familiar:::prepare_vimp_object(
   cluster_cut_method = "fixed_cut",
   cluster_similarity_metric = "mcfadden_r2",
   cluster_similarity_threshold = 0.99,
-  imputation_method = "simple"
-)
+  imputation_method = "simple")
 
-reference_cluster_table <- familiar:::.create_clustering_table(vimp_object_2@feature_info)
+reference_cluster_table <- familiar:::.create_clustering_table(
+  vimp_object_2@feature_info)
 
 # Update the variable importance object using the reference cluster table.
 updated_vimp_table_object <- familiar:::update_vimp_table_to_reference(
   vimp_table_object,
-  reference_cluster_table
-)
+  reference_cluster_table)
 
 testthat::test_that("Updating variable importance tables functions correctly.", {
   vimp_table <- familiar:::get_vimp_table(updated_vimp_table_object, "ranked")
@@ -203,9 +201,9 @@ testthat::test_that("Updating variable importance tables functions correctly.", 
   testthat::expect_equal(data.table::uniqueN(vimp_table[startsWith(name, "feature_4")]$rank), 1L)
 })
 
-
 testthat::test_that("Updating variable importance tables with reclustering functions correctly.", {
-  reclustered_vimp_table_object <- familiar:::recluster_vimp_table(updated_vimp_table_object)
+  reclustered_vimp_table_object <- familiar:::recluster_vimp_table(
+    updated_vimp_table_object)
   vimp_table <- familiar:::get_vimp_table(reclustered_vimp_table_object, "ranked")
 
   # Assert that colnames are correct.
@@ -221,21 +219,18 @@ testthat::test_that("Updating variable importance tables with reclustering funct
   testthat::expect_equal(sum(vimp_table$name == "feature_2"), 1L)
 })
 
-
-
-#### Test updating table where all features are different ----------------------
+# Test updating table where all features are different -------------------------
 
 data_3 <- familiar:::test_create_synthetic_correlated_data(
   outcome_type = "continuous",
   n_numeric = 2,
-  cluster_size = c(1, 1, 1, 1)
-)
+  cluster_size = c(1, 1, 1, 1))
 
 # Rename features.
-data.table::setnames(data_3@data,
+data.table::setnames(
+  x = data_3@data,
   old = c("feature_1", "feature_2", "feature_3", "feature_4"),
-  new = c("feature_A", "feature_B", "feature_C", "feature_D")
-)
+  new = c("feature_A", "feature_B", "feature_C", "feature_D"))
 
 vimp_object_3 <- familiar:::prepare_vimp_object(
   data = data_3,
@@ -247,17 +242,15 @@ vimp_object_3 <- familiar:::prepare_vimp_object(
   cluster_cut_method = "fixed_cut",
   cluster_similarity_metric = "mcfadden_r2",
   cluster_similarity_threshold = 0.99,
-  imputation_method = "simple"
-)
+  imputation_method = "simple")
 
-reference_cluster_table <- familiar:::.create_clustering_table(vimp_object_3@feature_info)
+reference_cluster_table <- familiar:::.create_clustering_table(
+  vimp_object_3@feature_info)
 
 # Update the variable importance object using the reference cluster table.
 updated_vimp_table_object <- familiar:::update_vimp_table_to_reference(
   vimp_table_object,
-  reference_cluster_table
-)
-
+  reference_cluster_table)
 
 testthat::test_that("Updating variable importance tables with mismatching reference cluster tables.", {
   vimp_table <- familiar:::get_vimp_table(updated_vimp_table_object, "ranked")
@@ -277,7 +270,7 @@ testthat::test_that("Updating variable importance tables with reclustering funct
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
 })
 
-#### Test updating table where the variable importance table could not be created. -----
+# Test updating table where the variable importance table could not be created. -----
 
 empty_vimp_table_object <- vimp_table_object
 empty_vimp_table_object@vimp_table <- NULL
@@ -285,8 +278,7 @@ empty_vimp_table_object@vimp_table <- NULL
 # Update the variable importance object using the reference cluster table.
 updated_vimp_table_object <- familiar:::update_vimp_table_to_reference(
   empty_vimp_table_object,
-  reference_cluster_table
-)
+  reference_cluster_table)
 
 testthat::test_that("Updating variable importance tables with mismatching reference cluster tables.", {
   vimp_table <- familiar:::get_vimp_table(updated_vimp_table_object, "ranked")
@@ -295,7 +287,6 @@ testthat::test_that("Updating variable importance tables with mismatching refere
 
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
 })
-
 
 testthat::test_that("Updating variable importance tables with reclustering functions correctly.", {
   reclustered_vimp_table_object <- familiar:::recluster_vimp_table(updated_vimp_table_object)
@@ -306,14 +297,12 @@ testthat::test_that("Updating variable importance tables with reclustering funct
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
 })
 
-
-#### Test with signature features ----------------------------------------------
+# Test with signature features -------------------------------------------------
 
 data <- familiar:::test_create_synthetic_correlated_data(
   outcome_type = "continuous",
   n_numeric = 2,
-  cluster_size = c(1, 1, 1, 1)
-)
+  cluster_size = c(1, 1, 1, 1))
 
 vimp_object <- familiar:::prepare_vimp_object(
   data = data,
@@ -326,8 +315,7 @@ vimp_object <- familiar:::prepare_vimp_object(
   cluster_similarity_metric = "mcfadden_r2",
   cluster_similarity_threshold = 0.99,
   signature = c("feature_1"),
-  imputation_method = "simple"
-)
+  imputation_method = "simple")
 
 vimp_table_object <- suppressWarnings(familiar:::.vimp(vimp_object, data))
 
@@ -353,8 +341,7 @@ testthat::test_that("A signature feature does not appear in the variable importa
   testthat::expect_equal(sort(unique(vimp_table$rank)), seq_len(3L))
 })
 
-
-#### Test with all signature features ------------------------------------------
+# Test with all signature features ---------------------------------------------
 
 vimp_object <- familiar:::prepare_vimp_object(
   data = data,
@@ -367,8 +354,7 @@ vimp_object <- familiar:::prepare_vimp_object(
   cluster_similarity_metric = "mcfadden_r2",
   cluster_similarity_threshold = 0.99,
   signature = c("feature_1", "feature_2", "feature_3", "feature_4"),
-  imputation_method = "simple"
-)
+  imputation_method = "simple")
 
 vimp_table_object <- suppressWarnings(familiar:::.vimp(vimp_object, data))
 
