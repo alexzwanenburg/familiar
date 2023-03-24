@@ -1,71 +1,74 @@
-familiar:::test_all_vimp_methods_available(familiar:::.get_available_correlation_vimp_methods(show_general=TRUE))
+familiar:::test_all_vimp_methods_available(
+  familiar:::.get_available_correlation_vimp_methods(show_general = TRUE))
 
 # Don't perform any further tests on CRAN due to running time.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_correlation_vimp_methods(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-familiar:::test_all_vimp_methods(familiar:::.get_available_correlation_vimp_methods(show_general=FALSE))
-familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_correlation_vimp_methods(show_general=FALSE))
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = familiar:::.get_available_correlation_vimp_methods(show_general = TRUE),
+  debug = FALSE,
+  parallel = FALSE
+)
+familiar:::test_all_vimp_methods(
+  familiar:::.get_available_correlation_vimp_methods(show_general = FALSE))
+familiar:::test_all_vimp_methods_parallel(
+  familiar:::.get_available_correlation_vimp_methods(show_general = FALSE))
 
-##### Count outcome #####
+# Count outcome ----------------------------------------------------------------
 data <- familiar:::test_create_good_data("count")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(data=data,
-                                              vimp_method="spearman",
-                                              vimp_method_parameter_list=NULL,
-                                              outcome_type="count",
-                                              cluster_method="none",
-                                              imputation_method="simple")
-
+vimp_object <- familiar:::prepare_vimp_object(
+  data = data,
+  vimp_method = "spearman",
+  vimp_method_parameter_list = NULL,
+  outcome_type = "count",
+  cluster_method = "none",
+  imputation_method = "simple")
 
 testthat::test_that(paste0("Spearman correlation correctly ranks count data."), {
-  
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-  
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage")), TRUE)
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
+    familiar:::.vimp(vimp_object, data)))
+
+  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
+    "per_capita_crime", "lower_status_percentage")))
 })
 
-
-
-##### Continuous outcome #####
+# Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(data=data,
-                                              vimp_method="spearman",
-                                              vimp_method_parameter_list=NULL,
-                                              outcome_type="continuous",
-                                              cluster_method="none",
-                                              imputation_method="simple")
+vimp_object <- familiar:::prepare_vimp_object(
+  data = data,
+  vimp_method = "spearman",
+  vimp_method_parameter_list = NULL,
+  outcome_type = "continuous",
+  cluster_method = "none",
+  imputation_method = "simple")
 
+testthat::test_that(paste0("Spearman correlation correctly ranks continuous data."), {
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
+    familiar:::.vimp(vimp_object, data)))
 
-testthat::test_that(paste0("Spearman correlation correctly ranks continuous data.."), {
-  
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-  
-  testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
+  testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")))
 })
 
-
-
-##### Survival outcome #####
+# Survival outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(data=data,
-                                              vimp_method="spearman",
-                                              vimp_method_parameter_list=NULL,
-                                              outcome_type="survival",
-                                              cluster_method="none",
-                                              imputation_method="simple")
+vimp_object <- familiar:::prepare_vimp_object(
+  data = data,
+  vimp_method = "spearman",
+  vimp_method_parameter_list = NULL,
+  outcome_type = "survival",
+  cluster_method = "none",
+  imputation_method = "simple")
 
+testthat::test_that(paste0(
+  "Spearman correlation correctly ranks survival outcome data."), {
+  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
+    familiar:::.vimp(vimp_object, data)))
 
-testthat::test_that(paste0("Spearman correlation correctly ranks survival outcome data."), {
-  
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-  
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")))
 })
