@@ -127,35 +127,38 @@ the Wisconsin breast cancer dataset [@Wolberg1990-gn] to predict cell malignancy
 from biopsies, which constitutes a classification problem.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="breast-data-preparation"}
-
 # Get a dataset.
-binomial_data <- familiar:::test_create_good_data(outcome_type="binomial")
+binomial_data <- familiar:::test_create_good_data(outcome_type = "binomial")
 
 # Call familiar to create models. Note that we skip hyperparameter optimisation
 # by manually defining the hyperparameters, and that we skip evaluation steps.
 # This is to save time when creating the vignette.
 familiar::summon_familiar(
-  data=binomial_data,
-  project_dir=file.path(tempdir()),
-  experiment_dir="binomial",
-  experimental_design="fs+mb",
-  cluster_method="none",
-  fs_method="none",
-  hyperparameter=list(
-    "random_forest_ranger"=
+  data = binomial_data,
+  project_dir = file.path(tempdir()),
+  experiment_dir = "binomial",
+  experimental_design = "fs+mb",
+  cluster_method = "none",
+  fs_method = "none",
+  hyperparameter = list(
+    "random_forest_ranger" =
       list(
-        "n_tree"=4,
-        "sample_size"=0.7,
-        "m_try"=0.5,
-        "node_size"=20,
-        "tree_depth"=3)),
-  learner="random_forest_ranger",
-  parallel=FALSE,
-  skip_evaluation_elements="all")
+        "n_tree" = 4,
+        "sample_size" = 0.7,
+        "m_try" = 0.5,
+        "node_size" = 20,
+        "tree_depth" = 3)),
+  learner = "random_forest_ranger",
+  parallel = FALSE,
+  skip_evaluation_elements = "all"
+)
 
 # Create path to the directory containing the models.
-model_directory_path <- file.path(tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
-model_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="model")[1])
+model_directory_path <- file.path(
+  tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
+model_path <- file.path(
+  model_directory_path,
+  list.files(model_directory_path, pattern = "model")[1])
 
 # Load the model.
 binomial_model <- readRDS(model_path)
@@ -166,35 +169,39 @@ chemotherapy clinical trial dataset [@Moertel1995-bh] to predict overall
 survival after treatment.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-data-preparation"}
-
 # Get a dataset.
-survival_data <- familiar:::test_create_good_data(outcome_type="survival")
+survival_data <- familiar:::test_create_good_data(outcome_type = "survival")
 
 # Call familiar to create models. Note that we skip hyperparameter optimisation
 # by manually defining the hyperparameters, and that we skip evaluation steps.
 # This is to save time when creating the vignette.
-familiar::summon_familiar(data=survival_data,
-                          project_dir=file.path(tempdir()),
-                          experiment_dir="survival",
-                          experimental_design="fs+mb",
-                          cluster_method="none",
-                          fs_method="none",
-                          hyperparameter=list(
-                            "random_forest_ranger"=
-                              list(
-                                "n_tree"=9,
-                                "sample_size"=0.95,
-                                "m_try"=0.68,
-                                "node_size"=30,
-                                "tree_depth"=2,
-                                "alpha"=0.25)),
-                          learner="random_forest_ranger",
-                          parallel=FALSE,
-                          skip_evaluation_elements="all")
+familiar::summon_familiar(
+  data = survival_data,
+  project_dir = file.path(tempdir()),
+  experiment_dir = "survival",
+  experimental_design = "fs+mb",
+  cluster_method = "none",
+  fs_method = "none",
+  hyperparameter = list(
+    "random_forest_ranger" =
+      list(
+        "n_tree" = 9,
+        "sample_size" = 0.95,
+        "m_try" = 0.68,
+        "node_size" = 30,
+        "tree_depth" = 2,
+        "alpha" = 0.25)),
+  learner = "random_forest_ranger",
+  parallel = FALSE,
+  skip_evaluation_elements = "all"
+)
 
 # Create path to the directory containing the models.
-model_directory_path <- file.path(tempdir(), "survival", "trained_models", "random_forest_ranger", "none")
-model_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="model")[1])
+model_directory_path <- file.path(
+  tempdir(), "survival", "trained_models", "random_forest_ranger", "none")
+model_path <- file.path(
+  model_directory_path, 
+  list.files(model_directory_path, pattern = "model")[1])
 
 # Load the model.
 survival_model <- readRDS(model_path)
@@ -209,10 +216,11 @@ vignette, and can be set using the `evaluation_metric` argument of the
 example, this results in the following plot for the breast cancer dataset:
 
 ```{r, fig.align='center', fig.width=7, label="model-performance-plot"}
-plots <- familiar::plot_model_performance(object=binomial_model,
-                                          data=binomial_data,
-                                          metric = c("auc", "brier", "f1_score"),
-                                          x_axis_by="metric")
+plots <- familiar::plot_model_performance(
+  object = binomial_model,
+  data = binomial_data,
+  metric = c("auc", "brier", "f1_score"),
+  x_axis_by = "metric")
 
 plots[[1]]
 ```
@@ -237,8 +245,9 @@ receiver-operating characteristic curve for the breast cancer dataset is as
 follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-bci"}
-plots <- familiar::plot_auc_roc_curve(object=binomial_model,
-                                      data=binomial_data)
+plots <- familiar::plot_auc_roc_curve(
+  object = binomial_model,
+  data = binomial_data)
 
 plots[[1]]
 ```
@@ -267,9 +276,10 @@ of a single model or the complete ensemble of models is evaluated
 (`detail_level="ensemble"`):
 
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-point"}
-plots <- familiar::plot_auc_roc_curve(object=binomial_model,
-                                      data=binomial_data,
-                                      estimation_type="point")
+plots <- familiar::plot_auc_roc_curve(
+  object = binomial_model,
+  data = binomial_data,
+  estimation_type = "point")
 
 plots[[1]]
 ```
@@ -291,8 +301,9 @@ negative class. For the breast cancer dataset, the precision-recall curve is as
 follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-bci"}
-plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
-                                                   data=binomial_data)
+plots <- familiar::plot_auc_precision_recall_curve(
+  object = binomial_model,
+  data = binomial_data)
 
 plots[[1]]
 ```
@@ -321,9 +332,10 @@ single model or of the complete ensemble of models (`detail_level="ensemble"`).
 In the breast cancer dataset, this produces the following curve:
 
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-point"}
-plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
-                                                   data=binomial_data,
-                                                   estimation_type="point")
+plots <- familiar::plot_auc_precision_recall_curve(
+  object = binomial_model,
+  data = binomial_data,
+  estimation_type = "point")
 
 plots[[1]]
 ```
@@ -335,8 +347,9 @@ class instances and their actual (observed) values. This may help identify
 potential weaknesses of classifiers, i.e. false positives or negatives.
 
 ```{r, fig.align='center', fig.width=7, label="confusion-matrix"}
-plots <- familiar::plot_confusion_matrix(object=binomial_model,
-                                         data=binomial_data)
+plots <- familiar::plot_confusion_matrix(
+  object = binomial_model,
+  data = binomial_data)
 
 plots[[1]]
 ```
@@ -380,8 +393,9 @@ Applying the survival model to the colon cancer dataset yields the following
 Kaplan-Meier plot:
 
 ```{r, fig.align='center', fig.width=7, label="kaplan-meier-plot"}
-plots <- familiar::plot_kaplan_meier(object=survival_model,
-                                     data=survival_data)
+plots <- familiar::plot_kaplan_meier(
+  object = survival_model,
+  data = survival_data)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -409,8 +423,9 @@ probability is. Model calibration is assessed for this purpose. The model for
 the breast cancer dataset produces the following calibration plot:
 
 ```{r, fig.align='center', fig.width=7, label="calibration-data-bci"}
-plots <- familiar::plot_calibration_data(object=binomial_model,
-                                         data=binomial_data)
+plots <- familiar::plot_calibration_data(
+  object = binomial_model,
+  data = binomial_data)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -475,9 +490,10 @@ We can observe the points thus created in a calibration plot when
 `estimation_type="point"`:
 
 ```{r, fig.align='center', fig.width=7, label="calibration-data-point"}
-plots <- familiar::plot_calibration_data(object=binomial_model,
-                                         data=binomial_data,
-                                         estimation_type="point")
+plots <- familiar::plot_calibration_data(
+  object = binomial_model,
+  data = binomial_data,
+  estimation_type = "point")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -499,12 +515,12 @@ bootstraps) for bias-corrected estimates and more for bootstraps confidence
 intervals.
 
 Linear fit intercept and slope as well as the goodness-of-fit test p-value are
-determined for each single set of groups. Intercept and slopes are then averaged (`point`
-and `bias_correction`) or assessed as a distribution
+determined for each single set of groups. Intercept and slopes are then averaged
+(`point` and `bias_correction`) or assessed as a distribution
 (`bootstrap_confidence_interval`). p-values from goodness-of-fit tests need to
-be combined. These tests are not fully independent because they derive
-from the same dataset. We therefore compute a harmonic mean p-value
-[@Wilson2019-bi] from the individual p-values.
+be combined. These tests are not fully independent because they derive from the
+same dataset. We therefore compute a harmonic mean p-value [@Wilson2019-bi] from
+the individual p-values.
 
 # Decision curve analysis
 
@@ -519,9 +535,10 @@ patients with malignancy predicted by the model. This produces the following
 figure:
 
 ```{r, fig.align='center', fig.width=7, label="decision-curve-bci"}
-plots <- familiar::plot_decision_curve(object=binomial_model,
-                                       data=binomial_data,
-                                       y_range=c(-0.2, 0.5))
+plots <- familiar::plot_decision_curve(
+  object = binomial_model,
+  data = binomial_data,
+  y_range = c(-0.2, 0.5))
 
 plots[[1]]
 ```
@@ -555,8 +572,9 @@ random forest model for the breast cancer dataset, permutation variable
 importance is determined. This produces the following plot:
 
 ```{r, fig.align='center', fig.width=7, label="model-variable-importance"}
-plots <- familiar::plot_model_signature_variable_importance(object=binomial_model,
-                                                            data=binomial_data)
+plots <- familiar::plot_model_signature_variable_importance(
+  object = binomial_model,
+  data = binomial_data)
 
 plots[[1]]
 ```
@@ -583,9 +601,10 @@ shuffling values of a feature across the instances in a dataset.
 For the breast cancer dataset, this results in the following figure:
 
 ```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc"}
-plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
-                                                        data=binomial_data,
-                                                        estimation_type="bias_correction")
+plots <- familiar::plot_permutation_variable_importance(
+  object = binomial_model,
+  data = binomial_data,
+  estimation_type = "bias_correction")
 
 plots[[1]]
 ```
@@ -616,11 +635,12 @@ measure similarity using the Spearman`s rank correlation coefficient, we arrive
 at the following:
 
 ```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc-spearman"}
-plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
-                                                        data=binomial_data,
-                                                        estimation_type="bias_correction",
-                                                        feature_similarity_metric="spearman",
-                                                        feature_similarity_threshold=c(0.6, 1.0))
+plots <- familiar::plot_permutation_variable_importance(
+  object = binomial_model,
+  data = binomial_data,
+  estimation_type = "bias_correction",
+  feature_similarity_metric = "spearman",
+  feature_similarity_threshold = c(0.6, 1.0))
 
 plots[[1]]
 ```
@@ -643,9 +663,10 @@ example, we can create an ICE plot for the `cell_shape_uniformity` feature that
 was found to be important for predicting cell malignancy in the breast cancer.
 
 ```{r, fig.align='center', fig.width=7, label="ice-cell-shap-uniformity"}
-plots <- familiar::plot_ice(object=binomial_model,
-                            data=binomial_data,
-                            features="cell_shape_uniformity")
+plots <- familiar::plot_ice(
+  object = binomial_model,
+  data = binomial_data,
+  features = "cell_shape_uniformity")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -675,10 +696,11 @@ fixed value. In effect this can reduce some of the offset caused by other
 behaviour:
 
 ```{r, fig.align='center', fig.width=7, label="ice-cell-shape-uniformity-anchored"}
-plots <- familiar::plot_ice(object=binomial_model,
-                            data=binomial_data,
-                            features="cell_shape_uniformity",
-                            anchor_values=list("cell_shape_uniformity"=10.0))
+plots <- familiar::plot_ice(
+  object = binomial_model,
+  data = binomial_data,
+  features = "cell_shape_uniformity",
+  anchor_values = list("cell_shape_uniformity" = 10.0))
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -692,9 +714,10 @@ It is also possible to show the partial dependence of two features at the same
 time:
 
 ```{r, fig.align='center', fig.width=7, label="ice-2d"}
-plots <- familiar::plot_ice(object=binomial_model,
-                            data=binomial_data,
-                            features=c("cell_shape_uniformity", "bare_nuclei"))
+plots <- familiar::plot_ice(
+  object = binomial_model,
+  data = binomial_data,
+  features = c("cell_shape_uniformity", "bare_nuclei"))
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -711,12 +734,14 @@ the underlying instances determines the size of each point.
 It also possible to anchor 2D partial dependence plots:
 
 ```{r, fig.align='center', fig.width=7, label="ice-2d-anchored"}
-plots <- familiar::plot_ice(object=binomial_model,
-                            data=binomial_data,
-                            features=c("cell_shape_uniformity", "bare_nuclei"),
-                            anchor_values=list("cell_shape_uniformity"=10.0,
-                                               "bare_nuclei"=10.0),
-                            show_novelty=FALSE)
+plots <- familiar::plot_ice(
+  object = binomial_model,
+  data = binomial_data,
+  features = c("cell_shape_uniformity", "bare_nuclei"),
+  anchor_values = list(
+    "cell_shape_uniformity" = 10.0,
+    "bare_nuclei" = 10.0),
+  show_novelty = FALSE)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -735,11 +760,12 @@ sampled, for the `nodes` feature in the colon cancer dataset this is not the
 case:
 
 ```{r, fig.align='center', fig.width=7, label="ice-2d-survival"}
-plots <- familiar::plot_ice(object=survival_model,
-                            data=survival_data,
-                            features=c("nodes", "rx"),
-                            evaluation_times=1000,
-                            show_novelty=FALSE)
+plots <- familiar::plot_ice(
+  object = survival_model,
+  data = survival_data,
+  features = c("nodes", "rx"),
+  evaluation_times = 1000,
+  show_novelty = FALSE)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -756,9 +782,10 @@ Highly similar features can carry redundant information for a model. This can be
 visualised using similarity heatmaps:
 
 ```{r, fig.align='center', fig.width=7, label="feature-similarity"}
-plots <- familiar::plot_feature_similarity(object=binomial_model,
-                                           data=binomial_data,
-                                           feature_similarity_metric="spearman")
+plots <- familiar::plot_feature_similarity(
+  object = binomial_model,
+  data = binomial_data,
+  feature_similarity_metric = "spearman")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -774,9 +801,10 @@ if samples are readily stratified into clusters, which may or may not correlate
 to the endpoint of interest. For the breast cancer dataset, this yields the
 following heatmap:
 ```{r, fig.align='center', fig.width=7, label="sample-similarity"}
-plots <- familiar::plot_sample_clustering(object=binomial_model,
-                                          data=binomial_data,
-                                          feature_similarity_metric="spearman")
+plots <- familiar::plot_sample_clustering(
+  object = binomial_model,
+  data = binomial_data,
+  feature_similarity_metric = "spearman")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -795,10 +823,11 @@ argument. In the breast cancer dataset all features have the same range, so we
 can also show the data directly:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity-unnormalised"}
-plots <- familiar::plot_sample_clustering(object=binomial_model,
-                                          data=binomial_data,
-                                          feature_similarity_metric="spearman",
-                                          show_normalised_data="none")
+plots <- familiar::plot_sample_clustering(
+  object = binomial_model,
+  data = binomial_data,
+  feature_similarity_metric = "spearman",
+  show_normalised_data = "none")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
