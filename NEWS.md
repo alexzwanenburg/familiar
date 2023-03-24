@@ -1,3 +1,9 @@
+# Version 1.5.0 (Development)
+
+## Major changes
+
+- The source code now uses the `tidyverse` code style.
+
 # Version 1.4.2 (Omnicompetent Owl)
 
 ## Bug fixes
