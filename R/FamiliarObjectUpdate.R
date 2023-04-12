@@ -652,6 +652,35 @@ setMethod(
       }
     }
 
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Transformation objects are now implemented using power.transform.
+      if (!is.null(object@transformation_parameters)) {
+        if (is(object@transformation_parameters,
+               "featureInfoParametersTransformationNone")) {
+          transformer <- power.transform::create_transformer_skeleton(method = "none")
+          
+        } else if (is(object@transformation_parameters,
+                      "featureInfoParametersTransformationBoxCox")) {
+          transformer <- power.transform::create_transformer_skeleton(
+            method = "box_cox",
+            lambda = object@lambda)
+          
+        } else if (is(object@transformation_parameters,
+                      "featureInfoParametersTransformationBoxCox")) {
+          transformer <- power.transform::create_transformer_skeleton(
+            method = "yeo_johnson",
+            lambda = object@lambda)
+        }
+        
+        object@transformation_parameters <- methods::new(
+          "featureInfoParametersTransformationPowerTransform",
+          transformer = transformer,
+          complete = TRUE,
+          familiar_version = as.package_version("1.5.0")
+        )
+      }
+    }
+    
     if (!methods::validObject(object)) {
       stop("Could not update the featureInfo object to the most recent definition.")
     }
