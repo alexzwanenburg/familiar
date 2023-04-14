@@ -394,17 +394,23 @@ setMethod(
     }
     
     if (invert) {
-      return(power.transform::revert_power_transform(
-        y = data,
-        transformer = object@transformer
-      ))
+      return(suppressWarnings(
+        power.transform::revert_power_transform(
+          y = data,
+          transformer = object@transformer
+        ),
+        classes = "power_transform_transform_invalid_values")
+      )
       
     } else {
-      return(power.transform::power_transform(
-        x = data,
-        transformer = object@transformer,
-        oob_action = "valid"
-      ))
+      return(suppressWarnings(
+        power.transform::power_transform(
+          x = data,
+          transformer = object@transformer,
+          oob_action = "valid"
+        ),
+        classes = "power_transform_transform_invalid_values")
+      )
     }
   }
 )
