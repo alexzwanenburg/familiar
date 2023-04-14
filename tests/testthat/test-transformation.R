@@ -49,14 +49,14 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             # Determine if the feature is numeric.
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               # Expect that values are finite.
-              testthat::expect_true(
-                is.finite(feature_info_list[[feature]]@transformation_parameters@lambda))
+              testthat::expect_true(is.finite(power.transform::get_lambda(
+                feature_info_list[[feature]]@transformation_parameters@transformer)))
+              
             } else {
-              # For categorical features test that the object class is
-              # featureInfoParametersTransformationNone.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              # For categorical features test that the object method is "none".
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -89,11 +89,11 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             ignore_attr = TRUE)
 
           # Expect that the lambda is finite.
-          testthat::expect_true(is.finite(aggr_transform_parameters$parameters@lambda))
+          testthat::expect_true(is.finite(power.transform::get_lambda(
+            aggr_transform_parameters$parameters@transformer)))
 
-          # Expect that instance mask is equal to the number of numeric features.
-          testthat::expect_gt(sum(aggr_transform_parameters$instance_mask), 0)
-          testthat::expect_lte(sum(aggr_transform_parameters$instance_mask), n_numeric_features)
+          # Expect that instance mask is equal to one.
+          testthat::expect_equal(sum(aggr_transform_parameters$instance_mask), 1)
           
         } else {
           # Expect that the selected transformation method matches the selected
@@ -160,14 +160,14 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             # Determine if the feature is numeric.
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               # Expect that values are finite.
-              testthat::expect_true(
-                is.finite(feature_info_list[[feature]]@transformation_parameters@lambda))
+              testthat::expect_true(is.finite(power.transform::get_lambda(
+                feature_info_list[[feature]]@transformation_parameters@transformer)))
               
             } else {
               # For categorical features test that the none method is used.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -226,20 +226,20 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               if (feature == "feature_2") {
                 # Expect that for the NA feature, the none method is used.
-                testthat::expect_s4_class(
-                  feature_info_list[[feature]]@transformation_parameters,
-                  "featureInfoParametersTransformationNone")
+                testthat::expect_equal(
+                  feature_info_list[[feature]]@transformation_parameters@method,
+                  "none")
                 
               } else {
                 # Check that the lambda is finite.
-                testthat::expect_true(
-                  is.finite(feature_info_list[[feature]]@transformation_parameters@lambda))
+                testthat::expect_true(is.finite(power.transform::get_lambda(
+                  feature_info_list[[feature]]@transformation_parameters@transformer)))
               }
             } else {
               # For categorical features test that the none method is used.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -298,14 +298,14 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             # Determine if the feature is numeric.
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               # Check the none method is used for invariant features.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             } else {
               # For categorical features test that the none method is used.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -365,19 +365,19 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               if (feature == "feature_2") {
                 # Expect that the invariant feature uses the none method.
-                testthat::expect_true(
-                  feature_info_list[[feature]]@transformation_parameters,
-                  "featureInfoParametersTransformationNone")
+                testthat::expect_equal(
+                  feature_info_list[[feature]]@transformation_parameters@method,
+                  "none")
               } else {
                 # Check that the lambda is finite.
-                testthat::expect_true(
-                  is.finite(feature_info_list[[feature]]@transformation_parameters@lambda))
+                testthat::expect_true(is.finite(power.transform::get_lambda(
+                  feature_info_list[[feature]]@transformation_parameters@transformer)))
               }
             } else {
               # For categorical features test that the none method is used.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -436,14 +436,14 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
             # Determine if the feature is numeric.
             if (feature_info_list[[feature]]@feature_type == "numeric") {
               # Expect that the none-method is used for one-sample data.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             } else {
               # For categorical features test that the none method is used.
-              testthat::expect_s4_class(
-                feature_info_list[[feature]]@transformation_parameters,
-                "featureInfoParametersTransformationNone")
+              testthat::expect_equal(
+                feature_info_list[[feature]]@transformation_parameters@method,
+                "none")
             }
           }
         }
@@ -479,11 +479,12 @@ testthat::test_that(
       feature_names = c("feature_1", "feature_2"))
 
     # Check that this only updates features 1 and 2.
-    testthat::expect_s4_class(
-      feature_info_list$feature_1@transformation_parameters,
-      "featureInfoParametersTransformationBoxCox")
-    testthat::expect_s4_class(
-      feature_info_list$feature_2@transformation_parameters, "featureInfoParametersTransformationBoxCox")
+    testthat::expect_equal(
+      feature_info_list$feature_1@transformation_parameters@method,
+      "box_cox")
+    testthat::expect_equal(
+      feature_info_list$feature_2@transformation_parameters@method,
+      "box_cox")
     testthat::expect_equal(feature_info_list$feature_3@transformation_parameters, NULL)
     testthat::expect_equal(feature_info_list$feature_4@transformation_parameters, NULL)
 
@@ -494,15 +495,15 @@ testthat::test_that(
       feature_names = c("feature_3"))
 
     # Check that this only updates feature 3.
-    testthat::expect_s4_class(
-      feature_info_list$feature_1@transformation_parameters,
-      "featureInfoParametersTransformationBoxCox")
-    testthat::expect_s4_class(
-      feature_info_list$feature_2@transformation_parameters,
-      "featureInfoParametersTransformationBoxCox")
-    testthat::expect_s4_class(
-      feature_info_list$feature_3@transformation_parameters,
-      "featureInfoParametersTransformationYeoJohnson")
+    testthat::expect_equal(
+      feature_info_list$feature_1@transformation_parameters@method,
+      "box_cox")
+    testthat::expect_equal(
+      feature_info_list$feature_2@transformation_parameters@method,
+      "box_cox")
+    testthat::expect_equal(
+      feature_info_list$feature_3@transformation_parameters@method,
+      "yeo_johnson")
     testthat::expect_equal(
       feature_info_list$feature_4@transformation_parameters,
       NULL)
@@ -514,18 +515,18 @@ testthat::test_that(
       feature_names = c("feature_4"))
     
     # Check that this only updates feature 4.
-    testthat::expect_s4_class(
-      feature_info_list$feature_1@transformation_parameters,
-      "featureInfoParametersTransformationBoxCox")
-    testthat::expect_s4_class(
-      feature_info_list$feature_2@transformation_parameters,
-      "featureInfoParametersTransformationBoxCox")
-    testthat::expect_s4_class(
-      feature_info_list$feature_3@transformation_parameters,
-      "featureInfoParametersTransformationYeoJohnson")
-    testthat::expect_s4_class(
-      feature_info_list$feature_4@transformation_parameters,
-      "featureInfoParametersTransformationNone")
+    testthat::expect_equal(
+      feature_info_list$feature_1@transformation_parameters@method,
+      "box_cox")
+    testthat::expect_equal(
+      feature_info_list$feature_2@transformation_parameters@method,
+      "box_cox")
+    testthat::expect_equal(
+      feature_info_list$feature_3@transformation_parameters@method,
+      "yeo_johnson")
+    testthat::expect_equal(
+      feature_info_list$feature_4@transformation_parameters@method,
+      "none")
 
     # Update the feature info list.
     feature_info_list <- familiar:::add_transformation_parameters(
