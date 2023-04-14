@@ -442,6 +442,10 @@ setMethod(
     }
 
     if (tail(object@familiar_version, n = 1L) < "1.2.0") {
+      # Prior to version 1.2.0, information used to process features was stored
+      # in ad-hoc lists. Since version 1.2.0 these have been replaced by S4
+      # objects, which allows for much cleaner testing and updating.
+      
       # Check if the object is generic/unset or was filled.
       is_unset <- is.null(object@transformation_parameters) &&
         is.null(object@normalisation_parameters) &&
@@ -652,34 +656,12 @@ setMethod(
       }
     }
 
-    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
-      # Transformation objects are now implemented using power.transform.
-      if (!is.null(object@transformation_parameters)) {
-        if (is(object@transformation_parameters,
-               "featureInfoParametersTransformationNone")) {
-          transformer <- power.transform::create_transformer_skeleton(method = "none")
-          
-        } else if (is(object@transformation_parameters,
-                      "featureInfoParametersTransformationBoxCox")) {
-          transformer <- power.transform::create_transformer_skeleton(
-            method = "box_cox",
-            lambda = object@lambda)
-          
-        } else if (is(object@transformation_parameters,
-                      "featureInfoParametersTransformationBoxCox")) {
-          transformer <- power.transform::create_transformer_skeleton(
-            method = "yeo_johnson",
-            lambda = object@lambda)
-        }
-        
-        object@transformation_parameters <- methods::new(
-          "featureInfoParametersTransformationPowerTransform",
-          transformer = transformer,
-          complete = TRUE,
-          familiar_version = as.package_version("1.5.0")
-        )
-      }
-    }
+    # Update objects separately.
+    object@transformation_parameters <- update_object(object =  object@transformation_parameters)
+    object@normalisation_parameters <- update_object(object = object@normalisation_parameters)
+    object@batch_normalisation_parameters <- update_object(object = object@batch_normalisation_parameters)
+    object@imputation_parameters <- update_object(object = object@imputation_parameters)
+    object@cluster_parameters <- update_object(object = object@cluster_parameters)
     
     if (!methods::validObject(object)) {
       stop("Could not update the featureInfo object to the most recent definition.")
@@ -688,6 +670,54 @@ setMethod(
     # Update package version.
     object <- add_package_version(object = object)
 
+    return(object)
+  }
+)
+
+
+
+## update_object (featureInfoParametersTransformationPowerTransform) -----------
+
+#' @rdname update_object-methods
+setMethod(
+  "update_object",
+  signature(object = "featureInfoParametersTransformationPowerTransform"),
+  function(object, ...) {
+    
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Transformation objects are now implemented using power.transform.
+      
+      if (is(object, "featureInfoParametersTransformationNone")) {
+        transformer <- power.transform::create_transformer_skeleton(method = "none")
+        
+      } else if (is(object, "featureInfoParametersTransformationBoxCox")) {
+        transformer <- power.transform::create_transformer_skeleton(
+          method = "box_cox",
+          lambda = object@lambda)
+        
+      } else if (is(object, "featureInfoParametersTransformationYeoJohnson")) {
+        transformer <- power.transform::create_transformer_skeleton(
+          method = "yeo_johnson",
+          lambda = object@lambda)
+      }
+      
+      object <- methods::new(
+        "featureInfoParametersTransformationPowerTransform",
+        transformer = transformer,
+        complete = TRUE,
+        familiar_version = as.package_version("1.5.0")
+      )
+    }
+    
+    if (!methods::validObject(object)) {
+      stop(paste0(
+        "Could not update the featureInfoParametersTransformationPowerTransform ",
+        "object to the most recent definition."))
+    }
+    
+    # Update package version.
+    object <- add_package_version(object = object)
+    
     return(object)
   }
 )
