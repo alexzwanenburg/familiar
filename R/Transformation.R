@@ -94,7 +94,7 @@ create_transformation_parameter_skeleton <- function(
     feature_names = NULL,
     transformation_method,
     transformation_lambda = NULL,
-    transformation_estimation_method = "cramer_von_mises",
+    transformation_optimisation_criterion = "cramer_von_mises",
     transformation_gof_p_value = NULL,
     .override_existing = FALSE) {
   # Creates a skeleton for the provided transformation method. If
@@ -133,7 +133,7 @@ create_transformation_parameter_skeleton <- function(
     FUN = .create_transformation_parameter_skeleton,
     method = transformation_method,
     lambda = transformation_lambda,
-    estimation_method = transformation_estimation_method,
+    optimisation_criterion = transformation_optimisation_criterion,
     gof_p_value = transformation_gof_p_value,
     .override_existing = .override_existing)
 
@@ -151,7 +151,7 @@ create_transformation_parameter_skeleton <- function(
 .create_transformation_parameter_skeleton <- function(
     feature_info, 
     method,
-    estimation_method = "cramer_von_mises",
+    optimisation_criterion = "cramer_von_mises",
     gof_p_value = NULL,
     lambda = NULL, 
     .override_existing = FALSE) {
@@ -168,7 +168,7 @@ create_transformation_parameter_skeleton <- function(
     feature_type = feature_info@feature_type,
     available = is_available(feature_info),
     method = method,
-    estimation_method = estimation_method,
+    optimisation_criterion = optimisation_criterion,
     gof_p_value = gof_p_value,
     lambda = lambda)
 
@@ -185,7 +185,7 @@ create_transformation_parameter_skeleton <- function(
     feature_type = "numeric",
     available = TRUE,
     method,
-    estimation_method = "cramer_von_mises",
+    optimisation_criterion = "cramer_von_mises",
     gof_p_value = NULL,
     lambda = NULL) {
   # This is the lowest level function for creation transformation parameter
@@ -209,10 +209,10 @@ create_transformation_parameter_skeleton <- function(
       paste_s(method)))
   }
   
-  # Set estimation method.
+  # Set estimation method (optimisation criterion).
   fitting_parameters <- c(
     fitting_parameters,
-    list("estimation_method" = estimation_method)
+    list("estimation_method" = optimisation_criterion)
   )
   
   # Set shift argument.
