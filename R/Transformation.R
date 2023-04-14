@@ -347,7 +347,10 @@ setMethod(
     transformer <- suppressWarnings(
       do.call(
         power.transform::find_transformation_parameters,
-        args = object@fitting_parameters),
+        args = c(
+          list("x" = data),
+          object@fitting_parameters)
+      ),
       classes = c(
         "power_transform_no_transform",
         "power_transform_few_unique_values",
