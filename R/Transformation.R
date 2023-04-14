@@ -342,6 +342,14 @@ setMethod(
       return(object)
     }
 
+    # The case where all data are missing is not handled by the power.transform
+    # package, which (correctly) throws an error.
+    if (is.numeric(data)) {
+      if (all(!is.finite(data))) {
+        object@fitting_parameters$method <- "none"
+      }
+    }
+    
     # Create transformer using the power.transform package. Suppress specific
     # types of warnings related to the input data.
     transformer <- suppressWarnings(
