@@ -192,7 +192,10 @@ create_transformation_parameter_skeleton <- function(
   # skeletons. This function always generates the same class of object. Fitting
   # parameters are passed on to power.transform::find_transformation_parameters.
 
-  if (feature_type != "numeric" || 
+  if (!require_package("power.transform", message_type = "silent")) {
+    fitting_parameters <- list("method" = "none")
+    
+  } else if (feature_type != "numeric" || 
       !available || 
       (method %in% .get_available_none_transformation_methods())) {
     fitting_parameters <- list("method" = "none")
@@ -328,11 +331,16 @@ setMethod(
     object,
     data,
     ...) {
-    # This method is targeted in when directly determining the transformation
-    # parameters. It is usually called from the child functions.
-
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
+    
+    # Check if the power.transform package is present.
+    if (!require_package("power.transform", message_type = "silent")) {
+      object@method <- "none"
+      object@complete <- TRUE
+      
+      return(object)
+    }
 
     # Create transformer using the power.transform package. Suppress specific
     # types of warnings related to the input data.
@@ -368,6 +376,19 @@ setMethod(
     data,
     invert = FALSE,
     ...) {
+    
+    # Check if the power.transform package is present.
+    if (!require_package("power.transform", message_type = "silent")) {
+      if (object@method == "none") {
+        return(data)
+        
+      } else {
+        require_package(
+          "power.transform",
+          purpose = "to transform features",
+          message_type = "error")
+      }
+    }
     
     if (invert) {
       return(power.transform::revert_power_transform(
