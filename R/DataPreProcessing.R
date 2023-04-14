@@ -447,7 +447,10 @@ determine_preprocessing_parameters <- function(
   # Add skeletons to the feature information list.
   feature_info_list <- create_transformation_parameter_skeleton(
     feature_info_list = feature_info_list,
-    transformation_method = settings$prep$transform_method)
+    transformation_method = settings$prep$transform_method,
+    transformation_optimisation_criterion = settings$transformation_optimisation_criterion,
+    transformation_gof_p_value = settings$transformation_gof_test_p_value
+  )
   
   # Add transformation parameters to the feature information list
   feature_info_list <- add_transformation_parameters(

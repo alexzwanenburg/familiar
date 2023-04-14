@@ -1256,42 +1256,52 @@
 #'
 #'   * `none`: This disables transformation of features.
 #'
-#'   * `yeo_johnson` (default): Transformation using the Yeo-Johnson
-#'   transformation (Yeo and Johnson, 2000). The algorithm tests various lambda
-#'   values and selects the lambda that maximises the log-likelihood.
+#'   * `yeo_johnson`: Transformation using the shift-sensitive version of the
+#'   Yeo-Johnson transformation (Yeo and Johnson, 2000; Zwanenburg and Löck,
+#'   2023).
 #'
-#'   * `yeo_johnson_trim`: As `yeo_johnson`, but based on the set of feature
-#'   values where the 5% lowest and 5% highest values are discarded. This
-#'   reduces the effect of outliers.
+#'   * `yeo_johnson_robust` (default): A robust version of `yeo_johnson`.
+#'   This method is less sensitive to outliers.
 #'
-#'   * `yeo_johnson_winsor`: As `yeo_johnson`, but based on the set of feature
-#'   values where the 5% lowest and 5% highest values are winsorised. This
-#'   reduces the effect of outliers.
+#'   * `yeo_johnson_non_shift`: As `yeo_johnson`, but without optimisation of
+#'   the shift parameter. This method is equivalent to the original
+#'   transformation proposed by Yeo and Johnson (2001).
 #'
-#'   * `yeo_johnson_robust`: A robust version of `yeo_johnson` after Raymaekers
-#'   and Rousseeuw (2021). This method is less sensitive to outliers.
+#'   * `box_cox`: Transformation using the shift-sensitive version of the
+#'   Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck, 2023).
 #'
-#'   * `box_cox`: Transformation using the Box-Cox transformation (Box and Cox,
-#'   1964). Unlike the Yeo-Johnson transformation, the Box-Cox transformation
-#'   requires that all data are positive. Features that contain zero or negative
-#'   values cannot be transformed using this transformation. The algorithm tests
-#'   various lambda values and selects the lambda that maximises the
-#'   log-likelihood.
+#'   * `box_cox_robust`: A robust version of `yeo_johnson`. This method is less
+#'   sensitive to outliers.
 #'
-#'   * `box_cox_trim`: As `box_cox`, but based on the set of feature values
-#'   where the 5% lowest and 5% highest values are discarded. This reduces the
-#'   effect of outliers.
+#'   * `box_cox_non_shift`: As `box_cox`, but without optimisation of
+#'   the shift parameter. This method is equivalent to the original
+#'   transformation proposed by Box and Cox (1964). This method requires
+#'   strictly positive feature values.
 #'
-#'   * `box_cox_winsor`: As `box_cox`, but based on the set of feature values
-#'   where the 5% lowest and 5% highest values are winsorised. This reduces the
-#'   effect of outliers.
+#'   Transformation requires the `power.transform` package. Only features that
+#'   contain numerical data are transformed. Transformation parameters obtained
+#'   in development data are stored within `featureInfo` objects for later use
+#'   with validation data sets.
 #'
-#'   * `box_cox_robust`: A robust verson of `box_cox` after Raymaekers and
-#'   Rousseew (2021). This method is less sensitive to outliers.
+#' @param transformation_optimisation_criterion (*optional*) Transformation
+#'   parameters are optimised using a criterion, conventionally
+#'   maximum-likelihood-estimation. `power.transform` implements multiple
+#'   optimisation criteria, of which the following are available:
 #'
-#'   Only features that contain numerical data are transformed. Transformation
-#'   parameters obtained in development data are stored within `featureInfo`
-#'   objects for later use with validation data sets.
+#'   * `mle`: Optimisation using maximum likelihood estimation.
+#'
+#'   * `cramer_von_mises` (default): Optimisation using the Cramér-von Mises
+#'   criterion. Zwanenburg and Löck (2023) found that this criterion was
+#'   relatively robust against outliers.
+#'
+#' @param transformation_gof_test_p_value (*optional*) Not all transformations
+#'   will lead to features that are roughly normally distributed. Zwanenburg and
+#'   Löck (2023) established a empirical goodness-of-fit test for central
+#'   normality. This parameter sets the significance for rejecting the
+#'   null-hypothesis that a feature distribution is centrally normal. When the
+#'   null-hypothesis is rejected, no transformation is performed. The default
+#'   value is `NULL`, which disables the test.
+#'
 #' @param normalisation_method (*optional*) The normalisation method used to
 #'   improve the comparability between numerical features that may have very
 #'   different scales. The following normalisation methods can be chosen:
@@ -1647,6 +1657,8 @@
     robustness_threshold_metric = waiver(),
     robustness_threshold_value = waiver(),
     transformation_method = waiver(),
+    transformation_optimisation_criterion = waiver(),
+    transformation_gof_test_p_value = waiver(),
     normalisation_method = waiver(),
     batch_normalisation_method = waiver(),
     imputation_method = waiver(),
@@ -1903,7 +1915,53 @@
     x = settings$transform_method,
     var_name = "transformation_method",
     values = .get_available_transformation_methods())
+  
+  # If power.transform is not installed, no transformation can be performed.
+  if (!require_package(
+    x = "power.transform",
+    purpose = "to transform data",
+    message_type = "backend_warning")) {
+    
+    settings$transform_method <- "none"
+  }
 
+  # transformation_optimisation_criterion --------------------------------------
+  # Optimisation criterion
+  settings$transformation_optimisation_criterion <- .parse_arg(
+    x_config = config$transformation_optimisation_criterion,
+    x_var = transformation_optimisation_criterion,
+    var_name = "transformation_optimisation_criterion",
+    type = "character",
+    optional = TRUE,
+    default = "cramer_von_mises"
+  )
+  
+  .check_parameter_value_is_valid(
+    x = settings$transformation_optimisation_criterion,
+    var_name = "transformation_optimisation_criterion",
+    values = c("mle", "cramer_von_mises")
+  )
+  
+  # transformation_gof_test_p_value --------------------------------------------
+  # Significance threshold for empirical goodness-of-fit test for central
+  # normality.
+  settings$transformation_gof_test_p_value <- .parse_arg(
+    x_config = config$transformation_gof_test_p_value,
+    x_var = transformation_gof_test_p_value,
+    var_name = "transformation_gof_test_p_value",
+    type = "numeric",
+    optional = TRUE,
+    default = NULL
+  )
+  
+  if (!is.null(settings$transformation_gof_test_p_value)) {
+    .check_number_in_valid_range(
+      x = settings$transformation_gof_test_p_value,
+      var_name = "transformation_gof_test_p_value",
+      range = c(0.0, 1.0)
+    )
+  }
+  
   # normalisation_method -------------------------------------------------------
   # Normalisation method
   settings$normalisation_method <- .parse_arg(

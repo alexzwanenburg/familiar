@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include Transformation.R
 NULL
 
 # update_object (generic) ------------------------------------------------------
