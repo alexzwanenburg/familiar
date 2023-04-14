@@ -82,11 +82,11 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
 
         if (n_numeric_features > 0 && transformation_method != "none") {
           # Expect that the selected transformation method matches the selected
+          # method -- Note that the method attribute is only the transformation
           # method.
-          testthat::expect_equal(
-            aggr_transform_parameters$parameters@method,
-            transformation_method,
-            ignore_attr = TRUE)
+          testthat::expect_true(startsWith(
+            x = transformation_method,
+            prefix = aggr_transform_parameters$parameters@method))
 
           # Expect that the lambda is finite.
           testthat::expect_true(is.finite(power.transform::get_lambda(
@@ -480,10 +480,10 @@ testthat::test_that(
 
     # Check that this only updates features 1 and 2.
     testthat::expect_equal(
-      feature_info_list$feature_1@transformation_parameters@method,
+      feature_info_list$feature_1@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(
-      feature_info_list$feature_2@transformation_parameters@method,
+      feature_info_list$feature_2@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(feature_info_list$feature_3@transformation_parameters, NULL)
     testthat::expect_equal(feature_info_list$feature_4@transformation_parameters, NULL)
@@ -496,13 +496,13 @@ testthat::test_that(
 
     # Check that this only updates feature 3.
     testthat::expect_equal(
-      feature_info_list$feature_1@transformation_parameters@method,
+      feature_info_list$feature_1@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(
-      feature_info_list$feature_2@transformation_parameters@method,
+      feature_info_list$feature_2@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(
-      feature_info_list$feature_3@transformation_parameters@method,
+      feature_info_list$feature_3@transformation_parameters@fitting_parameters$method,
       "yeo_johnson")
     testthat::expect_equal(
       feature_info_list$feature_4@transformation_parameters,
@@ -516,16 +516,16 @@ testthat::test_that(
     
     # Check that this only updates feature 4.
     testthat::expect_equal(
-      feature_info_list$feature_1@transformation_parameters@method,
+      feature_info_list$feature_1@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(
-      feature_info_list$feature_2@transformation_parameters@method,
+      feature_info_list$feature_2@transformation_parameters@fitting_parameters$method,
       "box_cox")
     testthat::expect_equal(
-      feature_info_list$feature_3@transformation_parameters@method,
+      feature_info_list$feature_3@transformation_parameters@fitting_parameters$method,
       "yeo_johnson")
     testthat::expect_equal(
-      feature_info_list$feature_4@transformation_parameters@method,
+      feature_info_list$feature_4@transformation_parameters@fitting_parameters$method,
       "none")
 
     # Update the feature info list.
