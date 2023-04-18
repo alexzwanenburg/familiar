@@ -6968,3 +6968,8 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 
   return(object)
 }
+
+
+.is_testing <- function() {
+  return(identical(Sys.getenv("TESTTHAT"), "true"))
+}
