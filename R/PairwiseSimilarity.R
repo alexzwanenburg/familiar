@@ -400,7 +400,7 @@ setMethod(
     
     if (analysis_info$type %in% c("gaussian", "binomial")) {
       
-      if (analysis_info == "gaussian") {
+      if (analysis_info$type == "gaussian") {
         fitting_family <- stats::gaussian()
       } else {
         fitting_family <- stats::binomial()
