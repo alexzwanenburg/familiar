@@ -434,12 +434,15 @@ setMethod(
 
   # Suppress NOTES due to non-standard evaluation in data.table
   n <- method <- NULL
-
+  
+  none_object <- ..create_transformation_parameter_skeleton(
+    feature_name = feature_name,
+    method = "none")
+  none_object@transformer <- power.transform::create_transformer_skeleton(method = "none")
+  
   if (!any(instance_mask)) {
     return(list(
-      "parameters" = ..create_transformation_parameter_skeleton(
-        feature_name = feature_name,
-        method = "none"),
+      "parameters" = none_object,
       "instance_mask" = instance_mask))
   }
 
@@ -457,9 +460,7 @@ setMethod(
   # method.
   if (all(object_method[instance_mask] == "none")) {
     return(list(
-      "parameters" = ..create_transformation_parameter_skeleton(
-        feature_name = feature_name,
-        method = "none"),
+      "parameters" = none_object,
       "instance_mask" = instance_mask))
   }
 
