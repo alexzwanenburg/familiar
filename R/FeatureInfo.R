@@ -1196,12 +1196,14 @@ setMethod(
     transform_parameters <- object@transformation_parameters
     if (!is.null(transform_parameters)) {
       if (is(transform_parameters, "featureInfoParametersTransformationPowerTransform")) {
-        if (transform_parameters@lambda != 1.0) {
+        if (transform_parameters@method != "none") {
           transform_str <- paste0(
             "  transformation (",
             transform_parameters@method,
             ") with \u03BB = ",
-            transform_parameters@lambda,
+            power.transform::get_lambda(transform_parameters@transformer),
+            " and shift = ",
+            power.transform::get_shift(transform_parameters@transformer),
             ".\n")
         }
       }
