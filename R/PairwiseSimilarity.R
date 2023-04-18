@@ -397,6 +397,8 @@ setMethod(
     
     x <- analysis_info$x
     y <- analysis_info$y
+    x_categorical <- analysis_info$x_categorical
+    y_categorical <- analysis_info$y_categorical
     
     if (analysis_info$type %in% c("gaussian", "binomial")) {
       
@@ -763,14 +765,15 @@ compute_sample_similarity_metric <- function(
   # Generate all combinations of samples
   combinations <- utils::combn(seq_len(nrow(data@data)), 2)
   
-  # Encode data -- this has no effect for distance-based metrics.
-  data <- encode_categorical_variables(object = object, data = data)
-  
-  # Find feature columns and categorical mask from encoded data.
-  feature_columns <- get_feature_columns(data)
-  categorical_mask <- sapply(
-    feature_columns,
-    function(feature, x) (is.factor(x[[feature]])))
+  # # Encode data -- this has no effect for distance-based metrics.
+  # data <- encode_categorical_variables(object = object, data = data)
+  # 
+  # # Find feature columns and categorical mask from encoded data.
+  # feature_columns <- get_feature_columns(data)
+  # categorical_mask <- sapply(
+  #   feature_columns,
+  #   function(feature, x) (is.factor(x[[feature]])),
+  #   )
   
   # Determine similarity measures for each sample pair.
   similarity <- fam_sapply(
@@ -1025,17 +1028,23 @@ setMethod(
   if (requires_swap) {
     x_out <- y
     y_out <- x
+    x_categorical_out <- y_categorical
+    y_categorical_out <- x_categorical
     
   } else {
     x_out <- x
     y_out <- y
+    x_categorical_out <- x_categorical
+    y_categorical_out <- y_categorical
   }
   
   return(list(
     "type" = analysis_type,
     "swap" = requires_swap,
     "x" = x_out,
-    "y" = y_out))
+    "y" = y_out,
+    "x_categorical" = x_categorical_out,
+    "y_categorical" = y_categorical_out))
 }
 
 
