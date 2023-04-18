@@ -18,41 +18,49 @@
 
 
 ..deprecation_count <- function() {
-  rlang::warn(
-    message = "The \"count\" outcome type will be deprecated in familiar version 2.0.0.",
-    class = "deprecation_warning",
-    .frequency = "once",
-    .frequency_id = "deprecation_warning_count")
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The \"count\" outcome type will be deprecated in familiar version 2.0.0.",
+      class = "deprecation_warning",
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_count")
+  }
 }
 
 
 
 ..deprecation_vgam <- function() {
-  rlang::warn(
-    message = "The use of VGAM for multinomial logistic models will be deprecated in familiar version 2.0.0.",
-    class = "deprecation_warning",
-    .frequency = "once",
-    .frequency_id = "deprecation_warning_vgam")
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The use of VGAM for multinomial logistic models will be deprecated in familiar version 2.0.0.",
+      class = "deprecation_warning",
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_vgam")
+  }
 }
 
 
 
 ..deprecation_qvalue <- function() {
-  rlang::warn(
-    message = "The use of qvalue for computing q-values will be deprecated in familiar version 2.0.0.",
-    class = "deprecation_warning",
-    .frequency = "once",
-    .frequency_id = "deprecation_warning_qvalue")
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The use of qvalue for computing q-values will be deprecated in familiar version 2.0.0.",
+      class = "deprecation_warning",
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_qvalue")
+  }
 }
 
 
 
 ..deprecation_mboost <- function() {
-  rlang::warn(
-    message = "The use of mboost for gradient boosted models will be deprecated in familiar version 2.0.0.",
-    class = "deprecation_warning",
-    .frequency = "once",
-    .frequency_id = "deprecation_warning_mboost")
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The use of mboost for gradient boosted models will be deprecated in familiar version 2.0.0.",
+      class = "deprecation_warning",
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_mboost")
+  }
 }
 
 
