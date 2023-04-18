@@ -111,6 +111,9 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
   }
 }
 
+# Don't perform any further tests on CRAN due to running time.
+testthat::skip_on_cran()
+
 # NA-value test ----------------------------------------------------------------
 for (n_numeric_features in c(4, 3, 2, 1, 0)) {
   data <- familiar:::test_create_synthetic_series_na_data(
