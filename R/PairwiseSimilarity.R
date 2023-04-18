@@ -211,11 +211,11 @@ compute_feature_similarity_metric <- function(
   categorical_mask <- sapply(
     feature_info_list[feature_columns],
     function(x) (x@feature_type == "factor"))
-  
-  if (is_available(object = object, any_categorical = any(categorical_mask))) {
+
+  if (!is_available(object = object, any_categorical = any(categorical_mask))) {
     rlang::warn(
       message = paste0(
-        "The ", similarity_metric, " can not be used to assess similarity between ",
+        "The ", similarity_metric, " metric can not be used to assess similarity between ",
         "categorical variables. We will use mutual_information instead."),
       class = "parameter_replacement_warning")
     
