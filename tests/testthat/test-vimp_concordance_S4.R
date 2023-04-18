@@ -106,5 +106,5 @@ testthat::test_that(paste0("The concordance method correctly ranks survival outc
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")))
 })
