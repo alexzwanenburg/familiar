@@ -936,7 +936,7 @@ setMethod(
     
     # Remove missing elements.
     valid_elements <- is.finite(x) & is.finite(y)
-    if (sum(valid_elements) <= 1) return(callNextMethod())
+    if (sum(valid_elements) < 1) return(callNextMethod())
     
     # Keep only valid elements.
     x <- x[valid_elements]
