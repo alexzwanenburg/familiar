@@ -234,7 +234,7 @@ create_transformation_parameter_skeleton <- function(
   if (!is.null(gof_p_value)) {
     fitting_parameters <- c(
       fitting_parameters,
-      list("empirical_gof_normality_p_value " = gof_p_value)
+      list("empirical_gof_normality_p_value" = gof_p_value)
     )
   } 
   
