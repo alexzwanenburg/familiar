@@ -156,10 +156,10 @@ setMethod(
     data = "dataObject"),
   function(object, data, ...) {
     # Check if the training data is ok.
-    if (has_bad_training_data(object = object, data = data)) callNextMethod()
+    if (has_bad_training_data(object = object, data = data)) return(callNextMethod())
 
     # Check if hyperparameters are set.
-    if (is.null(object@hyperparameters)) callNextMethod()
+    if (is.null(object@hyperparameters)) return(callNextMethod())
 
     # Check that required packages are loaded and installed.
     require_package(object, "train")
@@ -261,6 +261,39 @@ setMethod(
     object@is_trimmed <- TRUE
 
     return(object)
+  }
+)
+
+
+
+
+# has_bad_training_data --------------------------------------------------------
+setMethod(
+  "has_bad_training_data", 
+  signature(
+    object = "familiarNoveltyDetector",
+    data = "dataObject"),
+  function(
+    object,
+    data,
+    allow_no_features = FALSE,
+    ...) {
+    # Checks the data for consistency and usability. Any errors are passed as
+    # attributes
+    
+    # Call general, less stringent, routine first.
+    return_value <- callNextMethod()
+    if (return_value) return(return_value)
+    
+    if (nrow(data@data) < 3) {
+      return_value <- TRUE
+      attr(return_value, "error") <- paste0(
+        "Too few samples were available to train the isolation forest.")
+      
+      return(return_value)
+    }
+    
+    return(FALSE)
   }
 )
 
