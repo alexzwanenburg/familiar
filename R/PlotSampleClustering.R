@@ -1577,6 +1577,11 @@ setMethod(
 
   # y_breaks
   if (is.null(dist_breaks)) {
+    if (diff(dist_range) == 0.0) {
+      dist_range[1] <- dist_range[1] - 0.1
+      dist_range[2] <- dist_range[2] + 0.1
+    }
+    
     .check_input_plot_args(
       y_range = dist_range,
       y_n_breaks = dist_n_breaks
