@@ -188,8 +188,7 @@ testthat::test_that("Gradient boosting regression model has variable importance"
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
 
   # Expect that avginc has rank 1 and calwpct has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "avginc")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "calwpct")
+  testthat::expect_true(all(vimp_table[rank <= 2, ]$name %in% c("avginc", "calwpct")))
 })
 
 

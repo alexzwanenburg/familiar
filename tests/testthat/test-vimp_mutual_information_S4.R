@@ -112,7 +112,7 @@ testthat::test_that(paste0("MIFS correctly ranks continuous data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_truel(any(vimp_table[rank <= 2]$name %in% c(
+  testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
     "enrltot", "avginc", "calwpct")))
 })
 

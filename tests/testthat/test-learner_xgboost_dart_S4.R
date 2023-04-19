@@ -206,7 +206,7 @@ testthat::test_that("Extreme gradient boosting dart tree model has variable impo
   # Expect that avg_rooms has rank 1 and lower_status_percentage has rank 2.
   testthat::expect_true(vimp_table[rank == 1, ]$name %in% c(
     "avg_rooms", "lower_status_percentage", "per_capita_crime", "residence_before_1940_proportion"))
-  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c(
+  testthat::expect_true(vimp_table[rank == 2, ]$name %in% c(
     "avg_rooms", "lower_status_percentage", "per_capita_crime", "residence_before_1940_proportion"))
 })
 
