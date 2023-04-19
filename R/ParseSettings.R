@@ -1288,9 +1288,9 @@
 #'   maximum-likelihood-estimation. `power.transform` implements multiple
 #'   optimisation criteria, of which the following are available:
 #'
-#'   * `mle`: Optimisation using maximum likelihood estimation.
+#'   * `mle` (default): Optimisation using maximum likelihood estimation.
 #'
-#'   * `cramer_von_mises` (default): Optimisation using the Cramér-von Mises
+#'   * `cramer_von_mises`: Optimisation using the Cramér-von Mises
 #'   criterion. Zwanenburg and Löck (2023) found that this criterion was
 #'   relatively robust against outliers.
 #'
@@ -1933,7 +1933,7 @@
     var_name = "transformation_optimisation_criterion",
     type = "character",
     optional = TRUE,
-    default = "cramer_von_mises"
+    default = "mle"
   )
   
   .check_parameter_value_is_valid(

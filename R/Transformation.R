@@ -94,7 +94,7 @@ create_transformation_parameter_skeleton <- function(
     feature_names = NULL,
     transformation_method,
     transformation_lambda = NULL,
-    transformation_optimisation_criterion = "cramer_von_mises",
+    transformation_optimisation_criterion = "mle",
     transformation_gof_p_value = NULL,
     .override_existing = FALSE) {
   # Creates a skeleton for the provided transformation method. If
@@ -151,7 +151,7 @@ create_transformation_parameter_skeleton <- function(
 .create_transformation_parameter_skeleton <- function(
     feature_info, 
     method,
-    optimisation_criterion = "cramer_von_mises",
+    optimisation_criterion = "mle",
     gof_p_value = NULL,
     lambda = NULL, 
     .override_existing = FALSE) {
@@ -185,7 +185,7 @@ create_transformation_parameter_skeleton <- function(
     feature_type = "numeric",
     available = TRUE,
     method,
-    optimisation_criterion = "cramer_von_mises",
+    optimisation_criterion = "mle",
     gof_p_value = NULL,
     lambda = NULL) {
   # This is the lowest level function for creation transformation parameter

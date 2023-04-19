@@ -92,7 +92,7 @@
       <robustness_threshold_value></robustness_threshold_value>
       <!-- Feature transformation method (optional, default: yeo_johnson_robust; otherwise one of none, box_cox, box_cox_robust, box_cox_non_shift, yeo_johnson, yeo_johnson_non_shift) -->
       <transformation_method></transformation_method>
-      <!-- Criterion for optimising feature values. (optional, default: cramer_von_mises; otherwise mle) -->
+      <!-- Criterion for optimising feature values. (optional, default: mle; otherwise cramer_von_mises) -->
       <transformation_optimisation_criterion></transformation_optimisation_criterion>
       <!-- Significance level for rejecting non-normal distributions using an empirical goodness-of-fit test -->
       <transformation_gof_test_p_value></transformation_gof_test_p_value>
