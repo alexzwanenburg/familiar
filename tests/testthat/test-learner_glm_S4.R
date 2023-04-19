@@ -277,8 +277,7 @@ testthat::test_that("Generalised linear model has variable importance", {
   testthat::expect_true(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
 
   # Expect that Petal length has rank 1 and petal width has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("Petal_Length", "Petal_Width"), TRUE)
-  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("Petal_Length", "Petal_Width"), TRUE)
+  testthat::expect_true(all(vimp_table[rank <= 2, ]$name %in% c("Petal_Length", "Petal_Width")))
 })
 
 

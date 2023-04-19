@@ -136,8 +136,8 @@ testthat::test_that("Naive Bayes model can train on wide data", {
   # Variable importance table is empty.
   testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
 
-  # Valid predictions cannot be made.
-  testthat::expect_equal(familiar:::any_predictions_valid(
+  # Valid predictions can be made.
+  testthat::expect_true(familiar:::any_predictions_valid(
     familiar:::.predict(wide_model, wide_data),
     outcome_type = wide_data@outcome_type))
 

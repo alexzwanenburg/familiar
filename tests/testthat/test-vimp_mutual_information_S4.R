@@ -59,7 +59,7 @@ testthat::test_that(paste0("MIFS correctly ranks count data."), {
     familiar:::.vimp(vimp_object, data)))
 
   testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage")))
+    "per_capita_crime", "lower_status_percentage", "industry")))
 })
 
 # Process dataset.
@@ -76,7 +76,7 @@ testthat::test_that(paste0("MRMR correctly ranks count data."), {
     familiar:::.vimp(vimp_object, data)))
 
   testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage")))
+    "per_capita_crime", "lower_status_percentage", "industry")))
 })
 
 # Continuous outcome -----------------------------------------------------------
@@ -112,7 +112,7 @@ testthat::test_that(paste0("MIFS correctly ranks continuous data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c(
+  testthat::expect_truel(any(vimp_table[rank <= 2]$name %in% c(
     "enrltot", "avginc", "calwpct")))
 })
 

@@ -54,7 +54,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
 
         # Check that the combination of in-bag and out-of-bag data is the same
         # as the input dataset.
-        testthat::expect_false(data.table::fsetequal(
+        testthat::expect_true(data.table::fsetequal(
           unique(rbind(subsample_data$train_list[[ii]], subsample_data$valid_list[[ii]])),
           unique(data@data[, mget(familiar:::get_id_columns(id_depth = "series"))])
         ))
@@ -241,7 +241,7 @@ for (outcome_type in c("binomial", "multinomial")) {
     if (length(subsample_data) > 1) {
       for (ii in 1:(length(subsample_data) - 1)) {
         for (jj in (ii + 1):length(subsample_data)) {
-          testthat::expect_true(data.table::fsetequal(
+          testthat::expect_false(data.table::fsetequal(
             subsample_data[[ii]],
             subsample_data[[jj]]))
         }
