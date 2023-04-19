@@ -495,7 +495,8 @@ setMethod(
   }
   
   # Determine metric scores for the real (unshuffled) data
-  scores <- ..compute_permutation_vimp(
+  scores <- list()
+  scores[[1L]] <- ..compute_permutation_vimp(
     data_element = data_element,
     object = object,
     data = NULL,
@@ -504,9 +505,8 @@ setMethod(
     ...)
   
   # Determine metric scores for the shuffled data.
-  scores <- list()
   for (ii in seq_len(n_shuffles)) {
-    scores[[ii]] <- ..compute_permutation_vimp(
+    scores[[ii + 1L]] <- ..compute_permutation_vimp(
       data_element = data_element,
       object = object,
       data = data,
@@ -614,10 +614,10 @@ setMethod(
     data = prediction_data,
     time = data_element@identifiers$evaluation_time)
   
-  return(list(data.table::data.table(
+  return(data.table::data.table(
     "metric" = metric,
     "value" = score,
-    "is_shuffled" = !is.null(shuffled_features))))
+    "is_shuffled" = !is.null(shuffled_features)))
 }
 
 
