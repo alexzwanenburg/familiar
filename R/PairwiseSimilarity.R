@@ -366,8 +366,11 @@ setMethod(
     x <- x[valid_elements]
     y <- y[valid_elements]
     
-    # Check if there are more than one unique values in x and or y.
-    if (length(unique(x)) == 1 && length(unique(y)) == 1) return(1.0)
+    # Check if x and y are both invariant.
+    x_invariant <- all(x == x[1])
+    y_invariant <- all(y == y[1])
+    if (x_invariant && y_invariant) return(1.0)
+    if (x_invariant || y_invariant) return(0.0)
     
     if (type == "approximate") {
       # Select the number of samples for the computing approximate distances.
@@ -382,10 +385,13 @@ setMethod(
       if (x_categorical) x <- droplevels(x)
       y <- y[sample_index]
       if (y_categorical) y <- droplevels(y)
+      
+      # Check if x and y are now both invariant.
+      x_invariant <- all(x == x[1])
+      y_invariant <- all(y == y[1])
+      if (x_invariant && y_invariant) return(1.0)
+      if (x_invariant || y_invariant) return(0.0)
     }
-    
-    # Check if there are more than one unique values in x and or y.
-    if (length(unique(x)) == 1 && length(unique(y)) == 1) return(1.0)
     
     # Find analysis type and whether x and y should be swapped in the models,
     # based on information content.
