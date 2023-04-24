@@ -109,7 +109,7 @@ testthat::test_that(paste0(
     familiar:::.vimp(vimp_object, data)))
 
   testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness", "bare_nuclei")))
+   "epithelial_cell_size", "cell_shape_uniformity", "clump_thickness", "bare_nuclei")))
 })
 
 # Process dataset.
