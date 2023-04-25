@@ -1156,12 +1156,11 @@ setMethod(
   "requires_naive_model",
   signature(object = "familiarModel"),
   function(object, ...) {
-    # Determine if the model hyperparameters specify that a naive model
-    # should be trained.
-    if (!has_optimised_hyperparameters(object = object)) {
-      ..error_reached_unreachable_code("optimised hyperparameters are expected")
-    }
-
+    # Determine if the model hyperparameters specify that a naive model should
+    # be trained. This obviously does not work if there no hyperparameters to
+    # speak of.
+    if (!has_optimised_hyperparameters(object = object)) return(FALSE)
+    
     # Check if the signature size hyperparameter exists.
     if (is.null(object@hyperparameters$sign_size)) return(FALSE)
 
