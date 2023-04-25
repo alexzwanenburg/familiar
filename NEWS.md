@@ -1,3 +1,9 @@
+# Version 1.4.3 (Puzzled Prawn)
+
+## Bug fixes
+
+- Prevented an error due to an overzealous check for hyperparameters being present for training a model.
+
 # Version 1.4.2 (Omnicompetent Owl)
 
 ## Bug fixes
