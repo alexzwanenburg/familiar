@@ -4,6 +4,10 @@
 
 - The source code now uses the `tidyverse` code style.
 
+## Bug fixes
+
+- Prevent errors due to parsing columns called `for`, `if` or `in`.
+
 # Version 1.4.3 (Puzzled Prawn)
 
 ## Bug fixes
