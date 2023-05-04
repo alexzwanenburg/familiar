@@ -17,7 +17,7 @@
   column_name <- gsub(pattern = "^([0-9])", replacement = "n_\\1", column_name)
 
   # Replace illegal strings that will cause issues for stats::reformulate.
-  illegal_names <- column_name %in% c("in", "for", "if")
+  illegal_names <- column_name %in% c("else", "for", "function", "if", "in", "while")
   if (any(illegal_names)) column_name[illegal_names] <- paste0(column_name[illegal_names], "_")
   
   return(column_name)
