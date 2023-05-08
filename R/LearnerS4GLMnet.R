@@ -19,33 +19,47 @@ setClass(
 ## familiarGLMnetRidge ---------------------------------------------------------
 setClass(
   "familiarGLMnetRidge",
-  contains = "familiarGLMnet")
+  contains = "familiarGLMnet"
+)
 
 ## familiarGLMnetLasso ---------------------------------------------------------
 setClass(
   "familiarGLMnetLasso",
-  contains = "familiarGLMnet")
+  contains = "familiarGLMnet"
+)
 
 ## familiarGLMnetElasticNet ----------------------------------------------------
 setClass(
   "familiarGLMnetElasticNet",
-  contains = "familiarGLMnet")
+  contains = "familiarGLMnet"
+)
 
 ## familiarGLMnetLassoTest -----------------------------------------------------
 setClass(
   "familiarGLMnetLassoTest",
-  contains = "familiarGLMnetLasso")
+  contains = "familiarGLMnetLasso"
+)
 
 ## familiarGLMnetLassoTestAllFail ----------------------------------------------
+# This class predicts NA for all samples.
 setClass(
   "familiarGLMnetLassoTestAllFail",
-  contains = "familiarGLMnetLassoTest")
+  contains = "familiarGLMnetLassoTest"
+)
 
 ## familiarGLMnetLassoTestSomeFail ---------------------------------------------
+# This class predicts NA for some sample samples,but not all.
 setClass(
   "familiarGLMnetLassoTestSomeFail",
-  contains = "familiarGLMnetLassoTest")
+  contains = "familiarGLMnetLassoTest"
+)
 
+## familiarGLMnetLassoTestAllExtreme -------------------------------------------
+# This class predicts probabilities that are always exactly 0 or 1.
+setClass(
+  "familiarGLMnetLassoTestAllExtreme",
+  contains = "familiarGLMnetLassoTest"
+)
 
 
 # initialize -------------------------------------------------------------------
@@ -801,6 +815,15 @@ setMethod(
   }
 )
 
+# is_available (extreme test) --------------------------------------------------
+setMethod(
+  "is_available",
+  signature(object = "familiarGLMnetLassoTestAllExtreme"),
+  function(object, ...) {
+    return(object@outcome_type %in% c("binomial", "multinomial"))
+  }
+)
+
 
 
 # ..predict (all fail) ---------------------------------------------------------
@@ -880,6 +903,64 @@ setMethod(
       ..error_outcome_type_not_implemented(object@outcome_type)
     }
 
+    return(prediction_table)
+  }
+)
+
+
+# ..predict (extreme) --------------------------------------------------------
+setMethod(
+  "..predict",
+  signature(
+    object = "familiarGLMnetLassoTestAllExtreme",
+    data = "dataObject"),
+  function(object, data, type = "default", ...) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    outcome <- NULL
+    
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
+    # Check that required packages are loaded and installed.
+    require_package(object, "predict")
+    browser()
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE)
+    
+    # Get an empty prediction table.
+    prediction_table <- get_placeholder_prediction_table(
+      object = object,
+      data = encoded_data$encoded_data,
+      type = type)
+    
+    if (object@outcome_type %in% c("binomial", "multinomial")) {
+      # Get class levels
+      class_levels <- get_outcome_class_levels(x = object)
+      
+      # Set probability to 1.0 for the column that matches the outcome.
+      class_probability_columns <- get_class_probability_name(x = class_levels)
+      for (ii in seq_along(class_levels)) {
+        prediction_table[, (class_probability_columns[ii]) := as.numeric(outcome == class_levels[ii])]
+      }
+      
+      # Set the class to the outcome.
+      prediction_table[, "predicted_class" := outcome]
+      
+    } else {
+      ..error_outcome_type_not_implemented(object@outcome_type)
+    }
+    
     return(prediction_table)
   }
 )
@@ -1046,6 +1127,12 @@ setMethod(
 
 .get_available_glmnet_lasso_learners_test_some_fail <- function(show_general = TRUE) {
   return("lasso_test_some_fail")
+}
+
+
+
+.get_available_glmnet_lasso_learners_test_extreme <- function(show_general = TRUE) {
+  return("lasso_test_extreme")
 }
 
 

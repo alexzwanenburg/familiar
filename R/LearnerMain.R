@@ -75,6 +75,9 @@ setMethod(
     } else if (learner %in% .get_available_glmnet_lasso_learners_test_some_fail()) {
       # Lasso penalised regression models for testing purposes.
       object <- methods::new("familiarGLMnetLassoTestSomeFail", object)
+    } else if (learner %in% .get_available_glmnet_lasso_learners_test_extreme()) {
+      # Lasso penalised regression models for testing purposes.
+      object <- methods::new("familiarGLMnetLassoTestAllExtreme", object)
     }
 
     # Add package version.
