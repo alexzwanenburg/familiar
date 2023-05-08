@@ -5171,7 +5171,7 @@ test_plots <- function(
         ifelse(
           outcome_type %in% outcome_type_available && !not_available_all_predictions_fail,
           "can", "cannot"),
-        " be created for models yield only invalid predictions."),
+        " be created for models yielding only invalid predictions."),
       {
         collection <- suppressWarnings(as_familiar_collection(
           failed_prediction_data,
@@ -5223,7 +5223,7 @@ test_plots <- function(
         ifelse(
           outcome_type %in% outcome_type_available && !not_available_some_predictions_fail,
           "can", "cannot"),
-        " be created for models yield some invalid predictions."),
+        " be created for models yielding some invalid predictions."),
       {
         collection <- suppressWarnings(as_familiar_collection(
           failing_prediction_data,
@@ -5248,6 +5248,58 @@ test_plots <- function(
         }
       }
     )
+    
+    # With extreme probability values ------------------------------------------
+    
+    # Train the model.
+    if (outcome_type %in% c("binomial", "multinomial")) {
+      model_extreme_predictions <- suppressWarnings(test_train(
+        cl = cl,
+        data = full_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        fs_method = "mim",
+        hyperparameter_list = hyperparameters,
+        learner = "lasso_test_extreme",
+        time_max = 1832,
+        create_novelty_detector = create_novelty_detector))
+      
+      extreme_prediction_data <- as_familiar_data(
+        object = model_extreme_predictions,
+        data = full_data,
+        data_element = data_element,
+        cl = cl,
+        ...)
+      
+      test_fun(
+        paste0(
+          "14. Plots for ", outcome_type, " outcomes ",
+          ifelse(
+            outcome_type %in% outcome_type_available,
+            "can", "cannot"),
+          " be created for models yielding extreme predictions."),
+        {
+          collection <- suppressWarnings(as_familiar_collection(
+            extreme_prediction_data,
+            familiar_data_names = c("extreme_predictions")))
+          
+          plot_list <- do.call(
+            plot_function,
+            args = c(
+              list("object" = collection),
+              plot_args))
+          
+          which_present <- .test_which_plot_present(plot_list)
+          
+          if (outcome_type %in% outcome_type_available) {
+            testthat::expect_equal(all(which_present), TRUE)
+            
+          } else {
+            testthat::expect_equal(any(!which_present), TRUE)
+          }
+        }
+      )
+    }
   }
 }
 
@@ -6534,6 +6586,62 @@ test_export <- function(
         }
       }
     )
+    
+    # With extreme probability values ------------------------------------------
+    
+    # Train the model.
+    if (outcome_type %in% c("binomial", "multinomial")) {
+      model_extreme_predictions <- suppressWarnings(test_train(
+        cl = cl,
+        data = full_data,
+        cluster_method = "none",
+        imputation_method = "simple",
+        fs_method = "mim",
+        hyperparameter_list = hyperparameters,
+        learner = "lasso_test_extreme",
+        time_max = 1832,
+        create_novelty_detector = create_novelty_detector))
+      
+      extreme_prediction_data <- as_familiar_data(
+        object = model_extreme_predictions,
+        data = full_data,
+        data_element = data_element,
+        cl = cl,
+        ...)
+      
+      test_fun(
+        paste0(
+          "14. Export data for ", outcome_type, " outcomes ",
+          ifelse(
+            outcome_type %in% outcome_type_available,
+            "can", "cannot"),
+          " be created for models yielding extreme predictions."),
+        {
+          collection <- suppressWarnings(as_familiar_collection(
+            extreme_prediction_data,
+            familiar_data_names = c("extreme_predictions")))
+          
+          data_elements <- do.call(
+            export_function,
+            args = c(
+              list("object" = collection),
+              export_args))
+
+          which_present <- .test_which_data_element_present(
+            data_elements,
+            outcome_type = outcome_type)
+
+          if (outcome_type %in% outcome_type_available) {
+            testthat::expect_equal(all(which_present), TRUE)
+
+            if (debug) show(data_elements)
+
+          } else {
+            testthat::expect_equal(any(!which_present), TRUE)
+          }
+        }
+      )
+    }
   }
 }
 
