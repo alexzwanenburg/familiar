@@ -172,7 +172,7 @@ setMethod(
     }
 
     # Check for lasso_test
-    if (object@learner %in% c("lasso_test_all_fail", "lasso_test_some_fail")) {
+    if (object@learner %in% c("lasso_test_all_fail", "lasso_test_some_fail", "lasso_test_extreme")) {
       fam <- ""
     }
 
