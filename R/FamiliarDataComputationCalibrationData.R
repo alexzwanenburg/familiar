@@ -1026,6 +1026,7 @@ setMethod(
     
     # Recompute the t-score
     fit_summary[, 3] <- fit_summary[, 1] / fit_summary[, 2]
+    fit_summary[, 3][fit_summary[, 2] == 0.0] <- Inf
     
     # Recompute the p-value
     fit_summary[, 4] <- 2.0 * stats::pt(abs(fit_summary[, 3]), fit$df.residual, lower.tail = FALSE)
