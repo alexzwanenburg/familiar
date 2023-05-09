@@ -12,6 +12,7 @@ familiar:::test_plots(
   not_available_all_prospective = TRUE,
   not_available_any_prospective = TRUE,
   not_available_single_sample = TRUE,
+  not_available_extreme_probability = TRUE,
   debug = debug_flag
 )
 
