@@ -2361,6 +2361,15 @@ theme_familiar <- function(
 
 
 .draw_plot <- function(plot_or_grob) {
+  suppress_warnings(
+    ..draw_plot(plot_or_grob),
+    regexp = c("containing missing values", "containing non-finite values")
+  )
+}
+
+
+
+..draw_plot <- function(plot_or_grob) {
   if (ggplot2::is.ggplot(plot_or_grob)) {
     show(plot_or_grob)
     
@@ -2374,7 +2383,6 @@ theme_familiar <- function(
   
   return(invisible(NULL))
 }
-
 
 
 .save_plot_to_file <- function(
