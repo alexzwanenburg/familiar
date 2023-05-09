@@ -263,6 +263,32 @@ condition_summary <- function(x) {
 
 
 
+suppress_warnings <- function(
+    expr,
+    classes = "warning",
+    regexp = NULL
+) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      # Attempt to silence a warning. A warning is silenced if it is one of the
+      # provided classes. In addition, if regexp is set, it is silenced only
+      # when the warning matches one of the classes, and has the regexp in its
+      # message.
+      if (rlang::inherits_any(w, classes)) {
+        if (is.null(regexp)) {
+          tryInvokeRestart("muffleWarning")
+          
+        } else if (any(sapply(regexp, grepl, x = conditionMessage(w)))) {
+          tryInvokeRestart("muffleWarning")
+        }
+      }
+    }
+  )
+}
+
+
+
 quiet <- function(x) {
   # Removes all output to console.
 
