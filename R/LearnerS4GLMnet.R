@@ -930,7 +930,7 @@ setMethod(
     
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
-    browser()
+    
     # Encode data so that the features are the same as in the training.
     encoded_data <- encode_categorical_variables(
       data = data,

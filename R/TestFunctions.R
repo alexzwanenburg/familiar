@@ -4246,6 +4246,7 @@ test_plots <- function(
     not_available_all_prospective = FALSE,
     not_available_any_prospective = FALSE,
     not_available_single_sample = FALSE,
+    not_available_extreme_probability = FALSE,
     ...,
     plot_args = list(),
     test_specific_config = FALSE,
@@ -4338,6 +4339,11 @@ test_plots <- function(
     .not_available_single_sample <- not_available_single_sample
     if (is.character(.not_available_single_sample)) {
       .not_available_single_sample <- any(.not_available_single_sample == outcome_type)
+    }
+    
+    .not_available_extreme_probability <- not_available_extreme_probability
+    if (is.character(.not_available_extreme_probability)) {
+      .not_available_extreme_probability <- any(.not_available_extreme_probability == outcome_type)
     }
 
     # Parse hyperparameter list
@@ -4679,6 +4685,13 @@ test_plots <- function(
       ...)
 
     # Create additional familiar data objects.
+    data_naive_full <- as_familiar_data(
+      object = naive_model,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
+      ...
+    )
     data_empty_full_1 <- as_familiar_data(
       object = model_full_1,
       data = empty_data,
@@ -4721,9 +4734,9 @@ test_plots <- function(
       paste0(
         "3. Plots for ", outcome_type, " outcomes ",
         ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a dataset with some missing data."),
+        " be created for a dataset with some missing data and a naive model."),
       {
-        object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
+        object <- list(data_good_full_1, data_naive_full, data_empty_full_1, data_good_full_2)
         object <- mapply(
           set_object_name,
           object,
@@ -5169,7 +5182,7 @@ test_plots <- function(
       paste0(
         "12. Plots for ", outcome_type, " outcomes ",
         ifelse(
-          outcome_type %in% outcome_type_available && !not_available_all_predictions_fail,
+          outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail,
           "can", "cannot"),
         " be created for models yielding only invalid predictions."),
       {
@@ -5184,7 +5197,7 @@ test_plots <- function(
         
         which_present <- .test_which_plot_present(plot_list)
         
-        if (outcome_type %in% outcome_type_available && !not_available_all_predictions_fail) {
+        if (outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail) {
           testthat::expect_equal(all(which_present), TRUE)
           
         } else if (!outcome_type %in% outcome_type_available) {
@@ -5221,7 +5234,7 @@ test_plots <- function(
       paste0(
         "13. Plots for ", outcome_type, " outcomes ",
         ifelse(
-          outcome_type %in% outcome_type_available && !not_available_some_predictions_fail,
+          outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail,
           "can", "cannot"),
         " be created for models yielding some invalid predictions."),
       {
@@ -5237,7 +5250,7 @@ test_plots <- function(
         
         which_present <- .test_which_plot_present(plot_list)
         
-        if (outcome_type %in% outcome_type_available && !not_available_some_predictions_fail) {
+        if (outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail) {
           testthat::expect_equal(all(which_present), TRUE)
           
         } else if (!outcome_type %in% outcome_type_available) {
@@ -5275,7 +5288,7 @@ test_plots <- function(
         paste0(
           "14. Plots for ", outcome_type, " outcomes ",
           ifelse(
-            outcome_type %in% outcome_type_available,
+            outcome_type %in% outcome_type_available && !.not_available_extreme_probability,
             "can", "cannot"),
           " be created for models yielding extreme predictions."),
         {
@@ -5291,7 +5304,7 @@ test_plots <- function(
           
           which_present <- .test_which_plot_present(plot_list)
           
-          if (outcome_type %in% outcome_type_available) {
+          if (outcome_type %in% outcome_type_available && !.not_available_extreme_probability) {
             testthat::expect_equal(all(which_present), TRUE)
             
           } else {
@@ -5499,6 +5512,7 @@ test_export <- function(
     not_available_some_predictions_fail = TRUE,
     not_available_any_prospective = FALSE,
     not_available_single_sample = FALSE,
+    not_available_extreme_probability = FALSE,
     ...,
     export_args = list(),
     test_specific_config = FALSE,
@@ -5585,6 +5599,11 @@ test_export <- function(
     .not_available_single_sample <- not_available_single_sample
     if (is.character(.not_available_single_sample)) {
       .not_available_single_sample <- any(.not_available_single_sample == outcome_type)
+    }
+
+    .not_available_extreme_probability <- not_available_extreme_probability
+    if (is.character(.not_available_extreme_probability)) {
+      .not_available_extreme_probability <- any(.not_available_extreme_probability == outcome_type)
     }
 
     # Parse hyperparameter list
@@ -5979,6 +5998,13 @@ test_export <- function(
       ...)
 
     # Create additional familiar data objects.
+    data_naive_full <- as_familiar_data(
+      object = naive_model,
+      data = full_data,
+      data_element = data_element,
+      cl = cl,
+      ...
+    )
     data_empty_full_1 <- as_familiar_data(
       object = model_full_1,
       data = empty_data,
@@ -6023,7 +6049,7 @@ test_export <- function(
         ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
         " be created for a dataset with some missing data."),
       {
-        object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
+        object <- list(data_good_full_1, data_naive_full, data_empty_full_1, data_good_full_2)
         object <- mapply(
           set_object_name,
           object,
@@ -6573,7 +6599,7 @@ test_export <- function(
           data_elements,
           outcome_type = outcome_type)
         
-        if (outcome_type %in% outcome_type_available && !not_available_some_predictions_fail) {
+        if (outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail) {
           testthat::expect_equal(all(which_present), TRUE)
           
           if (debug) show(data_elements)
@@ -6613,7 +6639,7 @@ test_export <- function(
         paste0(
           "14. Export data for ", outcome_type, " outcomes ",
           ifelse(
-            outcome_type %in% outcome_type_available,
+            outcome_type %in% outcome_type_available && !.not_available_extreme_probability,
             "can", "cannot"),
           " be created for models yielding extreme predictions."),
         {
@@ -6631,7 +6657,7 @@ test_export <- function(
             data_elements,
             outcome_type = outcome_type)
 
-          if (outcome_type %in% outcome_type_available) {
+          if (outcome_type %in% outcome_type_available && !.not_available_extreme_probability) {
             testthat::expect_equal(all(which_present), TRUE)
 
             if (debug) show(data_elements)
