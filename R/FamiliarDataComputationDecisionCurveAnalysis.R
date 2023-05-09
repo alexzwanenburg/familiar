@@ -572,6 +572,12 @@ setMethod(
     "net_benefit" = n_true_positive / n -
       n_false_positive / n * (probability / (1.0 - probability)))]
   
+  # Net benefit should be numeric.
+  data <- data[is.finite(net_benefit)]
+  
+  # Check if the data has more than 1 row.
+  if (nrow(data) <= 1) return(NULL)
+  
   # If the predicted probability occurs more than once, select the lowest net
   # benefit.
   data <- data[, list("net_benefit" = min(net_benefit)), by = "probability"]
