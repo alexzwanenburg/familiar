@@ -4682,6 +4682,9 @@ test_plots <- function(
       cl = cl,
       ...)
 
+    # Replace fs_method attribute
+    naive_model@fs_method <- "mifs"
+    
     # Create additional familiar data objects.
     data_naive_full <- as_familiar_data(
       object = naive_model,
@@ -5986,6 +5989,9 @@ test_export <- function(
       cl = cl,
       ...)
 
+    # Replace fs_method attribute
+    naive_model@fs_method <- "mifs"
+    
     # Create additional familiar data objects.
     data_naive_full <- as_familiar_data(
       object = naive_model,
