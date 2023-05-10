@@ -1248,12 +1248,12 @@ setMethod(
   if(method == "linear"){
     # Interpolate observed values. Return NA values outside the known expected
     # range.
-    observed_interpolated <- stats::approx(
+    observed_interpolated <- suppressWarnings(stats::approx(
       x=data$expected,
       y=data$observed,
       xout=expected_interpolated,
       method="linear",
-      rule=1)$y
+      rule=1)$y)
     
   } else if(method == "loess"){
     # Set up the loess model.
