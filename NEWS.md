@@ -6,7 +6,7 @@
 
 ## Bug fixes
 
-- Prevent errors due to parsing columns called `for`, `if` or `in`.
+- Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
 # Version 1.4.4 (Quixotic Quail)
 
