@@ -971,11 +971,23 @@ setMethod(
   # Get coefficients for intercept and slope
   fit_coef <- stats::coef(fit)
   
+  # Determine if there is no slope.
+  no_slope <- is.na(fit_coef["expected"]) && data.table::uniqueN(calibration_data$expected)
+  if (no_slope) fit_coef["expected"] <- 0.0
+  
   # Get confidence intervals
   fit_conf_int <- suppressWarnings(stats::confint(fit))
+  if (no_slope) fit_conf_int["expected", ] <- c(-Inf, Inf)
   
   # Get summary
   fit_summary <- suppressWarnings(stats::summary.lm(fit))$coefficients
+  if (no_slope) {
+    fit_summary <- rbind(
+      fit_summary,
+      matrix(data = c(0.0, Inf, 0.0, 1.0), ncol = 4)
+    )
+    rownames(fit_summary) <- c("(Intercept)", "expected")
+  }
   
   # Correct for having multiple overlapping groups in binomial and multinomial
   # tests.
@@ -989,6 +1001,7 @@ setMethod(
     
     # Recompute the t-score
     fit_summary[, 3] <- fit_summary[, 1] / fit_summary[, 2]
+    fit_summary[, 3][fit_summary[, 2] == 0.0] <- Inf
     
     # Recompute the p-value
     fit_summary[, 4] <- 2.0 * stats::pt(abs(fit_summary[, 3]), fit$df.residual, lower.tail = FALSE)
@@ -1235,12 +1248,12 @@ setMethod(
   if(method == "linear"){
     # Interpolate observed values. Return NA values outside the known expected
     # range.
-    observed_interpolated <- stats::approx(
+    observed_interpolated <- suppressWarnings(stats::approx(
       x=data$expected,
       y=data$observed,
       xout=expected_interpolated,
       method="linear",
-      rule=1)$y
+      rule=1)$y)
     
   } else if(method == "loess"){
     # Set up the loess model.
