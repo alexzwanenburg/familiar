@@ -54,7 +54,7 @@ setClass(
 }
 
 .get_available_yeo_johnson_transformation_methods <- function() {
-  return(c("yeo_johnson", "yeo_johnson_robust", "box_cox_non_shift"))
+  return(c("yeo_johnson", "yeo_johnson_robust", "yeo_johnson_non_shift"))
 }
 
 .get_available_transformation_methods <- function(type = "all") {
