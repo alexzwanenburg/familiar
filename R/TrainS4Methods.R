@@ -62,6 +62,7 @@ setMethod(
     hyperparameter_list = list(),
     create_bootstrap = FALSE,
     create_novelty_detector = FALSE,
+    create_naive = FALSE,
     cl = NULL,
     trim_model = FALSE,
     ...) {
@@ -94,6 +95,9 @@ setMethod(
       setting_hyperparam <- hyperparameter_list
     }
 
+    # Determine if a naive model should be forced.
+    fs_method <- ifelse(create_naive, "no_features", "none")
+    
     settings <- do.call(
       .parse_general_settings,
       args = c(
@@ -101,7 +105,7 @@ setMethod(
           "settings" = settings,
           "data" = data_bypass@data,
           "parallel" = FALSE,
-          "fs_method" = "none",
+          "fs_method" = fs_method,
           "learner" = learner,
           "hyperparameter" = setting_hyperparam),
         dots))
@@ -140,7 +144,6 @@ setMethod(
       available_features = get_available_features(
         feature_info_list = feature_info_list))
 
-
     # Find features that are required for processing the data
     required_features <- get_required_features(
       x = data,
@@ -152,6 +155,9 @@ setMethod(
       x = data,
       feature_info_list = feature_info_list)
 
+    # Naive models do not require features.
+    if (create_naive) required_features <- model_features <- NULL
+    
     # Prepare hyperparameters --------------------------------------------------
 
     # Get default hyperparameters.
@@ -189,7 +195,7 @@ setMethod(
       "familiarModel",
       outcome_type = settings$data$outcome_type,
       learner = learner,
-      fs_method = "none",
+      fs_method = fs_method,
       hyperparameters = param_list,
       required_features = required_features,
       model_features = model_features,
