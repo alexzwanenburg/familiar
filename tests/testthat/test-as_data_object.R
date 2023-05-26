@@ -467,3 +467,34 @@ testthat::test_that("Additional class levels are detected", {
     }
   }
 })
+
+
+
+# Naive model ------------------------------------------------------------------
+# Train a model to transfer settings.
+data <- familiar:::test_create_good_data("binomial")
+
+# Train a naive model using the good dataset.
+fam_naive_model <- familiar:::test_train(
+  data = data,
+  cluster_method = "none",
+  imputation_method = "simple",
+  hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
+  learner = "glm_logistic",
+  create_novelty_detector = TRUE,
+  create_naive = TRUE)
+  
+data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
+
+testthat::test_that("Naive models can be used to convert data objects.", {
+  for (strictness in c("strict", "external_warn", "external")) {
+    parsed_data <- familiar::as_data_object(
+      data = data.table::copy(data),
+      object = fam_model,
+      check_stringency = strictness)
+    
+    testthat::expect_equal(
+      levels(parsed_data@data$outcome),
+      c("benign", "malignant"))
+  }
+})
