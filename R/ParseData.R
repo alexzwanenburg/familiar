@@ -949,6 +949,8 @@ update_data_set <- function(data, object) {
         )
       }
     }
+  } else {
+    available_features <- NULL
   }
 
   # Check features -------------------------------------------------------------
