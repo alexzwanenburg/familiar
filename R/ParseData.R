@@ -848,6 +848,8 @@ update_data_set <- function(data, object){
                           paste0("No additional feature-specific details could be assessed because none of the features appear in the dataset."))
       }
     }
+  } else {
+    available_features <- NULL
   }
   
   ##### Check features #########################################################
