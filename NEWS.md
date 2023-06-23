@@ -1,3 +1,9 @@
+# Version 1.4.5 (Reminiscing Rat)
+
+## Bug fixes
+
+- Creating data objects (`as_data_object`) using naive learners now works and no longer throws an error.
+
 # Version 1.4.4 (Quixotic Quail)
 
 ## Bug fixes
