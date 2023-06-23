@@ -8,6 +8,12 @@
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
+# Version 1.4.5 (Reminiscing Rat)
+
+## Bug fixes
+
+- Creating data objects (`as_data_object`) using naive learners now works and no longer throws an error.
+
 # Version 1.4.4 (Quixotic Quail)
 
 ## Bug fixes
