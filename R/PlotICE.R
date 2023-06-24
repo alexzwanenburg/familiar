@@ -83,7 +83,7 @@ NULL
 #' @inheritParams .check_input_plot_args
 #' @inheritParams .check_plot_splitting_variables
 #' @inheritDotParams export_ice_data -object
-#' @inheritDotParams ggplot2::ggsave -height -width -units
+#' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #' @inheritDotParams extract_ice -object
 #'
 #' @details This function generates individual conditional expectation plots.
@@ -299,7 +299,7 @@ setMethod(
 #'
 #' @inheritParams plot_ice
 #' @inheritDotParams export_ice_data -object
-#' @inheritDotParams ggplot2::ggsave -height -width -units
+#' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #' @inheritDotParams extract_ice -object
 #'
 #' @details This function generates partial dependence plots. These plots come

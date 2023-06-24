@@ -30,7 +30,7 @@ NULL
 #' @inheritParams .check_plot_splitting_variables
 #' @inheritParams plot_univariate_importance
 #' @inheritDotParams as_familiar_collection -object
-#' @inheritDotParams ggplot2::ggsave -height -width -units
+#' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #' @inheritDotParams extract_permutation_vimp -object
 #'
 #' @details This function generates a horizontal barplot that lists features by

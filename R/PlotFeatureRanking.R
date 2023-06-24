@@ -38,7 +38,7 @@ NULL
 #' @inheritParams .check_input_plot_args
 #' @inheritParams .check_plot_splitting_variables
 #' @inheritDotParams as_familiar_collection -object
-#' @inheritDotParams ggplot2::ggsave -height -width -units
+#' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #' @inheritDotParams extract_fs_vimp -object -aggregation_method -rank_threshold
 #'
 #' @details This function generates a barplot based on variable importance of

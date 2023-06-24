@@ -42,7 +42,7 @@ NULL
 #' @inheritParams .check_plot_splitting_variables
 #' @inheritDotParams extract_performance -object
 #' @inheritDotParams as_familiar_collection -object
-#' @inheritDotParams ggplot2::ggsave -height -width -units
+#' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #'
 #' @details This function plots model performance based on empirical bootstraps,
 #'   using various plot representations.
