@@ -4,6 +4,8 @@
 
 - The source code now uses the `tidyverse` code style.
 
+- Power transformation is now handled by the `power.transform` package. This package replaces the internal routines that were previously used.
+
 ## Bug fixes
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
@@ -13,6 +15,8 @@
 ## Bug fixes
 
 - Creating data objects (`as_data_object`) using naive learners now works and no longer throws an error.
+
+- `filename`, `path` and `plot` arguments are not passed to `ggplot2::ggsave` for saving, and are now no longer present in the documentation of plot functions.
 
 # Version 1.4.4 (Quixotic Quail)
 
