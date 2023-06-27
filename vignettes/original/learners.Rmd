@@ -73,25 +73,6 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 | normal (gaussian) | `elastic_net_gaussian`      |   |   | × |   |   |
 | poisson | `elastic_net_poisson`                 |   |   |   | × |   |
 | cox | `elastic_net_cox`                         |   |   |   |   | × |
-|**boosted linear models**|
-| general^a^ | `boosted_glm`                      | × |   | × | × | × |
-| area under the curve | `boosted_glm_auc`        | × |   |   |   |   | 
-| cauchy | `boosted_glm_cauchy`                   | × |   |   |   |   | 
-| complementary log-log | `boosted_glm_loglog`    | × |   |   |   |   | 
-| logistic | `boosted_glm_logistic`               | × |   |   |   |   | 
-| log-logistic | `boosted_glm_log`                | × |   |   |   |   | 
-| normal | `boosted_glm_probit`                   | × |   |   |   |   | 
-| gaussian | `boosted_glm_gaussian`               |   |   | × |   |   | 
-| huber loss | `boosted_glm_huber`                |   |   | × |   |   | 
-| laplace | `boosted_glm_laplace`                 |   |   | × |   |   | 
-| poisson | `boosted_glm_poisson`                 |   |   |   | × |   | 
-| concordance index | `boosted_glm_cindex`        |   |   |   |   | × | 
-| cox | `boosted_glm_cox`                         |   |   |   |   | × | 
-| log-logistic | `boosted_glm_loglog`             |   |   |   |   | × | 
-| log-normal | `boosted_glm_lognormal`            |   |   |   |   | × | 
-| rank-based estimation | `boosted_glm_gehan`     |   |   |   |   | × | 
-| survival regression^a^ | `boosted_glm_surv`     |   |   |   |   | × | 
-| weibull | `boosted_glm_weibull`                 |   |   |   |   | × | 
 |**extreme gradient boosted linear models**|
 | general^a^ | `xgboost_lm`                       | × | × | × | × | × |
 | logistic | `xgboost_lm_logistic`                | × | × | × |   |   |
@@ -102,25 +83,6 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 |**random forests**|
 | random forest (RFSRC) | `random_forest_rfsrc`   | × | × | × | × | × |
 | random forest (ranger) | `random_forest_ranger` | × | × | × | × | × | 
-|**boosted regression trees**|
-| general^a^ | `boosted_tree`                     | × |   | × | × | × |
-| area under the curve | `boosted_tree_auc`       | × |   |   |   |   | 
-| cauchy | `boosted_tree_cauchy`                  | × |   |   |   |   | 
-| complementary log-log | `boosted_tree_loglog`   | × |   |   |   |   | 
-| logistic | `boosted_tree_logistic`              | × |   |   |   |   | 
-| log-logistic | `boosted_tree_log`               | × |   |   |   |   | 
-| normal | `boosted_tree_probit`                  | × |   |   |   |   | 
-| gaussian | `boosted_tree_gaussian`              |   |   | × |   |   | 
-| huber loss | `boosted_tree_huber`               |   |   | × |   |   | 
-| laplace | `boosted_tree_laplace`                |   |   | × |   |   | 
-| poisson | `boosted_tree_poisson`                |   |   |   | × |   | 
-| concordance index | `boosted_tree_cindex`       |   |   |   |   | × | 
-| cox | `boosted_tree_cox`                        |   |   |   |   | × | 
-| log-logistic | `boosted_tree_loglog`            |   |   |   |   | × | 
-| log-normal | `boosted_tree_lognormal`           |   |   |   |   | × | 
-| rank-based estimation | `boosted_tree_gehan`    |   |   |   |   | × | 
-| survival regression^a^ | `boosted_tree_surv`    |   |   |   |   | × | 
-| weibull | `boosted_tree_weibull`                |   |   |   |   | × | 
 |**extreme gradient boosted trees**|
 | general^a^ | `xgboost_tree`                     | × | × | × | × | × |
 | logistic | `xgboost_tree_logistic`              | × | × | × |   |   |
@@ -278,37 +240,6 @@ hyperparameter optimisation.
 | sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
 | beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 | normalisation | `normalise` | `FALSE`, `TRUE` | no | Default is `FALSE`, as normalisation is part of pre-processing in familiar.|
-
-## Boosted generalised linear models and regression trees
-
-Boosting is a procedure which combines many weak learners to form a more
-powerful panel [@Schapire1990-vn; @Hastie2009-ed]. Boosting learners are
-implemented using the `mboost` package [@Buhlmann2007-ku; @Hothorn2010-cu;
-@Hofner2015-tt]. Both linear regression (`mboost::glmboost`) and regression
-trees (`mboost::blackboost`) are implemented. The hyperparameters are shown in
-the table below.
-
-| **parameter** | **tag** | **values** | **optimised** | **comments** |
-|:--------------|:--------|:----------:|:----------:|:-------------|
-| signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| family | `family` | `logistic`, `probit`, `bin_loglog`, `cauchy`, `log`, `auc`, `gaussian`, `huber`, `laplace`, `poisson`, `cox`, `weibull`, `lognormal`, `surv_loglog`, `gehan`, `cindex` | general tags | The family is not optimised when it is specified, e.g. `boosted_tree_gaussian`.|
-| boosting iterations | `n_boost` | $\mathbb{R} \in \left[0,\infty\right)$ | yes | This parameter is expressed on the $\log_{10}$ scale, i.e. the actual input value will be $10^\texttt{n_boost}$. The default range is $\left[0, 3\right]$. |
-| learning rate | `learning_rate` | $\mathbb{R} \in \left[-\infty,0\right]$ | yes | This parameter is expressed on the $\log_{10}$ scale. The default range is $\left[-5,0\right]$.|
-| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
-| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
-| maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,n\right]$ | trees only | Maximum depth to which trees are allowed to grow.|
-| minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | trees only | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
-| significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | trees only | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
-
-Optimising the number of boosting iterations may be slow as models with a large
-number of boosting iterations take longer to learn and assess. If this is
-an issue, the `n_boost` parameter should be set to a smaller range, or provided
-with a fixed value.
-
-Low learning rates may require an increased number of boosting iterations.
-
-Also note that hyperparameter optimisation time depends on the type of family
-chosen, e.g. `cindex` is considerably slower than `cox`.
 
 ## Extreme gradient boosted linear models and trees
 
