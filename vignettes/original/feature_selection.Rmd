@@ -28,68 +28,65 @@ knitr::opts_chunk$set(echo = TRUE)
 Feature selection methods in familiar measure variable importance in a
 univariate or multivariate setting.
 
-| **method** | **tag** | **binomial** | **multinomial** | **continuous** | **count** | **survival** |
+| **method** | **tag** | **binomial** | **multinomial** | **continuous** | **survival** |
 |:------------|:------------|:-----:|:-----:|:-----:|:-----:|:-----:|
 | **correlation** |
-| Pearson's *r* | `pearson`                                             |   |   | × | × | × |
-| Spearman's *ρ* | `spearman`                                           |   |   | × | × | × |
-| Kendall's *τ* | `kendall`                                             |   |   | × | × | × |
+| Pearson's *r* | `pearson`                                             |   |   | × | × |
+| Spearman's *ρ* | `spearman`                                           |   |   | × | × |
+| Kendall's *τ* | `kendall`                                             |   |   | × | × |
 | **concordance** |
-| concordance^a^ | `concordance`                                        | × | × | × | × | × |
+| concordance^a^ | `concordance`                                        | × | × | × | × |
 | **CORElearn** |
-| information gain ratio | `gain_ratio`                                 | × | × |   |   |   |
-| gini-index | `gini`                                                   | × | × |   |   |   |
-| minimum description length | `mdl`                                    | × | × |   |   |   |
-| ReliefF with exponential weighting of distance ranks | `relieff_exp_rank`       | × | × | × | × |   |
+| information gain ratio | `gain_ratio`                                 | × | × |   |   |
+| gini-index | `gini`                                                   | × | × |   |   |
+| minimum description length | `mdl`                                    | × | × |   |   |
+| ReliefF with exponential weighting of distance ranks | `relieff_exp_rank`       | × | × | × |   |
 | **mutual information**|
-| mutual information maximisation | `mim`                               | × | × | × | × | × |
-| mutual information features selection | `mifs`                        | × | × | × | × | × |
-| minimum redundancy maximum relevance | `mrmr`                         | × | × | × | × | × |
+| mutual information maximisation | `mim`                               | × | × | × | × |
+| mutual information features selection | `mifs`                        | × | × | × | × |
+| minimum redundancy maximum relevance | `mrmr`                         | × | × | × | × |
 | **univariate regression** |
-| univariate regression | `univariate_regression`                       | × | × | × | × | × |
+| univariate regression | `univariate_regression`                       | × | × | × | × |
 | **multivariate regression**| 
-| multivariate regression | `multivariate_regression`                   | × | × | × | × | × |
+| multivariate regression | `multivariate_regression`                   | × | × | × | × |
 | **lasso regression**| 
-| general^a^ | `lasso`                                                  | × | × | × | × | × |
-| logistic | `lasso_binomial`                                           | × |   |   |   |   |
-| multi-logistic | `lasso_multinomial`                                  |   | × |   |   |   |
-| normal (gaussian) | `lasso_gaussian`                                  |   |   | × |   |   |
-| poisson | `lasso_poisson`                                             |   |   |   | × |   |
-| cox | `lasso_cox`                                                     |   |   |   |   | × |
+| general^a^ | `lasso`                                                  | × | × | × | × |
+| logistic | `lasso_binomial`                                           | × |   |   |   |
+| multi-logistic | `lasso_multinomial`                                  |   | × |   |   |
+| normal (gaussian) | `lasso_gaussian`                                  |   |   | × |   |
+| cox | `lasso_cox`                                                     |   |   |   | × |
 | **ridge regression**|
-| general^a^ | `ridge`                                                  | × | × | × | × | × |
-| logistic | `ridge_binomial`                                           | × |   |   |   |   |
-| multi-logistic | `ridge_multinomial`                                  |   | × |   |   |   |
-| normal (gaussian) | `ridge_gaussian`                                  |   |   | × |   |   |
-| poisson | `ridge_poisson`                                             |   |   |   | × |   |
-| cox | `ridge_cox`                                                     |   |   |   |   | × |
+| general^a^ | `ridge`                                                  | × | × | × | × |
+| logistic | `ridge_binomial`                                           | × |   |   |   |
+| multi-logistic | `ridge_multinomial`                                  |   | × |   |   |
+| normal (gaussian) | `ridge_gaussian`                                  |   |   | × |   |
+| cox | `ridge_cox`                                                     |   |   |   | × |
 | **elastic net regression**| 
-| general^a,b^ | `elastic_net`                                          | × | × | × | × | × |
-| logistic^b^ | `elastic_net_binomial`                                  | × |   |   |   |   |
-| multi-logistic^b^ | `elastic_net_multinomial`                         |   | × |   |   |   |
-| normal (gaussian)^b^ | `elastic_net_gaussian`                         |   |   | × |   |   |
-| poisson^b^ | `elastic_net_poisson`                                    |   |   |   | × |   |
-| cox^b^ | `elastic_net_cox`                                            |   |   |   |   | × |
+| general^a,b^ | `elastic_net`                                          | × | × | × | × |
+| logistic^b^ | `elastic_net_binomial`                                  | × |   |   |   |
+| multi-logistic^b^ | `elastic_net_multinomial`                         |   | × |   |   |
+| normal (gaussian)^b^ | `elastic_net_gaussian`                         |   |   | × |   |
+| cox^b^ | `elastic_net_cox`                                            |   |   |   | × |
 | **random forest (RFSRC) variable importance**|
-| permutation^b^ | `random_forest_permutation`                                     | × | × | × | × | × |
-| permutation (unoptimised) | `random_forest_permutation_default`                  | × | × | × | × | × |
-| minimum depth^b^ | `random_forest_minimum_depth`                                 | × | × | × | × | × |
-| minimum depth (unoptimised) | `random_forest_minimum_depth_default`              | × | × | × | × | × |
-| variable hunting^b^ | `random_forest_variable_hunting`                           | × | × | × | × | × |
-| variable hunting (unoptimised) | `random_forest_variable_hunting_default`        | × | × | × | × | × |
-| hold-out ^b^ | `random_forest_holdout`                                           | × | × | × | × | × |
-| hold-out (unoptimised) | `random_forest_holdout_default`                         | × | × | × | × | × |
+| permutation^b^ | `random_forest_permutation`                                     | × | × | × | × |
+| permutation (unoptimised) | `random_forest_permutation_default`                  | × | × | × | × |
+| minimum depth^b^ | `random_forest_minimum_depth`                                 | × | × | × | × |
+| minimum depth (unoptimised) | `random_forest_minimum_depth_default`              | × | × | × | × |
+| variable hunting^b^ | `random_forest_variable_hunting`                           | × | × | × | × |
+| variable hunting (unoptimised) | `random_forest_variable_hunting_default`        | × | × | × | × |
+| hold-out ^b^ | `random_forest_holdout`                                           | × | × | × | × |
+| hold-out (unoptimised) | `random_forest_holdout_default`                         | × | × | × | × |
 | **random forest (ranger) variable importance**|
-| permutation^b^ | `random_forest_ranger_permutation`                              | × | × | × | × | × |
-| permutation (unoptimised) | `random_forest_ranger_permutation_default`           | × | × | × | × | × |
-| hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`             | × | × | × | × | × |
-| hold-out perm. (unoptimised) |`random_forest_ranger_holdout_permutation_default` | × | × | × | × | × | 
-| impurity^b^ | `random_forest_ranger_impurity`                                    | × | × | × | × | x |
-| impurity (unoptimised) | `random_forest_ranger_impurity_default`                 | × | × | × | × | x |
+| permutation^b^ | `random_forest_ranger_permutation`                              | × | × | × | × |
+| permutation (unoptimised) | `random_forest_ranger_permutation_default`           | × | × | × | × |
+| hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`             | × | × | × | × |
+| hold-out perm. (unoptimised) |`random_forest_ranger_holdout_permutation_default` | × | × | × | × | 
+| impurity^b^ | `random_forest_ranger_impurity`                                    | × | × | × | x |
+| impurity (unoptimised) | `random_forest_ranger_impurity_default`                 | × | × | × | x |
 | **special methods**|
-| no selection | `none`                                                 | × | × | × | × | × |
-| random selection | `random`                                           | × | × | × | × | × |
-| signature only | `signature_only`                                     | × | × | × | × | × |
+| no selection | `none`                                                 | × | × | × | × |
+| random selection | `random`                                           | × | × | × | × |
+| signature only | `signature_only`                                     | × | × | × | × |
 
 Table: Overview of feature selection methods. ^a^ This is a general method where
 an appropriate specific method will be chosen, or multiple distributions or
@@ -163,7 +160,7 @@ event are considered.
 Concordance methods assess how well the ordering of feature values corresponds
 to the ordering of the outcome. The method internally refers to the `gini`
 method for binomial and multinomial outcomes and to the `kendall` method for
-continuous and count outcomes. For survival outcomes, concordance is measured
+continuous outcomes. For survival outcomes, concordance is measured
 using the `concordance_index`.
 
 ## CORElearn methods
@@ -193,7 +190,7 @@ sample estimates. In case of continuous $x$, these are discretised into
 $\lceil 2 n^{1/3} \rceil$ bins, with $n$ the number of samples, after which
 computation is conducted as if $x$ was a categorical variable.
 
-2. For continuous and count outcomes, we use the approximation proposed by De 
+2. For continuous outcomes, we use the approximation proposed by De 
 Jay et al. after Gel'fand and Yaglom [@Gelfand1959-de; @De_Jay2013-yl]:
 $I = -0.5 \log(1 - \rho(x,y)^2 + \epsilon)$, with $\rho(x,y)$ Spearman's
 correlation coefficient and $\epsilon$ a small positive number to prevent
@@ -268,8 +265,8 @@ below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
-| regression learner | `learner` | dependent on outcome | no | Any generalised linear regression model from the *learning algorithms and hyperparameter optimisation* vignette can be selected. Default values are `glm_logistic` for binomial, `glm_multinomial` for multinomial, `glm_gaussian` for continuous, `glm_poisson` for count, and `cox` for survival outcomes. |
-| performance metric | `metric` | dependent on outcome | no | Any metric from the *performance metrics* vignette can be selected. Default values are `auc_roc` for binomial and multinomial, `mse` for continuous, `msle` for count and `concordance_index` for survival outcomes |
+| regression learner | `learner` | dependent on outcome | no | Any generalised linear regression model from the *learning algorithms and hyperparameter optimisation* vignette can be selected. Default values are `glm_logistic` for binomial, `glm_multinomial` for multinomial, `glm_gaussian` for continuous, and `cox` for survival outcomes. |
+| performance metric | `metric` | dependent on outcome | no | Any metric from the *performance metrics* vignette can be selected. Default values are `auc_roc` for binomial and multinomial, `mse` for continuous, and `concordance_index` for survival outcomes |
 | number of bootstraps | `n_bootstrap` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | The default value is $10$. |
 | drop-out alpha level | `alpha` | $\mathbb{R} \in \left[0, 1\right]$ | no | The default value is $0.05$. Only used in multivariate regression. |
 
@@ -341,8 +338,8 @@ for `ranger`-based and `randomForestSRC`-based methods, are shown below.
 | node size | `node_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | yes | Minimum number of unique samples in terminal nodes. The default range is $\left[5, \lfloor m / 3\rfloor\right]$, with $m$ the number of samples.|
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
-| splitting rule (`randomForestSRC` only) | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
-| splitting rule (`ranger` only) | `split_rule` | `gini`, `hellinger`, `extratrees`, `beta`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
+| splitting rule (`randomForestSRC` only) | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` outcomes and `logrank` for `survival` outcomes.|
+| splitting rule (`ranger` only) | `split_rule` | `gini`, `hellinger`, `extratrees`, `beta`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous` and `survival` outcomes.|
 | significance split threshold (`ranger` only) | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 | variable hunting cross-validation folds | `fs_vh_fold` | $\mathbb{Z} \in \left[2, \infty\right)$ | no | Number of cross-validation folds for the `random_forest_variable_hunting` method. The default is $5$. |
 | variable hunting step size | `fs_vh_step_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Step size for the `random_forest_variable_hunting` method. The default is $1$. |
