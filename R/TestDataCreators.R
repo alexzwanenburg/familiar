@@ -79,13 +79,13 @@ test_create_good_data <- function(
     "feature_2b" = feature_2b,
     "feature_3a" = cut(
       x = feature_3a,
-      breaks = c(0.0, 0.333, 0.667, 1.0),
-      labels = c("round", "square", "hex")
+      breaks = c(0.0, 0.5, 1.0),
+      labels = c("round", "square")
     ),
     "feature_3b" = cut(
       x = feature_3b,
-      breaks = c(0.0, 0.333, 0.667, 1.0),
-      labels = c("sphere", "cube", "bucky")
+      breaks = c(-1.0, 0.5, 2.0),
+      labels = c("sphere", "cube")
     ),
     "feature_4" = cut(
       x = feature_4,
