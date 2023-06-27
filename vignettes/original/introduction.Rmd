@@ -102,7 +102,7 @@ Familiar supports modelling and evaluation of several types of endpoints:
 
 -   Categorical endpoints, where the outcome consists of two or more classes. Familiar distinguishes between two-class (`binomial`) and multi-class (`multinomial`) outcomes. These differ in that fewer feature selection methods and learners are available for multi-class outcomes. Additionally some evaluation and explanation steps will assess all classes separately in a one-against-all fashion for multi-class outcomes, whereas for two-class outcomes only the *positive* class is assessed.
 
--   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic `continuous` option.
+-   Numerical endpoints, where the outcome consists of numeric values (`continuous`).
 
 -   Survival endpoints, where the outcome consists of a pair of time and event status variables. Familiar supports right-censored time-to-event data (`survival`).
 

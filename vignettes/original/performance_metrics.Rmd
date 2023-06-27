@@ -247,8 +247,8 @@ For `binomial` problems, informedness and the Youden J statistic are the same.
 
 # Regression outcomes
 
-Performance metrics for models with regression outcomes, i.e. `count` and
-`continuous`, are listed below.
+Performance metrics for models with regression outcomes, i.e. `continuous`,
+are listed below.
 
 | **method**                 | **tag**                               |
 |:---------------------------|:--------------------------------------|
