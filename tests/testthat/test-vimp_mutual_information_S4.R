@@ -25,59 +25,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general = FALSE))
 
-# Count outcome ----------------------------------------------------------------
-data <- familiar:::test_create_good_data("count")
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "mim",
-  vimp_method_parameter_list = NULL,
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(paste0("MIM correctly ranks count data."), {
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-    familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage")))
-})
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "mifs",
-  vimp_method_parameter_list = NULL,
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(paste0("MIFS correctly ranks count data."), {
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-    familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage", "industry")))
-})
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "mrmr",
-  vimp_method_parameter_list = NULL,
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(paste0("MRMR correctly ranks count data."), {
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-    familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage", "industry")))
-})
 
 # Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")

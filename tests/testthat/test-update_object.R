@@ -16,7 +16,6 @@ test_generate_experiment_parameters <- coro::generator(function(outcome_type) {
       current_outcome_type,
       "binomial" = c("glm_logistic", "lasso"),
       "multinomial" = c("glm", "lasso"),
-      "count" = c("glm", "lasso"),
       "continuous" = c("glm_gaussian", "lasso"),
       "survival" = c("cox", "survival_regr_weibull"))
 

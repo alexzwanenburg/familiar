@@ -9,14 +9,6 @@ testthat::skip_on_cran()
 familiar:::test_all_vimp_methods(
   familiar:::.get_available_ranger_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 1.00,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "alpha" = 0.1
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 1.00,
@@ -59,14 +51,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_ranger_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 1.00,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "alpha" = 0.1
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 1.00,
@@ -100,91 +84,6 @@ familiar:::test_all_vimp_methods_parallel(
       "alpha" = 0.1
     )
   )
-)
-
-# Count outcome ----------------------------------------------------------------
-data <- familiar:::test_create_good_data("count")
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_impurity",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0("The ranger random forest impurity method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms", "industry")))
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_permutation",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple"
-)
-
-testthat::test_that(
-  paste0("The ranger random forest permutation method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms")))
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_holdout_permutation",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0("The ranger random forest hold-out permutation method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms")))
-  }
 )
 
 # Continuous outcome -----------------------------------------------------------

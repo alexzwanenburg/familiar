@@ -16,7 +16,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods(
   vimp_methods = familiar:::.get_available_glmnet_elastic_net_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list("alpha" = 0.50),
     "continuous" = list("alpha" = 0.50),
     "binomial" = list("alpha" = 0.50),
     "multinomial" = list("alpha" = 0.50),
@@ -32,7 +31,6 @@ familiar:::test_all_vimp_methods_parallel(
 familiar:::test_all_vimp_methods_parallel(
   vimp_methods = familiar:::.get_available_glmnet_elastic_net_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list("alpha" = 0.50),
     "continuous" = list("alpha" = 0.50),
     "binomial" = list("alpha" = 0.50),
     "multinomial" = list("alpha" = 0.50),

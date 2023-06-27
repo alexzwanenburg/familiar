@@ -88,21 +88,11 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
 # Test alignment of different plots, with missing data.
-familiar:::test_plot_ordering(
-  plot_function = familiar:::plot_calibration_data,
-  data_element = "calibration_data",
-  outcome_type_available = c("count"),
-  plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
-    "color_by" = c("data_set")),
-  debug = debug_flag
-)
-
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
@@ -146,7 +136,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("count", "continuous", "binomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "survival"),
   plot_args = list("facet_by" = c("learner", "fs_method", "data_set")),
   debug = debug_flag
 )

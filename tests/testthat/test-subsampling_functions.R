@@ -5,7 +5,7 @@ testthat::skip_on_cran()
 r <- familiar:::.start_random_number_stream(seed = 1863)
 
 # Subsampling ------------------------------------------------------------------
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
     rare_outcome = TRUE,
@@ -165,7 +165,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
 }
 
 
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   # Create synthetic dataset with one outcome.
 
   if (outcome_type %in% c("binomial", "multinomial", "survival")) {
@@ -608,7 +608,7 @@ for (outcome_type in c("binomial", "multinomial")) {
 }
 
 # Cross-validation -------------------------------------------------------------
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
     rare_outcome = TRUE,
@@ -775,7 +775,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
   }
 }
 
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   # Create synthetic dataset with one outcome.
 
   if (outcome_type %in% c("binomial", "multinomial", "survival")) {
@@ -826,7 +826,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
 }
 
 # Repeated cross-validation ----------------------------------------------------
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
     rare_outcome = TRUE,
@@ -993,7 +993,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
   }
 }
 
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   # Create synthetic dataset with one outcome.
 
   if (outcome_type %in% c("binomial", "multinomial", "survival")) {
@@ -1048,7 +1048,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
 
 
 # Leave-one-out cross-validation -----------------------------------------------
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
     rare_outcome = TRUE,
@@ -1179,7 +1179,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
   })
 }
 
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   testthat::test_that(paste0(
     "Repeated cross-validation for ",
     outcome_type, " with odd data functions correctly."
@@ -1214,7 +1214,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
 }
 
 # Bootstraps -------------------------------------------------------------------
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
     rare_outcome = TRUE,
@@ -1370,7 +1370,7 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "count", "surviv
   }
 }
 
-for (outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")) {
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   # Create synthetic dataset with one outcome.
 
   if (outcome_type %in% c("binomial", "multinomial", "survival")) {

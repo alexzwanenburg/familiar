@@ -9,7 +9,7 @@ familiar:::test_plots(
   not_available_no_samples = FALSE,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   data_element = "model_vimp",
   debug = debug_flag
 )
@@ -18,7 +18,7 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_signature_occurrence,
   data_element = "model_vimp",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
@@ -26,7 +26,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_signature_occurrence,
   data_element = "model_vimp",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner"),
     "color_by" = c("fs_method")),
@@ -39,7 +39,7 @@ familiar:::test_plots(
   not_available_no_samples = FALSE,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   data_element = "model_vimp",
   debug = debug_flag
 )
@@ -48,7 +48,7 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_signature_variable_importance,
   data_element = "model_vimp",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
@@ -56,7 +56,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_signature_variable_importance,
   data_element = "model_vimp",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner"),
     "color_by" = c("fs_method")),

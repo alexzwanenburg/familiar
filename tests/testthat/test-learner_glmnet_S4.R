@@ -16,7 +16,6 @@ familiar:::test_all_learners_train_predict_vimp(
 familiar:::test_all_learners_train_predict_vimp(
   learners = familiar:::.get_available_glmnet_elastic_net_learners(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list("alpha" = 0.50),
     "continuous" = list("alpha" = 0.50),
     "binomial" = list("alpha" = 0.50),
     "multinomial" = list("alpha" = 0.50),
@@ -29,76 +28,11 @@ familiar:::test_all_learners_parallel_train_predict_vimp(
 familiar:::test_all_learners_parallel_train_predict_vimp(
   learners = familiar:::.get_available_glmnet_elastic_net_learners(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list("alpha" = 0.50),
     "continuous" = list("alpha" = 0.50),
     "binomial" = list("alpha" = 0.50),
     "multinomial" = list("alpha" = 0.50),
     "survival" = list("alpha" = 0.50)))
 
-# Count outcome tests-----------------------------------------------------------
-
-# Create test data sets.
-good_data <- familiar:::test_create_good_data("count")
-wide_data <- familiar:::test_create_wide_data("count")
-
-# Train the model using the good dataset.
-good_model <- familiar:::test_train(
-  data = good_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list("sign_size" = familiar:::get_n_features(good_data)),
-  learner = "lasso")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list("sign_size" = familiar:::get_n_features(wide_data)),
-  learner = "lasso")
-
-testthat::test_that("Regularised regression model trained correctly", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
-
-  # Check that no deprecation warnings are given.
-  familiar:::test_not_deprecated(good_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(good_model@messages$error, NULL)
-})
-
-testthat::test_that("Regularised regression model has variable importance", {
-  # Extract the variable importance table.
-  vimp_table <- familiar:::get_vimp_table(good_model)
-
-  # Expect that the vimp table has entries up to the number of features.
-  testthat::expect_equal(nrow(vimp_table) <= familiar:::get_n_features(good_data), TRUE)
-
-  # Expect that the names are the same as that of the features.
-  testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
-
-  # Expect specific features to be highly ranked.
-  testthat::expect_true(
-    any(vimp_table[rank <= 2]$name %in% c(
-      "avg_rooms", "per_capita_crime", "lower_status_percentage", "industry", "large_residence_proportion")))
-})
-
-testthat::test_that("Regularised regression model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Test that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
 
 # Continuous outcome tests------------------------------------------------------
 

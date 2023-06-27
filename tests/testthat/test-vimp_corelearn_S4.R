@@ -49,28 +49,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general = FALSE))
 
-# Count outcome ----------------------------------------------------------------
-data <- familiar:::test_create_good_data("count")
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "relieff_exp_rank",
-  vimp_method_parameter_list = NULL,
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple"
-)
-
-testthat::test_that(paste0(
-  "RReliefF exponentially decreasing ranks method correctly ranks count data."), {
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-    familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "per_capita_crime", "lower_status_percentage", "avg_rooms")))
-})
-
 # Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")
 

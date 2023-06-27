@@ -9,13 +9,6 @@ testthat::skip_on_cran()
 familiar:::test_all_learners_train_predict_vimp(
   learners = familiar:::.get_available_rfsrc_learners(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 0.50,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 0.50,
@@ -50,13 +43,6 @@ familiar:::test_all_learners_train_predict_vimp(
 familiar:::test_all_learners_parallel_train_predict_vimp(
   learners = familiar:::.get_available_rfsrc_learners(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 0.50,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 0.50,
@@ -88,84 +74,6 @@ familiar:::test_all_learners_parallel_train_predict_vimp(
   )
 )
 
-# Count outcome tests-----------------------------------------------------------
-
-# Create test data sets.
-good_data <- familiar:::test_create_good_data("count")
-wide_data <- familiar:::test_create_wide_data("count")
-
-# Train the model using the good dataset.
-good_model <- familiar:::test_train(
-  data = good_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(good_data),
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(wide_data),
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
-
-testthat::test_that("Random forest SRC model trained correctly", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
-
-  # That no deprecation warnings are given.
-  familiar:::test_not_deprecated(good_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(good_model@messages$error, NULL)
-})
-
-testthat::test_that("Random forest SRC model has variable importance", {
-  # Extract the variable importance table.
-  vimp_table <- familiar:::get_vimp_table(good_model, data = good_data)
-
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 13)
-
-  # Expect that the names are the same as that of the features.
-  testthat::expect_true(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
-
-  # Expect that avg_rooms has rank 1 and per_capita_crime has rank 2. Disabled
-  # test because vimp by the random forest is unstable.
-})
-
-testthat::test_that("Random forest SRC model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is present.
-  testthat::expect_false(familiar:::is_empty(
-    familiar:::get_vimp_table(wide_model, data = wide_data)))
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Test that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
 
 # Continuous outcome tests------------------------------------------------------
 

@@ -54,30 +54,6 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
 
-# count ------------------------------------------------------------------------
-
-# Create data.table.
-data <- familiar:::test_create_good_data(
-  outcome_type = "count",
-  to_data_object = FALSE)
-
-# Check that train_familiar functions correctly.
-model <- familiar::train_familiar(
-  data = data,
-  fs_method = "mrmr",
-  learner = "glm_poisson",
-  outcome_type = "count",
-  outcome_column = "median_house_value",
-  sample_id_column = "sample_id",
-  verbose = FALSE)
-
-testthat::test_that("Poisson model can be trained using train_familiar", {
-  testthat::expect_s4_class(model, "familiarGLM")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  testthat::expect_s3_class(summary(model), "summary.glm")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-})
-
 # continuous -------------------------------------------------------------------
 
 # Create data.table.

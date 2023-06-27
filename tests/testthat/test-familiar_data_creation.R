@@ -2,9 +2,7 @@
 testthat::skip_on_cran()
 
 familiar_data_creation_unit_test <- function(outcome_type) {
-  if (outcome_type == "count") {
-    learner <- "glm_poisson"
-  } else if (outcome_type == "continuous") {
+  if (outcome_type == "continuous") {
     learner <- "glm_gaussian"
   } else if (outcome_type == "binomial") {
     learner <- "glm_logistic"
@@ -208,7 +206,6 @@ familiar_data_creation_unit_test <- function(outcome_type) {
   )
 }
 
-familiar_data_creation_unit_test("count")
 familiar_data_creation_unit_test("continuous")
 familiar_data_creation_unit_test("binomial")
 familiar_data_creation_unit_test("multinomial")
