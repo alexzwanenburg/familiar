@@ -27,7 +27,6 @@ familiar:::test_all_learners_parallel_train_predict_vimp(
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("continuous")
-wide_data <- familiar:::test_create_wide_data("continuous")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(
@@ -39,15 +38,6 @@ good_model <- familiar:::test_train(
     "k" = 3),
   learner = "k_nearest_neighbours_gower")
 
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(good_data),
-    "k" = 3),
-  learner = "k_nearest_neighbours_gower")
 
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
@@ -70,30 +60,10 @@ testthat::test_that("k-nearest neighbour model has no variable importance", {
 })
 
 
-testthat::test_that("k-nearest neighbour model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is absent.
-  testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Check that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
-
 # Binomial tests----------------------------------------------------------------
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("binomial")
-wide_data <- familiar:::test_create_wide_data("binomial")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(
@@ -104,17 +74,6 @@ good_model <- familiar:::test_train(
     "sign_size" = familiar:::get_n_features(good_data),
     "k" = 3),
   learner = "k_nearest_neighbours_gower")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(wide_data),
-    "k" = 3),
-  learner = "k_nearest_neighbours_gower")
-
 
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
@@ -137,30 +96,10 @@ testthat::test_that("k-nearest neighbour model does not have variable importance
 })
 
 
-testthat::test_that("k-nearest neighbour model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is absent.
-  testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Check that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
-
 # Multinomial tests-------------------------------------------------------------
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("multinomial")
-wide_data <- familiar:::test_create_wide_data("multinomial")
 
 # Train the model using the good dataset.
 good_model <- suppressWarnings(familiar:::test_train(
@@ -171,16 +110,6 @@ good_model <- suppressWarnings(familiar:::test_train(
     "sign_size" = familiar:::get_n_features(good_data),
     "k" = 3),
   learner = "k_nearest_neighbours_gower"))
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(wide_data),
-    "k" = 3),
-  learner = "k_nearest_neighbours_gower")
 
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
@@ -200,25 +129,6 @@ testthat::test_that("k-nearest neighbour model has no variable importance", {
 
   # Expect that the vimp table is empty.
   testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
-})
-
-testthat::test_that("k-nearest neighbour model can train on wide data", {
-  # Model cannot be trained.
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is empty.
-  testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions cannot be made.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Check that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
