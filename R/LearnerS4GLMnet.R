@@ -124,7 +124,7 @@ setMethod(
         "lasso", "lasso_poisson",
         "ridge", "ridge_poisson")) {
       ..deprecation_count()
-      return(TRUE)
+      return(FALSE)
     }
     
     return(FALSE)
@@ -188,8 +188,6 @@ setMethod(
     if (fam == "") {
       if (outcome_type == "continuous") {
         family_default <- c("gaussian", "poisson")
-      } else if (outcome_type == "count") {
-        family_default <- "poisson"
       } else if (outcome_type == "binomial") {
         family_default <- "binomial"
       } else if (outcome_type == "multinomial") {
@@ -485,7 +483,7 @@ setMethod(
     object = "familiarGLMnet",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
       object <- methods::new("familiarNaiveModel", object)
       
@@ -600,8 +598,8 @@ setMethod(
         class_predictions <- factor(class_predictions, levels = class_levels)
         prediction_table[, "predicted_class" := class_predictions]
         
-      } else if (object@outcome_type %in% c("survival", "continuous", "count")) {
-        ##### Survival, count and continuous outcomes####################
+      } else if (object@outcome_type %in% c("survival", "continuous")) {
+        # Survival and continuous outcomes -------------------------------------
 
         # Use the model for prediction.
         model_predictions <- predict(
@@ -895,7 +893,7 @@ setMethod(
       # Set the class to NA.
       prediction_table[1L, "predicted_class" := NA]
       
-    } else if (object@outcome_type %in% c("survival", "continuous", "count")) {
+    } else if (object@outcome_type %in% c("survival", "continuous")) {
       # Add regression.
       prediction_table[1L, "predicted_outcome" := Inf]
       

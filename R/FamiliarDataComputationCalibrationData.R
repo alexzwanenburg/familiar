@@ -401,7 +401,7 @@ setMethod(
     calibration_gof_test <- .compute_calibration_hosmer_lemeshow(
       calibration_data = calibration_data)
     
-  } else if (object@outcome_type %in% c("count", "continuous")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     # Calibration grouping data for numerical outcomes.
     calibration_data <- .compute_calibration_data_regression(
       object = object,
@@ -494,7 +494,7 @@ setMethod(
       old = get_class_probability_name(x = data_element@identifiers$positive_class),
       new = "expected")
     
-  } else if (object@outcome_type %in% c("count", "continuous")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     # Determine the outcome range
     outcome_range <- range(object@outcome_info@distribution$fivenum)
     

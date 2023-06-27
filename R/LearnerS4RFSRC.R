@@ -42,7 +42,10 @@ setMethod(
   function(object, ...) {
     # Random forests exists for all outcome types and variable importance
     # methods.
-    if (object@outcome_type == "count") ..deprecation_count()
+    if (object@outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
     
     return(TRUE)
   }

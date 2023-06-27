@@ -74,7 +74,7 @@ setMethod(
       outcome_type == "count" &&
       learner %in% c("glm", "glm_poisson", "glm_log_poisson")) {
       ..deprecation_count()
-      return(TRUE)
+      return(FALSE)
     }
     
     return(FALSE)
@@ -131,8 +131,6 @@ setMethod(
         family_default <- c("logistic", "probit", "loglog", "cauchy")
       } else if (outcome_type == "continuous") {
         family_default <- c("gaussian", "log_gaussian", "inv_gaussian", "poisson", "log_poisson")
-      } else if (outcome_type == "count") {
-        family_default <- c("poisson", "log_poisson")
       } else if (outcome_type == "multinomial") {
         family_default <- "multinomial"
       } else if (outcome_type == "survival") {
@@ -146,8 +144,6 @@ setMethod(
       # according to the outcome type.
       if (outcome_type == "continuous") {
         family_default <- c("log_gaussian", "log_poisson")
-      } else if (outcome_type == "count") {
-        family_default <- "log_poisson"
       }
       
     } else {
@@ -269,7 +265,7 @@ setMethod(
         object@hyperparameters$sample_weighting_beta),
       normalisation = "average_one")
     
-    if (object@outcome_type %in% c("binomial", "continuous", "count")) {
+    if (object@outcome_type %in% c("binomial", "continuous")) {
       # Faster implementation using fastglm. We keep the stats::glm
       # implementation in case fastglm disappears from CRAN at some point.
 
@@ -510,7 +506,7 @@ setMethod(
         class_predictions <- factor(class_predictions, levels = class_levels)
         prediction_table[, "predicted_class" := class_predictions]
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         ## Count and continuous outcomes ---------------------------------------
 
         if (inherits(object@model, "fastglm")) {
@@ -563,8 +559,8 @@ setMethod(
         encoded_data$encoded_data@data[, "intercept__" := 1.0]
       }
 
-      if (object@outcome_type %in% c("continuous", "count", "binomial")) {
-        ## Binomial, count and continuous outcomes -----------------------------
+      if (object@outcome_type %in% c("continuous", "binomial")) {
+        ## Binomial and continuous outcomes ------------------------------------
 
         if (inherits(object@model, "fastglm")) {
           return(predict(
@@ -750,8 +746,6 @@ setMethod(
         family_default <- c("logistic")
       } else if (object@outcome_type == "continuous") {
         family_default <- c("gaussian")
-      } else if (object@outcome_type == "count") {
-        family_default <- c("poisson")
       } else if (object@outcome_type == "multinomial") {
         family_default <- "multinomial"
       } else if (object@outcome_type == "survival") {
@@ -765,8 +759,6 @@ setMethod(
       # according to the outcome type.
       if (object@outcome_type == "continuous") {
         family_default <- c("log_gaussian")
-      } else if (object@outcome_type == "count") {
-        family_default <- "log_poisson"
       }
       
     } else {

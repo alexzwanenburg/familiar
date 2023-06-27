@@ -499,7 +499,7 @@ setMethod(
     prediction_columns <- c(
       get_class_probability_name(object), "novelty")
     
-  } else if (object@outcome_type %in% c("count", "continuous")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     prediction_columns <- c("predicted_outcome", "novelty")
     
   } else {
@@ -782,7 +782,7 @@ setMethod(
   if (outcome_type %in% c("binomial", "multinomial")) {
     old_value_column <- "probability"
     
-  } else if (outcome_type %in% c("continuous", "count")) {
+  } else if (outcome_type %in% c("continuous")) {
     old_value_column <- "predicted_outcome"
     
   } else if (outcome_type %in% c("survival")) {

@@ -210,7 +210,7 @@ setMethod(
     # Determine the range
     sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_events / 15)))))
     
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     # Determine the range
     sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_samples / 15)))))
     

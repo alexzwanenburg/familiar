@@ -848,7 +848,7 @@ setMethod(
         "internal" = internal_outcome_columns,
         "external" = external_outcome_columns)
       
-    } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
+    } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       # Find internal and external outcome column names.
       internal_outcome_columns <- get_outcome_columns(object@outcome_type)
       external_outcome_columns <- object@outcome_info@outcome_column

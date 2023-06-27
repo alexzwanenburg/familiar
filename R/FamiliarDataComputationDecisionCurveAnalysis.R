@@ -71,9 +71,9 @@ setMethod(
     verbose = FALSE,
     ...) {
     
-    # Decision curve analysis is only available for categorical and
-    # survival outcomes.
-    if (object@outcome_type %in% c("count", "continuous")) return(NULL)
+    # Decision curve analysis is only available for categorical and survival
+    # outcomes.
+    if (!object@outcome_type %in% c("binomial", "multinomial", "survival")) return(NULL)
     
     # Message extraction start
     logger_message(

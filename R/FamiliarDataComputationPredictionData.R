@@ -461,7 +461,7 @@ setMethod(
     # Probability columns
     prediction_columns <- get_class_probability_name(x = class_levels)
     
-  } else if (outcome_type %in% c("continuous", "count", "survival")) {
+  } else if (outcome_type %in% c("continuous", "survival")) {
     # Outcome columns
     prediction_columns <- "predicted_outcome"
     

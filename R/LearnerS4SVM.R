@@ -39,17 +39,19 @@ setMethod(
     # Extract outcome type.
     outcome_type <- object@outcome_type
 
-    if (
-      outcome_type %in% c("continuous", "count") &&
+    if (outcome_type %in% c("continuous") &&
       (is(object, "familiarSVMNu") || is(object, "familiarSVMEps"))) {
       
-      if (outcome_type == "count") ..deprecation_count()
       return(TRUE)
       
     } else if (
       outcome_type %in% c("binomial", "multinomial") && 
       (is(object, "familiarSVMNu") || is(object, "familiarSVMC"))) {
       return(TRUE)
+    
+    } else if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)  
       
     } else {
       return(FALSE)

@@ -89,8 +89,7 @@ setMethod(
       outcome_type == "count" &&
       learner %in% c("", "poisson", "gaussian")) {
       ..deprecation_count()
-      return(TRUE)
-      
+      return(FALSE)
     }
      
     return(FALSE)

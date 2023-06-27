@@ -114,7 +114,7 @@ setMethod(
     
     data_element@grouping_column <- "time"
     
-  } else if (object@outcome_type %in% c("count", "continuous")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     data_element@value_column <- colnames(data_element@data)
     
   } else {
@@ -149,7 +149,7 @@ setMethod(
       use.names = TRUE,
       fill = TRUE)
     
-    if (x[[1]]@outcome_type %in% c("continuous", "count")) {
+    if (x[[1]]@outcome_type %in% c("continuous")) {
       
       # Extract min and max values of the range for continuous and count type
       # outcomes.
@@ -309,7 +309,7 @@ setMethod(
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       return(NULL)
       
-    } else if (object@outcome_type %in% c("count", "continuous")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       subtype <- "observed_value_range"
       
     } else if (object@outcome_type %in% c("survival")) {

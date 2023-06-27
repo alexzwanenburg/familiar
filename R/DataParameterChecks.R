@@ -1124,9 +1124,15 @@
     stop(paste0("A single outcome type should be provided. Found: ", length(outcome_type)))
   }
   
+  # Check for the count outcome type -- this type of outcome was deprecated in
+  # version 2.0.0.
+  if (outcome_type == "count") {
+    ..deprecation_count(as_error = TRUE)
+  }
+  
   # Check if the provided outcome_type is a valid choice.
   if (!outcome_type %in% c(
-    "binomial", "multinomial", "count", "continuous",
+    "binomial", "multinomial", "continuous",
     "survival", "competing_risk", "unsupervised")) {
     ..error_no_known_outcome_type(outcome_type)
   }
@@ -1155,7 +1161,7 @@
     
   # Check if one column is provided for binomial, multinomial, count and
   # continuous outcome types.
-  if (outcome_type %in% c("binomial", "multinomial", "count", "continuous")) {
+  if (outcome_type %in% c("binomial", "multinomial", "continuous")) {
     
     if (check_stringency != "strict" && !is.null(outcome_column)) {
       # For non-strict checks only check in case any outcome columns are
@@ -1253,28 +1259,6 @@
         stop(paste0(
           "Fewer than two classes were found in the outcome column:", outcome_column,
           ". Two or more classes are expected for the multinomial outcome type."))
-      }
-    }
-  }
-  
-  # Plausibility check for the count outcome type
-  if (outcome_type == "count" && !outcome_na) {
-    
-    ..deprecation_count()
-    
-    if (check_stringency %in% c("strict", "external_warn")) {
-      if (!is.numeric(data[[outcome_column]])) {
-        stop(paste0(
-          "The outcome column (", outcome_column, ") does not contain numeric data. ",
-          "Numeric data are expected for the count outcome type."))
-      }
-      
-      if (min(data[[outcome_column]], na.rm = TRUE) < 0.0) {
-        stop_or_warn(
-          paste0(
-            "The outcome column (", outcome_column, ") contains values smaller than 0. ",
-            "The count outcome type expects that all values are 0 or greater."),
-          check_stringency == "strict")
       }
     }
   }

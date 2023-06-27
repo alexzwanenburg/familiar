@@ -192,7 +192,7 @@ setMethod(
         return(return_value)
       }
       
-    } else if (object@outcome_type %in% c("count", "continuous")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # Check that not all data have the same outcome value.
       if (all(data@data$outcome == data@data$outcome[1])) {
         return_value <- TRUE

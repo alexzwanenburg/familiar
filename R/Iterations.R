@@ -793,7 +793,7 @@
   if (is.null(outcome_type)) outcome_type <- settings$data$outcome_type
 
   # Check stratification for continuous data
-  if (outcome_type %in% c("continuous", "count")) stratify <- FALSE
+  if (outcome_type %in% c("continuous")) stratify <- FALSE
 
   # Do not stratify absent data
   if (is_empty(data)) stratify <- FALSE
@@ -804,7 +804,7 @@
     sample_identifiers <- unique(data[, mget(id_columns)])
   }
 
-  if (outcome_type %in% c("count", "continuous")) {
+  if (outcome_type %in% c("continuous")) {
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.
@@ -1155,12 +1155,12 @@
   }
 
   # Check stratification for continuous data
-  if (outcome_type %in% c("continuous", "count")) stratify <- FALSE
+  if (outcome_type %in% c("continuous")) stratify <- FALSE
 
   # Check stratification for absent data
   if (is_empty(data)) stratify <- FALSE
 
-  if (outcome_type %in% c("continuous", "count")) {
+  if (outcome_type %in% c("continuous")) {
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.
@@ -1997,12 +1997,12 @@
   }
 
   # Check stratification for continuous data
-  if (outcome_type %in% c("continuous", "count")) stratify <- FALSE
+  if (outcome_type %in% c("continuous")) stratify <- FALSE
 
   # Check stratification for absent data
   if (is_empty(data)) stratify <- FALSE
 
-  if (outcome_type %in% c("continuous", "count")) {
+  if (outcome_type %in% c("continuous")) {
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.

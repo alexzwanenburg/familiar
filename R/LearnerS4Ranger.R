@@ -40,7 +40,10 @@ setMethod(
   function(object, ...) {
     # Ranger exists for all outcome types and variable importance methods,
     # including impurity for survival.
-    if (object@outcome_type == "count") ..deprecation_count()
+    if (object@outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
     
     return(TRUE)
   }

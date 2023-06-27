@@ -1541,7 +1541,7 @@ setMethod(
     if (data@outcome_type == "survival") {
       outcome_is_valid <- is_valid_data(data@data[["outcome_time"]]) & is_valid_data(data@data[["outcome_event"]])
       
-    } else if (data@outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
+    } else if (data@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       outcome_is_valid <- is_valid_data(data@data[["outcome"]])
       
     } else {
@@ -2349,7 +2349,7 @@ create_data_column_info <- function(settings) {
       "internal" = internal_outcome_columns,
       "external" = external_outcome_columns)
     
-  } else if (settings$data$outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
+  } else if (settings$data$outcome_type %in% c("binomial", "multinomial", "continuous")) {
     
     # Find internal and external outcome column names.
     internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)

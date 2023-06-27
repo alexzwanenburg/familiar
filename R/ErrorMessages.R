@@ -17,10 +17,20 @@
 
 
 
-..deprecation_count <- function() {
+..deprecation_count <- function(as_error = FALSE) {
+  
+  message_string <- "The \"count\" outcome type has been deprecated in familiar version 2.0.0."
+  
+  if (as_error) {
+    rlang::abort(
+      message = message_string,
+      class = "deprecation_error"
+    )
+  }
+  
   if (!.is_testing()) {
     rlang::warn(
-      message = "The \"count\" outcome type will be deprecated in familiar version 2.0.0.",
+      message = message_string,
       class = "deprecation_warning",
       .frequency = "once",
       .frequency_id = "deprecation_warning_count")

@@ -38,8 +38,7 @@ setMethod(
       
     } else if (object@outcome_type == "count") {
       ..deprecation_count()
-      return(TRUE)
-      
+      return(FALSE)
     }
     
     return(FALSE)
