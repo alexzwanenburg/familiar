@@ -32,8 +32,6 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
     univariate_fun <- .univariate_binomial_logistic_regression_test
   } else if (outcome_type == "multinomial") {
     univariate_fun <- .univariate_multinomial_logistic_regression_test
-  } else if (outcome_type == "count") {
-    univariate_fun <- .univariate_poisson_regression_test
   } else if (outcome_type == "competing_risk") {
     ..error_outcome_type_not_implemented(outcome_type)
   } else {

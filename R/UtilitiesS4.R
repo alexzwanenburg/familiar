@@ -128,7 +128,7 @@ setMethod("get_outcome_class_levels", signature(x = "dataObject"), function(x) {
 })
 
 .get_outcome_class_levels <- function(data, outcome_type) {
-  if (outcome_type %in% c("survival", "continuous", "count", "competing_risk")) {
+  if (outcome_type %in% c("survival", "continuous", "competing_risk")) {
     return(character(0))
     
   } else if (outcome_type %in% c("binomial", "multinomial")) {
@@ -266,7 +266,7 @@ setMethod("get_outcome_columns", signature(x = "familiarEnsemble"), function(x) 
   if (outcome_type %in% c("survival")) {
     outcome_cols <- c("outcome_time", "outcome_event")
     
-  } else if (outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
+  } else if (outcome_type %in% c("binomial", "multinomial", "continuous")) {
     outcome_cols <- c("outcome")
     
   } else if (outcome_type == "unsupervised") {
@@ -774,10 +774,11 @@ setMethod(
     if ("default" %in% type) {
       # Add default prediction columns.
 
-      if (object@outcome_type %in% c("survival", "continuous", "count", "competing_risk")) {
+      if (object@outcome_type %in% c("survival", "continuous", "competing_risk")) {
         # For survival and continuous outcomes, a single predicted outcome
         # column is added.
         prediction_table[, "predicted_outcome" := as.double(NA)]
+        
       } else if (object@outcome_type %in% c("binomial", "multinomial")) {
         
         # For categorical outcomes, both predicted class and predicted class

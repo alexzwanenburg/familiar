@@ -17,6 +17,12 @@ setMethod(
   "is_available",
   signature(object = "familiarConcordanceVimp"),
   function(object, ...) {
+    
+    if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
     return(TRUE)
   }
 )
@@ -58,7 +64,7 @@ setMethod(
         object = new_vimp_object,
         data = data))
       
-    } else if (object@outcome_type %in% c("continuous", "count")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # For continuous outcomes use kendall's tau.
 
       # Create a new vimp object, and replace the vimp_method slot.

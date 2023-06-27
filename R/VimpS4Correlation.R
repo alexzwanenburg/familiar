@@ -19,7 +19,13 @@ setMethod(
   "is_available",
   signature(object = "familiarCorrelationVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("continuous", "count", "survival"))
+    
+    if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
+    return(object@outcome_type %in% c("continuous", "survival"))
   }
 )
 

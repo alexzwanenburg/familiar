@@ -46,6 +46,12 @@ setMethod(
   "is_available",
   signature(object = "familiarRegressionVimp"),
   function(object, ...) {
+    
+    if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
     return(TRUE)
   }
 )
@@ -85,7 +91,6 @@ setMethod(
       "binomial" = "glm_logistic",
       "multinomial" = "glm_multinomial",
       "continuous" = "glm_gaussian",
-      "count" = "glm_poisson",
       "survival" = "cox")
 
     # Set the learner range, i.e. all generalised linear models.
@@ -114,7 +119,6 @@ setMethod(
       "binomial" = "auc_roc",
       "multinomial" = "auc_roc",
       "continuous" = "mse",
-      "count" = "msle",
       "survival" = "concordance_index")
 
     # Get all available metrics.

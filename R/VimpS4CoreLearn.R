@@ -80,7 +80,13 @@ setMethod(
   "is_available",
   signature(object = "familiarCoreLearnRelieffExpRankVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous"))
+    
+    if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
+    return(object@outcome_type %in% c("binomial", "multinomial", "continuous"))
   }
 )
 
@@ -140,7 +146,7 @@ setMethod(
         estimator = "MDL")
       
     } else if (is(object, "familiarCoreLearnRelieffExpRankVimp")) {
-      if (object@outcome_type %in% c("continuous", "count")) {
+      if (object@outcome_type %in% c("continuous")) {
         # RReliefFexpRank method.
         score <- CORElearn::attrEval(
           formula, 

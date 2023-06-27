@@ -47,6 +47,12 @@ setMethod(
   "is_available",
   signature(object = "familiarMutualInformationVimp"),
   function(object, ...) {
+    
+    if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
     return(TRUE)
   }
 )
