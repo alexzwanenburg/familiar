@@ -26,11 +26,11 @@ test_create_good_data <- function(
   feature_4 <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
   
   # Determine the raw outcome.
-  outcome_raw <- feature_1 + 0.1 * feature_2a + 0.5 * feature_3a + 0.2 * feature_4
+  outcome_raw <- feature_1 + 0.1 * feature_2a + 0.3 * feature_3a + 0.1 * feature_4
   
   if (outcome_type == "binomial") {
     # Convert to 0, 1
-    outcome_value <- outcome_raw > 0.9
+    outcome_value <- outcome_raw > 0.75
     outcome_value <- factor(
       x = outcome_value,
       levels = c(FALSE, TRUE),
@@ -39,10 +39,10 @@ test_create_good_data <- function(
   } else if (outcome_type == "multinomial") {
     outcome_value <- numeric(n_series_instances)
     
-    # Convert to 0 (x < 0.73), 1 (0.73 < x < 1.07), 2 (1.07 < x < 1.8)
-    outcome_value[outcome_raw < 0.73] <- 0.0
-    outcome_value[outcome_raw >= 0.73 & outcome_raw < 1.07] <- 1.0
-    outcome_value[outcome_raw >= 1.07] <- 2.0
+    # Convert to 0 (x < 0.58), 1 (0.58 < x < 0.92), 2 (0.92 < x < 1.5)
+    outcome_value[outcome_raw < 0.58] <- 0.0
+    outcome_value[outcome_raw >= 0.58 & outcome_raw < 0.92] <- 1.0
+    outcome_value[outcome_raw >= 0.92] <- 2.0
     
     outcome_value <- factor(
       x = outcome_value,
@@ -56,12 +56,12 @@ test_create_good_data <- function(
     # Outcome follows an exponential distribution.
     outcome_time <- exp(outcome_raw)
     outcome_event <- rep_len(1L, length.out = n_series_instances)
-    
+
     # Censor randomly.
     outcome_event[
       fam_sample(
         seq_len(n_series_instances),
-        n = ceiling(0.4 * n_series_instances),
+        size = ceiling(0.4 * n_series_instances),
         replace = FALSE)
     ] <- 0L
     
@@ -429,12 +429,12 @@ test_create_wide_data <- function(outcome_type) {
   random_data <- lapply(
     seq_len(20), 
     function(ii, n, r) fam_rnorm(n = n, rstream_object = r),
-    n = nrow(data),
+    n = nrow(data@data),
     r = r)
   names(random_data) <- paste0("random_feature_", seq_len(20))
   
   # Add to dataset
-  data <- cbind(data, data.table::as.data.table(random_data))
+  data@data <- cbind(data@data, data.table::as.data.table(random_data))
 
 
   return(data)
