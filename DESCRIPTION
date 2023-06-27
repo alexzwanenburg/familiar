@@ -71,7 +71,6 @@ Suggests:
     scales,
     testthat (>= 3.0.0),
     xml2,
-    VGAM,
     xgboost
 Collate: 
     'FamiliarS4Classes.R'

@@ -32,7 +32,7 @@
 ..deprecation_vgam <- function() {
   if (!.is_testing()) {
     rlang::warn(
-      message = "The use of VGAM for multinomial logistic models will be deprecated in familiar version 2.0.0.",
+      message = "The use of VGAM for multinomial logistic models has been deprecated since familiar version 2.0.0.",
       class = "deprecation_warning",
       .frequency = "once",
       .frequency_id = "deprecation_warning_vgam")

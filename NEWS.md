@@ -6,6 +6,8 @@
 
 - The `qvalue` package for computing q-values was deprecated.
 
+- The `VGAM` package, which has been soft-deprecated since version 1.3.0, has now fully been deprecated.
+
 # Version 1.5.0 (Development)
 
 ## Major changes

@@ -489,14 +489,7 @@ setMethod(
         } else {
           # For VGAM::vglm
           ..deprecation_vgam()
-
-          model_predictions <- suppressWarnings(
-            VGAM::predictvglm(
-              object = object@model,
-              newdata = encoded_data$encoded_data@data,
-              type = "response"
-            )
-          )
+          return(callNextMethod())
         }
 
         # Obtain class levels.
@@ -603,13 +596,7 @@ setMethod(
         } else {
           # For VGAM::vglm
           ..deprecation_vgam()
-
-          # Use the model for prediction.
-          return(VGAM::predictvglm(
-            object = object@model,
-            newdata = encoded_data$encoded_data@data,
-            type = type,
-            ...))
+          return(callNextMethod())
         }
         
       } else {
@@ -647,13 +634,8 @@ setMethod(
 
     if (is(object@model, "vglm")) {
       ..deprecation_vgam()
+      return(callNextMethod())
 
-      # Parse coefficient names. vglm adds :1 and :2 (and so on) to
-      # coefficient names.
-      coefficient_names <- strsplit(x = names(coefficient_z_values), split = ":", fixed = TRUE)
-      coefficient_names <- sapply(coefficient_names, function(coefficient_name) coefficient_name[1])
-      names(coefficient_z_values) <- coefficient_names
-      
     } else if (inherits(object@model, "nnet")) {
       coefficient_names <- colnames(coefficient_z_values)
       coefficient_names <- rep(coefficient_names, each = nrow(coefficient_z_values))
@@ -859,26 +841,6 @@ setMethod(
       
     } else if (inherits(object@model, "vglm")) {
       ..deprecation_vgam()
-      
-      # Update model by removing the call.
-      object@model@call <- call("trimmed")
-
-      # Add show.
-      object <- .capture_show(object)
-
-      # Remove .Environment.
-      object@model@terms$terms <- .replace_environment(object@model@terms$terms)
-      object@model@misc$formula <- .replace_environment(object@model@misc$formula)
-
-      # Remove elements that contain sample-specific values.
-      object@model@predictors <- matrix(0)
-      object@model@effects <- numeric(0)
-      object@model@qr$qr <- NULL
-      object@model@fitted.values <- matrix(0)
-      object@model@residuals <- matrix(0)
-      object@model@weights <- matrix(0)
-      object@model@x <- matrix(0)
-      object@model@y <- matrix(0)
     }
 
     # Set is_trimmed to TRUE.

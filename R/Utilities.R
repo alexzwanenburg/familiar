@@ -1186,12 +1186,8 @@ is_valid_data <- function(x) {
 
   if (is(model, "vglm")) {
     # Check if the package is installed and attached.
-    require_package(
-      x = "VGAM",
-      purpose = "to determine z-scores for multinomial regression models")
-
-    if (is.null(mu)) mu <- VGAM::coefvlm(model)
-    if (is.null(cov_matrix)) cov_matrix <- VGAM::vcovvlm(model)
+    ..deprecation_vgam()
+    return(NULL)
     
   } else if (inherits(model, "fastglm")) {
     require_package(
