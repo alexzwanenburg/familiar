@@ -380,7 +380,7 @@ setMethod(
     if (is.waive(x_label)) {
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         x_label <- "expected probability"
-      } else if (object@outcome_type %in% c("count", "continuous")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         x_label <- "expected value"
       } else if (object@outcome_type %in% c("survival")) {
         x_label <- "expected survival probability"
@@ -393,7 +393,7 @@ setMethod(
     if (is.waive(y_label)) {
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         y_label <- "observed proportion"
-      } else if (object@outcome_type %in% c("count", "continuous")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         y_label <- "observed value"
       } else if (object@outcome_type %in% c("survival")) {
         y_label <- "observed survival proportion"

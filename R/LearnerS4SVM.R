@@ -231,8 +231,7 @@ setMethod(
       object@outcome_type %in% c("binomial", "multinomial")) {
       svm_type <- "nu-classification"
     } else if (
-      is(object, "familiarSVMNu") &&
-      object@outcome_type %in% c("count", "continuous")) {
+      is(object, "familiarSVMNu") && object@outcome_type %in% c("continuous")) {
       svm_type <- "nu-regression"
     } else if (is(object, "familiarSVMEps")) {
       svm_type <- "eps-regression"
@@ -316,7 +315,7 @@ setMethod(
     object = "familiarSVM",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a naive model.
       object <- methods::new("familiarNaiveModel", object)
     }
@@ -398,7 +397,7 @@ setMethod(
         
         prediction_table[, "predicted_class" := class_predictions]
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
         # Extract predicted regression values.

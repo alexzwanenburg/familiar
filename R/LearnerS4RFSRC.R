@@ -171,7 +171,7 @@ setMethod(
     if (data@outcome_type %in% c("binomial", "multinomial")) {
       split_rule_range <- c("gini", "auc", "entropy")
       split_rule_default <- "gini"
-    } else if (data@outcome_type %in% c("continuous", "count")) {
+    } else if (data@outcome_type %in% c("continuous")) {
       split_rule_range <- c("mse", "quantile.regr", "la.quantile.regr")
       split_rule_default <- "mse"
     } else if (data@outcome_type == "survival") {
@@ -390,7 +390,7 @@ setMethod(
         termlabels = feature_columns,
         response = quote(Surv(outcome_time, outcome_event)))
       
-    } else if (object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")) {
+    } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       formula <- stats::reformulate(
         termlabels = feature_columns,
         response = quote(outcome))
@@ -484,7 +484,7 @@ setMethod(
     object = "familiarRFSRC",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
       object <- methods::new("familiarNaiveModel", object)
       
@@ -545,7 +545,7 @@ setMethod(
           prediction_table[, (class_probability_columns[ii]) := model_predictions$predicted[, ii]]
         }
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
         # Extract predicted regression values.
@@ -843,7 +843,7 @@ setMethod(
           termlabels = feature_columns,
           response = quote(Surv(outcome_time, outcome_event)))
         
-      } else if (object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")) {
+      } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
         formula <- stats::reformulate(
           termlabels = feature_columns,
           response = quote(outcome))

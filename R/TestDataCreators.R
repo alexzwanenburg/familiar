@@ -108,47 +108,6 @@ test_create_good_data <- function(outcome_type, to_data_object = TRUE) {
         outcome_type = outcome_type,
         exclude_features = "mealpct")
     }
-    
-  } else if (outcome_type == "count") {
-    # Load the Boston Housing data set
-    data <- data.table::as.data.table(MASS::Boston)
-
-    # Rename columns
-    data.table::setnames(data,
-      old = c(
-        "crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad",
-        "tax", "ptratio", "black", "lstat", "medv"),
-      new = c(
-        "per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
-        "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
-        "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
-        "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"
-      )
-    )
-
-    # Convert by_charles_river to a factor.
-    data$by_charles_river <- factor(
-      x = data$by_charles_river, 
-      levels = c(0, 1), 
-      labels = c("no", "yes"))
-
-    # Convert the median_house_value to the actual value.
-    data[, "median_house_value" := median_house_value * 1000.0]
-
-    # Limit to 150 samples
-    data <- data[1:150, ]
-
-    # Add sample identifier.
-    data[, ":="("sample_id" = .I)]
-
-    # Convert to a data object.
-    if (to_data_object) {
-      data <- as_data_object(
-        data = data,
-        sample_id_column = "sample_id",
-        outcome_column = "median_house_value",
-        outcome_type = outcome_type)
-    }
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
@@ -188,8 +147,6 @@ test_create_invariant_good_data <- function(outcome_type) {
     data@data[, "Sepal_Length" := 3.0]
   } else if (outcome_type == "continuous") {
     data@data[, "calwpct" := 5.0]
-  } else if (outcome_type == "count") {
-    data@data[, "industry" := 3.0]
   }
 
   return(data)
@@ -500,41 +457,6 @@ test_create_single_feature_data <- function(outcome_type) {
       outcome_type = outcome_type,
       include_features = "avginc")
     
-  } else if (outcome_type == "count") {
-    # Load the Boston Housing data set
-    data <- data.table::as.data.table(MASS::Boston)
-
-    # Rename columns
-    data.table::setnames(data,
-      old = c(
-        "crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad",
-        "tax", "ptratio", "black", "lstat", "medv"),
-      new = c(
-        "per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
-        "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
-        "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
-        "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"))
-
-    # Convert by_charles_river to a factor.
-    data$by_charles_river <- factor(x = data$by_charles_river, levels = c(0, 1), labels = c("no", "yes"))
-
-    # Convert the median_house_value to the actual value.
-    data[, "median_house_value" := median_house_value * 1000.0]
-
-    # Limit to 150 samples
-    data <- data[1:150, ]
-
-    # Add sample identifier.
-    data[, ":="("sample_id" = .I)]
-
-    # Convert to a data object.
-    data <- as_data_object(
-      data = data,
-      sample_id_column = "sample_id",
-      outcome_column = "median_house_value",
-      outcome_type = outcome_type,
-      include_features = "lower_status_percentage")
-    
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
@@ -806,71 +728,6 @@ test_create_wide_data <- function(outcome_type) {
       outcome_column = "testscr",
       outcome_type = outcome_type)
     
-  } else if (outcome_type == "count") {
-    # Load the Boston Housing data set
-    data <- data.table::as.data.table(MASS::Boston)
-
-    # Rename columns
-    data.table::setnames(data,
-      old = c(
-        "crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", 
-        "tax", "ptratio", "black", "lstat", "medv"),
-      new = c(
-        "per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
-        "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
-        "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
-        "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"))
-
-    # Convert by_charles_river to a factor.
-    data$by_charles_river <- factor(
-      x = data$by_charles_river,
-      levels = c(0, 1),
-      labels = c("no", "yes"))
-
-    # Convert the median_house_value to the actual value.
-    data[, "median_house_value" := median_house_value * 1000.0]
-
-    # Limit to 10 samples
-    data <- data[1:10, ]
-
-    # Add sample identifier.
-    data[, ":="("sample_id" = .I)]
-
-    # Add twenty random features
-    random_data <- lapply(
-      seq_len(20),
-      function(ii, n, r) fam_rnorm(n = n, rstream_object = r),
-      n = nrow(data),
-      r = r)
-    names(random_data) <- paste0("random_", seq_len(20))
-
-    # Add to dataset
-    data <- cbind(data, data.table::as.data.table(random_data))
-
-    # Add another 3 random features
-    random_data <- lapply(
-      seq_len(3),
-      function(ii, n, r) {
-        return(factor(fam_sample(
-          c("red", "green", "blue"),
-          size = n,
-          replace = TRUE,
-          rstream_object = r)))
-      },
-      n = nrow(data),
-      r = r)
-    names(random_data) <- paste0("random_categorical_", seq_len(3))
-
-    # Add to dataset
-    data <- cbind(data, data.table::as.data.table(random_data))
-
-    # Convert to a data object.
-    data <- as_data_object(
-      data = data,
-      sample_id_column = "sample_id",
-      outcome_column = "median_house_value",
-      outcome_type = outcome_type)
-    
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
@@ -943,10 +800,6 @@ test_create_bad_data <- function(outcome_type, add_na_data = FALSE) {
   } else if (outcome_type == "continuous") {
     # For continuous data, it would be bad if all outcome values are invariant.
     data@data[, "outcome" := 500.0]
-    
-  } else if (outcome_type == "count") {
-    # For count data it would be bad if all outcome values are invariant
-    data@data[, "outcome" := 50000]
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
@@ -1094,9 +947,6 @@ test_create_synthetic_series_data <- function(
   } else if (outcome_type == "continuous") {
     outcome_value <- outcome_raw
     
-  } else if (outcome_type == "count") {
-    outcome_value <- round(outcome_raw * 100)
-    
   } else if (outcome_type == "survival") {
     # Outcome follows an exponential distribution.
     outcome_time <- exp(outcome_raw)
@@ -1188,7 +1038,7 @@ test_create_synthetic_series_one_outcome <- function(
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     data@data[, "outcome" := 1]
   } else if (outcome_type == "survival") {
     data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1)]
@@ -1613,7 +1463,7 @@ test_create_synthetic_correlated_one_outcome_data <- function(
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     data@data[, "outcome" := 1]
   } else if (outcome_type == "survival") {
     data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1)]
@@ -1638,7 +1488,7 @@ test_create_synthetic_correlated_bad_outcome_data <- function(
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     data@data[, "outcome" := 1]
   } else if (outcome_type == "survival") {
     data@data[, ":="("outcome_event" = 0)]

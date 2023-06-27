@@ -404,7 +404,7 @@ get_outcome_info_from_backend <- function() {
     # Number of instances for each class
     distr_list[["frequency"]] <- x[, list("count" = .N), by = "outcome"]
     
-  } else if (object@outcome_type %in% c("continuous", "count")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     # Number of samples
     distr_list[["n"]] <- nrow(x)
 
@@ -535,7 +535,7 @@ setMethod(
         outcome_str, ", with classes: ",
         paste_s(object@levels), ".\n")
       
-    } else if (object@outcome_type %in% c("count", "continuous")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # No further details provided.
       outcome_str <- paste0(outcome_str, ".\n")
       

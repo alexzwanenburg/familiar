@@ -520,7 +520,7 @@
     # Generate outcome column with NA values
     data[, (outcome_column) := NA_character_]
     
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     # Find outcome column names
     outcome_column <- get_outcome_columns(x = outcome_type)
 
@@ -874,7 +874,7 @@ update_data_set <- function(data, object) {
 
   # TODO: When we start supporting transformation and normalisation
   # parameters for outcome, process the data here.
-  if (outcome_type %in% c("count", "continuous")) {
+  if (outcome_type %in% c("continuous")) {
     if (is(object@outcome_info, "outcomeInfo")) {
       if (!is.null(object@outcome_info@transformation_parameters) ||
           !is.null(object@outcome_info@normalisation_parameters)) {

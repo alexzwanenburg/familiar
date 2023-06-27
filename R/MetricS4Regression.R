@@ -53,7 +53,7 @@ setMethod(
   "is_available",
   signature(object = "familiarMetricRegression"),
   function(object, ...) {
-    return(object@outcome_type %in% c("count", "continuous"))
+    return(object@outcome_type %in% c("continuous"))
   }
 )
 

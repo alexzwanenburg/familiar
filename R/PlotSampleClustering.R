@@ -486,7 +486,7 @@ setMethod(
       # Assign default label to the
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         outcome_legend_label <- "class"
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         outcome_legend_label <- "value"
       } else if (object@outcome_type %in% c("survival", "competing_risk")) {
         outcome_legend_label <- "event"
@@ -1046,17 +1046,8 @@ setMethod(
 
   # outcome_palette_range and outcome_plot_data --------------------------------
 
-  # Set outcome_palette_range for continuous and count outcome types.
-  if (is.waive(outcome_palette_range) &&
-      outcome_type %in% c("continuous", "count") &&
-      !is.null(show_outcome)) {
-    if (outcome_type == "continuous") {
-      outcome_palette_range <- c(NA, NA)
-    } else if (outcome_type == "count") {
-      outcome_palette_range <- c(0.0, NA)
-    }
-    
-  } else if (is.waive(outcome_palette_range)) {
+  # Set outcome_palette_range for continuous outcome types.
+  if (is.waive(outcome_palette_range)) {
     outcome_palette_range <- c(NA, NA)
   }
 
@@ -1090,7 +1081,7 @@ setMethod(
   
   # Update the outcome palette range based on data present.
   if (any(!is.finite(outcome_palette_range)) &&
-      outcome_type %in% c("continuous", "count") &&
+      outcome_type %in% c("continuous") &&
       !is.null(show_outcome)) {
     # Iterate over outcome_plot_data to find minimum and maximum values.
     outcome_ranges <- lapply(
@@ -1719,7 +1710,7 @@ setMethod(
   # Set type of palette that is to be used for default palettes.
   if (outcome_type %in% c("binomial", "multinomial")) {
     palette_type <- "qualitative"
-  } else if (outcome_type %in% c("continuous", "count")) {
+  } else if (outcome_type %in% c("continuous")) {
     palette_type <- "sequential"
   } else if (outcome_type %in% c("survival", "competing_risk")) {
     palette_type <- "qualitative"
@@ -1769,7 +1760,7 @@ setMethod(
   }
 
   # Specify the colours.
-  if (outcome_type %in% c("continuous", "count")) {
+  if (outcome_type %in% c("continuous")) {
     # Colors
     outcome_colours <- .get_palette(
       x = outcome_palette,

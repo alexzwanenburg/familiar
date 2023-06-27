@@ -157,7 +157,7 @@ setMethod(
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       split_rule_range <- c("gini", "extratrees", "hellinger")
       split_rule_default <- "gini"
-    } else if (object@outcome_type %in% c("continuous", "count")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       split_rule_range <- c("variance", "extratrees", "maxstat", "beta")
       split_rule_default <- "maxstat"
     } else if (object@outcome_type == "survival") {
@@ -358,7 +358,7 @@ setMethod(
         termlabels = feature_columns,
         response = quote(survival::Surv(outcome_time, outcome_event)))
       
-    } else if (object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")) {
+    } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       formula <- stats::reformulate(
         termlabels = feature_columns,
         response = quote(outcome))
@@ -461,7 +461,7 @@ setMethod(
     object = "familiarRanger",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
       object <- methods::new("familiarNaiveModel", object)
       
@@ -557,7 +557,7 @@ setMethod(
           prediction_table[, (class_probability_columns[ii]) := model_predictions$predictions[, ii]]
         }
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
         # Extract predicted regression values.

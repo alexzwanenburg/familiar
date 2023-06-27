@@ -70,24 +70,16 @@ setMethod(
       learner %in% c("", "logistic", "gaussian", "gamma")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "multinomial" &&
-      learner %in% c("", "logistic")) {
+    } else if (outcome_type == "multinomial" && learner %in% c("", "logistic")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "binomial" &&
-      learner %in% c("", "logistic")) {
+    } else if (outcome_type == "binomial" && learner %in% c("", "logistic")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "survival" &&
-      learner %in% c("", "cox")) {
+    } else if (outcome_type == "survival" && learner %in% c("", "cox")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "count" &&
-      learner %in% c("", "poisson", "gaussian")) {
+    } else if (outcome_type == "count" && learner %in% c("", "poisson", "gaussian")) {
       ..deprecation_count()
       return(FALSE)
     }
@@ -169,8 +161,6 @@ setMethod(
       # No specific objective is provided.
       if (outcome_type == "continuous") {
         learn_objective_default <- c("gaussian", "continuous_logistic", "gamma")
-      } else if (outcome_type == "count") {
-        learn_objective_default <- c("gaussian", "poisson")
       } else if (outcome_type == "binomial") {
         learn_objective_default <- "binomial_logistic"
       } else if (outcome_type == "multinomial") {
@@ -450,7 +440,7 @@ setMethod(
       # Set outcome_labels
       outcome_labels <- outcome_data$outcome_label
       
-    } else if (object@outcome_type %in% c("continuous", "count")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # Set outcome_labels
       outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1]]]
 
@@ -579,7 +569,7 @@ setMethod(
     object = "familiarXGBoost",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
       object <- methods::new("familiarNaiveModel", object)
       
@@ -712,7 +702,7 @@ setMethod(
         
         prediction_table[, "predicted_class" := class_predictions]
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # Numerical outcomes ---------------------------------------------------
 
         # Map predictions back to original scale.

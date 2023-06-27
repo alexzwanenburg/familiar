@@ -46,7 +46,7 @@ setMethod(
         ..error_message_no_optimised_hyperparameters_available())))
     }
 
-    if (object@outcome_type %in% c("count", "continuous")) {
+    if (object@outcome_type %in% c("continuous")) {
       model <- object@outcome_info@distribution
     } else if (object@outcome_type %in% c("binomial", "multinomial")) {
       model <- object@outcome_info@distribution
@@ -104,7 +104,7 @@ setMethod(
       
       prediction_table[, "predicted_class" := class_predictions]
       
-    } else if (object@outcome_type %in% c("count", "continuous")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # In the naive model, return the median value for regression problems.
       prediction_table[, "predicted_outcome" := object@model$median]
       

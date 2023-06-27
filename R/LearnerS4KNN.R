@@ -218,7 +218,7 @@ setMethod(
     object = "familiarKNN",
     data = "dataObject"),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a naive model.
       object <- methods::new("familiarNaiveModel", object)
     }
@@ -286,8 +286,8 @@ setMethod(
         class_predictions <- factor(class_predictions, levels = class_levels)
         prediction_table[, "predicted_class" := class_predictions]
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
-        # Count and continuous outcomes ----------------------------------------
+      } else if (object@outcome_type %in% c("continuous")) {
+        # Continuous outcomes --------------------------------------------------
 
         # Use the model for prediction.
         model_predictions <- predict(

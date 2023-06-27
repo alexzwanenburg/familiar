@@ -602,7 +602,7 @@ setMethod(
         }
       }
       
-    } else if (metric@outcome_type %in% c("count", "continuous")) {
+    } else if (metric@outcome_type %in% c("continuous")) {
       # Baseline median value.
       median_value <- outcome_info@distribution$median
 
@@ -922,8 +922,6 @@ setMethod(
     default_metric <- "auc_roc"
   } else if (outcome_type == "continuous") {
     default_metric <- "mse"
-  } else if (outcome_type == "count") {
-    default_metric <- "msle"
   } else if (outcome_type == "survival") {
     default_metric <- "concordance_index"
   } else if (outcome_type == "competing_risk") {

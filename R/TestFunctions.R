@@ -7,7 +7,7 @@ test_all_learners_available <- function(learners) {
   for (learner in learners) {
     # Determine if the learner is available for any outcome.
     for (outcome_type in c(
-      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
       object <- methods::new(
         "familiarModel",
@@ -55,7 +55,7 @@ test_all_learners_train_predict_vimp <- function(
   }
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
@@ -559,7 +559,7 @@ test_all_learners_train_predict_vimp <- function(
               levels(prediction_table$predicted_class),
               get_outcome_class_levels(model))
             
-          } else if (outcome_type %in% c("count", "continuous", "survival", "competing_risk")) {
+          } else if (outcome_type %in% c("continuous", "survival", "competing_risk")) {
             # Expect that the predicted outcome is valid.
             testthat::expect_equal(is.numeric(prediction_table$predicted_outcome), TRUE)
           }
@@ -1305,7 +1305,7 @@ test_all_learners_parallel_train_predict_vimp <- function(
   on.exit(data.table::setDTthreads(0L), add = TRUE)
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
 
@@ -1857,7 +1857,7 @@ test_all_vimp_methods_available <- function(vimp_methods) {
   for (vimp_method in vimp_methods) {
     # Determine if the learner is available for any outcome.
     for (outcome_type in c(
-      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a familiarModel object.
       object <- methods::new(
         "familiarVimpMethod",
@@ -1899,7 +1899,7 @@ test_all_vimp_methods <- function(
   }
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
@@ -2308,7 +2308,7 @@ test_all_vimp_methods_parallel <- function(
   on.exit(data.table::setDTthreads(0L), add = TRUE)
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
 
@@ -2408,7 +2408,7 @@ test_all_metrics_available <- function(metrics) {
   for (metric in metrics) {
     # Determine if the metric is available for any outcome.
     for (outcome_type in c(
-      "count", "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
       # Create a metric object
       object <- as_metric(
         metric = metric,
@@ -2448,7 +2448,7 @@ test_all_metrics <- function(
   }
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test_create_all_identical_data(outcome_type)
@@ -2505,7 +2505,6 @@ test_all_metrics <- function(
         "family" = switch(
           outcome_type,
           "continuous" = "gaussian",
-          "count" = "poisson",
           "binomial" = "logistic",
           "multinomial" = "multinomial",
           "survival" = "cox"))
@@ -2516,7 +2515,6 @@ test_all_metrics <- function(
         "family" = switch(
           outcome_type,
           "continuous" = "gaussian",
-          "count" = "poisson",
           "binomial" = "binomial",
           "multinomial" = "multinomial",
           "survival" = "cox"))
@@ -3525,7 +3523,7 @@ test_all_metrics <- function(
 test_hyperparameter_optimisation <- function(
     vimp_methods = NULL,
     learners = NULL,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     not_available_no_samples = TRUE,
     n_max_bootstraps = 25L,
     n_max_optimisation_steps = 3L,
@@ -4238,7 +4236,7 @@ test_hyperparameter_optimisation <- function(
 test_plots <- function(
     plot_function,
     data_element,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     not_available_no_samples = TRUE,
     not_available_single_feature = FALSE,
     not_available_all_predictions_fail = TRUE,
@@ -4283,7 +4281,7 @@ test_plots <- function(
   }
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "survival", "binomial", "multinomial")) {
+  for (outcome_type in c("continuous", "survival", "binomial", "multinomial")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test_create_all_identical_data(outcome_type)
@@ -4352,7 +4350,6 @@ test_plots <- function(
       "family" = switch(
         outcome_type,
         "continuous" = "gaussian",
-        "count" = "poisson",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
         "survival" = "cox"))
@@ -5315,7 +5312,7 @@ test_plots <- function(
 test_plot_ordering <- function(
     plot_function,
     data_element,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     ...,
     experiment_args = list(),
     plot_args = list(),
@@ -5369,7 +5366,6 @@ test_plot_ordering <- function(
       "family" = switch(
         outcome_type,
         "continuous" = "gaussian",
-        "count" = "poisson",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
         "survival" = "cox"))
@@ -5395,7 +5391,6 @@ test_plot_ordering <- function(
       "family" = switch(
         outcome_type,
         "continuous" = "gaussian",
-        "count" = "poisson",
         "binomial" = "logistic",
         "multinomial" = "multinomial",
         "survival" = "cox"))
@@ -5499,7 +5494,7 @@ test_plot_ordering <- function(
 test_export <- function(
     export_function,
     data_element,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     not_available_no_samples = TRUE,
     not_available_single_feature = FALSE,
     not_available_all_predictions_fail = TRUE,
@@ -5542,7 +5537,7 @@ test_export <- function(
   }
 
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")) {
+  for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     identical_sample_data <- test_create_all_identical_data(outcome_type)
@@ -5606,7 +5601,6 @@ test_export <- function(
       "family" = switch(
         outcome_type,
         "continuous" = "gaussian",
-        "count" = "poisson",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
         "survival" = "cox"))
@@ -6664,7 +6658,7 @@ test_export <- function(
 test_export_specific <- function(
     export_function,
     data_element,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     ...,
     export_args = list(),
     use_data_set = "full",
@@ -6692,7 +6686,6 @@ test_export_specific <- function(
       "family" = switch(
         outcome_type,
         "continuous" = "gaussian",
-        "count" = "poisson",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
         "survival" = "cox"))
@@ -6784,7 +6777,7 @@ integrated_test <- function(
     ...,
     learner = NULL,
     hyperparameters = NULL,
-    outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     warning_good = NULL,
     warning_bad = NULL,
     debug = FALSE) {
@@ -6828,7 +6821,6 @@ integrated_test <- function(
             "family" = switch(
               outcome_type,
               "continuous" = "gaussian",
-              "count" = "poisson",
               "binomial" = "binomial",
               "multinomial" = "multinomial",
               "survival" = "cox"))
@@ -6883,7 +6875,6 @@ integrated_test <- function(
             "family" = switch(
               outcome_type,
               "continuous" = "gaussian",
-              "count" = "poisson",
               "binomial" = "binomial",
               "multinomial" = "multinomial",
               "survival" = "cox"))

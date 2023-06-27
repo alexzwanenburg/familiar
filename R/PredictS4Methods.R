@@ -825,7 +825,7 @@ any_predictions_valid <- function(
         "any_predictions_valid: outcome_type was not provided.")
     }
 
-    if (outcome_type %in% c("continuous", "count")) {
+    if (outcome_type %in% c("continuous")) {
       return(check_fun(is.finite(prediction_table$predicted_outcome)))
       
     } else if (outcome_type %in% c("survival", "competing_risk")) {
@@ -876,7 +876,7 @@ remove_nonvalid_predictions <- function(prediction_table, outcome_type) {
       prediction_table <- prediction_table[!is.na(risk_group), ]
     }
     
-  } else if (outcome_type %in% c("continuous", "count")) {
+  } else if (outcome_type %in% c("continuous")) {
     prediction_table <- prediction_table[is.finite(predicted_outcome), ]
     
   } else if (outcome_type %in% c("binomial", "multinomial")) {
@@ -927,7 +927,7 @@ setMethod(
     # Check predicted outcome columns.
     if (outcome_type %in% c("survival", "competing_risk")) {
       data <- data[is.finite(outcome_time) & !is.na(outcome_event), ]
-    } else if (outcome_type %in% c("count", "continuous")) {
+    } else if (outcome_type %in% c("continuous")) {
       data <- data[is.finite(outcome), ]
     } else if (outcome_type %in% c("binomial", "multinomial")) {
       data <- data[!is.na(outcome), ]

@@ -132,7 +132,7 @@ setMethod(
       ..deprecation_mboost()
       return(FALSE)
       
-    } else if(outcome_type == "count" && learner %in% c("boosted_tree", "boosted_tree_poisson")) {
+    } else if (outcome_type == "count" && learner %in% c("boosted_tree", "boosted_tree_poisson")) {
       ..deprecation_mboost()
       ..deprecation_count()
       return(FALSE)
