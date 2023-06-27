@@ -133,9 +133,6 @@ setMethod(
       univariate_data <- NULL
       
     } else {
-      # Check that the qvalue package is installed.
-      has_qvalue_package <- is_package_installed(name = "qvalue")
-      
       # Calculate univariate P values, based on aggregated data
       regression_p_values <- compute_univariable_p_values(
         cl = cl,
@@ -150,36 +147,11 @@ setMethod(
         "feature" = names(regression_p_values),
         "p_value" = regression_p_values)[order(p_value)]
       
-      # Only introduce q-values if the qvalue package is installed.
-      if (has_qvalue_package) {
-        ..deprecation_qvalue()
-        
-        if (all(!is.finite(regression_p_values))) {
-          # q-values can only be computed if any p-values are not NA.
-          computed_q_value <- NA_real_
-          
-        } else {
-          # q-values can only be computed for larger numbers of features
-          computed_q_value <- tryCatch(
-            qvalue::qvalue(p = univariate_data$p_value)$qvalues,
-            warning = identity,
-            error = identity)
-          
-          if (inherits(computed_q_value, "error")) computed_q_value <- NA_real_
-          if (inherits(computed_q_value, "warning")) computed_q_value <- NA_real_
-        }
-        
-        # Set q-value
-        univariate_data[, "q_value" := computed_q_value]
-      }
-      
       # Set univariate data.
       univariate_data <- methods::new(
         "familiarDataElementUnivariateAnalysis",
         data = univariate_data,
-        value_column = ifelse(
-          has_qvalue_package,
-          c("p_value", "q_value"), "p_value"),
+        value_column = "p_value",
         grouping_column = "feature")
       
       # Add model name.

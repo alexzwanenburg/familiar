@@ -657,10 +657,9 @@ find_unimportant_features <- function(
   # Find which features are not important for the current endpoint.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  p_full <- q_full <- p_val <- q_val <- name <- NULL
-  p_median <- q_median <- q_sel <- p_sel <- NULL
+  p_full <- p_val <- name <- p_median <- p_sel <- NULL
 
-  # Base calculatutions on medians/modes for repeated data. Repeated
+  # Base calculations on medians/modes for repeated data. Repeated
   # measurements are not independent and may inflate statistics.
   data <- aggregate_data(data = data)
 
@@ -703,22 +702,7 @@ find_unimportant_features <- function(
     "p_full" = regr_pval)
   regression_data[!is.finite(p_full), "p_full" := 1]
 
-  # Calculate q-value
-  if (nrow(regression_data) >= 2 && is_package_installed(name = "qvalue")) {
-    ..deprecation_qvalue()
-    regression_data[, "q_full" := qvalue::qvalue(p = p_full, lambda = 0)$qvalues]
-    
-  } else {
-    regression_data[, "q_full" := p_full]
-  }
-
-  if (settings$prep$univar_metric == "q_value") {
-    # Filter out features with high q-value
-    feature_columns <- feature_columns[
-      feature_columns %in% regression_data[
-        q_full <= settings$prep$univar_threshold, ]$name]
-    
-  } else if (settings$prep$univar_metric == "p_value") {
+  if (settings$prep$univar_metric == "p_value") {
     # Filter out features with high p-value
     feature_columns <- feature_columns[
       feature_columns %in% regression_data[
@@ -748,17 +732,6 @@ find_unimportant_features <- function(
         "iter_id" = ii)
       
       regression_data_bootstrap[[ii]][!is.finite(p_val), "p_val" := 1.0]
-
-      # Calculate q-values for the current bootstrap
-      if (
-        nrow(regression_data_bootstrap[[ii]]) >= 2 &&
-        is_package_installed(name = "qvalue")) {
-        ..deprecation_qvalue()
-        regression_data_bootstrap[[ii]][, "q_val" := qvalue::qvalue(p = p_val, lambda = 0)$qvalues]
-        
-      } else {
-        regression_data_bootstrap[[ii]][, "q_val" := p_val]
-      }
       
       rm(regr_pval)
       
@@ -766,8 +739,7 @@ find_unimportant_features <- function(
       regression_data_bootstrap[[ii]] <- data.table::data.table(
         "name" = character(),
         "p_val" = numeric(), 
-        "iter_id" = numeric(),
-        "q_val" = numeric())
+        "iter_id" = numeric())
     }
 
     rm(bootstrap_samples)
@@ -778,8 +750,7 @@ find_unimportant_features <- function(
 
   # Calculate median metric values of the bootstraps
   regression_data_bootstrap <- regression_data_bootstrap[, list(
-    "p_median" = stats::median(p_val, na.rm = TRUE),
-    "q_median" = stats::median(q_val, na.rm = TRUE)),
+    "p_median" = stats::median(p_val, na.rm = TRUE)),
     by = name]
 
   # Merge median metric value table and the full table
@@ -791,12 +762,10 @@ find_unimportant_features <- function(
 
   # Address non-finite entries
   regression_data_bootstrap[!is.finite(p_median), "p_median" := 1]
-  regression_data_bootstrap[!is.finite(q_median), "q_median" := 1]
 
   # Find the worst entries among the bootstraps and the full analysis
   regression_data_bootstrap[, ":="(
-    "p_sel" = pmax(p_median, p_full),
-    "q_sel" = pmax(q_median, q_full)), 
+    "p_sel" = pmax(p_median, p_full)), 
     by = name]
 
   rm(regression_data)
@@ -804,8 +773,6 @@ find_unimportant_features <- function(
   # Determine cutoff required to obtain the maximally sized feature set
   if (settings$prep$univar_feat_set_size > nrow(regression_data_bootstrap)) {
     max_thresh <- 1
-  } else if (settings$prep$univar_metric == "q_value") {
-    max_thresh <- sort(regression_data_bootstrap$q_sel)[settings$prep$univar_feat_set_size]
   } else if (settings$prep$univar_metric == "p_value") {
     max_thresh <- sort(regression_data_bootstrap$p_sel)[settings$prep$univar_feat_set_size]
   }
@@ -813,10 +780,8 @@ find_unimportant_features <- function(
   # Set the actual q threshold (the lower of max_q_thresh and settings$prep$univar_threshold)
   sel_thresh <- min(max_thresh, settings$prep$univar_threshold)
 
-  # Return features which have a q-value above the selected threshold
-  if (settings$prep$univar_metric == "q_value") {
-    unimportant_features <- regression_data_bootstrap[q_sel > sel_thresh, ]$name
-  } else if (settings$prep$univar_metric == "p_value") {
+  # Return features which have a p-value above the selected threshold
+  if (settings$prep$univar_metric == "p_value") {
     unimportant_features <- regression_data_bootstrap[p_sel > sel_thresh, ]$name
   } else {
     unimportant_features <- character(0)

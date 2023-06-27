@@ -44,7 +44,7 @@
 ..deprecation_qvalue <- function() {
   if (!.is_testing()) {
     rlang::warn(
-      message = "The use of qvalue for computing q-values will be deprecated in familiar version 2.0.0.",
+      message = "The qvalue package for computing q-values has been deprecated since familiar version 2.0.0.",
       class = "deprecation_warning",
       .frequency = "once",
       .frequency_id = "deprecation_warning_qvalue")

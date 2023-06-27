@@ -4,6 +4,8 @@
 
 - Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
 
+- The `qvalue` package for computing q-values was deprecated.
+
 # Version 1.5.0 (Development)
 
 ## Major changes

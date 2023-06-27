@@ -219,7 +219,7 @@ is_package_newer <- function(name, version) {
 
 
 .bioconductor_packages <- function() {
-  return("qvalue")
+  return(NULL)
 }
 
 

@@ -279,9 +279,7 @@
 #'
 #' @return A list of settings to be used within the workflow
 #'
-#' @references 1. Storey, J. D. A direct approach to false discovery rates. J.
-#'   R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
-#'
+#' @references
 #'   1. Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 #'   rater reliability. Psychol. Bull. 86, 420–428 (1979).
 #'
@@ -1195,15 +1193,11 @@
 #'   All features with values above the threshold are filtered. The default
 #'   value is `0.20`.
 #' @param univariate_test_threshold_metric (*optional*) Metric used with the to
-#'   compare the `univariate_test_threshold` against. The following metrics can
+#'   compare the `univariate_test_threshold` against. The following metric can
 #'   be chosen:
 #'
 #'   * `p_value` (default): The unadjusted p-value of each feature is used for
 #'   to filter features.
-#'
-#'   * `q_value`: The q-value (Story, 2002), is used to filter features. Some
-#'   data sets may have insufficient samples to compute the q-value. The
-#'   `qvalue` package must be installed from Bioconductor to use this method.
 #'
 #' @param univariate_test_max_feature_set_size (*optional*) Maximum size of the
 #'   feature set after the univariate test. P or q values of features are
@@ -1585,9 +1579,7 @@
 #'
 #' @return List of parameters related to preprocessing.
 #'
-#' @references 1. Storey, J. D. A direct approach to false discovery rates. J.
-#'   R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
-#'
+#' @references
 #'   1. Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 #'   rater reliability. Psychol. Bull. 86, 420–428 (1979).
 #'
@@ -1763,17 +1755,12 @@
     var_name = "univariate_test_threshold_metric",
     values = c("p_value", "q_value"))
 
-  # If the qvalue package is not installed, use p-values instead.
+  # If q_value is provided, warn for deprecation and use p-values instead.
   if (settings$univar_metric == "q_value") {
     ..deprecation_qvalue()
-    if (!require_package(
-      x = "qvalue",
-      purpose = "to use q-values as a metric for univariate feature tests",
-      message_type = "backend_warning")) {
-      settings$univar_metric <- "p_value"
-    }
+    settings$univar_metric <- "p_value"
   }
-
+  
   # univariate_test_max_feature_set_size ---------------------------------------
   # Maximum feature set size after univariate regression models.
   settings$univar_feat_set_size <- .parse_arg(

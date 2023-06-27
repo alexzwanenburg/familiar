@@ -65,7 +65,6 @@ Suggests:
     power.transform,
     praznik,
     proxy,
-    qvalue,
     randomForestSRC,
     ranger,
     rmarkdown,
