@@ -30,85 +30,82 @@ predict outcomes for new data. Familiar implements several commonly used
 algorithms. This vignette first describes the learners and their
 hyperparameters. Then, hyperparameter optimisation is described in more detail.
 
-|**learner** | **tag** | **binomial** | **multinomial** | **continuous** | **count** | **survival** |
+|**learner** | **tag** | **binomial** | **multinomial** | **continuous** | **survival** |
 |:------------|:------------|:-----:|:-----:|:-----:|:-----:|:-----:|
 |**generalised linear models**|
-| general^a^ | `glm`                        	    | × | × | × | × | × |
-| logistic | `glm_logistic`              		      | × |   |   |   |   |
-| cauchy | `glm_cauchy` 						              | × |   |   |   |   |
-| complementary log-log | `glm_loglog` 			      | × | 	| 	| 	| 	|
-| normal | `glm_probit` 						              | × | 	| 	| 	| 	|
-| multinomial | `glm_multinomial` 				        | 	| × | 	| 	| 	|
-| log-normal | `glm_log`, `glm_log_gaussian` 	    | 	| 	| × | 	| 	|
-| normal (gaussian) | `glm_gaussian` 			        | 	| 	| × | 	| 	|
-| inverse gaussian | `glm_inv_gaussian` 		      | 	| 	| × | 	| 	|
-| log-poisson | `glm_log_poisson` 				        | 	| 	| x	| × | 	|
-| poisson | `glm_poisson` 						            | 	| 	| x	| × | 	|
-| cox | `cox` 									                  | 	| 	| 	|	  | × |
-| exponential | `survival_regr_exponential` 	    | 	| 	| 	|	  | × |
-| gaussian | `survival_regr_gaussian` 			      | 	| 	| 	| 	| × |
-| logistic | `survival_regr_logistic` 			      | 	| 	| 	| 	| × |
-| log-logistic | `survival_regr_loglogistic` 	    | 	| 	| 	| 	| × |
-| log-normal | `survival_regr_lognormal` 		      | 	| 	| 	| 	| × |
-| survival regression^a^ | `survival_regr` 		    | 	| 	| 	| 	| × |
-| weibull | `survival_regr_weibull` 			        | 	| 	| 	| 	| × |
+| general^a^ | `glm`                        	    | × | × | × | × |
+| logistic | `glm_logistic`              		      | × |   |   |   |
+| cauchy | `glm_cauchy` 						              | × |   |   |   |
+| complementary log-log | `glm_loglog` 			      | × | 	| 	|  	|
+| normal | `glm_probit` 						              | × | 	| 	| 	|
+| multinomial | `glm_multinomial` 				        | 	| × | 	| 	|
+| log-normal | `glm_log`, `glm_log_gaussian` 	    | 	| 	| × |  	|
+| normal (gaussian) | `glm_gaussian` 			        | 	| 	| × |  	|
+| inverse gaussian | `glm_inv_gaussian` 		      | 	| 	| × |  	|
+| log-poisson | `glm_log_poisson` 				        | 	| 	| x	|  	|
+| poisson | `glm_poisson` 						            | 	| 	| x	|  	|
+| cox | `cox` 									                  | 	| 	| 	|	× |
+| exponential | `survival_regr_exponential` 	    | 	| 	| 	|	× |
+| gaussian | `survival_regr_gaussian` 			      | 	| 	| 	| × |
+| logistic | `survival_regr_logistic` 			      | 	| 	| 	| × |
+| log-logistic | `survival_regr_loglogistic` 	    | 	| 	| 	| × |
+| log-normal | `survival_regr_lognormal` 		      | 	| 	| 	| × |
+| survival regression^a^ | `survival_regr` 		    | 	| 	| 	| × |
+| weibull | `survival_regr_weibull` 			        | 	| 	| 	| × |
 |**lasso regression models**|
-| general^a^ | `lasso` 							              | × | × | × | × | × |
-| logistic | `lasso_binomial` 					          | × | 	| 	| 	| 	|
-| multi-logistic | `lasso_multinomial` 			      | 	| × | 	| 	| 	|
-| normal (gaussian) | `lasso_gaussian` 			      | 	| 	| × | 	| 	|
-| poisson | `lasso_poisson`						            | 	| 	| 	| × |	  |
-| cox | `lasso_cox` 							                | 	| 	| 	| 	| × |
+| general^a^ | `lasso` 							              | × | × | × | × |
+| logistic | `lasso_binomial` 					          | × | 	| 	| 	|
+| multi-logistic | `lasso_multinomial` 			      | 	| × | 	| 	|
+| normal (gaussian) | `lasso_gaussian` 			      | 	| 	| × |  	|
+| poisson | `lasso_poisson`						            | 	| 	| 	|   |
+| cox | `lasso_cox` 							                | 	| 	| 	| × |
 |**ridge regression models**|
-| general^a^ | `ridge`                            | × | × | × | × | × |
-| logistic | `ridge_binomial`                     | × |   |   |   |   |
-| multi-logistic | `ridge_multinomial`            |   | × |   |   |   |
-| normal (gaussian) | `ridge_gaussian`            |   |   | × |   |   |
-| poisson | `ridge_poisson`                       |   |   |   | × |   |
-| cox | `ridge_cox`                               |   |   |   |   | × |
+| general^a^ | `ridge`                            | × | × | × | × |
+| logistic | `ridge_binomial`                     | × |   |   |   |
+| multi-logistic | `ridge_multinomial`            |   | × |   |   |
+| normal (gaussian) | `ridge_gaussian`            |   |   | × |   |
+| poisson | `ridge_poisson`                       |   |   |   |   |
+| cox | `ridge_cox`                               |   |   |   | × |
 |**elastic net regression models**|
-| general^a^ | `elastic_net`                      | × | × | × | × | × |
-| logistic | `elastic_net_binomial`               | × |   |   |   |   |
-| multi-logistic | `elastic_net_multinomial`      |   | × |   |   |   |
-| normal (gaussian) | `elastic_net_gaussian`      |   |   | × |   |   |
-| poisson | `elastic_net_poisson`                 |   |   |   | × |   |
-| cox | `elastic_net_cox`                         |   |   |   |   | × |
+| general^a^ | `elastic_net`                      | × | × | × | × |
+| logistic | `elastic_net_binomial`               | × |   |   |   |
+| multi-logistic | `elastic_net_multinomial`      |   | × |   |   |
+| normal (gaussian) | `elastic_net_gaussian`      |   |   | × |   |
+| poisson | `elastic_net_poisson`                 |   |   |   |   |
+| cox | `elastic_net_cox`                         |   |   |   | × |
 |**extreme gradient boosted linear models**|
-| general^a^ | `xgboost_lm`                       | × | × | × | × | × |
-| logistic | `xgboost_lm_logistic`                | × | × | × |   |   |
-| gamma | `xgboost_lm_gamma`                      |   |   | × |   |   | 
-| gaussian | `xgboost_lm_gaussian`                |   |   | × | x |   |
-| poisson | `xgboost_lm_poisson`                  |   |   |   | × |   |
-| cox | `xgboost_lm_cox`                          |   |   |   |   | × |
+| general^a^ | `xgboost_lm`                       | × | × | × | × |
+| logistic | `xgboost_lm_logistic`                | × | × | × |   |
+| gamma | `xgboost_lm_gamma`                      |   |   | × |   | 
+| gaussian | `xgboost_lm_gaussian`                |   |   | × |   |
+| cox | `xgboost_lm_cox`                          |   |   |   | × |
 |**random forests**|
-| random forest (RFSRC) | `random_forest_rfsrc`   | × | × | × | × | × |
-| random forest (ranger) | `random_forest_ranger` | × | × | × | × | × | 
+| random forest (RFSRC) | `random_forest_rfsrc`   | × | × | × | × |
+| random forest (ranger) | `random_forest_ranger` | × | × | × | × | 
 |**extreme gradient boosted trees**|
-| general^a^ | `xgboost_tree`                     | × | × | × | × | × |
-| logistic | `xgboost_tree_logistic`              | × | × | × |   |   |
-| gamma | `xgboost_tree_gamma`                    |   |   | × |   |   | 
-| gaussian | `xgboost_tree_gaussian`              |   |   | × | x |   |
-| poisson | `xgboost_tree_poisson`                |   |   |   | × |   |
-| cox | `xgboost_tree_cox`                        |   |   |   |   | × |
+| general^a^ | `xgboost_tree`                     | × | × | × | × |
+| logistic | `xgboost_tree_logistic`              | × | × | × |   |
+| gamma | `xgboost_tree_gamma`                    |   |   | × |   | 
+| gaussian | `xgboost_tree_gaussian`              |   |   | × |   |
+| cox | `xgboost_tree_cox`                        |   |   |   | × |
 |**extreme gradient boosted DART trees**|
-| general^a^ | `xgboost_dart`                     | × | × | × | × | × |
-| logistic | `xgboost_dart_logistic`              | × | × | × |   |   |
-| gamma | `xgboost_dart_gamma`                    |   |   | × |   |   | 
-| gaussian | `xgboost_dart_gaussian`              |   |   | × | x |   |
-| poisson | `xgboost_dart_poisson`                |   |   |   | × |   |
-| cox | `xgboost_dart_cox`                        |   |   |   |   | × |
+| general^a^ | `xgboost_dart`                     | × | × | × | × |
+| logistic | `xgboost_dart_logistic`              | × | × | × |   |
+| gamma | `xgboost_dart_gamma`                    |   |   | × |   | 
+| gaussian | `xgboost_dart_gaussian`              |   |   | × |   |
+| cox | `xgboost_dart_cox`                        |   |   |   | × |
 |**bayesian models**|
-| naive bayes | `naive_bayes`                     | × | × |   |   |   |
+| naive bayes | `naive_bayes`                     | × | × |   |   |
 |**nearest neighbour models**|
-| k-nearest neighbours^b^ | `k_nearest_neighbours_*`, `knn_*`           | × | × | x | x |   |
+| k-nearest neighbours^b^ | `k_nearest_neighbours_*`, `knn_*`           | × | × | x |   |
 |**support vector machines**|
-| $C$-classification^c^ | `svm_c_*`                                     | × | × |   |   |   |
-| $\nu$-classification/ regression^c^ | `svm_nu_*`                      | × | × | × | × |   |
-| $\epsilon$-regression^c^ | `svm_eps_*`                                |   |   | × | × |   |
-| linear kernel^d^ | `svm_*_linear`               | × | × | × | × |   |
-| polynomial kernel^d^ | `svm_*_polynomial`       | × | × | × | × |   |
-| radial kernel^d^ | `svm_*_radial`               | × | × | × | × |   |
-| sigmoid kernel^d^ | `svm_*_sigmoid`             | × | × | × | × |   |
+| $C$-classification^c^ | `svm_c_*`                                     | × | × |   |   |
+| $\nu$-classification/ regression^c^ | `svm_nu_*`                      | × | × | × |   |
+| $\epsilon$-regression^c^ | `svm_eps_*`                                |   |   | × |   |
+| linear kernel^d^ | `svm_*_linear`               | × | × | × |   |
+| polynomial kernel^d^ | `svm_*_polynomial`       | × | × | × |   |
+| radial kernel^d^ | `svm_*_radial`               | × | × | × |   |
+| sigmoid kernel^d^ | `svm_*_sigmoid`             | × | × | × |   |
 
 Table: Overview of learners implemented in familiar. ^a^ These learners test
 multiple distributions or linking families and attempt to find the best option.
@@ -188,16 +185,16 @@ better scalability, this has been replaced by the `nnet::multinom` function
 | sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples`. Instances with the majority class receive less weight. |
 | beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
-### Linear models for continuous and count-type outcomes
+### Linear models for continuous outcomes
 
-Linear models for continuous and count-type outcomes derive from the `stats`
+Linear models for continuous outcomes derive from the `stats`
 package of the R core distribution [@rcore2018]. Hyperparameters for these
 models include linkage functions and are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| linking function |`family` | `gaussian`, `log_gaussian`, `inv_gaussian`, `poisson`, `log_poisson` | `glm` only | The linking function is not optimised when it is specified, e.g. `glm_poisson`. `gaussian`, `log_gaussian`, `inv_gaussian` linking functions are not available for count-type outcomes.|
+| linking function |`family` | `gaussian`, `log_gaussian`, `inv_gaussian`, `poisson`, `log_poisson` | `glm` only | The linking function is not optimised when it is specified, e.g. `glm_poisson`.|
 
 ### Linear models for survival outcomes
 
@@ -264,7 +261,7 @@ regression-tree based boosting with drop-outs (`xgboost_dart`).
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | `gbtree`, `dart` | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | subsampling fraction | `sample_size` | $\mathbb{R} \in \left(0, 1.0\right]$ | `gbtree`, `dart` | Fraction of available data that is used for to create a single tree. The default range is $\left[2 / m, 1.0\right]$, with $m$ the number of samples. |
 | minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | `gbtree`, `dart` | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
-| min. splitting error reduction | `gamma` | $\mathbb{R} \in \left[-6, \infty\right)$ | `gbtree`, `dart` | Minimum error reduction required to allow splitting. This parameter is expressed on the $\log_{10}$ scale with a $10^{-6}$ offset. The default range is $\left[-6, 3\right]$. `continuous` and `count`-type outcomes are normalised to the $\left[0, 1\right]$ range prior to model fitting to deal with scaling issues. Values are converted back to the original scale after prediction. |
+| min. splitting error reduction | `gamma` | $\mathbb{R} \in \left[-6, \infty\right)$ | `gbtree`, `dart` | Minimum error reduction required to allow splitting. This parameter is expressed on the $\log_{10}$ scale with a $10^{-6}$ offset. The default range is $\left[-6, 3\right]$. `continuous`-type outcomes are normalised to the $\left[0, 1\right]$ range prior to model fitting to deal with scaling issues. Values are converted back to the original scale after prediction. |
 | DART sampling algorithm | `sample_type` | `uniform`, `weighted` | `dart` | -- |
 | drop-out rate | `rate_drop` | $\mathbb{R} \in \left[0,1\right)$ | `dart` | -- |
 
@@ -273,10 +270,6 @@ regression-tree based boosting with drop-outs (`xgboost_dart`).
 Random forests (explain) [@Breiman2001-ao]. The random forest learner is
 implemented through the `randomForestSRC` package, which provides a unified
 interface for different types of forests [@Ishwaran2008-hz; @Ishwaran2011-gu].
-
-An outcome variable that represents count-type data is first transformed using a
-$\log(x+1)$ transformation. Predicted responses are then transformed to the
-original scale using the inverse $\exp(x)-1$ transformation.
 
 Hyperparameters for random forest learners are shown in the table below.
 
@@ -289,7 +282,7 @@ Hyperparameters for random forest learners are shown in the table below.
 | node size | `node_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | yes | Minimum number of unique samples in terminal nodes. The default range is $\left[5, \lfloor m / 3\rfloor\right]$, with $m$ the number of samples.|
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
-| splitting rule | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
+| splitting rule | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` outcomes and `logrank` for `survival` outcomes.|
 | sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
 | beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
@@ -315,7 +308,7 @@ are shown in the table below.
 | number of features at each node | `m_try` | $\mathbb{R} \in \left[0.0, 1.0\right]$ | yes | Familiar ensures that there is always at least one candidate feature. |
 | node size | `node_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | yes | Minimum number of unique samples in terminal nodes. The default range is $\left[5, \lfloor m / 3\rfloor\right]$, with $m$ the number of samples.|
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
-| splitting rule | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
+| splitting rule | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous` and `survival` outcomes.|
 | significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 | sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
 | beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
@@ -369,7 +362,7 @@ default hyperparameter ranges specified in the table below.
 | signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | SVM kernel | `kernel` | `linear`, `polynomial`, `radial`, `sigmoid` | no | Default is `radial`, unless specified as part of the learner's name. |
 | $C$ | `c` | $\mathbb{R}$ | yes | The cost for violation of constraints is expressed on a $\log_{10}$ scale, i.e. the actual value is $10^\texttt{c}$. The default range is $\left[-5, 3\right]$. |
-| $\epsilon$ | `epsilon` | $\mathbb{R}$ | `continuous` and `count` outcomes | The error tolerance $\epsilon$ is only used for regression SVM. $\epsilon$ is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
+| $\epsilon$ | `epsilon` | $\mathbb{R}$ | `continuous` outcomes | The error tolerance $\epsilon$ is only used for regression SVM. $\epsilon$ is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
 | $\nu$ | `nu` | $\mathbb{R}$ | `nu` SVM type | `nu` provides upper bounds for the fraction of training errors and lower bounds for the fraction of support vectors [@Chang2011-ck]. It is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
 | inverse kernel width | `gamma` | $\mathbb{R}$ | non-linear kernels | This parameter specifies the inverse of the kernel width. It is expressed on the $\log_{10}$ scale. The default range is $\left[-9, 3\right]$. |
 | polynomial degree | `degree` | $\mathbb{Z} \in \left[1, \infty\right)$ | polynomial kernel | The default range is $\left[1, 5\right]$. |
@@ -477,11 +470,11 @@ summary score is determined from the optimisation score over all subsamples.
 
 An objective score $s''$ is computed from the performance metric value for a
 specific hyperparameter set for in-bag (IB; $s''_{\textrm{IB}}$) and out-of-bag
-data (OOB; $s''_{\textrm{OOB}}$). The objective score always lies in the interval
-$[-1.0, 1.0]$. An objective score of $1.0$ always indicates the best possible
-score. A score of $0.0$ indicates that the hyperparameter set leads to the same
-degree of performance as the best educated guess, i.e. the majority class (for
-binomial and multinomial outcomes), the median value (for continuous and count
+data (OOB; $s''_{\textrm{OOB}}$). The objective score always lies in the
+interval $[-1.0, 1.0]$. An objective score of $1.0$ always indicates the best
+possible score. A score of $0.0$ indicates that the hyperparameter set leads to
+the same degree of performance as the best educated guess, i.e. the majority
+class (for binomial and multinomial outcomes), the median value (for continuous
 outcomes), or tied risk or survival times (for survival outcomes). Objective
 scores that are either missing or below $-1.0$ are truncated to the value of
 $-1.0$. In case multiple metrics are used to assess model performance, the mean
@@ -742,7 +735,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_initial_bootstraps` | Number of bootstraps assessed initially. | `1` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
-| `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |
+| `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); and `concordance_index` (`survival`) |
 | `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
 | `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
