@@ -56,7 +56,7 @@
 ..deprecation_mboost <- function() {
   if (!.is_testing()) {
     rlang::warn(
-      message = "The use of mboost for gradient boosted models will be deprecated in familiar version 2.0.0.",
+      message = "The mboost package for gradient boosted models has been deprecated since familiar version 2.0.0.",
       class = "deprecation_warning",
       .frequency = "once",
       .frequency_id = "deprecation_warning_mboost")

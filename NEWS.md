@@ -1,3 +1,9 @@
+# Version 2.0.0 (Development)
+
+## Major changes
+
+- Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
+
 # Version 1.5.0 (Development)
 
 ## Major changes

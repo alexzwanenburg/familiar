@@ -8,9 +8,6 @@
       "with_timeout" = TRUE),
     "summary" = list(
       "FUN" = summary,
-      "with_timeout" = TRUE),
-    "varimp" = list(
-      "FUN" = mboost::varimp,
       "with_timeout" = TRUE)))
 }
 
