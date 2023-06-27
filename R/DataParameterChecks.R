@@ -623,7 +623,7 @@
 #'
 #' This function allows for imputation of the most plausible outcome type.
 #' This imputation is only done for trivial cases, where there is little doubt.
-#' As a consequence `count` and `continuous` outcome types are never imputed.
+#' As a consequence `continuous` outcome type is never imputed.
 #'
 #' @param data Data set as loaded using the `.load_data` function.
 #' @param outcome_column Name of the outcome column in the data set. 
@@ -802,11 +802,11 @@
       }
     }
     
-    # Tests for continuous and count type data are not really possible. One
-    # could test on is.numeric, and minimum value, but these data could still
-    # represent binomial (e.g. 0s and 1s) or multinomial data. One may devise
-    # some tests by counting the number of samples with a unique value, but this
-    # is dangerous for smaller data sets.
+    # Tests for continuous type data are not really possible. One could test on
+    # is.numeric, and minimum value, but these data could still represent
+    # binomial (e.g. 0s and 1s) or multinomial data. One may devise some tests
+    # by counting the number of samples with a unique value, but this is
+    # dangerous for smaller data sets.
     stop("Imputation of the outcome type was not possible. Please provide an outcome type manually.")
   }
 }
@@ -1159,8 +1159,8 @@
     }
   }
     
-  # Check if one column is provided for binomial, multinomial, count and
-  # continuous outcome types.
+  # Check if one column is provided for binomial, multinomial, and continuous
+  # outcome types.
   if (outcome_type %in% c("binomial", "multinomial", "continuous")) {
     
     if (check_stringency != "strict" && !is.null(outcome_column)) {

@@ -37,10 +37,9 @@ NULL
 #' @param type Type of prediction made. The following values are directly
 #'   supported:
 #'
-#'  * `default`: Default prediction, i.e. value estimates for `count` and
-#'   `continuous` outcomes, predicted class probabilities and class for
-#'   `binomial` and `multinomial` and the model response for `survival`
-#'   outcomes.
+#'  * `default`: Default prediction, i.e. value estimates for `continuous`
+#'  outcomes, predicted class probabilities and class for `binomial` and
+#'  `multinomial` and the model response for `survival` outcomes.
 #'
 #'  * `survival_probability`: Predicts survival probabilities at the time
 #'   specified by `time`. Only applicable to `survival` outcomes. Some models

@@ -50,7 +50,7 @@ setMethod(
     verbose = FALSE) {
     
     # Extracts calibration info for survival outcomes. Note that some routines
-    # for count and continuous outcomes are available, but not used.
+    # for continuous outcomes are available, but not used.
     if (!object@outcome_type %in% c("survival")) return(NULL)
     
     # Message extraction start
@@ -151,8 +151,7 @@ setMethod(
     
     if (x[[1]]@outcome_type %in% c("continuous")) {
       
-      # Extract min and max values of the range for continuous and count type
-      # outcomes.
+      # Extract min and max values of the range for continuous type outcomes.
       if (is.null(x[[1]]@grouping_column)) {
         data <- data[, list(
           "min_value" = min(min_value),

@@ -507,7 +507,7 @@ setMethod(
         prediction_table[, "predicted_class" := class_predictions]
         
       } else if (object@outcome_type %in% c("continuous")) {
-        ## Count and continuous outcomes ---------------------------------------
+        ## Continuous outcomes -------------------------------------------------
 
         if (inherits(object@model, "fastglm")) {
           # For fastglm::fastglm models.

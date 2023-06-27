@@ -559,8 +559,6 @@
 #'
 #'   * `multinomial`: categorical outcome with 2 or more levels.
 #'
-#'   * `count`: Poisson-distributed numeric outcomes.
-#'
 #'   * `continuous`: general continuous numeric outcomes.
 #'
 #'   * `survival`: survival outcome for time-to-event data.
@@ -570,7 +568,8 @@
 #'   therefore advise to provide this information manually.
 #'
 #'   Note that `competing_risk` survival analysis are not fully supported, and
-#'   is currently not a valid choice for `outcome_type`.
+#'   is currently not a valid choice for `outcome_type`. The `count` outcome
+#'   type was deprecated in version 2.0.0, and superseded by `continuous`.
 #'
 #' @param class_levels (*optional*) Class levels for `binomial` or `multinomial`
 #'   outcomes. This argument can be used to specify the ordering of levels for
@@ -2621,8 +2620,6 @@
 #'   * `auc_roc`: For `binomial` and `multinomial` models.
 #'
 #'   * `mse`: Mean squared error for `continuous` models.
-#'
-#'   * `msle`: Mean squared logarithmic error for `count` models.
 #'
 #'   * `concordance_index`: For `survival` models.
 #'

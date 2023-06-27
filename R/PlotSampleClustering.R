@@ -21,16 +21,16 @@ NULL
 #'   gradient. This should be a range of two values, e.g. `c(0, 1)`. Lower or
 #'   upper boundary can be unset by using `NA`. If not set, the full
 #'   metric-specific range is used.
-#' @param outcome_palette (*optional*) Sequential (`continuous`, `count`
-#'   outcomes) or qualitative (other outcome types) palette used to show outcome
-#'   values. This argument is ignored if the outcome is not shown.
+#' @param outcome_palette (*optional*) Sequential (`continuous` outcomes) or
+#'   qualitative (other outcome types) palette used to show outcome values. This
+#'   argument is ignored if the outcome is not shown.
 #' @param outcome_palette_range (*optional*) Numerical range used to span the
-#'   gradient of numeric (`continuous`, `count`) outcome values. This argument
+#'   gradient of numeric (`continuous`) outcome values. This argument
 #'   is ignored for other outcome types or if the outcome is not shown.
 #' @param outcome_legend_label (*optional*) Label to provide to the legend for
 #'   outcome data. If NULL, the legend will not have a name. By default,
 #'   `class`, `value` and `event` are used for `binomial` and `multinomial`,
-#'   `continuous` and `count`, and `survival` outcome types, respectively.
+#'   `continuous`, and `survival` outcome types, respectively.
 #' @param show_feature_dendrogram (*optional*) Show feature dendrogram around
 #'   the main panel. Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`,
 #'   `bottom`, `left` and `right`.

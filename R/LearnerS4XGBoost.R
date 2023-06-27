@@ -302,9 +302,9 @@ setMethod(
       # called gamma or min_split_loss in xgboost. We implement it on the
       # power(10) scale, with 10^-6 offset.
       #
-      # For continuous and count-type outcomes, this parameter can be a bit
-      # tricky due to a wide range in possible scales, and thus in error values.
-      # This is resolved by normalising the outcome to the [0, 1] range.
+      # For continuous type outcomes, this parameter can be a bit tricky due to
+      # a wide range in possible scales, and thus in error values. This is
+      # resolved by normalising the outcome to the [0, 1] range.
       param$gamma <- .set_hyperparameter(
         default = c(-6, -3, -1, 1, 3),
         type = "numeric",
