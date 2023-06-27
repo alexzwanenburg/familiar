@@ -38,7 +38,6 @@ good_model <- familiar:::test_train(
     "k" = 3),
   learner = "k_nearest_neighbours_gower")
 
-
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
@@ -49,7 +48,6 @@ testthat::test_that("k-nearest neighbour model trained correctly", {
   # Test that no errors appear.
   testthat::expect_equal(good_model@messages$error, NULL)
 })
-
 
 testthat::test_that("k-nearest neighbour model has no variable importance", {
   # Extract the variable importance table.
@@ -86,7 +84,6 @@ testthat::test_that("k-nearest neighbour model trained correctly", {
   testthat::expect_equal(good_model@messages$error, NULL)
 })
 
-
 testthat::test_that("k-nearest neighbour model does not have variable importance", {
   # Extract the variable importance table.
   vimp_table <- familiar:::get_vimp_table(good_model)
@@ -121,7 +118,6 @@ testthat::test_that("k-nearest neighbour model trained correctly", {
   # Test that no errors appear.
   testthat::expect_equal(good_model@messages$error, NULL)
 })
-
 
 testthat::test_that("k-nearest neighbour model has no variable importance", {
   # Extract the variable importance table.
