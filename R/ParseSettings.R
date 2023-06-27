@@ -539,8 +539,8 @@
 #'   be used in figures created by `familiar`.
 #'
 #'   If not set, the column name in `outcome_column` will be used for
-#'   `binomial`, `multinomial`, `count` and `continuous` outcomes. For other
-#'   outcomes (`survival` and `competing_risk`) no default is used.
+#'   `binomial`, `multinomial`, and `continuous` outcomes. For other outcomes
+#'   (`survival` and `competing_risk`) no default is used.
 #'
 #' @param outcome_column (**recommended**) Name of the column containing the
 #'   outcome of interest. May be identified from a formula, if a formula is
