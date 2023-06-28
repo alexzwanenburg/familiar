@@ -20,7 +20,7 @@ setMethod(
   signature(object = "familiarCorrelationVimp"),
   function(object, ...) {
     
-    if (outcome_type == "count") {
+    if (object@outcome_type == "count") {
       ..deprecation_count()
       return(FALSE)
     }
