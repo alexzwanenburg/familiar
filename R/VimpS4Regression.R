@@ -47,7 +47,7 @@ setMethod(
   signature(object = "familiarRegressionVimp"),
   function(object, ...) {
     
-    if (outcome_type == "count") {
+    if (object@outcome_type == "count") {
       ..deprecation_count()
       return(FALSE)
     }
