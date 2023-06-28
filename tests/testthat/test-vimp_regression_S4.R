@@ -30,6 +30,7 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_multivariate_regression_vimp_methods(show_general = FALSE))
 
+
 # Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")
 
@@ -46,8 +47,17 @@ testthat::test_that(paste0("Multivariate regression correctly ranks continuous d
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")))
+  # Expect that the vimp table has at most six rows.
+  testthat::expect_lte(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
+
 
 # Binomial outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("binomial")
@@ -64,10 +74,18 @@ vimp_object <- familiar:::prepare_vimp_object(
 testthat::test_that(paste0("Multivariate regression correctly ranks binomial data.."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")))
+  
+  # Expect that the vimp table has at most six rows.
+  testthat::expect_lte(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
+
 
 # Multinomial outcome ----------------------------------------------------------
 data <- familiar:::test_create_good_data("multinomial")
@@ -84,10 +102,18 @@ vimp_object <- familiar:::prepare_vimp_object(
 testthat::test_that(paste0("Multivariate regression correctly ranks multinomial outcome data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "Petal_Length", "Petal_Width", "Sepal_Length")))
+  
+  # Expect that the vimp table has at most six rows.
+  testthat::expect_lte(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
+
 
 # Survival outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("survival")
@@ -104,6 +130,14 @@ vimp_object <- familiar:::prepare_vimp_object(
 testthat::test_that(paste0("Multivariate regression correctly ranks survival outcome data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")))
+  
+  # Expect that the vimp table has at most six rows.
+  testthat::expect_lte(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
