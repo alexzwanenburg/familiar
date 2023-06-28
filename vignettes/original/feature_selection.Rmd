@@ -72,8 +72,6 @@ univariate or multivariate setting.
 | permutation (unoptimised) | `random_forest_permutation_default`                  | × | × | × | × |
 | minimum depth^b^ | `random_forest_minimum_depth`                                 | × | × | × | × |
 | minimum depth (unoptimised) | `random_forest_minimum_depth_default`              | × | × | × | × |
-| variable hunting^b^ | `random_forest_variable_hunting`                           | × | × | × | × |
-| variable hunting (unoptimised) | `random_forest_variable_hunting_default`        | × | × | × | × |
 | hold-out ^b^ | `random_forest_holdout`                                           | × | × | × | × |
 | hold-out (unoptimised) | `random_forest_holdout_default`                         | × | × | × | × |
 | **random forest (ranger) variable importance**|
@@ -341,14 +339,9 @@ for `ranger`-based and `randomForestSRC`-based methods, are shown below.
 | splitting rule (`randomForestSRC` only) | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` outcomes and `logrank` for `survival` outcomes.|
 | splitting rule (`ranger` only) | `split_rule` | `gini`, `hellinger`, `extratrees`, `beta`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous` and `survival` outcomes.|
 | significance split threshold (`ranger` only) | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
-| variable hunting cross-validation folds | `fs_vh_fold` | $\mathbb{Z} \in \left[2, \infty\right)$ | no | Number of cross-validation folds for the `random_forest_variable_hunting` method. The default is $5$. |
-| variable hunting step size | `fs_vh_step_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Step size for the `random_forest_variable_hunting` method. The default is $1$. |
-| variable hunting iterations | `fs_vh_n_rep` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Number of Monte Carlo iterations for the `random_forest_variable_hunting` method. The default is $50$. |
 
 The unoptimised methods do not require hyperparameter optimisation, and use
-default values from the `ranger` and `randomForestSRC`. For
-`random_forest_variable_hunting_default`the `fs_vh_fold`, `fs_vh_step_size` and
-`fs_vh_n_rep` parameters can be set.
+default values from the `ranger` and `randomForestSRC`.
 
 ### Permutation importance
 

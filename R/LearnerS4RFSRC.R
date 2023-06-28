@@ -74,9 +74,6 @@ setMethod(
     # Variable importance only parameters (are not optimised by hyperparameter
     # optimisation)
     param$fs_vimp_method <- list()
-    param$fs_vh_fold <- list()
-    param$fs_vh_step_size <- list()
-    param$fs_vh_n_rep <- list()
 
     # If datat is not provided, return the list with hyperparameter names only
     if (is.null(data)) return(param)
@@ -213,31 +210,7 @@ setMethod(
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
-      range = c("permutation", "minimum_depth", "variable_hunting", "holdout"),
-      randomise = FALSE)
-
-    # variable hunting cross-validation folds (variable importance only) -------
-    param$fs_vh_fold <- .set_hyperparameter(
-      default = 5,
-      type = "integer",
-      range = c(2, n_samples),
-      valid_range = c(2, Inf),
-      randomise = FALSE)
-
-    # variable hunting step size (variable importance only) --------------------
-    param$fs_vh_step_size <- .set_hyperparameter(
-      default = 1,
-      type = "integer",
-      range = c(1, 50),
-      valid_range = c(1, Inf),
-      randomise = FALSE)
-
-    # variable hunting repetitions (variable importance only) ------------------
-    param$fs_vh_n_rep <- .set_hyperparameter(
-      default = 50,
-      type = "integer",
-      range = c(1, 50),
-      valid_range = c(1, Inf),
+      range = c("permutation", "minimum_depth", "holdout"),
       randomise = FALSE)
 
     return(param)
@@ -260,9 +233,6 @@ setMethod(
     # Variable importance only parameters (are not optimised by hyperparameter
     # optimisation)
     param$fs_vimp_method <- list()
-    param$fs_vh_fold <- list()
-    param$fs_vh_step_size <- list()
-    param$fs_vh_n_rep <- list()
 
     # If data is not provided, return the list with hyperparameter names only.
     if (is.null(data)) return(param)
@@ -294,31 +264,7 @@ setMethod(
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
-      range = c("permutation", "minimum_depth", "variable_hunting", "holdout"),
-      randomise = FALSE)
-
-    # variable hunting cross-validation folds (variable importance only) -------
-    param$fs_vh_fold <- .set_hyperparameter(
-      default = 5,
-      type = "integer",
-      range = c(2, n_samples),
-      valid_range = c(2, Inf),
-      randomise = FALSE)
-
-    # variable hunting step size (variable importance only) --------------------
-    param$fs_vh_step_size <- .set_hyperparameter(
-      default = 1,
-      type = "integer",
-      range = c(1, 50),
-      valid_range = c(1, Inf),
-      randomise = FALSE)
-
-    # variable hunting repetitions (variable importance only) ------------------
-    param$fs_vh_n_rep <- .set_hyperparameter(
-      default = 50,
-      type = "integer",
-      range = c(1, 50),
-      valid_range = c(1, Inf),
+      range = c("permutation", "minimum_depth", "holdout"),
       randomise = FALSE)
 
     return(param)
@@ -758,52 +704,8 @@ setMethod(
       return(vimp_object)
       
     } else if (vimp_method == "variable_hunting") {
-      # Check if the model is anonymous, and rebuild if it is. VIMP does not
-      # work otherwise.
-      if (inherits(object@model, "anonymous")) {
-        object <- .train(
-          object = object,
-          data = data,
-          get_additional_info = FALSE,
-          trim_model = FALSE,
-          anonymous = FALSE)
-
-        # Check that the non-anonymous model is trained.
-        if (!model_is_trained(object)) return(callNextMethod())
-      }
-
-      # Perform variable hunting
-      vimp_score <- randomForestSRC::var.select(
-        object = object@model,
-        method = "vh",
-        K = object@hyperparameters$fs_vh_fold,
-        nstep = object@hyperparameters$fs_vh_step_size,
-        nrep = object@hyperparameters$fs_vh_n_rep,
-        verbose = FALSE,
-        refit = FALSE
-      )$varselect
-
-      # Check that the variable importance score is not empty.
-      if (is_empty(vimp_score)) return(callNextMethod())
-
-      # Select the "rel.freq" column, which is the second column
-      if (is.matrix(vimp_score)) {
-        vimp_score_names <- rownames(vimp_score)
-        vimp_score <- vimp_score[, 2]
-      } else {
-        vimp_score_names <- names(vimp_score)
-      }
-
-      # Create variable importance object.
-      vimp_object <- methods::new(
-        "vimpTable",
-        vimp_table = data.table::data.table(
-          "score" = vimp_score,
-          "name" = vimp_score_names),
-        score_aggregation = "max",
-        invert = TRUE)
-
-      return(vimp_object)
+      ..deprecation_rfsrc_variable_hunting()
+      return(callNextMethod())
       
     } else if (vimp_method == "holdout") {
       # Check that data is present.
@@ -961,7 +863,7 @@ setMethod(
       prefix = c(
         "random_forest_variable_hunting",
         "random_forest_rfsrc_variable_hunting"))) {
-      vimp_method <- "variable_hunting"
+      ..deprecation_rfsrc_variable_hunting(as_error = TRUE)
       
     } else if (startswith_any(
       method,
@@ -1037,8 +939,7 @@ setMethod(
 .get_available_rfsrc_vimp_methods <- function(show_general = TRUE) {
   return(c(
     "random_forest_permutation", "random_forest_minimum_depth", 
-    "random_forest_variable_hunting", "random_forest_rfsrc_permutation",
-    "random_forest_rfsrc_minimum_depth", "random_forest_rfsrc_variable_hunting",
+    "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth",
     "random_forest_holdout", "random_forest_rfsrc_holdout"))
 }
 

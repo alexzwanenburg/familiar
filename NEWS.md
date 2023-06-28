@@ -10,6 +10,8 @@
 
 - The `VGAM` package, which has been soft-deprecated since version 1.3.0, has now fully been deprecated.
 
+- The variable hunting feature selection method for random forests was removed due to stability issues in unit tests.
+
 # Version 1.5.0 (Development)
 
 ## Major changes

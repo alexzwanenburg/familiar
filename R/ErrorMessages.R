@@ -75,6 +75,31 @@
 
 
 
+..deprecation_rfsrc_variable_hunting <- function(as_error = FALSE) {
+  
+  message_string <- paste0(
+    "The variable hunting feature selection method of randomForestSRC has been ",
+    "deprecated in familiar version 2.0.0 due to stability issues."
+  )
+  
+  if (as_error) {
+    rlang::abort(
+      message = message_string,
+      class = "deprecation_error"
+    )
+  }
+  
+  if (!.is_testing()) {
+    rlang::warn(
+      message = message_string,
+      class = "deprecation_warning",
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_rfsrc_variable_hunting")
+  }
+}
+
+
+
 ..error_no_predictions_possible <- function(outcome_type, prediction_type) {
   stop(paste0(
     "Predictions of the ", prediction_type, " type are not possible ",
