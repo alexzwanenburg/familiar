@@ -142,23 +142,10 @@ familiar:::test_all_learners_parallel_train_predict_vimp(
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("continuous")
-wide_data <- familiar:::test_create_wide_data("continuous")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(
   data = good_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(good_data),
-    "c" = -1.0,
-    "epsilon" = 0.0,
-    "gamma" = 1.0),
-  learner = "svm_eps_radial")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
-  data = wide_data,
   cluster_method = "none",
   imputation_method = "simple",
   hyperparameter_list = list(
@@ -187,44 +174,14 @@ testthat::test_that("SVM model has no variable importance", {
   testthat::expect_equal(is_empty(vimp_table), TRUE)
 })
 
-testthat::test_that("SVM model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is absent.
-  testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Test that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
 
 # Binomial tests----------------------------------------------------------------
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("binomial")
-wide_data <- familiar:::test_create_wide_data("binomial")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(
-  data = good_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(good_data),
-    "c" = -1.0,
-    "gamma" = 1.0),
-  learner = "svm_c_radial")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
   data = good_data,
   cluster_method = "none",
   imputation_method = "simple",
@@ -253,44 +210,14 @@ testthat::test_that("SVM model has no variable importance", {
   testthat::expect_equal(is_empty(vimp_table), TRUE)
 })
 
-testthat::test_that("SVM model can train on wide data", {
-  # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is absent.
-  testthat::expect_true(is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Test that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
 
 # Multinomial tests-------------------------------------------------------------
 
 # Create test data sets.
 good_data <- familiar:::test_create_good_data("multinomial")
-wide_data <- familiar:::test_create_wide_data("multinomial")
 
 # Train the model using the good dataset.
 good_model <- familiar:::test_train(
-  data = good_data,
-  cluster_method = "none",
-  imputation_method = "simple",
-  hyperparameter_list = list(
-    "sign_size" = familiar:::get_n_features(good_data),
-    "c" = -1.0,
-    "gamma" = 1.0),
-  learner = "svm_c_radial")
-
-# Train the model using wide data.
-wide_model <- familiar:::test_train(
   data = good_data,
   cluster_method = "none",
   imputation_method = "simple",
@@ -319,24 +246,6 @@ testthat::test_that("SVM model has no variable importance", {
   testthat::expect_equal(is_empty(vimp_table), TRUE)
 })
 
-testthat::test_that("SVM model can train on wide data", {
-  # Model cannot be trained.
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
-
-  # Variable importance table is empty.
-  testthat::expect_true(familiar:::is_empty(familiar:::get_vimp_table(wide_model)))
-
-  # Valid predictions can be made.
-  testthat::expect_true(familiar:::any_predictions_valid(
-    familiar:::.predict(wide_model, wide_data),
-    outcome_type = wide_data@outcome_type))
-
-  # Test that no deprecation warnings are given.
-  familiar:::test_not_deprecated(wide_model@messages$warning)
-
-  # Test that no errors appear.
-  testthat::expect_equal(wide_model@messages$error, NULL)
-})
 
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
