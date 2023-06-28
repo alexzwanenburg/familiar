@@ -66,8 +66,17 @@ testthat::test_that(paste0(
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c("avginc", "calwpct")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
+
 
 # Binomial outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("binomial")
@@ -86,8 +95,15 @@ testthat::test_that(paste0(
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-   "epithelial_cell_size", "cell_shape_uniformity", "clump_thickness", "bare_nuclei")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -103,8 +119,15 @@ testthat::test_that(paste0("The Gini method correctly ranks binomial data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -121,8 +144,15 @@ testthat::test_that(paste0("The gain ratio method correctly ranks binomial data.
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness", "bare_nuclei")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -138,9 +168,17 @@ testthat::test_that(paste0("The MDL method correctly ranks binomial data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")), TRUE)
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
+
 
 # Multinomial outcome ----------------------------------------------------------
 data <- familiar:::test_create_good_data("multinomial")
@@ -159,7 +197,15 @@ testthat::test_that(paste0(
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -175,8 +221,15 @@ testthat::test_that(paste0("The Gini method correctly ranks multinomial outcome 
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "Petal_Length", "Petal_Width", "Sepal_Length")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -192,8 +245,15 @@ testthat::test_that(paste0("The gain ratio method correctly ranks multinomial ou
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "Petal_Length", "Petal_Width", "Sepal_Length")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
 # Process dataset.
@@ -205,11 +265,17 @@ vimp_object <- familiar:::prepare_vimp_object(
   cluster_method = "none",
   imputation_method = "simple")
 
-
 testthat::test_that(paste0("The MDL method correctly ranks multinomial outcome data."), {
   vimp_table <- suppressWarnings(familiar:::get_vimp_table(
     familiar:::.vimp(vimp_object, data)))
 
-  testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-    "Petal_Length", "Petal_Width", "Sepal_Length")))
+  # Expect that the vimp table has six rows.
+  testthat::expect_equal(nrow(vimp_table), 6L)
+  
+  # Expect that the names are the same as that of the features.
+  testthat::expect_true(
+    all(familiar:::get_feature_columns(data) %in% vimp_table$name))
+  
+  # Feature 1 is most important.
+  testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
