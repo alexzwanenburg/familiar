@@ -78,6 +78,7 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 | logistic | `xgboost_lm_logistic`                | × | × | × |   |
 | gamma | `xgboost_lm_gamma`                      |   |   | × |   | 
 | gaussian | `xgboost_lm_gaussian`                |   |   | × |   |
+| poisson | `xgboost_lm_poisson`                  |   |   | × |   |
 | cox | `xgboost_lm_cox`                          |   |   |   | × |
 |**random forests**|
 | random forest (RFSRC) | `random_forest_rfsrc`   | × | × | × | × |
@@ -87,12 +88,14 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 | logistic | `xgboost_tree_logistic`              | × | × | × |   |
 | gamma | `xgboost_tree_gamma`                    |   |   | × |   | 
 | gaussian | `xgboost_tree_gaussian`              |   |   | × |   |
+| poisson | `xgboost_tree_poisson`                |   |   | × |   |
 | cox | `xgboost_tree_cox`                        |   |   |   | × |
 |**extreme gradient boosted DART trees**|
 | general^a^ | `xgboost_dart`                     | × | × | × | × |
 | logistic | `xgboost_dart_logistic`              | × | × | × |   |
 | gamma | `xgboost_dart_gamma`                    |   |   | × |   | 
 | gaussian | `xgboost_dart_gaussian`              |   |   | × |   |
+| poisson | `xgboost_dart_poisson`                |   |   | × |   |
 | cox | `xgboost_dart_cox`                        |   |   |   | × |
 |**bayesian models**|
 | naive bayes | `naive_bayes`                     | × | × |   |   |

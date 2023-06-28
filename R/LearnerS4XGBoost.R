@@ -67,7 +67,7 @@ setMethod(
 
     if (
       outcome_type == "continuous" &&
-      learner %in% c("", "logistic", "gaussian", "gamma")) {
+      learner %in% c("", "logistic", "gaussian", "gamma", "poisson")) {
       return(TRUE)
       
     } else if (outcome_type == "multinomial" && learner %in% c("", "logistic")) {
