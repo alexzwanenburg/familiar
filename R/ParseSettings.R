@@ -3167,65 +3167,78 @@
 #'  from both the global layer and the next lower level.
 #'
 #'  Setting the flag to `true` saves computation time.
-#' @param skip_evaluation_elements (*optional*) Specifies which evaluation steps,
-#'  if any, should be skipped as part of the evaluation process. Defaults to
-#'  `none`, which means that all relevant evaluation steps are performed. It can
-#'  have one or more of the following values:
+#' @param evaluation_elements (*optional*) Specifies which evaluation steps
+#'  should be performed during the evaluation process. Defaults to `all`,
+#'  indicating that all evaluation steps should be performed. It can have one or
+#'  more of the following values:
 #'
-#'  * `none`, `false`: no steps are skipped.
-#'
-#'  * `all`, `true`: all steps are skipped.
+#'  * `all`, `true`: all evaluation steps are performed.
+#'  
+#'  * `none`, `false`: no evaluation is performed.
 #'
 #'  * `auc_data`: data for assessing and plotting the area under the receiver
-#'  operating characteristic curve are not computed.
+#'  operating characteristic curve are computed.
 #'
 #'  * `calibration_data`: data for assessing and plotting model calibration are
-#'  not computed.
+#'  computed.
 #'
 #'  * `calibration_info`: data required to assess calibration, such as baseline
-#'  survival curves, are not collected. These data will still be present in the
+#'  survival curves, are collected. These data will still be present in the
 #'  models.
 #'
 #'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
-#'  not collected.
+#'  collected.
 #'
 #'  * `decision_curve_analyis`: data for performing a decision curve analysis
-#'  are not computed.
+#'  are computed.
 #'
 #'  * `feature_expressions`: data for assessing and plotting sample clustering
-#'  are not computed.
+#'  are computed.
 #'
-#'  * `feature_similarity`: data for assessing and plotting feature clusters are
+#'  * `feature_similarity`: data for assessing and plotting feature clusters
 #'  not computed.
 #'
 #'  * `fs_vimp`: data for assessing and plotting feature selection-based
-#'  variable importance are not collected.
+#'  variable importance are collected.
 #'
-#'  * `hyperparameters`: data for assessing model hyperparameters are not
+#'  * `hyperparameters`: data for assessing model hyperparameters are 
 #'  collected. These data will still be present in the models.
 #'
 #'  * `ice_data`: data for individual conditional expectation and partial
-#'  dependence plots are not created.
+#'  dependence plots are created.
 #'
 #'  * `model_performance`: data for assessing and visualising model performance
-#'  are not created.
+#'  are created.
 #'
 #'  * `model_vimp`: data for assessing and plotting model-based variable
-#'  importance are not collected.
+#'  importance are collected.
 #'
 #'  * `permutation_vimp`: data for assessing and plotting model-agnostic
-#'  permutation variable importance are not computed.
+#'  permutation variable importance are computed.
 #'
-#'  * `prediction_data`: predictions for each sample are not made and exported.
+#'  * `prediction_data`: predictions for each sample are made and exported.
 #'
 #'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier
-#'  survival curves are not collected.
+#'  survival curves are collected.
 #'
 #'  * `risk_stratification_info`: data for assessing stratification into risk
-#'  groups are not computed.
+#'  groups are computed.
 #'
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature
-#'  importance are not computed.
+#'  importance are computed.
+#'  
+#'  The logical intersect of the evaluation elements specified by
+#'  `evaluation_elements` and `skip_evaluation_elements` is used to define which
+#'  evaluation steps are performed.
+#' @param skip_evaluation_elements (*optional*) Specifies which evaluation steps,
+#'  if any, should be skipped as part of the evaluation process. Defaults to
+#'  `none`, which means that all relevant evaluation steps are performed. It can
+#'  have one or more of the same values as `evaluation_elements`.
+#'  
+#'  The logical intersect of the evaluation elements specified by
+#'  `evaluation_elements` and `skip_evaluation_elements` is used to define which
+#'  evaluation steps are performed.
+#'
 #' @param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
 #'
@@ -3580,6 +3593,7 @@
     prep_cluster_similarity_threshold,
     prep_cluster_similarity_metric,
     evaluate_top_level_only = waiver(),
+    evaluation_elements = waiver(),
     skip_evaluation_elements = waiver(),
     ensemble_method = waiver(),
     evaluation_metric = waiver(),
@@ -3622,9 +3636,33 @@
     optional = TRUE,
     default = TRUE)
 
+  # evaluation_elements --------------------------------------------------------
+  keep_evaluation_elements <- .parse_arg(
+    x_config = config$evaluation_elements,
+    x_var = evaluation_elements,
+    var_name = "evaluation_elements",
+    type = "character_list",
+    optional = TRUE,
+    default = "all"
+  )
+  
+  keep_evaluation_elements <- tolower(keep_evaluation_elements)
+  .check_parameter_value_is_valid(
+    x = keep_evaluation_elements,
+    var_name = "evaluation_elements",
+    values = c(.get_available_data_elements(), "none", "false", "all", "true"))
+  
+  if (any(keep_evaluation_elements %in% c("all", "true"))) {
+    keep_evaluation_elements <- .get_available_data_elements()
+  }
+  
+  if (any(keep_evaluation_elements %in% c("none", "false"))) {
+    keep_evaluation_elements <- NULL
+  }
+  
   # skip_evaluation_elements ---------------------------------------------------
   # Specify any specific elements of the evaluation to skip.
-  settings$evaluation_data_elements <- .parse_arg(
+  skipped_evaluation_elements <- .parse_arg(
     x_config = config$skip_evaluation_elements,
     x_var = skip_evaluation_elements,
     var_name = "skip_evaluation_elements",
@@ -3632,25 +3670,26 @@
     optional = TRUE,
     default = "none")
 
-  settings$evaluation_data_elements <- tolower(settings$evaluation_data_elements)
+  skipped_evaluation_elements <- tolower(skipped_evaluation_elements)
   .check_parameter_value_is_valid(
-    x = settings$evaluation_data_elements,
+    x = skipped_evaluation_elements,
     var_name = "skip_evaluation_elements",
     values = c(.get_available_data_elements(), "none", "false", "all", "true"))
 
-  if (any(settings$evaluation_data_elements %in% c("all", "true"))) {
-    settings$evaluation_data_elements <- .get_available_data_elements()
+  if (any(skipped_evaluation_elements %in% c("all", "true"))) {
+    skipped_evaluation_elements <- .get_available_data_elements()
   }
 
-  if (any(settings$evaluation_data_elements %in% c("none", "false"))) {
-    settings$evaluation_data_elements <- NULL
+  if (any(skipped_evaluation_elements %in% c("none", "false"))) {
+    skipped_evaluation_elements <- NULL
   }
 
   # Instead of specifying the elements to skip, we specify the elements to keep.
-  settings$evaluation_data_elements <- setdiff(
+  skipped_evaluation_elements <- setdiff(
     .get_available_data_elements(),
-    settings$evaluation_data_elements)
-
+    skipped_evaluation_elements)
+  
+  
   if ("calibration_data" %in% settings$evaluation_data_elements) {
     require_package(
       x = "harmonicmeanp",
@@ -3658,6 +3697,9 @@
       message_type = "backend_warning")
   }
 
+  settings$evaluation_data_elements <- intersect(
+    keep_evaluation_elements, skipped_evaluation_elements)
+  
   if (length(settings$evaluation_data_elements) == 0) {
     settings$evaluation_data_elements <- NULL
   }

@@ -2,15 +2,21 @@
 
 ## Major changes
 
-- The `count` outcome type has been deprecated. `count` is a subset of `continuous` outcomes. Its previous implementation did not provide any benefits over `continuous`.
+- Some functionality was deprecated because of redundancy and stability issues:
 
-- Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
+  - The `count` outcome type has been deprecated. `count` is a subset of `continuous` outcomes. Its previous implementation did not provide any benefits over   `continuous`.
 
-- The `qvalue` package for computing q-values was deprecated.
+  - Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
 
-- The `VGAM` package, which has been soft-deprecated since version 1.3.0, has now fully been deprecated.
+  - The `qvalue` package for computing q-values was deprecated.
 
-- The variable hunting feature selection method for random forests was removed due to stability issues in unit tests.
+  - The `VGAM` package, which has been soft-deprecated since version 1.3.0, has now fully been deprecated.
+
+  - The variable hunting feature selection method for random forests was removed due to stability issues in unit tests.
+
+## Minor changes
+
+- The `evaluation_elements` configuration parameter was added to allow for specifying which evaluation steps should be performed.
 
 # Version 1.5.0 (Development)
 
