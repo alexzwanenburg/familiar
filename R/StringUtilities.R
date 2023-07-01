@@ -54,12 +54,29 @@ paste_s <- function(...) {
 
 
 
+paste_sh <- function(..., n = 6L) {
+  # Function to collapse the first few elements of a series of strings into a
+  # summation of the form: "element_1, element_2, element_3, ..."
+  
+  dots <- c(...)
+  
+  # Check if all elements can be collapsed.
+  if (length(dots) <= n) return(paste_s(...))
+  
+  initial_string <- paste0(head(dots, n = n), collapse = ", ")
+  
+  return(paste0(initial_string, ", ..."))
+}
+
+
+
 paste_c <- function(x, y, collapse = NULL) {
   # Create combinations of strings in x and y.
   str_combinations <- unlist(lapply(x, paste0, y, collapse = collapse))
 
   return(str_combinations)
 }
+
 
 
 
