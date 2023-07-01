@@ -1,11 +1,13 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 
+# predictionTableRegression ----------------------------------------------------
 setClass(
   "predictionTableRegression",
   contains = "predictionTable"
 )
 
+# predictionTableSurvival ------------------------------------------------------
 setClass(
   "predictionTableSurvival",
   contains = "predictionTable",
@@ -21,6 +23,7 @@ setClass(
   )
 )
 
+# predictionTableSurvivalHazardRatio -------------------------------------------
 setClass(
   "predictionTableSurvivalHazardRatio",
   contains = "predictionTableSurvival"
@@ -31,31 +34,43 @@ setClass(
   contains = "predictionTableSurvival"
 )
 
+# predictionTableSurvivalTime --------------------------------------------------
 setClass(
   "predictionTableSurvivalTime",
   contains = "predictionTableSurvival"
 )
 
+# predictionTableSurvivalProbability -------------------------------------------
 setClass(
   "predictionTableSurvivalProbability",
   contains = "predictionTableSurvival"
 )
 
+# predictionTableGrouping ------------------------------------------------------
 setClass(
-  "predictionTableRiskGroups",
+  "predictionTableGrouping",
   contains = "predictionTable",
   slots = list(
-    "time" = "ANY",
-    "risk_groups" = "character",
-    "thresholds" = "numeric"
+    "groups" = "character"
   ),
   prototype = list(
-    "time" = Inf,
-    "risk_groups" = NA_character_,
-    "thresholds" = NA_real_
+    "groups" = NA_character_
   )
 )
 
+# predictionTableRiskGroups ----------------------------------------------------
+setClass(
+  "predictionTableRiskGroups",
+  contains = "predictionTableGrouping",
+  slots = list(
+    "time" = "ANY"
+  ),
+  prototype = list(
+    "time" = Inf
+  )
+)
+
+# predictionTableClassification ------------------------------------------------
 setClass(
   "predictionTableClassification",
   contains = "predictionTable",
@@ -69,6 +84,7 @@ setClass(
   )
 )
 
+# predictionTableNovelty -------------------------------------------------------
 setClass(
   "predictionTableNovelty",
   contains = "predictionTable"
@@ -106,6 +122,9 @@ as_prediction_table <- function(
   } else if (type == "survival_probability") {
     object <- methods::new("predictionTableSurvivalProbability")
   
+  } else if (type == "grouping") {
+    object <- methods::new("predictionTableGrouping")
+    
   } else if (type == "risk_stratification") {
     object <- methods::new("predictionTableRiskGroups")
     
@@ -632,7 +651,6 @@ setMethod(
       )
     }
     
-    
     if (!is_empty(object@reference_data)) {
       # Check that two sets of reference data are provided (time, status).
       if (ncol(object@reference_data != 2)) {
@@ -649,15 +667,82 @@ setMethod(
       setnames(object@reference_data, new = outcome_column)
       
       # Check that the time column is numeric and positive.
-      
-      # Check that the status columns contains 0s and 1s.
-      
-      # Check that reference data are numeric.
-      if (!is.numeric(object@reference_data[[outcome_column]])) {
+      time_column <- object@reference_data[[outcome_column[1]]]
+      if (!is.numeric(time_column)) {
         rlang::abort(
           message = paste0(
-            "Reference values are expected to be numeric, but data with class ",
-            class(object@v[[outcome_column]]), " were encountered."),
+            "Observed time is expected to be numeric, but data with class ",
+            class(time_column, collapse = ", "),
+            " were encountered."),
+          class = "prediction_table_error"
+        )
+      }
+      
+      if (any(time_column < 0.0, na.rm = TRUE)) {
+        negative_values <- time_column
+        negative_values <- negative_values[is.finite(negative_values)]
+        negative_values <- negative_values[negative_values < 0.0]
+        
+        rlang::abort(
+          message = paste0(
+            "Observed time can not be negative, but negative values were found: ",
+            paste_sh(negative_values)),
+          class = "prediction_table_error"
+        )
+      }
+      
+      # Check that the status columns contains 0s and 1s, or can be converted to
+      # such values.
+      status_column <- object@prediction_data[[outcome_column[2]]]
+      status_indicators <- as.character(unique_na(status_column))
+      
+      if (length(status_indicators) > 2) {
+        rlang::abort(
+          message = paste0(
+            "Event status may only contain two values that indicate censoring ",
+            "and event. Found: ", paste_sh(status_indicators)),
+          class = "prediction_table_error"
+        )
+      }
+      
+      if (all(status_indicators %in% c(object@censored, object@event))) {
+        # Convert to 0s and 1s.
+        new_status_column <- rep_len(1L, length(status_column))
+        new_status_column[status_column %in% object@censored] <- 0L
+        
+        object@reference_data <- data.table::copy(object@reference_data)
+        object@reference_data[[outcome_column[2]]] <- new_status_column
+        
+      } else if (all(status_indicators %in% c("0", "1"))) {
+        # Do nothing.
+        
+      } else if (all(status_indicators %in% c(
+        .get_available_default_censoring_indicator()),
+        .get_available_default_event_indicator())) {
+        
+        # Convert to 0s and 1s.
+        new_status_column <- rep_len(1L, length(status_column))
+        new_status_column[status_column %in% .get_available_default_censoring_indicator()] <- 0L
+        
+        object@reference_data <- data.table::copy(object@reference_data)
+        object@reference_data[[outcome_column[2]]] <- new_status_column
+        
+      } else {
+        
+        # Find indicator values
+        if (!all(is.na(c(object@censored, object@event)))) {
+          indicator_values <- c(object@censored, object@event)
+        } else {
+          indicator_values <- c(
+            .get_available_default_censoring_indicator(),
+            .get_available_default_event_indicator())
+        }
+        
+        rlang::abort(
+          message = paste0(
+            "Could not map potential status and event indicators (",
+            paste_s(indicator_values), ") to values present in the status column (",
+            paste_sh(status_indicators), ")."),
           class = "prediction_table_error"
         )
       }
@@ -668,6 +753,101 @@ setMethod(
 )
 
 ## complete_prediction_table (novelty) -----------------------------------------
+setMethod(
+  "complete_prediction_table",
+  signature(object = "predictionTableNovelty"),
+  function(object) {
+    
+    # Pass to superclass method first.
+    object <- callNextMethod(object)
+    
+    if (is_empty(object)) return(object)
+    
+    # Check outcome type
+    object@outcome_type <- "unsupervised"
+    
+    # Check that one set of prediction data are provided.
+    if (ncol(object@prediction_data != 1)) {
+      rlang::abort(
+        message = paste0(
+          "Only one set of predicted values was expected, but (",
+          ncol(object@prediction_data), ") sets were provided."),
+        class = "prediction_table_error"
+      )
+    }
+    
+    # Update column name of prediction_data to the standard value.
+    setnames(object@prediction_data, new = "novelty")
+    
+    # Check that prediction data are numeric.
+    if (!is.numeric(object@prediction_data$novelty)) {
+      rlang::abort(
+        message = paste0(
+          "Predicted values are expected to be numeric, but data with class ",
+          paste0(class(object@prediction_data$novelty), collapse = ", "),
+          " were encountered."),
+        class = "prediction_table_error"
+      )
+    }
+    
+    return(object)
+  }
+)
 
-
-## complete_prediction_table (risk groups) -------------------------------------
+## complete_prediction_table (grouping) ----------------------------------------
+setMethod(
+  "complete_prediction_table",
+  signature(object = "predictionTableGrouping"),
+  function(object) {
+    
+    # Pass to superclass method first.
+    object <- callNextMethod(object)
+    
+    if (is_empty(object)) return(object)
+    
+    # Check outcome type
+    object@outcome_type <- "unsupervised"
+    
+    # Check that one set of prediction data are provided.
+    if (ncol(object@prediction_data != 1)) {
+      rlang::abort(
+        message = paste0(
+          "Only one set of predicted values was expected, but (",
+          ncol(object@prediction_data), ") sets were provided."),
+        class = "prediction_table_error"
+      )
+    }
+    
+    # Update column name of prediction_data to the standard value.
+    setnames(object@prediction_data, new = "group")
+    
+    # Check that prediction data contains the groups, or set groups if absent.
+    if (all(!is.na(object@groups))) {
+      group_labels <- unique_na(object@prediction_data$group)
+      
+      if (!all(group_indicators %in% object@groups)) {
+        unknown_group_label <- setdiff(group_labels, object@groups)
+        
+        rlang::abort(
+          message = paste0(
+            "The set of predicted values contains group labels that could ",
+            "not be matched to provided labels. The following labels were not ",
+            "recognised: ", paste_s(unknown_group_label), ". ",
+            "The following labels were expected: ", paste_s(object@groups)),
+          class = "prediction_table_error"
+        )
+      }
+    } else {
+      
+      if (is.factor(object@prediction_data$group)) {
+        object@groups <- levels(object@prediction_data$group)
+        
+      } else {
+        group_labels <- unique_na(object@prediction_data$group)
+        if (length(group_labels) > NULL) object@groups <- sort(group_labels)
+      }
+    }
+    
+    return(object)
+  }
+)
