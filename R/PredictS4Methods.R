@@ -411,7 +411,7 @@ setMethod(
 )
 
 
-# predict (model) --------------------------------------------------------------
+# .predict (model) -------------------------------------------------------------
 setMethod(
   ".predict",
   signature(object = "familiarModel"),

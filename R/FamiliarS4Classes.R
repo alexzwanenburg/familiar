@@ -1284,7 +1284,8 @@ setClass("familiarHyperparameterLearner",
 #'
 #' @export
 
-setClass("familiarMetric",
+setClass(
+  "familiarMetric",
   slots = list(
     # The metric itself.
     metric = "character",
@@ -1403,7 +1404,8 @@ setClass("familiarMetric",
 #'
 #' @export
 
-setClass("familiarDataElement",
+setClass(
+  "familiarDataElement",
   slots = list(
     # The primary results.
     data = "ANY",
@@ -1474,7 +1476,8 @@ setClass("familiarDataElement",
 #'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
 #' @export
 
-setClass("experimentData",
+setClass(
+  "experimentData",
   slots = list(
     # Experimental design.
     experiment_setup = "ANY",
@@ -1495,4 +1498,50 @@ setClass("experimentData",
     vimp_table_list = NULL,
     project_id = NULL,
     familiar_version = NULL)
+)
+
+
+
+# predictionTable object -------------------------------------------------------
+
+#' Table with predictions
+#'
+#' ...
+#'
+#' @slot outcome_type Outcome type of the data used to create the object.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot identifier_data
+#' @slot reference_data
+#' @slot prediction_data
+#' @slot familiar_version Version of the familiar package used to create this
+#'   prediction table.
+#'
+#' @details ...
+#'
+#' @export
+
+setClass(
+  "predictionTable",
+  slots = list(
+    # Type of outcome.
+    outcome_type = "character",
+    # Outcome information object.
+    outcome_info = "ANY",
+    # Identifier data.
+    identifier_data = "ANY",
+    # Known outcome values.
+    reference_data = "ANY",
+    # Prediction data objects.
+    prediction_data = "ANY",
+    # Package version for backward compatibility
+    familiar_version = "ANY"),
+  prototype = list(
+    outcome_type = NA_character_,
+    outcome_info = NULL,
+    identifier_data = NULL,
+    reference_data = NULL,
+    prediction_data = NULL,
+    familiar_version = NULL
+  )
 )

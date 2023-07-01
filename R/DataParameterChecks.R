@@ -824,12 +824,12 @@
   if (check_stringency == "external") return(settings)
   
   # Define standard indicators for censoring, event and competing risk.
-  standard_censoring_indicator <- c("0", "false", "f", "n", "no")
+  standard_censoring_indicator <- .get_available_default_censoring_indicator()
   if (!is.null(settings$data$censoring_indicator)) {
     standard_censoring_indicator <- settings$data$censoring_indicator
   }
   
-  standard_event_indicator <- c("1", "true", "t", "y", "yes")
+  standard_event_indicator <- .get_available_default_event_indicator()
   if (!is.null(settings$data$event_indicator)) {
     standard_event_indicator <- settings$data$event_indicator
   }
@@ -1608,4 +1608,13 @@
   }
   
   return(FALSE)
+}
+
+
+.get_available_default_censoring_indicator <- function() {
+  return(c("0", "false", "f", "n", "no"))
+}
+
+.get_available_default_event_indicator <- function() {
+  return(c("1", "true", "t", "y", "yes"))
 }
