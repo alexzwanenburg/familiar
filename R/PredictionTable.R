@@ -851,3 +851,115 @@ setMethod(
     return(object)
   }
 )
+
+
+# merge_data_elements (predictionTable) ----------------------------------------
+setMethod(
+  "merge_data_elements",
+  signature(x = "predictionTable"),
+  function(
+    x,
+    x_list,
+    ...) {
+    
+    # Copy identifiers from any supplementary identifier attribute to the
+    # prediction_data attribute. The primary reason for doing so is to group and
+    # merge similar elements, but e.g. from different timepoints.
+    if (!is.null(as_data)) {
+      x_list <- lapply(x_list, .identifier_as_data_attribute)
+    }
+    
+    # Create return object.
+    y <- data.table::copy(x)
+    
+    # Collect prediction data.
+    y@prediction_data <- data.table::rbindlist(
+      lapply(x_list, function(x) (x@prediction_data)),
+      use.names = TRUE,
+      fill = TRUE
+    )
+    
+    # Collect identifier data.
+    y@identifier_data <- data.table::rbindlist(
+      lapply(x_list, function(x) (x@identifier_data)),
+      use.names = TRUE,
+      fill = FALSE
+    )
+    
+    # Collect reference data. Reference data may be absent, and we need to fill
+    # missing elements with NA.
+    missing_reference_data <- sapply(x_list, function(x) (is_empty(x@reference_data)))
+    if (!all(missing_reference_data) && any(missing_reference_data)) {
+      reference_col_name <- colnames(x_list[which(!missing_reference_data)][[1]]@reference_data)
+      
+      y@reference_data <- data.table::rbindlist(
+        lapply(
+          x_list,
+          function(x, ref_col) {
+            if (is_empty(x@reference_data)) return(x@reference_data)
+
+            placeholder_ref <- data.table::data.table(
+              "temp_name" = rep_len(NA, nrow(object@prediction_data)))
+
+            data.table::setnames(placeholder_ref, new = ref_col)
+
+            return(placeholder_ref)
+          }
+        ),
+        use.names = TRUE,
+        fill = TRUE
+      )
+      
+    } else if (all(missing_reference_data)) {
+      y@reference_data <- NULL
+      
+    } else {
+      y@reference_data <- data.table::rbindlist(
+        lapply(x_list, function(x) (x@reference_data)),
+        use.names = TRUE,
+        fill = TRUE
+      )
+    }
+    
+    return(list(y))
+  }
+)
+
+
+
+# .compute_data_element_estimates ----------------------------------------------
+setMethod(
+  ".compute_data_element_estimates",
+  signature(x = "predictionTable"),
+  function(x, x_list = NULL, ...) {
+    
+    # It might be that x was only used to direct to this method.
+    if (!is.null(x_list)) x <- x_list
+    if (!is.list(x)) x <- list(x)
+    
+    # Merge data.
+    x_list <- merge_data_elements(x = x)
+    
+    y <- lapply(x_list, ..compute_data_element_estimates, ...)
+  
+    return(data_elements)
+  }
+)
+
+# ..compute_data_element_estimates ---------------------------------------------
+setMethod(
+  "..compute_data_element_estimates",
+  signature(x = "predictionTable"),
+  function(x, ...) {
+    
+    if (is_empty(x)) return(NULL)
+    
+    identifier_columns <- colnames(x@identifier_data)
+    reference_columns <- NULL
+    if (!is_empty(x@reference_data)) reference_columns <- colnames(x@reference_data)
+    value_columns <- colnames
+    
+      grouping_columns <- 
+    
+  }
+)

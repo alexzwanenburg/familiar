@@ -356,7 +356,9 @@ setMethod(
       # Create a proto data element to avoid having to pass larger objects
       # than required.
       proto_data_element <- x[which(element_classes == element_class)][[1]]
-      proto_data_element@data <- NULL
+      if (methods::.hasSlot(proto_data_element, "data")) {
+        proto_data_element@data <- NULL
+      }
       
       # Run familiarDataElement-specific analysis. This means that we pass
       # the prototype data element as x with the list of elements.
