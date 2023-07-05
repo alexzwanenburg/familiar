@@ -311,6 +311,8 @@ setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric("
 
 setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
 
+setGeneric(".merge_slots_into_data", function(x, ...) standardGeneric(".merge_slots_into_data"))
+
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
 
