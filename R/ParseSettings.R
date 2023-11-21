@@ -1256,25 +1256,26 @@
 #'
 #'   * `none`: This disables transformation of features.
 #'
-#'   * `yeo_johnson`: Transformation using the shift-sensitive version of the
-#'   Yeo-Johnson transformation (Yeo and Johnson, 2000; Zwanenburg and Löck,
-#'   2023).
+#'   * `yeo_johnson`: Transformation using the location and scale invariant
+#'   version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
+#'   Zwanenburg and Löck, 2023).
 #'
 #'   * `yeo_johnson_robust` (default): A robust version of `yeo_johnson`.
 #'   This method is less sensitive to outliers.
 #'
-#'   * `yeo_johnson_non_shift`: As `yeo_johnson`, but without optimisation of
-#'   the shift parameter. This method is equivalent to the original
+#'   * `yeo_johnson_conventional`: As `yeo_johnson`, but without optimisation of
+#'   location and scale parameters. This method is equivalent to the original
 #'   transformation proposed by Yeo and Johnson (2001).
 #'
-#'   * `box_cox`: Transformation using the shift-sensitive version of the
-#'   Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck, 2023).
+#'   * `box_cox`: Transformation using the location and scale invariant version
+#'   of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
+#'   2023).
 #'
 #'   * `box_cox_robust`: A robust version of `yeo_johnson`. This method is less
 #'   sensitive to outliers.
 #'
-#'   * `box_cox_non_shift`: As `box_cox`, but without optimisation of
-#'   the shift parameter. This method is equivalent to the original
+#'   * `box_cox_conventional`: As `box_cox`, but without optimisation of
+#'   location and scale parameters. This method is equivalent to the original
 #'   transformation proposed by Box and Cox (1964). This method requires
 #'   strictly positive feature values.
 #'

@@ -50,11 +50,11 @@ setClass(
 }
 
 .get_available_box_cox_transformation_methods <- function() {
-  return(c("box_cox", "box_cox_robust", "box_cox_non_shift"))
+  return(c("box_cox", "box_cox_robust", "box_cox_conventional"))
 }
 
 .get_available_yeo_johnson_transformation_methods <- function() {
-  return(c("yeo_johnson", "yeo_johnson_robust", "yeo_johnson_non_shift"))
+  return(c("yeo_johnson", "yeo_johnson_robust", "yeo_johnson_conventional"))
 }
 
 .get_available_transformation_methods <- function(type = "all") {
@@ -218,10 +218,10 @@ create_transformation_parameter_skeleton <- function(
     list("estimation_method" = optimisation_criterion)
   )
   
-  # Set shift argument.
+  # Set invariant argument.
   fitting_parameters <- c(
     fitting_parameters,
-    list("shift" = !grepl(pattern = "non_shift", x = method))
+    list("invariant" = !grepl(pattern = "conventional", x = method))
   )
   
   # Set robust argument
@@ -245,9 +245,9 @@ create_transformation_parameter_skeleton <- function(
       list("lambda" = lambda)
     )
     
-    # Do not determine shift -- external lambda is only set using external
-    # objects.
-    fitting_parameters$shift <- FALSE
+    # Do not determine location and scale parameters -- external lambda is only
+    # set using external objects.
+    fitting_parameters$invariant <- FALSE
   }
   
   object <- methods::new(
@@ -478,8 +478,8 @@ setMethod(
   # Update the instance mask.
   instance_mask <- instance_mask & object_method == most_common_method
 
-  # Because both lambda and shift parameters may be varied, select only one
-  # instance.
+  # Because both lambda, shift and scale parameters may be varied, select only
+  # one instance.
   selected_instance <- head(which(instance_mask), n = 1L)
   instance_mask <- logical(length(instance_mask))
   instance_mask[selected_instance] <- TRUE
