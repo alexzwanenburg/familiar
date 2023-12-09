@@ -188,6 +188,7 @@ Collate:
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'
     'PredictS4Methods.R'
+    'PredictionTable.R'
     'ProcessTimeUtilities.R'
     'Random.R'
     'RandomGrouping.R'

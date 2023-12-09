@@ -90,11 +90,13 @@ as_prediction_table <- function(
     type,
     y = waiver(),
     batch_id = waiver(),
-    sample_id = Waiver(),
+    sample_id = waiver(),
     series_id = waiver(),
     repetition_id = waiver(),
     time = waiver(),
     classes = waiver(),
+    censored_label = waiver(),
+    event_label = waiver(),
     data = NULL) {
   
   # Create skeleton of object based on the provided type.
@@ -143,9 +145,13 @@ as_prediction_table <- function(
         "outcome_time" = y[, 1],
         "outcome_event" = y[, 2]
       )
+    } else {
+      object@reference_data <- as.data.table(y)
     }
     
-    object@reference_data <- as.data.table(y)
+  } else if (is(data, "dataObject")) {
+    y <- data@data[, mget(.get_outcome_columns(data@outcome_type))]
+    object@reference_data <- data.table::copy(y)
   }
   
   # Use batch_id, sample_id, series_id and repetition_id to set identifier_data
@@ -197,8 +203,9 @@ as_prediction_table <- function(
   }
   
   # Use classes to set classes attribute of prediction tables that have it.
-  if (method::.hasSlot(object, "classes")) {
+  if (methods::.hasSlot(object, "classes")) {
     if (is.waive(classes) && is(data, "dataObject")) {
+      classes <- get_outcome_class_levels(data)
       
     } else if (is.waive(classes) && !is_empty(object@reference_data)) {
       if (is.factor(object@reference_data[[1]])) {
@@ -214,14 +221,39 @@ as_prediction_table <- function(
     object@classes <- classes
   }
   
+  # Use censored_label to set censored attribute of prediction tables that have
+  # it.
+  if (methods::.hasSlot(object, "censored")) {
+    if (is.waive(censored_label) && is(data, "dataObject")) {
+      censored_label <- data@outcome_info@censored
+      
+    } else if (is.waive(censored_label)) {
+      censored_label <- .get_available_default_censoring_indicator()
+    }
+    
+    object@censored <- censored_label
+  }
+  
+  # Use event_label to set event attribute of prediction tables that have it.
+  if (methods::.hasSlot(object, "event")) {
+    if (is.waive(event_label) && is(data, "dataObject")) {
+      event_label <- data@outcome_info@event
+      
+    } else if (is.waive(event_label)) {
+      event_label <- .get_available_default_event_indicator()
+    }
+    
+    object@event <- event_label
+  }
+  
   # Infer outcome_type based on known information.
   if (is(data, "dataObject")) {
     object@outcome_type <- data@outcome_type
   }
   
   # Check the prediction table object for consistency.
-  object <- complete_prediction_table(object)
-  
+  object <- complete_prediction_table(object, .external)
+  browser()
   return(object)
 }
 
@@ -233,10 +265,10 @@ setGeneric(
   function(object, ...) standardGeneric("complete_prediction_table")
 )
 
-## complete_prediction_table (general) -----------------------------------------
+# complete_prediction_table (general) ------------------------------------------
 setMethod(
   "complete_prediction_table",
-  signature(object = "predictionTable"),
+  signature(object = "familiarDataElementPredictionTable"),
   function(object) {
     # Check that prediction_data, identifier_data and reference_data have the
     # same number of instances.
@@ -279,7 +311,7 @@ setMethod(
   function(object) {
     
     # Pass to superclass method first.
-    object <- callNextMethod(object)
+    object <- callNextMethod()
     
     if (is_empty(object)) return(object)
     
@@ -379,7 +411,7 @@ setMethod(
     }
     
     # Pass to superclass method first.
-    object <- callNextMethod(object)
+    object <- callNextMethod()
     
     if (is_empty(object)) return(object)
     
@@ -613,7 +645,7 @@ setMethod(
   function(object) {
     
     # Pass to superclass method first.
-    object <- callNextMethod(object)
+    object <- callNextMethod()
     
     if (is_empty(object)) return(object)
     
@@ -756,7 +788,7 @@ setMethod(
   function(object) {
     
     # Pass to superclass method first.
-    object <- callNextMethod(object)
+    object <- callNextMethod()
     
     if (is_empty(object)) return(object)
     
@@ -798,7 +830,7 @@ setMethod(
   function(object) {
     
     # Pass to superclass method first.
-    object <- callNextMethod(object)
+    object <- callNextMethod()
     
     if (is_empty(object)) return(object)
     
