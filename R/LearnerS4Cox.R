@@ -228,21 +228,19 @@ setMethod(
         encoding_method = "dummy",
         drop_levels = FALSE)
 
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
-
       # Use the model for prediction.
       model_predictions <- predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
         type = "risk")
-
-      # Update the prediction table.
-      prediction_table[, "predicted_outcome" := model_predictions]
-
+      
+      # Store as prediction table.
+      prediction_table <- as_prediction_table(
+        x = model_predictions,
+        type = "hazard_ratio",
+        data = data
+      )
+      
       return(prediction_table)
       
     } else {
