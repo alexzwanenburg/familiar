@@ -477,7 +477,7 @@ setMethod(
           features = object@model_features,
           feature_info_list = object@feature_info))
     }
-
+browser()
     # default response ---------------------------------------------------------
     if ("default" %in% type) {
       # Predict using the model and the standard type.
@@ -774,86 +774,6 @@ setMethod(
 .get_available_ensemble_prediction_methods <- function() {
   return(c("median", "mean"))
 }
-
-
-
-all_predictions_valid <- function(
-    prediction_table,
-    outcome_type = NULL,
-    type = "default") {
-  # Return results when checking with the "all" function.
-  return(.predictions_valid(
-    prediction_table = prediction_table,
-    outcome_type = outcome_type,
-    type = type,
-    check_type = "all"))
-}
-
-
-
-any_predictions_valid <- function(
-    prediction_table, 
-    outcome_type = NULL,
-    type = "default") {
-  # Return results when checking with the "any" function.
-  return(.predictions_valid(
-    prediction_table = prediction_table,
-    outcome_type = outcome_type,
-    type = type,
-    check_type = "any"))
-}
-
-
-
-.predictions_valid <- function(
-    prediction_table, 
-    outcome_type, 
-    type, 
-    check_type) {
-  # Set the check function.
-  check_fun <- switch(
-    check_type,
-    "all" = all,
-    "any" = any)
-
-  if (is_empty(prediction_table)) return(FALSE)
-
-  if (type %in% c("default", "survival_probability", "risk_stratification")) {
-    if (is.null(outcome_type)) {
-      ..error_reached_unreachable_code(
-        "any_predictions_valid: outcome_type was not provided.")
-    }
-
-    if (outcome_type %in% c("continuous")) {
-      return(check_fun(is.finite(prediction_table$predicted_outcome)))
-      
-    } else if (outcome_type %in% c("survival", "competing_risk")) {
-      if ("predicted_outcome" %in% colnames(prediction_table)) {
-        return(check_fun(is.finite(prediction_table$predicted_outcome)))
-      } else if ("survival_probability" %in% colnames(prediction_table)) {
-        return(check_fun(is.finite(prediction_table$survival_probability)))
-      } else if ("risk_group" %in% colnames(prediction_table)) {
-        return(check_fun(!is.na(prediction_table$risk_group)))
-      } else {
-        return(FALSE)
-      }
-      
-    } else if (outcome_type %in% c("binomial", "multinomial")) {
-      return(check_fun(!is.na(prediction_table$predicted_class)))
-      
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-    
-  } else if (type %in% c("novelty")) {
-    return(check_fun(is.finite(prediction_table$novelty)))
-    
-  } else {
-    ..error_reached_unreachable_code(
-      "any_predictions_valid: unknown type encountered")
-  }
-}
-
 
 
 

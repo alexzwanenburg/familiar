@@ -252,8 +252,8 @@ as_prediction_table <- function(
   }
   
   # Check the prediction table object for consistency.
-  object <- complete_prediction_table(object, .external)
-  browser()
+  object <- complete_prediction_table(object)
+  
   return(object)
 }
 
@@ -876,6 +876,142 @@ setMethod(
         if (length(group_labels) > NULL) object@groups <- sort(group_labels)
       }
     }
+    
+    return(object)
+  }
+)
+
+
+
+# is_empty ---------------------------------------------------------------------
+setMethod(
+  "is_empty",
+  signature(x = "familiarDataElementPredictionTable"),
+  function(x, ...) {
+    return(is_empty(x@prediction_data))
+  }
+)
+
+
+
+
+all_predictions_valid <- function(prediction_table) {
+  # Return results when checking with the "all" function.
+  return(.check_predictions_valid(
+    object = prediction_table,
+    check_type = "all"
+  ))
+}
+
+
+
+any_predictions_valid <- function(prediction_table) {
+  # Return results when checking with the "any" function.
+  
+  return(.check_predictions_valid(
+    object = prediction_table,
+    check_type = "any"
+  ))
+}
+
+
+
+# .check_predictions_valid (generic) -------------------------------------------
+setGeneric(".check_predictions_valid", function(object, ...) standardGeneric(".check_predictions_valid"))
+
+
+# .check_predictions_valid (general) ----------------------------------------
+setMethod(
+  ".check_predictions_valid",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, check_type) {
+    if (is_empty(prediction_table)) return(FALSE)
+    
+    check_fun <- switch(
+      check_type,
+      "all" = all,
+      "any" = any
+    )
+    
+    return(check_fun(is.finite(object@prediction_data$predicted_outcome)))
+  }
+)
+
+
+# .check_predictions_valid (classification) ------------------------------------
+setMethod(
+  ".check_predictions_valid",
+  signature(object = "predictionTableClassification"),
+  function(object, check_type) {
+    if (is_empty(prediction_table)) return(FALSE)
+    
+    check_fun <- switch(
+      check_type,
+      "all" = all,
+      "any" = any
+    )
+    
+    return(all(sapply(
+      object@prediction_data, 
+      function(x, check_fun) (check_fun(is.finite(x))),
+      check_fun = check_fun)
+    ))
+  }
+)
+
+
+# .check_predictions_valid (novelty) ----------------------------------------
+setMethod(
+  ".check_predictions_valid",
+  signature(object = "predictionTableNovelty"),
+  function(object, check_type) {
+    if (is_empty(prediction_table)) return(FALSE)
+    
+    check_fun <- switch(
+      check_type,
+      "all" = all,
+      "any" = any
+    )
+    
+    return(check_fun(is.finite(object@prediction_data$novelty)))
+  }
+)
+
+
+# .check_predictions_valid (grouping) ----------------------------------------
+setMethod(
+  ".check_predictions_valid",
+  signature(object = "predictionTableGrouping"),
+  function(object, check_type) {
+    if (is_empty(prediction_table)) return(FALSE)
+    
+    check_fun <- switch(
+      check_type,
+      "all" = all,
+      "any" = any
+    )
+    
+    return(check_fun(!is.na(object@prediction_data$group)))
+  }
+)
+
+
+
+# remove_invalid_predictions (generic) -----------------------------------------
+setGeneric("remove_invalid_predictions", function(object, ...) standardGeneric("remove_invalid_predictions"))
+
+# remove_invalid_predictions (general) -----------------------------------------
+setMethod(
+  "remove_invalid_predictions",
+  signature(object = familiarDataElementPredictionTable),
+  function(object, ...) {
+    if (is_empty(object)) return(object)
+    
+    instance_mask <- is.finite(object@prediction_data$predicted_outcome)
+    
+    object@identifier_data <- object@identifier_data[instance_mask, ]
+    object@reference_data <- object@reference_data[instance_mask, ]
+    object@prediction_data <- object@prediction_data[instance_mask, ]
     
     return(object)
   }

@@ -10,13 +10,11 @@ setClass(
   slots = list(
     "ensemble_method" = "character",
     "percentiles" = "ANY",
-    # "type" = "ANY",
     "outcome_type" = "ANY",
     "identifier_data" = "ANY",
     "reference_data" = "ANY",
     "prediction_data" = "ANY"
   ),
-    # "class_levels" = "ANY"),
   prototype = methods::prototype(
     bootstrap_ci_method = "percentile",
     ensemble_method = "median",
@@ -27,8 +25,7 @@ setClass(
     prediction_data = NULL
   )
 )
-    #class_levels = NULL,
-    #type = "default"))
+
 
 
 # extract_predictions (generic) ------------------------------------------------

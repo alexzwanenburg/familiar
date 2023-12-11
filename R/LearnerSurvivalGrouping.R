@@ -23,7 +23,7 @@
     data = data,
     allow_recalibration = TRUE,
     time = time_max)
-
+browser()
   # Check if any predictions are valid.
   if (!any_predictions_valid(
     prediction_table,
