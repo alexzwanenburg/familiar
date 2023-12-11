@@ -1000,14 +1000,71 @@ setMethod(
 # remove_invalid_predictions (generic) -----------------------------------------
 setGeneric("remove_invalid_predictions", function(object, ...) standardGeneric("remove_invalid_predictions"))
 
+
 # remove_invalid_predictions (general) -----------------------------------------
 setMethod(
   "remove_invalid_predictions",
-  signature(object = familiarDataElementPredictionTable),
+  signature(object = "familiarDataElementPredictionTable"),
   function(object, ...) {
     if (is_empty(object)) return(object)
     
     instance_mask <- is.finite(object@prediction_data$predicted_outcome)
+    
+    object@identifier_data <- object@identifier_data[instance_mask, ]
+    object@reference_data <- object@reference_data[instance_mask, ]
+    object@prediction_data <- object@prediction_data[instance_mask, ]
+    
+    return(object)
+  }
+)
+
+
+# remove_invalid_predictions (classification) ----------------------------------
+setMethod(
+  "remove_invalid_predictions",
+  signature(object = "predictionTableClassification"),
+  function(object, ...) {
+    if (is_empty(object)) return(object)
+    
+    instance_mask <- as.logical(
+      do.call(pmin, lapply(object@prediction_data, is.finite))
+    )
+    
+    object@identifier_data <- object@identifier_data[instance_mask, ]
+    object@reference_data <- object@reference_data[instance_mask, ]
+    object@prediction_data <- object@prediction_data[instance_mask, ]
+    
+    return(object)
+  }
+)
+
+
+# remove_invalid_predictions (novelty) -----------------------------------------
+setMethod(
+  "remove_invalid_predictions",
+  signature(object = "predictionTableNovelty"),
+  function(object, ...) {
+    if (is_empty(object)) return(object)
+    
+    instance_mask <- is.finite(object@prediction_data$novelty)
+    
+    object@identifier_data <- object@identifier_data[instance_mask, ]
+    object@reference_data <- object@reference_data[instance_mask, ]
+    object@prediction_data <- object@prediction_data[instance_mask, ]
+    
+    return(object)
+  }
+)
+
+
+# remove_invalid_predictions (general) -----------------------------------------
+setMethod(
+  "remove_invalid_predictions",
+  signature(object = "predictionTableGrouping"),
+  function(object, ...) {
+    if (is_empty(object)) return(object)
+    
+    instance_mask <- !is.na(object@prediction_data$group)
     
     object@identifier_data <- object@identifier_data[instance_mask, ]
     object@reference_data <- object@reference_data[instance_mask, ]
@@ -1025,6 +1082,7 @@ setMethod(
   function(x, ...) {
     # Merge identifier_data, reference_data and prediction_data and set
     # value column and grouping columns.
+    
   }
 )
 
