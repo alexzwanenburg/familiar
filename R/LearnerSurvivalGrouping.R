@@ -22,20 +22,14 @@
     object = object,
     data = data,
     allow_recalibration = TRUE,
-    time = time_max)
-browser()
+    time = time_max
+  )
+
   # Check if any predictions are valid.
-  if (!any_predictions_valid(
-    prediction_table,
-    outcome_type = object@outcome_type)) {
-    return(NULL)
-  }
+  if (!any_predictions_valid(prediction_table)) return(NULL)
 
   # Remove data with missing predictions.
-  prediction_table <- remove_nonvalid_predictions(
-    prediction_table,
-    outcome_type = object@outcome_type)
-
+  prediction_table <- remove_invalid_predictions(prediction_table)
   km_info_list <- list()
 
   # Iterate over stratification methods
@@ -43,16 +37,16 @@ browser()
     if (cut_off_method == "median") {
       # Identify threshold
       cutoff <- .find_quantile_threshold(
-        object = object,
         prediction_table = prediction_table,
-        quantiles = 0.5)
+        quantiles = 0.5
+      )
       
     } else if (cut_off_method == "fixed") {
       # Identify thresholds
       cutoff <- .find_quantile_threshold(
-        object = object,
         prediction_table = prediction_table,
-        quantiles = settings$eval$strat_quant_threshold)
+        quantiles = settings$eval$strat_quant_threshold
+      )
       
     } else if (cut_off_method == "optimised") {
       # Identify threshold
@@ -61,9 +55,9 @@ browser()
     } else if (cut_off_method %in% c("mean", "mean_winsor", "mean_trim")) {
       # Identify threshold
       cutoff <- .find_mean_threshold(
-        object = object,
         prediction_table = prediction_table,
-        method = cut_off_method)
+        method = cut_off_method
+      )
       
     } else {
       ..error_reached_unreachable_code(paste0(
@@ -73,9 +67,9 @@ browser()
 
     # Find corresponding sizes of the generated groups
     risk_group <- .apply_risk_threshold(
-      object = object,
-      predicted_values = prediction_table$predicted_outcome,
-      cutoff = cutoff)
+      prediction_table = prediction_table,
+      cutoff = cutoff
+    )
     
     group_size <- .get_risk_group_sizes(risk_group = risk_group)
 
@@ -83,7 +77,8 @@ browser()
     method_list <- list(
       "method" = cut_off_method,
       "cutoff" = cutoff,
-      "group_size" = group_size)
+      "group_size" = group_size
+    )
 
     # Attach method_list to the general km_info_list
     km_info_list[[cut_off_method]] <- method_list
@@ -93,55 +88,70 @@ browser()
   out_list <- list(
     "stratification_method" = settings$eval$strat_method,
     "parameters" = km_info_list,
-    "time_max" = time_max)
+    "time_max" = time_max
+  )
 
   return(out_list)
 }
 
 
 
-.find_mean_threshold <- function(object, prediction_table, method) {
+.find_mean_threshold <- function(prediction_table, method) {
   # Select finite values.
-  x <- prediction_table$predicted_outcome[is.finite(prediction_table$predicted_outcome)]
+  x <- prediction_table@prediction_data$predicted_outcome
 
-  if (method == "mean_trim") x <- trim(x)
-  if (method == "mean_winsor") x <- winsor(x)
+  if (method == "mean_trim") {
+    x <- trim(x)
+  } else if (method == "mean_winsor") {
+    x <- winsor(x)
+  } else {
+    ..error_reached_unreachable_code(paste0(
+      "The provided method for setting the mean risk stratification method was not recognised: ",
+      method
+    ))
+  }
 
   return(mean(x))
 }
 
 
 
-.find_quantile_threshold <- function(object, prediction_table, quantiles) {
+.find_quantile_threshold <- function(prediction_table, quantiles) {
   
-  if (get_prediction_type(object = object) %in% c("expected_survival_time")) {
+  if (is(prediction_table, "predictionTableSurvivalTime")) {
     # For time-like predictions, we should use the complements of the provided
     # quantiles.
     quantiles <- abs(1 - quantiles)
   }
-  # Order quantiles in ascending order
+  
+  # Order quantiles in ascending order.
   quantiles <- quantiles[order(quantiles)]
 
   # Return threshold values
   return(stats::quantile(
-    x = prediction_table$predicted_outcome,
+    x = prediction_table@prediction_data$predicted_outcome,
     probs = quantiles,
     names = FALSE,
-    na.rm = TRUE))
+    na.rm = TRUE
+  ))
 }
 
 
 
 .find_maxstat_threshold <- function(prediction_table) {
   # Check whether the model always predicted the same value
-  if (stats::var(prediction_table$predicted_outcome) == 0) {
-    return(prediction_table$predicted_outcome[1])
+  if (stats::var(prediction_table@prediction_data$predicted_outcome) == 0) {
+    return(prediction_table@prediction_data$predicted_outcome[1])
   }
 
   require_package(
     x = "maxstat",
-    purpose = "to determine an optimal risk threshold")
+    purpose = "to determine an optimal risk threshold"
+  )
 
+  # Convert prediction_table to a data.table.
+  prediction_table <- .as_data_table(prediction_table)
+  
   # Perform maxstat test
   h <- tryCatch(
     maxstat::maxstat.test(
@@ -204,7 +214,7 @@ browser()
 
 
 
-.apply_risk_threshold <- function(object, predicted_values, cutoff) {
+.apply_risk_threshold <- function(prediction_table, cutoff) {
   # Initialise risk group
   risk_group <- rep.int(1, times = length(predicted_values))
 
@@ -224,7 +234,8 @@ browser()
   # Convert to factor
   risk_group <- .assign_risk_group_names(
     risk_group = risk_group,
-    cutoff = cutoff)
+    cutoff = cutoff
+  )
 
   # Replace non-finite predicted values by NA.
   risk_group[!is.finite(predicted_values)] <- NA
