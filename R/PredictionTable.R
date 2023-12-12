@@ -289,7 +289,7 @@ setMethod(
     }
     
     if (!is_empty(object@identifier_data)) {
-      if (n_instances != object@identifier_data) {
+      if (n_instances != nrow(object@identifier_data)) {
         rlang::abort(
           message = paste0(
             "The number of instances of predicted values (",
@@ -323,7 +323,7 @@ setMethod(
     }
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data != 1)) {
+    if (ncol(object@prediction_data) != 1) {
       rlang::abort(
         message = paste0(
           "Only one set of predicted values was expected, but (",
@@ -348,7 +348,7 @@ setMethod(
     
     if (!is_empty(object@reference_data)) {
       # Check that one set of reference data are provided.
-      if (ncol(object@reference_data != 1)) {
+      if (ncol(object@reference_data) != 1) {
         rlang::abort(
           message = paste0(
             "Only one set of reference values was expected, but (",
@@ -657,7 +657,7 @@ setMethod(
     }
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data != 1)) {
+    if (ncol(object@prediction_data) != 1) {
       rlang::abort(
         message = paste0(
           "Only one set of predicted values was expected, but (",
@@ -682,7 +682,7 @@ setMethod(
     
     if (!is_empty(object@reference_data)) {
       # Check that two sets of reference data are provided (time, status).
-      if (ncol(object@reference_data != 2)) {
+      if (ncol(object@reference_data) != 2) {
         rlang::abort(
           message = paste0(
             "Both time and status data are expected, but (",
@@ -796,7 +796,7 @@ setMethod(
     object@outcome_type <- "unsupervised"
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data != 1)) {
+    if (ncol(object@prediction_data) != 1) {
       rlang::abort(
         message = paste0(
           "Only one set of predicted values was expected, but (",
