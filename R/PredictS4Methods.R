@@ -838,6 +838,8 @@ setMethod(
   "remove_missing_outcomes",
   signature(data = "data.table"),
   function(data, outcome_type) {
+    stop("remove_missing_outcomes is replaced by filter_missing_outcome")
+    
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome <- outcome_time <- outcome_event <- NULL
 

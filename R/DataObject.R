@@ -1528,24 +1528,51 @@ setMethod(
 )
 
 
-# filter_missing_outcome ------------------------------------------------------
+# filter_missing_outcome (dataObject) ------------------------------------------
 setMethod(
   "filter_missing_outcome",
   signature(data = "dataObject"),
-  function(data, is_validation = FALSE) {
+  function(data, is_validation = FALSE, ...) {
     
     # Check if data is empty
     if (is_empty(data)) return(data)
     
-    # Change behaviour by outcome_type
-    if (data@outcome_type == "survival") {
-      outcome_is_valid <- is_valid_data(data@data[["outcome_time"]]) & is_valid_data(data@data[["outcome_event"]])
+    # Pass to method for data.table.
+    data@data <- filter_missing_outcome(
+      data = data@data,
+      outcome_type = data@outcome_type,
+      is_validation = is_validation,
+      ...
+    )
+    
+    return(data)
+  }
+)
+
+
+# filter_missing_outcome (data.table) ------------------------------------------
+setMethod(
+  "filter_missing_outcome",
+  signature(data = "data.table"),
+  function(data, outcome_type, is_validation = FALSE, ...) {
+    
+    # Suppress NOTES due to non-standard evaluation in data.table
+    outcome <- outcome_time <- outcome_event <- NULL
+    
+    if (is_empty(data)) return(data)
+    
+    # Check predicted outcome columns.
+    if (outcome_type %in% c("survival", "competing_risk")) {
+      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) & is_valid_data(data[["outcome_event"]])
       
-    } else if (data@outcome_type %in% c("binomial", "multinomial", "continuous")) {
-      outcome_is_valid <- is_valid_data(data@data[["outcome"]])
+    } else if (outcome_type %in% c("continuous")) {
+      outcome_is_valid <- is_valid_data(data[["outcome"]])
+      
+    } else if (outcome_type %in% c("binomial", "multinomial")) {
+      outcome_is_valid <- is_valid_data(data[["outcome"]])
       
     } else {
-      stop(paste0("Implementation for outcome_type ", data@outcome_type, " is missing."))
+      ..error_no_known_outcome_type(outcome_type)
     }
     
     if (is_validation) {
@@ -1555,7 +1582,7 @@ setMethod(
     }
     
     # Keep only data for which the outcome exists
-    data@data <- data@data[(outcome_is_valid), ]
+    data <- data[(outcome_is_valid), ]
     
     return(data)
   }

@@ -1075,6 +1075,42 @@ setMethod(
 )
 
 
+
+# filter_missing_outcome (general) ---------------------------------------------
+setMethod(
+  "filter_missing_outcome",
+  signature(data = "familiarDataElementPredictionTable"),
+  function(data, is_validation = FALSE, ...) {
+    # This method removes instances where reference data are missing.
+    # See other methods for filter_missing_outcome in DataObject.R.
+    
+    # Check if data itself or the reference data contained therein is empty.
+    if (is_empty(data)) return(data)
+    if (is_empty(data@reference_data)) return(data)
+    
+    if (data@outcome_type %in% c("survival", "competing_risk")) {
+      outcome_is_valid <- is_valid_data(data@reference_data[["outcome_time"]]) & is_valid_data(data@reference_data[["outcome_event"]])
+      
+    } else {
+      outcome_is_valid <- is_valid_data(data@reference_data[["outcome"]])
+    }
+    
+    if (is_validation) {
+      # Check whether all outcome information is missing for validation. It may
+      # be a prospective study. In that case, keep all data.
+      if (all(!outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
+    }
+    
+    # Filter instances.
+    data@identifier_data <- data@identifier_data[outcome_is_valid, ]
+    data@reference_data <- data@reference_data[outcome_is_valid, ]
+    data@prediction_data <- data@prediction_data[outcome_is_valid, ]
+    
+    return(data)
+  }
+)
+
+
 # .merge_slots_into_data -------------------------------------------------------
 setMethod(
   ".merge_slots_into_data",
