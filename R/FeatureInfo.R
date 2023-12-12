@@ -1202,8 +1202,10 @@ setMethod(
             transform_parameters@method,
             ") with \u03BB = ",
             power.transform::get_lambda(transform_parameters@transformer),
-            " and shift = ",
+            ", shift = ",
             power.transform::get_shift(transform_parameters@transformer),
+            ", and scale = ",
+            power.transform::get_scale(transform_parameters@transformer),
             ".\n")
         }
       }
