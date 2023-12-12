@@ -428,6 +428,13 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     .NATURAL <- NULL
     
+    if (length(type) != 1) {
+      ..error_reached_unreachable_code(paste0(
+        "Only one type of prediction is expected as argument to .predict. ",
+        "Found: ", paste_s(type)
+      ))
+    }
+    
     # Prepare input data
     data <- process_input_data(
       object = object,
@@ -435,10 +442,7 @@ setMethod(
       is_pre_processed = is_pre_processed,
       stop_at = "clustering",
       keep_novelty = "novelty" %in% type)
-
-    # Set empty prediction table that can be updated
-    prediction_table <- NULL
-
+    
     # user specified type ------------------------------------------------------
     if (any(!type %in% .get_available_prediction_type_arguments())) {
       # Select the first non-standard type.
@@ -464,91 +468,69 @@ setMethod(
     }
 
     # novelty ------------------------------------------------------------------
-    if ("novelty" %in% type) {
+    if (type == "novelty") {
       # Predict instance novelty.
-      prediction_table <- .predict_novelty(
-        object = object,
-        data = data)
-
-      # Keep only model features in data for the remaining analysis.
-      data <- select_features(
-        data = data,
-        features = features_after_clustering(
-          features = object@model_features,
-          feature_info_list = object@feature_info))
-    }
-browser()
-    # default response ---------------------------------------------------------
-    if ("default" %in% type) {
-      # Predict using the model and the standard type.
-      temp_prediction_table <- ..predict(
-        object = object,
-        data = data,
-        time = time)
-
-      # Recalibrate the results.
-      if (allow_recalibration) {
-        temp_prediction_table <- .apply_recalibration(
+      return(.predict_novelty(
           object = object,
-          predictions = temp_prediction_table)
-      }
-
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
-      }
+          data = data
+        ))
     }
-
-    # survival probability -----------------------------------------------------
-    if ("survival_probability" %in% type) {
-      # Prediction survival probabilities,
-      temp_prediction_table <- ..predict_survival_probability(
+    
+    # Keep only model features in data for the remaining predictions.
+    data <- select_features(
+      data = data,
+      features = features_after_clustering(
+        features = object@model_features,
+        feature_info_list = object@feature_info
+      )
+    )
+    
+browser()
+    if (type == "default") {
+      # default prediction -----------------------------------------------------
+      
+      # Predict using the model and the standard type.
+      prediction_table <- ..predict(
         object = object,
         data = data,
-        time = time)
+        time = time
+      )
 
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        # Merge with the prediction table
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
+      # Recalibrate the predictions.
+      if (allow_recalibration) {
+        prediction_table <- .apply_recalibration(
+          object = object,
+          predictions = prediction_table
+        )
       }
-    }
-
-    # risk stratification ------------------------------------------------------
-    if ("risk_stratification" %in% type) {
+      
+    } else if (type == "survival_probability") {
+      # survival probability ---------------------------------------------------
+      
+      # Predict survival probabilities.
+      prediction_table <- ..predict_survival_probability(
+        object = object,
+        data = data,
+        time = time
+      )
+      
+    } else if (type == "risk_stratification") {
+      # risk stratification ----------------------------------------------------
+      
       # Prediction survival probabilities,
-      temp_prediction_table <- .predict_risk_stratification(
+      prediction_table <- .predict_risk_stratification(
         object = object,
         data = data,
         time = time,
         stratification_threshold = stratification_threshold,
         stratification_method = stratification_method,
-        ...)
-
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
-      }
-    }
-
-    if (!is_empty(prediction_table)) {
-      # Order output columns.
-      ordered_columns <- intersect(
-        colnames(get_placeholder_prediction_table(
-          object = object, 
-          data = data, 
-          type = type)),
-        colnames(prediction_table))
-
-      data.table::setcolorder(
-        x = prediction_table,
-        neworder = ordered_columns)
+        ...
+      )
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(
+        "Type of prediction was not recognised: ", type
+      ))
     }
 
     return(prediction_table)
@@ -579,16 +561,6 @@ setMethod(
       object = object,
       data = data,
       type = type)
-
-    if (!is_empty(prediction_table)) {
-      # Order output columns.
-      data.table::setcolorder(
-        x = prediction_table,
-        neworder = colnames(get_placeholder_prediction_table(
-          object = object,
-          data = data,
-          type = type)))
-    }
 
     return(prediction_table)
   }
@@ -625,12 +597,14 @@ setMethod(
     data, 
     type = "novelty",
     is_pre_processed = FALSE,
-    ...) {
+    ...
+  ) {
     return(.predict(
       object = object@novelty_detector,
       data = data,
       type = type,
-      is_pre_processed = is_pre_processed))
+      is_pre_processed = is_pre_processed
+    ))
   }
 )
 
