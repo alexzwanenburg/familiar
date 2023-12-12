@@ -778,6 +778,9 @@ setMethod(
 
 
 remove_nonvalid_predictions <- function(prediction_table, outcome_type) {
+  # TODO: REMOVE THIS FUNCTION: it is replaced by remove_invalid_predictions.
+  stop("This function has been replaced by remove_invalid_predictions.")
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   predicted_outcome <- predicted_class <- survival_probability <- risk_group <- NULL
 
