@@ -722,7 +722,7 @@ setMethod(
       
       # Check that the status columns contains 0s and 1s, or can be converted to
       # such values.
-      status_column <- object@prediction_data[[outcome_column[2]]]
+      status_column <- object@reference_data[[outcome_column[2]]]
       status_indicators <- as.character(unique_na(status_column))
       
       if (length(status_indicators) > 2) {
