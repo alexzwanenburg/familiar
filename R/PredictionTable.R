@@ -888,7 +888,7 @@ setGeneric(".is_merged_prediction_table", function(x, ...) standardGeneric(".is_
 ## .is_merged_prediction_table (general) ---------------------------------------
 setMethod(
   ".is_merged_prediction_table",
-  signature(x = ""),
+  signature(x = "familiarDataElementPredictionTable"),
   function(x, ...) {
     return(is_empty(x@data) && is_empty(x@grouping_column))
   }

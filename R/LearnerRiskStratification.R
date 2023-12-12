@@ -1,3 +1,8 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+#' @include FamiliarDataComputationPredictionData.R
+#' @include PredictionTable.R
+
 .get_available_stratification_methods <- function() {
   return(c("median", "fixed", "optimised", "mean", "mean_trim", "mean_winsor"))
 }
