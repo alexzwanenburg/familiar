@@ -485,7 +485,6 @@ setMethod(
       )
     )
     
-browser()
     if (type == "default") {
       # default prediction -----------------------------------------------------
       

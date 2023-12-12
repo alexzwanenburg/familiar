@@ -890,7 +890,7 @@ setMethod(
   ".is_merged_prediction_table",
   signature(x = "familiarDataElementPredictionTable"),
   function(x, ...) {
-    return(is_empty(x@data) && is_empty(x@grouping_column))
+    return(!is_empty(x@grouping_column))
   }
 )
 
@@ -941,8 +941,9 @@ setMethod(
   ".check_predictions_valid",
   signature(object = "familiarDataElementPredictionTable"),
   function(object, check_type) {
-    if (is_empty(prediction_table)) return(FALSE)
     
+    if (is_empty(object)) return(FALSE)
+
     check_fun <- switch(
       check_type,
       "all" = all,
@@ -961,7 +962,8 @@ setMethod(
   ".check_predictions_valid",
   signature(object = "predictionTableClassification"),
   function(object, check_type) {
-    if (is_empty(prediction_table)) return(FALSE)
+    
+    if (is_empty(object)) return(FALSE)
     
     check_fun <- switch(
       check_type,
@@ -985,7 +987,8 @@ setMethod(
   ".check_predictions_valid",
   signature(object = "predictionTableNovelty"),
   function(object, check_type) {
-    if (is_empty(prediction_table)) return(FALSE)
+    
+    if (is_empty(object)) return(FALSE)
     
     check_fun <- switch(
       check_type,
@@ -1005,7 +1008,8 @@ setMethod(
   ".check_predictions_valid",
   signature(object = "predictionTableGrouping"),
   function(object, check_type) {
-    if (is_empty(prediction_table)) return(FALSE)
+    
+    if (is_empty(object)) return(FALSE)
     
     check_fun <- switch(
       check_type,
@@ -1165,7 +1169,7 @@ setMethod(
     }
     
     # Filter instances.
-    if (is_merged) {
+    if (merged_table) {
       data@data <- data@data[outcome_is_valid, ]
       
     } else {
@@ -1204,8 +1208,8 @@ setMethod(
     if (.is_merged_prediction_table(x)) return(x)
     
     # Set grouping and value columns.
-    x@grouping_column <- c(colnames(data@identifier_data), colnames(data@reference_data))
-    x@value_column <- colnames(data@prediction_data)
+    x@grouping_column <- c(colnames(x@identifier_data), colnames(x@reference_data))
+    x@value_column <- colnames(x@prediction_data)
     
     # Merge data and set data attribute.
     x@data <- cbind(x@identifier_data, x@reference_data, x@prediction_data)
@@ -1214,7 +1218,7 @@ setMethod(
     slot(x, "identifier_data", check = FALSE) <- NULL
     slot(x, "reference_data", check = FALSE) <- NULL
     slot(x, "prediction_data", check = FALSE) <- NULL
-    
+
     return(x)
   }
 )
