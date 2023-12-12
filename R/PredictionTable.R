@@ -882,13 +882,29 @@ setMethod(
 )
 
 
+# .is_merged_prediction_table (generic) ----------------------------------------
+setGeneric(".is_merged_prediction_table", function(x, ...) standardGeneric(".is_merged_prediction_table"))
+
+## .is_merged_prediction_table (general) ---------------------------------------
+setMethod(
+  ".is_merged_prediction_table",
+  signature(x = ""),
+  function(x, ...) {
+    return(is_empty(x@data) && is_empty(x@grouping_column))
+  }
+)
+
 
 # is_empty ---------------------------------------------------------------------
 setMethod(
   "is_empty",
   signature(x = "familiarDataElementPredictionTable"),
   function(x, ...) {
-    return(is_empty(x@prediction_data))
+    if (.is_merged_prediction_table(x)) {
+      return(is_empty(x@data))
+    } else {
+      return(is_empty(x@prediction_data))
+    }
   }
 )
 
@@ -933,7 +949,9 @@ setMethod(
       "any" = any
     )
     
-    return(check_fun(is.finite(object@prediction_data$predicted_outcome)))
+    data_slot <- ifelse(.is_merged_prediction_table(object), "data", "prediction_data")
+    
+    return(check_fun(is.finite(slot(object, data_slot)$predicted_outcome)))
   }
 )
 
@@ -951,8 +969,10 @@ setMethod(
       "any" = any
     )
     
+    data_slot <- ifelse(.is_merged_prediction_table(object), "data", "prediction_data")
+    
     return(all(sapply(
-      object@prediction_data, 
+      slot(object, data_slot), 
       function(x, check_fun) (check_fun(is.finite(x))),
       check_fun = check_fun)
     ))
@@ -973,7 +993,9 @@ setMethod(
       "any" = any
     )
     
-    return(check_fun(is.finite(object@prediction_data$novelty)))
+    data_slot <- ifelse(.is_merged_prediction_table(object), "data", "prediction_data")
+    
+    return(check_fun(is.finite(slot(object, data_slot)$novelty)))
   }
 )
 
@@ -991,7 +1013,9 @@ setMethod(
       "any" = any
     )
     
-    return(check_fun(!is.na(object@prediction_data$group)))
+    data_slot <- ifelse(.is_merged_prediction_table(object), "data", "prediction_data")
+    
+    return(check_fun(!is.na(slot(object, data_slot)$group)))
   }
 )
 
@@ -1008,11 +1032,18 @@ setMethod(
   function(object, ...) {
     if (is_empty(object)) return(object)
     
-    instance_mask <- is.finite(object@prediction_data$predicted_outcome)
-    
-    object@identifier_data <- object@identifier_data[instance_mask, ]
-    object@reference_data <- object@reference_data[instance_mask, ]
-    object@prediction_data <- object@prediction_data[instance_mask, ]
+    if (.is_merged_prediction_table(object)) {
+      instance_mask <- is.finite(object@data$predicted_outcome)
+      
+      object@data <- object@data[instance_mask, ]
+      
+    } else {
+      instance_mask <- is.finite(object@prediction_data$predicted_outcome)
+      
+      object@identifier_data <- object@identifier_data[instance_mask, ]
+      object@reference_data <- object@reference_data[instance_mask, ]
+      object@prediction_data <- object@prediction_data[instance_mask, ]
+    }
     
     return(object)
   }
@@ -1026,13 +1057,22 @@ setMethod(
   function(object, ...) {
     if (is_empty(object)) return(object)
     
-    instance_mask <- as.logical(
-      do.call(pmin, lapply(object@prediction_data, is.finite))
-    )
-    
-    object@identifier_data <- object@identifier_data[instance_mask, ]
-    object@reference_data <- object@reference_data[instance_mask, ]
-    object@prediction_data <- object@prediction_data[instance_mask, ]
+    if (.is_merged_prediction_table(object)) {
+      instance_mask <- as.logical(
+        do.call(pmin, lapply(object@data[, mget(object@value_column)], is.finite))
+      )
+      
+      object@data <- object@data[instance_mask, ]
+      
+    } else {
+      instance_mask <- as.logical(
+        do.call(pmin, lapply(object@prediction_data, is.finite))
+      )
+      
+      object@identifier_data <- object@identifier_data[instance_mask, ]
+      object@reference_data <- object@reference_data[instance_mask, ]
+      object@prediction_data <- object@prediction_data[instance_mask, ]
+    }
     
     return(object)
   }
@@ -1046,11 +1086,18 @@ setMethod(
   function(object, ...) {
     if (is_empty(object)) return(object)
     
-    instance_mask <- is.finite(object@prediction_data$novelty)
-    
-    object@identifier_data <- object@identifier_data[instance_mask, ]
-    object@reference_data <- object@reference_data[instance_mask, ]
-    object@prediction_data <- object@prediction_data[instance_mask, ]
+    if (.is_merged_prediction_table(object)) {
+      instance_mask <- is.finite(object@data$novelty)
+      
+      object@data <- object@data[instance_mask, ]
+      
+    } else {
+      instance_mask <- is.finite(object@prediction_data$novelty)
+      
+      object@identifier_data <- object@identifier_data[instance_mask, ]
+      object@reference_data <- object@reference_data[instance_mask, ]
+      object@prediction_data <- object@prediction_data[instance_mask, ]
+    }
     
     return(object)
   }
@@ -1064,11 +1111,18 @@ setMethod(
   function(object, ...) {
     if (is_empty(object)) return(object)
     
-    instance_mask <- !is.na(object@prediction_data$group)
-    
-    object@identifier_data <- object@identifier_data[instance_mask, ]
-    object@reference_data <- object@reference_data[instance_mask, ]
-    object@prediction_data <- object@prediction_data[instance_mask, ]
+    if (.is_merged_prediction_table(object)) {
+      instance_mask <- is.finite(object@data$group)
+      
+      object@data <- object@data[instance_mask, ]
+      
+    } else {
+      instance_mask <- is.finite(object@prediction_data$group)
+      
+      object@identifier_data <- object@identifier_data[instance_mask, ]
+      object@reference_data <- object@reference_data[instance_mask, ]
+      object@prediction_data <- object@prediction_data[instance_mask, ]
+    }
     
     return(object)
   }
@@ -1086,13 +1140,22 @@ setMethod(
     
     # Check if data itself or the reference data contained therein is empty.
     if (is_empty(data)) return(data)
+    
+    merged_table <- .is_merged_prediction_table(data)
+    data_slot <- ifelse(merged_table, "data", "reference_data")
+    
     if (is_empty(data@reference_data)) return(data)
     
     if (data@outcome_type %in% c("survival", "competing_risk")) {
-      outcome_is_valid <- is_valid_data(data@reference_data[["outcome_time"]]) & is_valid_data(data@reference_data[["outcome_event"]])
+      if (merged_table && !all(c("outcome_time", "outcome_event") %in% data@grouping_column)) return(data)
+      
+      outcome_is_valid <- is_valid_data(slot(object, data_slot)$outcome_time) &
+        is_valid_data(slot(object, data_slot)$outcome_event)
       
     } else {
-      outcome_is_valid <- is_valid_data(data@reference_data[["outcome"]])
+      if (merged_table && !("outcome" %in% data@grouping_column)) return(data)
+      
+      outcome_is_valid <- is_valid_data(slot(object, data_slot)$outcome)
     }
     
     if (is_validation) {
@@ -1102,13 +1165,31 @@ setMethod(
     }
     
     # Filter instances.
-    data@identifier_data <- data@identifier_data[outcome_is_valid, ]
-    data@reference_data <- data@reference_data[outcome_is_valid, ]
-    data@prediction_data <- data@prediction_data[outcome_is_valid, ]
+    if (is_merged) {
+      data@data <- data@data[outcome_is_valid, ]
+      
+    } else {
+      data@identifier_data <- data@identifier_data[outcome_is_valid, ]
+      data@reference_data <- data@reference_data[outcome_is_valid, ]
+      data@prediction_data <- data@prediction_data[outcome_is_valid, ]
+    }
     
     return(data)
   }
 )
+
+
+
+setMethod(
+  ".as_data_table",
+  signature(x = "familiarDataElementPredictionTable"),
+  function(x, ...) {
+    x <- .merge_slots_into_data(x)
+    
+    return(x@data)
+  }
+)
+
 
 
 # .merge_slots_into_data -------------------------------------------------------
@@ -1119,6 +1200,64 @@ setMethod(
     # Merge identifier_data, reference_data and prediction_data and set
     # value column and grouping columns.
     
+    # Do not merge prediction tables that are already merged.
+    if (.is_merged_prediction_table(x)) return(x)
+    
+    # Set grouping and value columns.
+    x@grouping_column <- c(colnames(data@identifier_data), colnames(data@reference_data))
+    x@value_column <- colnames(data@prediction_data)
+    
+    # Merge data and set data attribute.
+    x@data <- cbind(x@identifier_data, x@reference_data, x@prediction_data)
+    
+    # Empty data slots.
+    slot(x, "identifier_data", check = FALSE) <- NULL
+    slot(x, "reference_data", check = FALSE) <- NULL
+    slot(x, "prediction_data", check = FALSE) <- NULL
+    
+    return(x)
+  }
+)
+
+
+# .extract_slots_from_data -----------------------------------------------------
+setMethod(
+  ".extract_slots_from_data",
+  signature(x = "familiarDataElementPredictionTable"),
+  function(x, ...) {
+    # Extract identifier_data, reference_data and prediction_data from data.
+    
+    if (!.is_merged_prediction_table(x)) return(x)
+    
+    # Get reference columns.
+    reference_columns <- get_outcome_columns(x@outcome_type)
+    
+    # Get identifier columns.
+    identifier_columns <- setdiff(x@grouping_column, reference_columns)
+    
+    # Set identifier data.
+    x@identifier_data <- x@data[, mget(identifier_columns)]
+    
+    # Set or generate reference columns.
+    if (is.null(reference_columns)) {
+      # Pass. Do not set reference data if none are required.
+      
+    } else if (all(reference_columns %in% colnames(x@data))) {
+      x@reference_data <- x@data[, mget(reference_columns)]
+        
+    } else {
+      # Pass do not set reference data it is missing.
+    }
+    
+    # Set prediction data.
+    x@prediction_data <- x@data[, mget(x@value_column)]
+    
+    # Reset grouping and value column attributes, and empty data.
+    slot(x, "grouping_column", check = FALSE) <- NULL
+    slot(x, "value_column") <- NA_character_
+    slot(x, "data", check = FALSE) <- NULL
+    
+    return(x)
   }
 )
 

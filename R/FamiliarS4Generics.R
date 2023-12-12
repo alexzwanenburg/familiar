@@ -313,8 +313,11 @@ setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric(
 
 setGeneric(".merge_slots_into_data", function(x, ...) standardGeneric(".merge_slots_into_data"))
 
-setGeneric("collect", function(x, ...) standardGeneric("collect"))
+setGeneric(".extract_slots_from_data", function(x, ...) standardGeneric(".extract_slots_from_data"))
 
+setGeneric(".as_data_table", function(x, ...) standardGeneric(".as_data_table"))
+
+setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
 
 # vimpTable methods ------------------------------------------------------------
