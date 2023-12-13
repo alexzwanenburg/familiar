@@ -177,7 +177,7 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles)
-
+browser()
     if (type %in% .get_available_prediction_type_arguments()) {
       # Find non-feature columns.
       non_feature_columns <- get_non_feature_columns(object)
