@@ -128,7 +128,14 @@ as_prediction_table <- function(
     object <- methods::new("predictionTableNovelty")
     
   } else {
-    ..error_unknown_prediction_type(type)
+    rlang::abort(
+      message = paste0(
+        "The type argument was not recognized: ", type,
+        "One of regression, classification, hazard_ratio, cumulative_hazard, ",
+        "expected_survival_time, survival_probability, grouping, 
+        risk_stratification or novelty is expected."
+      )
+    )
   }
   
   if (is_empty(x)) {
@@ -1196,7 +1203,7 @@ setMethod(
 
 
 
-# .merge_slots_into_data -------------------------------------------------------
+# .merge_slots_into_data (general) ---------------------------------------------
 setMethod(
   ".merge_slots_into_data",
   signature(x = "familiarDataElementPredictionTable"),
@@ -1224,7 +1231,17 @@ setMethod(
 )
 
 
-# .extract_slots_from_data -----------------------------------------------------
+# .merge_slots_into_data (null) ------------------------------------------------
+setMethod(
+  ".merge_slots_into_data",
+  signature(x = "NULL"),
+  function(x, ...) {
+    return(NULL)
+  }
+)
+
+
+# .extract_slots_from_data (general) -------------------------------------------
 setMethod(
   ".extract_slots_from_data",
   signature(x = "familiarDataElementPredictionTable"),
@@ -1265,114 +1282,183 @@ setMethod(
   }
 )
 
- 
-# # merge_data_elements (predictionTable) ----------------------------------------
-# setMethod(
-#   "merge_data_elements",
-#   signature(x = "predictionTable"),
-#   function(
-#     x,
-#     x_list,
-#     ...) {
-#     
-#     # Copy identifiers from any supplementary identifier attribute to the
-#     # prediction_data attribute. The primary reason for doing so is to group and
-#     # merge similar elements, but e.g. from different timepoints.
-#     if (!is.null(as_data)) {
-#       x_list <- lapply(x_list, .identifier_as_data_attribute)
-#     }
-#     
-#     # Create return object.
-#     y <- data.table::copy(x)
-#     
-#     # Collect prediction data.
-#     y@prediction_data <- data.table::rbindlist(
-#       lapply(x_list, function(x) (x@prediction_data)),
-#       use.names = TRUE,
-#       fill = TRUE
-#     )
-#     
-#     # Collect identifier data.
-#     y@identifier_data <- data.table::rbindlist(
-#       lapply(x_list, function(x) (x@identifier_data)),
-#       use.names = TRUE,
-#       fill = FALSE
-#     )
-#     
-#     # Collect reference data. Reference data may be absent, and we need to fill
-#     # missing elements with NA.
-#     missing_reference_data <- sapply(x_list, function(x) (is_empty(x@reference_data)))
-#     if (!all(missing_reference_data) && any(missing_reference_data)) {
-#       reference_col_name <- colnames(x_list[which(!missing_reference_data)][[1]]@reference_data)
-#       
-#       y@reference_data <- data.table::rbindlist(
-#         lapply(
-#           x_list,
-#           function(x, ref_col) {
-#             if (is_empty(x@reference_data)) return(x@reference_data)
-# 
-#             placeholder_ref <- data.table::data.table(
-#               "temp_name" = rep_len(NA, nrow(object@prediction_data)))
-# 
-#             data.table::setnames(placeholder_ref, new = ref_col)
-# 
-#             return(placeholder_ref)
-#           }
-#         ),
-#         use.names = TRUE,
-#         fill = TRUE
-#       )
-#       
-#     } else if (all(missing_reference_data)) {
-#       y@reference_data <- NULL
-#       
-#     } else {
-#       y@reference_data <- data.table::rbindlist(
-#         lapply(x_list, function(x) (x@reference_data)),
-#         use.names = TRUE,
-#         fill = TRUE
-#       )
-#     }
-#     
-#     return(list(y))
-#   }
-# )
-# 
-# 
-# 
-# # .compute_data_element_estimates ----------------------------------------------
-# setMethod(
-#   ".compute_data_element_estimates",
-#   signature(x = "predictionTable"),
-#   function(x, x_list = NULL, ...) {
-#     
-#     # It might be that x was only used to direct to this method.
-#     if (!is.null(x_list)) x <- x_list
-#     if (!is.list(x)) x <- list(x)
-#     
-#     # Merge data.
-#     x_list <- merge_data_elements(x = x)
-#     
-#     y <- lapply(x_list, ..compute_data_element_estimates, ...)
-#   
-#     return(data_elements)
-#   }
-# )
-# 
-# # ..compute_data_element_estimates ---------------------------------------------
-# setMethod(
-#   "..compute_data_element_estimates",
-#   signature(x = "predictionTable"),
-#   function(x, ...) {
-#     
-#     if (is_empty(x)) return(NULL)
-#     
-#     identifier_columns <- colnames(x@identifier_data)
-#     reference_columns <- NULL
-#     if (!is_empty(x@reference_data)) reference_columns <- colnames(x@reference_data)
-#     value_columns <- colnames
-#     
-#       grouping_columns <- 
-#     
-#   }
-# )
+
+# .extract_slots_from_data (null) ----------------------------------------------
+setMethod(
+  ".extract_slots_from_data",
+  signature(x = "NULL"),
+  function(x, ...) {
+    
+    return(NULL)
+  }
+)
+
+
+# ..compute_ensemble_prediction_estimates (general) ----------------------------
+setMethod(
+  "..compute_ensemble_prediction_estimates",
+  signature(x = "familiarDataElementPredictionTable"),
+  function(x, data, ensemble_method, ...) {
+    
+    # Compute aggregate values.
+    prediction_data <- data[
+      ,
+      ...compute_ensemble_estimates(
+        x = .SD,
+        prediction_columns = x@value_column,
+        confidence_level = x@confidence_level,
+        percentiles = x@percentiles,
+        ensemble_method = ensemble_method,
+        ...
+      ),
+      by = c(x@grouping_column),
+      .SDcols = c("estimation_type", x@value_column)
+    ]
+    
+    return(prediction_data)
+  }
+)
+
+
+# ..compute_ensemble_prediction_estimates (general groups) ---------------------
+setMethod(
+  "..compute_ensemble_prediction_estimates",
+  signature(x = "predictionTableGrouping"),
+  function(x, data, ensemble_method, ...) {
+    
+    # Compute aggregate values.
+    prediction_data <- data[
+      ,
+      ...compute_ensemble_estimates(
+        x = .SD,
+        prediction_columns = x@value_column,
+        confidence_level = x@confidence_level,
+        percentiles = x@percentiles,
+        ensemble_method = ensemble_method,
+        ...
+      ),
+      by = c(x@grouping_column),
+      .SDcols = c("estimation_type", x@value_column)
+    ]
+    browser()
+    return(prediction_data)
+  }
+)
+
+
+
+# ..compute_ensemble_prediction_estimates (risk strata) ------------------------
+setMethod(
+  "..compute_ensemble_prediction_estimates",
+  signature(x = "predictionTableRiskGroups"),
+  function(x, data, ensemble_method, ...) {
+    
+    # Compute aggregate values.
+    prediction_data <- data[
+      ,
+      ...compute_ensemble_estimates(
+        x = .SD,
+        prediction_columns = x@value_column,
+        confidence_level = x@confidence_level,
+        percentiles = x@percentiles,
+        ensemble_method = ensemble_method,
+        ...
+      ),
+      by = c(x@grouping_column),
+      .SDcols = c("estimation_type", x@value_column)
+    ]
+    browser()
+    return(prediction_data)
+  }
+)
+
+
+
+...compute_ensemble_estimates <- function(
+    x,
+    prediction_columns,
+    ensemble_method,
+    confidence_level = NULL,
+    percentiles = NULL
+) {
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  estimation_type <- NULL
+  
+  if (ensemble_method %in% c("percentile", "bc")) {
+    # Compute ensemble estimates using bootstraps.
+    ensemble_values <- lapply(
+      prediction_columns,
+      function(ii_col, x) {
+        return(..bootstrap_ci(
+          x = x[estimation_type != "point"][[ii_col]],
+          x0 = x[estimation_type == "point"][[ii_col]],
+          bootstrap_ci_method = ensemble_method,
+          confidence_level = confidence_level,
+          percentiles = percentiles))
+      },
+      x = x
+    )
+    
+  } else {
+    # Compute ensemble estimates using statistical methods.
+    if (ensemble_method == "median") {
+      aggregation_fun <- stats::median
+    } else {
+      aggregation_fun <- mean
+    }
+    
+    ensemble_values <- lapply(
+      prediction_columns,
+      function(ii_col, x, aggregation_fun) {
+        return(aggregation_fun(x[[ii_col]], na.rm = TRUE))
+      },
+      x = x,
+      aggregation_fun = aggregation_fun
+    )
+  }
+  
+  # Determine column names
+  column_names <- lapply(
+    seq_along(prediction_columns),
+    function(ii, prediction_columns, ensemble_values, parse_percentile) {
+      # If the content of element ii is not a list itself, it contains only a
+      # single value that should be named.
+      if (!is.list(ensemble_values[[ii]])) return(prediction_columns[ii])
+      
+      if (!parse_percentile) {
+        # If the content of element ii is a list, assign the prediction column
+        # name to the first column, and add the name to the remainder.
+        
+        column_names <- prediction_columns[ii]
+        
+        if (length(ensemble_values[[ii]]) > 1) {
+          column_names <- c(
+            column_names,
+            paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2:length(ensemble_values[[ii]])]))
+        }
+        
+        return(column_names)
+        
+      } else {
+        # Assign the prediction column name to every column in case percentiles
+        # are returned.
+        return(paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])))
+      }
+    },
+    prediction_columns = prediction_columns,
+    ensemble_values = ensemble_values,
+    parse_percentile = ensemble_method %in% c("percentile", "bc") && is.null(confidence_level) && !is.null(percentiles))
+  
+  # Flatten list of column names
+  column_names <- unlist(column_names)
+  
+  # Flatten list of ensemble values.
+  ensemble_values <- unlist(ensemble_values, recursive = FALSE)
+  if (!is.list(ensemble_values)) ensemble_values <- as.list(ensemble_values)
+  
+  # Set column names.
+  names(ensemble_values) <- column_names
+  
+  return(ensemble_values)
+}

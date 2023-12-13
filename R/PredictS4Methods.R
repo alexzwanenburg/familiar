@@ -290,7 +290,8 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
     
@@ -305,8 +306,9 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
-
+      ...
+    )
+    
     return(predictions)
   }
 )
@@ -321,14 +323,16 @@ setMethod(
     data,
     allow_recalibration = TRUE,
     is_pre_processed = FALSE,
-    time = NULL, type = "default",
+    time = NULL,
+    type = "default",
     dir_path = NULL,
     ensemble_method = "median",
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
     ...,
-    aggregate_results = TRUE) {
+    aggregate_results = TRUE
+  ) {
     # Predict function for a model ensemble. This will always return ensemble
     # information, and not details corresponding to the individual models.
 
@@ -337,82 +341,43 @@ setMethod(
 
     # Extract predictions for each individual model
     if (length(object@model_list) > 0) {
-      predict_list <- lapply(object@model_list,
+      predict_list <- lapply(
+        object@model_list,
         .predict,
         data = data,
         allow_recalibration = allow_recalibration,
         is_pre_processed = is_pre_processed,
         time = time,
         type = type,
+        ensemble_method = "median",
         stratification_threshold = stratification_threshold,
         stratification_method = stratification_method,
-        ...)
+        percentiles = percentiles,
+        ...
+      )
       
     } else {
       # Generate a placeholder table.
-      predict_list <- list(get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type))
+      predict_list <- NULL
     }
 
     # ensemble predictions -----------------------------------------------------
     # Generate ensemble predictions
     if (all(type %in% .get_available_prediction_type_arguments())) {
       if (aggregate_results) {
-        # Determine class levels.
-        if (object@outcome_type %in% c("binomial", "multinomial")) {
-          class_levels <- get_outcome_class_levels(x = object)
-        } else {
-          class_levels <- NULL
-        }
-
-        # Set grouping columns. Remove outcome columns for novelty-only
-        # predictions.
-        grouping_column <- get_non_feature_columns(object)
-        if (all(type %in% .get_available_novelty_prediction_type_arguments())) {
-          grouping_column <- setdiff(grouping_column, get_outcome_columns(object))
-        }
-
-        # Ensemble predictions are done using the
-        # .compute_data_element_estimates method.
-        data_element <- methods::new("familiarDataElementPredictionTable",
-          data = data.table::rbindlist(predict_list),
-          detail_level = "ensemble",
-          percentiles = percentiles,
-          type = type,
-          ensemble_method = ensemble_method,
-          estimation_type = ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval"),
-          outcome_type = object@outcome_type,
-          class_levels = class_levels,
-          grouping_column = grouping_column)
-
-        # Compute ensemble values.
-        data_element <- .compute_data_element_estimates(
-          x = data_element,
-          object = object)
-
-        # Check that the data element is not empty.
-        if (is_empty(data_element)) {
-          return(get_placeholder_prediction_table(
-            object = object, 
-            data = data, 
-            type = type))
-        }
-
-        # Extract data from data element.
-        return(data_element[[1]]@data)
         
-      } else {
-        return(data.table::rbindlist(
-          predict_list, 
-          use.names = TRUE, 
-          fill = TRUE))
+        # Merge prediction data etc. slots into the data slot.
+        predict_list <- lapply(predict_list, .merge_slots_into_data)
+        
+        # Compute ensemble values.
+        predict_list <- .compute_data_element_estimates(
+          x = predict_list,
+          object = object
+        )
       }
-    } else {
-      # Return list with custom types.
-      return(predict_list)
     }
+    
+    return(predict_list)
   }
 )
 
@@ -428,9 +393,12 @@ setMethod(
     is_pre_processed = FALSE,
     time = NULL,
     type = "default",
+    ensemble_method = "median",
     stratification_threshold = NULL,
     stratification_method = NULL,
-    ...) {
+    percentiles = NULL,
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     .NATURAL <- NULL
     
@@ -447,7 +415,8 @@ setMethod(
       data = data,
       is_pre_processed = is_pre_processed,
       stop_at = "clustering",
-      keep_novelty = "novelty" %in% type)
+      keep_novelty = "novelty" %in% type
+    )
     
     # user specified type ------------------------------------------------------
     if (any(!type %in% .get_available_prediction_type_arguments())) {
@@ -459,18 +428,19 @@ setMethod(
         data = data,
         features = features_after_clustering(
           features = object@model_features,
-          feature_info_list = object@feature_info))
-
+          feature_info_list = object@feature_info
+        )
+      )
+      
       # Call predict from ..predict method with the given type and the
       # unspecified extra arguments in ... .
-      prediction_element <- ..predict(
+      return(..predict(
         object = object,
         data = data,
         time = time,
         type = type,
-        ...)
-      
-      return(prediction_element)
+        ...
+      ))
     }
 
     # novelty ------------------------------------------------------------------
@@ -492,7 +462,7 @@ setMethod(
     )
     
     if (type %in% c("default", "survival_probability")) {
-      # default prediction -----------------------------------------------------
+      # default, survival_probability ------------------------------------------
       
       # Predict using the model and the standard type.
       prediction_table <- ..predict(
@@ -509,16 +479,6 @@ setMethod(
           predictions = prediction_table
         )
       }
-      
-    # } else if (type == "survival_probability") {
-    #   # survival probability ---------------------------------------------------
-    #   
-    #   # Predict survival probabilities.
-    #   prediction_table <- ..predict_survival_probability(
-    #     object = object,
-    #     data = data,
-    #     time = time
-    #   )
       
     } else if (type == "risk_stratification") {
       # risk stratification ----------------------------------------------------
@@ -538,7 +498,14 @@ setMethod(
         "Type of prediction was not recognised: ", type
       ))
     }
-
+  
+    if (is(prediction_table, "familiarDataElementPredictionTable")) {
+      prediction_table@detail_level <- "ensemble"
+      prediction_table@percentiles <- percentiles
+      prediction_table@ensemble_method <- ensemble_method
+      prediction_table@estimation_type = ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval")
+    }
+    
     return(prediction_table)
   }
 )
