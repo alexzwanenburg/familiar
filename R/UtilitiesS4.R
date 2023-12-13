@@ -761,6 +761,8 @@ setMethod(
     object = "outcomeInfo",
     data = "data.table"),
   function(object, data, type = "default") {
+    stop("deprecated")
+    
     # Check that the type parameter is valid,
     .check_parameter_value_is_valid(
       x = type,

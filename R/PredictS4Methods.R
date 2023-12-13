@@ -4,6 +4,12 @@ NULL
 
 
 
+.is_available_prediction_type <- function(type) {
+  return(type %in% c(.get_available_prediction_type_arguments()))
+}
+
+
+
 .get_available_prediction_type_arguments <- function() {
   return(c(
     .get_available_novelty_prediction_type_arguments(),
@@ -485,13 +491,14 @@ setMethod(
       )
     )
     
-    if (type == "default") {
+    if (type %in% c("default", "survival_probability")) {
       # default prediction -----------------------------------------------------
       
       # Predict using the model and the standard type.
       prediction_table <- ..predict(
         object = object,
         data = data,
+        type = type,
         time = time
       )
 
@@ -503,15 +510,15 @@ setMethod(
         )
       }
       
-    } else if (type == "survival_probability") {
-      # survival probability ---------------------------------------------------
-      
-      # Predict survival probabilities.
-      prediction_table <- ..predict_survival_probability(
-        object = object,
-        data = data,
-        time = time
-      )
+    # } else if (type == "survival_probability") {
+    #   # survival probability ---------------------------------------------------
+    #   
+    #   # Predict survival probabilities.
+    #   prediction_table <- ..predict_survival_probability(
+    #     object = object,
+    #     data = data,
+    #     time = time
+    #   )
       
     } else if (type == "risk_stratification") {
       # risk stratification ----------------------------------------------------
@@ -637,10 +644,11 @@ setMethod(
     time, 
     stratification_threshold = NULL,
     stratification_method = NULL, 
-    ...) {
+    ...
+  ) {
     # Only assess stratification for survival outcomes.
     if (!object@outcome_type %in% c("survival")) return(NULL)
-
+    browser()
     # Allow for settings the stratification threshold explicitly.
     if (is.null(stratification_threshold)) {
       if (!is.null(stratification_method)) {

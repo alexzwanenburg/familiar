@@ -204,35 +204,43 @@ setMethod(
   signature(
     object = "familiarCoxPH",
     data = "dataObject"),
-  function(object, data, type = "default", ...) {
+  function(
+    object, 
+    data, 
+    type = "default",
+    time = NULL,
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
-
+    
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
     if (type == "default") {
-      # Default method --------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
+      # default ----------------------------------------------------------------
 
       # Encode data so that the features are the same as in the training.
       encoded_data <- encode_categorical_variables(
         data = data,
         object = object,
         encoding_method = "dummy",
-        drop_levels = FALSE)
+        drop_levels = FALSE
+      )
 
       # Use the model for prediction.
       model_predictions <- predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
-        type = "risk")
+        type = "risk"
+      )
       
       # Store as prediction table.
       prediction_table <- as_prediction_table(
@@ -243,31 +251,38 @@ setMethod(
       
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
+    } else if (type == "survival_probability") {
+      # survival probability ---------------------------------------------------
+      
+      # If time is unset, read the max time stored by the model.
+      if (is.null(time)) time <- object@settings$time_max
+      
+      return(.survival_probability_relative_risk(
+        object = object,
+        data = data,
+        time = time
+      ))
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified ---------------------------------------------------------
 
       # Encode data so that the features are the same as in the training.
       encoded_data <- encode_categorical_variables(
         data = data,
         object = object,
         encoding_method = "dummy",
-        drop_levels = FALSE)
+        drop_levels = FALSE
+      )
 
       return(predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -284,7 +299,7 @@ setMethod(
     if (object@outcome_type != "survival") {
       return(callNextMethod())
     }
-
+    stop("deprecated -> ..predict")
     # If time is unset, read the max time stored by the model.
     if (is.null(time)) time <- object@settings$time_max
 

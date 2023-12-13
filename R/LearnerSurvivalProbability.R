@@ -79,26 +79,25 @@ get_baseline_survival <- function(data) {
   prediction_table <- .predict(
     object = object,
     data = data,
+    type = "default",
     allow_recalibration = TRUE,
-    time = time)
-
-  # Prepare an empty table in case things go wrong.
-  empty_table <- get_placeholder_prediction_table(
-    object = object,
-    data = data,
-    type = "survival_probability")
-
+    time = time
+  )
+  
   # Check for several issues that prevent survival probabilities from being
   # predicted.
-  if (!any_predictions_valid(
-    prediction_table = prediction_table,
-    outcome_type = object@outcome_type)) {
-    return(empty_table)
-  }
-  if (!has_calibration_info(object)) {
-    return(empty_table)
-  }
+  if (is_empty(prediction_table)) return(NULL)
+  if (!any_predictions_valid(prediction_table)) return(NULL)
+  if (!has_calibration_info(object)) return(NULL)
 
+  # Check that prediction table contains hazard ratios.
+  if (!is(prediction_table, "predictionTableSurvivalHazardRatio")) {
+    ..error_reached_unreachable_code(paste0(
+      "survival probability can only be computed using hazard rations ",
+      "(predictionTableSurvivalHazardRatio)"
+    ))
+  }
+  
   # Survival in the group is based on proportional hazards assumption, and
   # uses baseline cumulative hazard and the group's predicted relative risks.
   # This evaluation comes in handy when performing, e.g. the Nam-D'Agostino
@@ -107,13 +106,16 @@ get_baseline_survival <- function(data) {
   # at t=time_max for each sample.
   survival_probabilities <- ..survival_probability_relative_risk(
     object = object,
-    relative_risk = prediction_table$predicted_outcome,
-    time = time)
+    relative_risk = prediction_table@prediction_data$predicted_outcome,
+    time = time
+  )
 
-  # Updated the prediction table
-  prediction_table[, ":="(
-    "predicted_outcome" = NULL,
-    "survival_probability" = survival_probabilities)]
+  # Create prediction table.
+  prediction_table <- as_prediction_table(
+    x = survival_probabilities,
+    type = "survival_probability",
+    data = data
+  )
 
   return(prediction_table)
 }

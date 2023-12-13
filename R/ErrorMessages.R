@@ -100,10 +100,22 @@
 
 
 
-..error_no_predictions_possible <- function(outcome_type, prediction_type) {
-  stop(paste0(
+..error_no_predictions_possible <- function(
+    object,
+    prediction_type,
+    call = rlang::caller_env()
+) {
+  message_string <- paste0(
     "Predictions of the ", prediction_type, " type are not possible ",
-    "using models for ", outcome_type, " outcomes."))
+    "using the ", object@learner, " model (class: ", class(object)[1],
+    ") for ", object@outcome_type, " outcomes."
+  )
+  
+  rlang::abort(
+    message = message_string,
+    class = "prediction_type_error",
+    call = call
+  )
 }
 
 
@@ -309,11 +321,18 @@
 
 
 
-..error_reached_unreachable_code <- function(err_code = "") {
-  stop(paste0(
+..error_reached_unreachable_code <- function(err_code = "", call = rlang::caller_env()) {
+  message_str <- paste0(
     "This error should not occur, as this code should not be reachable by design. ",
     "Contact the package maintainer if you see this error.\n\t",
-    err_code))
+    err_code
+  )
+  
+  rlang::abort(
+    message = message_str,
+    class = "developer_error",
+    call = call
+  )
 }
 
 

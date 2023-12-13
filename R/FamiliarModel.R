@@ -965,9 +965,7 @@ setMethod(
     data = "dataObject"),
   function(object, data, ...) {
     # This is a fall-back option.
-    return(get_placeholder_prediction_table(
-      object = object,
-      data = data))
+    return(NULL)
   }
 )
 
