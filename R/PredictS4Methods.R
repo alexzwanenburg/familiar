@@ -636,7 +636,7 @@ setMethod(
   ) {
     # Only assess stratification for survival outcomes.
     if (!object@outcome_type %in% c("survival")) return(NULL)
-    browser()
+    
     # Allow for settings the stratification threshold explicitly.
     if (is.null(stratification_threshold)) {
       if (!is.null(stratification_method)) {
@@ -657,40 +657,34 @@ setMethod(
       }
     }
 
-    # Generate an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "risk_stratification")
-
     # Check again if a stratification threshold is now set.
-    if (is.null(stratification_threshold)) return(prediction_table)
+    if (is.null(stratification_threshold)) return(NULL)
 
     # Predict for the instances in data.
     predictions <- .predict(
       object = object,
       data = data,
-      time = time)
+      time = time
+    )
 
     # Check for valid predictions,
-    if (is_empty(predictions)) {
-      return(prediction_table)
-    }
-    if (!any_predictions_valid(
-      prediction_table = predictions,
-      outcome_type = object@outcome_type)) {
-      return(prediction_table)
-    }
+    if (is_empty(predictions)) return(NULL)
+    if (!any_predictions_valid(predictions)) return(NULL)
 
     # Find risk groups for each instance.
     assigned_risk_group <- .apply_risk_threshold(
-      object = object,
-      predicted_values = predictions$predicted_outcome,
-      cutoff = stratification_threshold)
+      x = predictions,
+      cutoff = stratification_threshold
+    )
 
-    # Set to prediction table.
-    prediction_table[, "risk_group" := assigned_risk_group]
-
+    # Convert to prediction table
+    prediction_table <- as_prediction_table(
+      x = assigned_risk_group,
+      type = "risk_stratification",
+      data = data,
+      time = time
+    )
+    browser()
     return(prediction_table)
   }
 )
@@ -707,16 +701,7 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     ...) {
-    # Only assess stratification for survival outcomes.
-    if (!object@outcome_type %in% c("survival")) return(NULL)
-
-    # Generate an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "risk_stratification")
-
-    return(prediction_table)
+    return(NULL)
   }
 )
 
@@ -734,7 +719,9 @@ setMethod(
       .predict_risk_stratification, 
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 

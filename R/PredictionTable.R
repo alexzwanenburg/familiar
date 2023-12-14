@@ -153,7 +153,7 @@ as_prediction_table <- function(
         "outcome_event" = y[, 2]
       )
     } else {
-      object@reference_data <- as.data.table(y)
+      object@reference_data <- data.table::as.data.table(y)
     }
     
   } else if (is(data, "dataObject")) {
@@ -203,8 +203,8 @@ as_prediction_table <- function(
       range = c(0.0, Inf),
       closed = c(FALSE, TRUE))
     
-    add_data_element_identifier(
-      x = proto_data_element,
+    object <- add_data_element_identifier(
+      x = object,
       evaluation_time = time
     )
   }
@@ -340,7 +340,7 @@ setMethod(
     }
     
     # Update column name of prediction_data to the standard value.
-    setnames(object@prediction_data, new = "predicted_outcome")
+    data.table::setnames(object@prediction_data, new = "predicted_outcome")
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$predicted_outcome)) {
@@ -366,7 +366,7 @@ setMethod(
       
       # Update column name of reference_data to the standard value.
       outcome_column <- get_outcome_columns(object@outcome_type)
-      setnames(object@reference_data, new = outcome_column)
+      data.table::setnames(object@reference_data, new = outcome_column)
       
       # Check that reference data are numeric.
       if (!is.numeric(object@reference_data[[outcome_column]])) {
@@ -495,7 +495,7 @@ setMethod(
         rlang::warn(
           message = paste0(
             "Neither set of predicted values (",
-            paste0(colnames(object@prediction_data, collapse = ", ")),
+            paste0(colnames(object@prediction_data), collapse = ", "),
             ") can be directly assigned to a corresponding class (",
             paste0(object@classes, collapse = ", "), "). We assume these sets ",
             "are ordered according to the provided classes."),
@@ -576,7 +576,7 @@ setMethod(
         rlang::warn(
           message = paste0(
             "Neither set of predicted values (",
-            paste0(colnames(object@prediction_data, collapse = ", ")),
+            paste0(colnames(object@prediction_data), collapse = ", "),
             ") can be directly assigned to a corresponding class (",
             paste0(object@classes, collapse = ", "), "). We assume these sets ",
             "are ordered according to the provided classes."),
@@ -623,7 +623,7 @@ setMethod(
       
       # Update column name of reference_data to the standard value.
       outcome_column <- get_outcome_columns(object@outcome_type)
-      setnames(object@reference_data, new = outcome_column)
+      data.table::setnames(object@reference_data, new = outcome_column)
       
       # Check that reference data only contains the known classes.
       missing_classes <- setdiff(
@@ -674,7 +674,7 @@ setMethod(
     }
     
     # Update column name of prediction_data to the standard value.
-    setnames(object@prediction_data, new = "predicted_outcome")
+    data.table::setnames(object@prediction_data, new = "predicted_outcome")
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$predicted_outcome)) {
@@ -700,7 +700,7 @@ setMethod(
       
       # Update column name of reference_data to the standard value.
       outcome_column <- get_outcome_columns(object@outcome_type)
-      setnames(object@reference_data, new = outcome_column)
+      data.table::setnames(object@reference_data, new = outcome_column)
       
       # Check that the time column is numeric and positive.
       time_column <- object@reference_data[[outcome_column[1]]]
@@ -708,7 +708,7 @@ setMethod(
         rlang::abort(
           message = paste0(
             "Observed time is expected to be numeric, but data with class ",
-            class(time_column, collapse = ", "),
+            paste0(class(time_column), collapse = ", "),
             " were encountered."),
           class = "prediction_table_error"
         )
@@ -813,7 +813,7 @@ setMethod(
     }
     
     # Update column name of prediction_data to the standard value.
-    setnames(object@prediction_data, new = "novelty")
+    data.table::setnames(object@prediction_data, new = "novelty")
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$novelty)) {
@@ -845,7 +845,7 @@ setMethod(
     object@outcome_type <- "unsupervised"
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data != 1)) {
+    if (ncol(object@prediction_data) != 1) {
       rlang::abort(
         message = paste0(
           "Only one set of predicted values was expected, but (",
@@ -855,13 +855,13 @@ setMethod(
     }
     
     # Update column name of prediction_data to the standard value.
-    setnames(object@prediction_data, new = "group")
+    data.table::setnames(object@prediction_data, new = "group")
     
     # Check that prediction data contains the groups, or set groups if absent.
     if (all(!is.na(object@groups))) {
       group_labels <- unique_na(object@prediction_data$group)
       
-      if (!all(group_indicators %in% object@groups)) {
+      if (!all(group_labels %in% object@groups)) {
         unknown_group_label <- setdiff(group_labels, object@groups)
         
         rlang::abort(
@@ -1215,7 +1215,7 @@ setMethod(
     if (.is_merged_prediction_table(x)) return(x)
     
     # Set grouping and value columns.
-    x@grouping_column <- c(colnames(x@identifier_data), colnames(x@reference_data))
+    x@grouping_column <- c(x@grouping_column, colnames(x@identifier_data), colnames(x@reference_data))
     x@value_column <- colnames(x@prediction_data)
     
     # Merge data and set data attribute.
@@ -1306,25 +1306,49 @@ setMethod(
     # Check if ensembling is actually required -- computing ensemble values is 
     # somewhat expensive because it is done for each subset of data.
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
-      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+      return(data[
+        , mget(c(x@grouping_column, x@value_column))
+      ])
     }
     
-    # Compute aggregate values.
-    prediction_data <- data[
-      ,
-      ...compute_ensemble_estimates(
-        x = .SD,
-        prediction_columns = x@value_column,
-        confidence_level = x@confidence_level,
-        percentiles = x@percentiles,
-        ensemble_method = ensemble_method,
-        ...
-      ),
-      by = c(x@grouping_column),
-      .SDcols = c("estimation_type", x@value_column)
-    ]
-    
-    return(prediction_data)
+    # Check if ensembling uses standard functions where we don't actually need
+    # do difficult stuff.
+    if (ensemble_method == "median") {
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, stats::median, na.rm = TRUE),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
+      
+    } else if (ensemble_method == "mean") {
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, mean, na.rm = TRUE),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
+      
+    } else {
+      # Compute bootstrap estimates.
+      return(data[
+        ,
+        ...compute_bootstrap_ensemble_estimates(
+          x = .SD,
+          prediction_columns = x@value_column,
+          confidence_level = x@confidence_level,
+          percentiles = x@percentiles,
+          ensemble_method = ensemble_method,
+          ...
+        ),
+        by = c(x@grouping_column),
+        .SDcols = c("estimation_type", x@value_column)
+      ])
+    }
   }
 )
 
@@ -1337,16 +1361,39 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     estimation_type <- NULL
     
+    # There is no natural way to estimate bootstrap intervals for groups, and we
+    # therefore revert to the "median" method.
+    if (ensemble_method %in% c("percentile", "bc")) {
+      ensemble_method <- "median"
+      data <- data[estimation_type != "point"]
+    }
+    
     # Check if ensembling is actually required -- the computation is somewhat
     # expensive because it is done on the subset of data.
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
-      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+      return(data[, mget(c(x@grouping_column, x@value_column))])
+      
+    } else if (ensemble_method == "median") {
+      # For median, we use 
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, get_mode),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
+      
+    } else if (ensemble_method == "mean") {
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, get_mean_risk_group),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
     }
-    
-    # Compute aggregate values.
-    browser()
-    
-    return(prediction_data)
   }
 )
 
@@ -1360,22 +1407,46 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     estimation_type <- NULL
     
+    # There is no natural way to estimate bootstrap intervals for groups, and we
+    # therefore revert to the "median" method.
+    if (ensemble_method %in% c("percentile", "bc")) {
+      ensemble_method <- "median"
+      data <- data[estimation_type != "point"]
+    }
+    browser()
     # Check if ensembling is actually required -- the computation is somewhat
     # expensive because it is done on the subset of data.
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
-      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+      return(data[, mget(c(x@grouping_column, x@value_column))])
+      
+    } else if (ensemble_method == "median") {
+      # For median, we use the closest approximate: the most commonly selected
+      # group.
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, get_mode),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
+      
+    } else if (ensemble_method == "mean") {
+      return(data[
+        estimation_type != "point",
+        (x@value_colum) := lapply(.SD, get_mean_risk_group),
+        by = x@grouping_column,
+        .SDcols = x@value_column
+      ][
+        , mget(c(x@grouping_column, x@value_column))
+      ])
     }
-    
-    # Compute aggregate values.
-    browser()
-
-    return(prediction_data)
   }
 )
 
 
 
-...compute_ensemble_estimates <- function(
+...compute_bootstrap_ensemble_estimates <- function(
     x,
     prediction_columns,
     ensemble_method,
@@ -1386,38 +1457,20 @@ setMethod(
   # Suppress NOTES due to non-standard evaluation in data.table
   estimation_type <- NULL
   
-  if (ensemble_method %in% c("percentile", "bc")) {
-    # Compute ensemble estimates using bootstraps.
-    ensemble_values <- lapply(
-      prediction_columns,
-      function(ii_col, x) {
-        return(..bootstrap_ci(
-          x = x[estimation_type != "point"][[ii_col]],
-          x0 = x[estimation_type == "point"][[ii_col]],
-          bootstrap_ci_method = ensemble_method,
-          confidence_level = confidence_level,
-          percentiles = percentiles))
-      },
-      x = x
-    )
-    
-  } else {
-    # Compute ensemble estimates using statistical methods.
-    if (ensemble_method == "median") {
-      aggregation_fun <- stats::median
-    } else {
-      aggregation_fun <- mean
-    }
-    
-    ensemble_values <- lapply(
-      prediction_columns,
-      function(ii_col, x, aggregation_fun) {
-        return(aggregation_fun(x[[ii_col]], na.rm = TRUE))
-      },
-      x = x,
-      aggregation_fun = aggregation_fun
-    )
-  }
+  # Compute ensemble estimates using bootstraps.
+  ensemble_values <- lapply(
+    prediction_columns,
+    function(ii_col, x) {
+      return(..bootstrap_ci(
+        x = x[estimation_type != "point"][[ii_col]],
+        x0 = x[estimation_type == "point"][[ii_col]],
+        bootstrap_ci_method = ensemble_method,
+        confidence_level = confidence_level,
+        percentiles = percentiles
+      ))
+    },
+    x = x
+  )
   
   # Determine column names
   column_names <- lapply(
@@ -1436,7 +1489,8 @@ setMethod(
         if (length(ensemble_values[[ii]]) > 1) {
           column_names <- c(
             column_names,
-            paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2:length(ensemble_values[[ii]])]))
+            paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2:length(ensemble_values[[ii]])])
+          )
         }
         
         return(column_names)
@@ -1449,7 +1503,8 @@ setMethod(
     },
     prediction_columns = prediction_columns,
     ensemble_values = ensemble_values,
-    parse_percentile = ensemble_method %in% c("percentile", "bc") && is.null(confidence_level) && !is.null(percentiles))
+    parse_percentile = is.null(confidence_level) && !is.null(percentiles)
+  )
   
   # Flatten list of column names
   column_names <- unlist(column_names)

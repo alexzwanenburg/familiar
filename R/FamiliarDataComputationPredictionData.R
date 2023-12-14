@@ -311,21 +311,7 @@ setMethod(
         "cannot both be NULL."
       ))
     }
-    
-    # # Determine the bootstrap_ci_method and the aggregation function
-    # if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
-    #   bootstrap_ci_method <- ifelse(x[[1]]@ensemble_method == "median", "percentile", "bc")
-    #   aggregation_fun <- ..bootstrap_ci
-    #   
-    # } else if (x[[1]]@ensemble_method == "median") {
-    #   bootstrap_ci_method <- NULL
-    #   aggregation_fun <- stats::median
-    #   
-    # } else {
-    #   bootstrap_ci_method <- NULL
-    #   aggregation_fun <- mean
-    # }
-    
+
     # Determine the bootstrap_ci_method and the aggregation function
     if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
       ensemble_method <- ifelse(x[[1]]@ensemble_method == "median", "percentile", "bc")
@@ -368,92 +354,19 @@ setMethod(
     } else {
       # Select values.
       data <- data.table::as.data.table(x[[1]]@data)
-      data[, "estimation_type" := "point"]
+      data[, "estimation_type" := "ensemble"]
       
       # Copy the familiarDataElement.
       y <- x[[1]]
       y@data <- NULL
     }
     
+    # Compute prediction data.
     y@data <- ..compute_ensemble_prediction_estimates(
       x = y,
       data = data,
       ensemble_method = ensemble_method
     )
-    
-    # 
-    # if ("default" %in% type) {
-    #   y@data <- ..compute_ensemble_default_estimates(
-    #     data = data,
-    #     FUN = aggregation_fun,
-    #     bootstrap_ci_method = bootstrap_ci_method,
-    #     outcome_type = x[[1]]@outcome_type,
-    #     class_levels = x[[1]]@class_levels,
-    #     percentiles = x[[1]]@percentiles,
-    #     confidence_level = x[[1]]@confidence_level,
-    #     grouping_column = x[[1]]@grouping_column)
-    # }
-    # 
-    # # Determine if novelty is part of the columns.
-    # if ("novelty" %in% type) {
-    #   temp_data <- ..compute_ensemble_novelty_estimates(
-    #     data = data,
-    #     FUN = aggregation_fun,
-    #     bootstrap_ci_method = bootstrap_ci_method,
-    #     percentiles = x[[1]]@percentiles,
-    #     confidence_level = x[[1]]@confidence_level,
-    #     grouping_column = x[[1]]@grouping_column)
-    #   
-    #   if (is.null(y@data)) {
-    #     y@data <- temp_data
-    #     
-    #   } else {
-    #     y@data <- merge(
-    #       x = y@data,
-    #       y = temp_data,
-    #       by = x[[1]]@grouping_column)
-    #   }
-    # }
-    # 
-    # # Determine if survival probabilities were computed.
-    # if ("survival_probability" %in% type) {
-    #   temp_data <- ..compute_ensemble_survival_probability_estimates(
-    #     data = data,
-    #     FUN = aggregation_fun,
-    #     bootstrap_ci_method = bootstrap_ci_method,
-    #     percentiles = x[[1]]@percentiles,
-    #     confidence_level = x[[1]]@confidence_level,
-    #     grouping_column = x[[1]]@grouping_column)
-    #   
-    #   if (is.null(y@data)) {
-    #     y@data <- temp_data
-    #     
-    #   } else {
-    #     y@data <- merge(
-    #       x = y@data,
-    #       y = temp_data,
-    #       by = x[[1]]@grouping_column)
-    #   }
-    # }
-    # 
-    # # Determine if data were assigned to risk groups.
-    # if ("risk_stratification" %in% type) {
-    #   temp_data <- ..compute_ensemble_risk_stratification(
-    #     data = data,
-    #     bootstrap_ci_method = bootstrap_ci_method,
-    #     ensemble_method = x[[1]]@ensemble_method,
-    #     grouping_column = x[[1]]@grouping_column)
-    #   
-    #   if (is.null(y@data)) {
-    #     y@data <- temp_data
-    #     
-    #   } else {
-    #     y@data <- merge(
-    #       x = y@data,
-    #       y = temp_data,
-    #       by = x[[1]]@grouping_column)
-    #   }
-    # }
     
     # Update value column
     y@value_column <- setdiff(
@@ -470,132 +383,6 @@ setGeneric(
   "..compute_ensemble_prediction_estimates",
   function(x, ...) standardGeneric("..compute_ensemble_prediction_estimates")
 )
-
-
-# 
-# 
-# ..compute_ensemble_default_estimates <- function(
-#     data,
-#     outcome_type,
-#     class_levels = NULL,
-#     grouping_column,
-#     ...) {
-#   
-#   if (outcome_type %in% c("binomial", "multinomial")) {
-#     
-#     if (is.null(class_levels)) {
-#       ..error_reached_unreachable_code(
-#         "..compute_ensemble_default_estimates: class_levels cannot be NULL.")
-#     }
-#     
-#     # Probability columns
-#     prediction_columns <- get_class_probability_name(x = class_levels)
-#     
-#   } else if (outcome_type %in% c("continuous", "survival")) {
-#     # Outcome columns
-#     prediction_columns <- "predicted_outcome"
-#     
-#   } else if (outcome_type == "competing_risk") {
-#     ..error_outcome_type_not_implemented(outcome_type = outcome_type)
-#     
-#   } else {
-#     ..error_no_known_outcome_type(outcome_type = outcome_type)
-#   }
-#   
-#   # Compute ensemble estimates for the default predictions.
-#   prediction_data <- data[, ...compute_ensemble_estimates(
-#     x = .SD,
-#     prediction_columns = prediction_columns,
-#     ...),
-#     by = c(grouping_column),
-#     .SDcols = c("estimation_type", prediction_columns)]
-#   
-#   # Add the predicted class, if required
-#   if (outcome_type %in% c("binomial", "multinomial")) {
-#     
-#     # Identify the name of the most probable class
-#     new_predicted_class <- class_levels[max.col(prediction_data[, mget(prediction_columns)])]
-#     
-#     # Add the names as the predicted outcome
-#     prediction_data[, "predicted_class" := new_predicted_class]
-#     
-#     # Convert to a factor
-#     prediction_data$predicted_class <- factor(
-#       prediction_data$predicted_class,
-#       levels = class_levels)
-#   }
-#   
-#   return(prediction_data)
-# }
-# 
-# 
-# 
-# ..compute_ensemble_novelty_estimates <- function(
-#     data,
-#     grouping_column,
-#     ...) {
-#   
-#   # Compute ensemble estimates for the novelty score.
-#   prediction_data <- data[, ...compute_ensemble_estimates(
-#     x = .SD,
-#     prediction_columns = "novelty",
-#     ...),
-#     by = c(grouping_column),
-#     .SDcols = c("estimation_type", "novelty")]
-#   
-#   return(prediction_data)
-# }
-# 
-# 
-# 
-# ..compute_ensemble_survival_probability_estimates <- function(
-#     data,
-#     grouping_column,
-#     ...) {
-#   
-#   # Compute ensemble estimates for the 
-#   prediction_data <- data[, ...compute_ensemble_estimates(
-#     x = .SD,
-#     prediction_columns = "survival_probability",
-#     ...),
-#     by = c(grouping_column),
-#     .SDcols = c("estimation_type", "survival_probability")]
-#   
-#   return(prediction_data)
-# }
-
-
-
-..compute_ensemble_risk_stratification <- function(
-    data,
-    ensemble_method,
-    grouping_column,
-    bootstrap_ci_method = NULL,
-    ...) {
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  risk_group <- estimation_type <- NULL
-  
-  if (!is.null(bootstrap_ci_method)) data <- data[estimation_type != "point"]
-  
-  # Create risk groups according to the corresponding method.
-  if (ensemble_method == "mean") {
-    prediction_data <- data[, list(
-      "risk_group" = get_mean_risk_group(risk_group)),
-      by = c(grouping_column)]
-    
-  } else if (ensemble_method == "median") {
-    prediction_data <- data[, list(
-      "risk_group" = get_mode(risk_group)),
-      by = c(grouping_column)]
-  }
-  
-  return(prediction_data)
-}
-
-
-
-
 
 
 
