@@ -153,7 +153,8 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    ...
+  ) {
     if (missing(newdata)) stop("newdata must be provided.")
     if (is_empty(newdata)) ..error_data_set_is_empty()
 
@@ -176,15 +177,23 @@ setMethod(
       ensemble_method = ensemble_method,
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
-      percentiles = percentiles)
-browser()
-    if (type %in% .get_available_prediction_type_arguments()) {
-      # Find non-feature columns.
-      non_feature_columns <- get_non_feature_columns(object)
-      prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
-
-      # Update the table with predictions by removing the non-feature columns.
-      predictions <- data.table::copy(predictions[, mget(prediction_columns)])
+      percentiles = percentiles
+    )
+    browser()
+    if (is(predictions, "familiarDataElementPredictionTable")) {
+      # Only return prediction columns for external predict calls.
+      
+      # Merge slots into data (this should have already happened).
+      predictions <- .merge_slots_into_data(predictions)
+      
+      # Complete the prediction table (e.g., by predicting the majority class).
+      # TODO: only affects classification tables at the moment.
+      
+      # Ensure that values are ordered the same as in the input data.
+      # TODO: Use identifiers from data to order the predictions.
+      
+      # Isolate predicted values.
+      predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
     }
 
     return(predictions)
@@ -251,7 +260,8 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
 
@@ -266,8 +276,9 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
-
+      ...
+    )
+    
     return(predictions)
   }
 )
@@ -374,6 +385,9 @@ setMethod(
           x = predict_list,
           object = object
         )
+        
+        # Extract the merged object.
+        predict_list <- predict_list[[1]]
       }
     }
     
