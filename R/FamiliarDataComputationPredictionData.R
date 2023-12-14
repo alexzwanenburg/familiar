@@ -296,7 +296,7 @@ setMethod(
     # It might be that x was only used to direct to this method.
     if (!is.null(x_list)) x <- x_list
     if (!is.list(x)) x <- list(x)
-browser()
+
     # Identify the estimation types of the current data elements.
     estimation_type <- sapply(x, function(x) (x@estimation_type))
     
@@ -368,7 +368,7 @@ browser()
     } else {
       # Select values.
       data <- data.table::as.data.table(x[[1]]@data)
-      data[, "estimation_type" := x[[1]]@estimation_type]
+      data[, "estimation_type" := "point"]
       
       # Copy the familiarDataElement.
       y <- x[[1]]

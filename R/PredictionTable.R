@@ -1302,9 +1302,9 @@ setMethod(
     
     # Suppress NOTES due to non-standard evaluation in data.table
     estimation_type <- NULL
-    browser()
-    # Check if ensembling is actually required -- the computation is somewhat
-    # expensive because it is done on the subset of data.
+    
+    # Check if ensembling is actually required -- computing ensemble values is 
+    # somewhat expensive because it is done for each subset of data.
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
       return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
     }
