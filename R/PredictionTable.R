@@ -1300,6 +1300,15 @@ setMethod(
   signature(x = "familiarDataElementPredictionTable"),
   function(x, data, ensemble_method, ...) {
     
+    # Suppress NOTES due to non-standard evaluation in data.table
+    estimation_type <- NULL
+    browser()
+    # Check if ensembling is actually required -- the computation is somewhat
+    # expensive because it is done on the subset of data.
+    if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
+      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+    }
+    
     # Compute aggregate values.
     prediction_data <- data[
       ,
@@ -1325,22 +1334,18 @@ setMethod(
   "..compute_ensemble_prediction_estimates",
   signature(x = "predictionTableGrouping"),
   function(x, data, ensemble_method, ...) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    estimation_type <- NULL
+    
+    # Check if ensembling is actually required -- the computation is somewhat
+    # expensive because it is done on the subset of data.
+    if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
+      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+    }
     
     # Compute aggregate values.
-    prediction_data <- data[
-      ,
-      ...compute_ensemble_estimates(
-        x = .SD,
-        prediction_columns = x@value_column,
-        confidence_level = x@confidence_level,
-        percentiles = x@percentiles,
-        ensemble_method = ensemble_method,
-        ...
-      ),
-      by = c(x@grouping_column),
-      .SDcols = c("estimation_type", x@value_column)
-    ]
     browser()
+    
     return(prediction_data)
   }
 )
@@ -1352,22 +1357,18 @@ setMethod(
   "..compute_ensemble_prediction_estimates",
   signature(x = "predictionTableRiskGroups"),
   function(x, data, ensemble_method, ...) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    estimation_type <- NULL
+    
+    # Check if ensembling is actually required -- the computation is somewhat
+    # expensive because it is done on the subset of data.
+    if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
+      return(data[estimation_type == "point", mget(c(x@grouping_column, x@value_column))])
+    }
     
     # Compute aggregate values.
-    prediction_data <- data[
-      ,
-      ...compute_ensemble_estimates(
-        x = .SD,
-        prediction_columns = x@value_column,
-        confidence_level = x@confidence_level,
-        percentiles = x@percentiles,
-        ensemble_method = ensemble_method,
-        ...
-      ),
-      by = c(x@grouping_column),
-      .SDcols = c("estimation_type", x@value_column)
-    ]
     browser()
+
     return(prediction_data)
   }
 )
