@@ -155,7 +155,7 @@ setMethod(
     percentiles = NULL,
     ...
   ) {
-    if (missing(newdata)) stop("newdata must be provided.")
+    if (missing(newdata)) rlang::abort("newdata must be provided.")
     if (is_empty(newdata)) ..error_data_set_is_empty()
 
     # Make sure the ensemble model object is updated.
@@ -165,8 +165,9 @@ setMethod(
     data <- as_data_object(
       data = newdata,
       object = object,
-      check_stringency = "external")
-
+      check_stringency = "external"
+    )
+    browser()
     # Propagate to .predict
     predictions <- .predict(
       object = object,
@@ -179,7 +180,7 @@ setMethod(
       stratification_method = stratification_method,
       percentiles = percentiles
     )
-    browser()
+    
     if (is(predictions, "familiarDataElementPredictionTable")) {
       # Only return prediction columns for external predict calls.
       
@@ -190,7 +191,13 @@ setMethod(
       # TODO: only affects classification tables at the moment.
       
       # Ensure that values are ordered the same as in the input data.
-      # TODO: Use identifiers from data to order the predictions.
+      predictions@data <- merge(
+        x = data@data[, mget(get_id_columns())],
+        y = predictions@data,
+        on = c(familiar:::get_id_columns()),
+        all.x = TRUE,
+        sort = FALSE
+      )
       
       # Isolate predicted values.
       predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
