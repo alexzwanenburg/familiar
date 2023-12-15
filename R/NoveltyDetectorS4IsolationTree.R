@@ -220,12 +220,6 @@ setMethod(
     # Check if the data is empty.
     if (is_empty(data)) return(callNextMethod())
 
-    # Get a placeholder prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "novelty")
-
     # Find and replace ordered features.
     ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
     for (current_feature in ordered_features) {
@@ -238,10 +232,14 @@ setMethod(
     # Find novelty values.
     novelty_values <- predict(
       object = object@model,
-      newdata = data@data)
-
-    # Store the novelty values in the table.
-    prediction_table[, "novelty" := novelty_values]
+      newdata = data@data
+    )
+    
+    prediction_table <- as_prediction_table(
+      x = novelty_values,
+      type = "novelty",
+      data = data
+    )
 
     return(prediction_table)
   }

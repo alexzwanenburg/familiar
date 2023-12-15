@@ -1,6 +1,5 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
-#' @include NoveltyDetectorS4IsolationTree.R
 NULL
 
 

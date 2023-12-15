@@ -129,7 +129,8 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
+      ...
+    )
 
     return(predictions)
   }
@@ -218,7 +219,8 @@ setMethod(
     object,
     newdata,
     type = "novelty",
-    ...) {
+    ...
+  ) {
     if (missing(newdata)) stop("newdata must be provided.")
     if (is_empty(newdata)) ..error_data_set_is_empty()
 
@@ -229,21 +231,33 @@ setMethod(
     data <- as_data_object(
       data = newdata,
       object = object,
-      check_stringency = "external")
-
+      check_stringency = "external"
+    )
+    
     # Propagate to .predict
     predictions <- .predict(
       object = object,
       data = data,
-      type = type)
+      type = type
+    )
 
-    if (type %in% .get_available_novelty_prediction_type_arguments()) {
-      # Find non-feature columns.
-      non_feature_columns <- get_non_feature_columns(object)
-      prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
-
-      # Update the table with predictions by removing the non-feature columns.
-      predictions <- data.table::copy(predictions[, mget(prediction_columns)])
+    if (is(predictions, "familiarDataElementPredictionTable")) {
+      # Only return prediction columns for external predict calls.
+      
+      # Merge slots into data (this should have already happened).
+      predictions <- .merge_slots_into_data(predictions)
+      
+      # Ensure that values are ordered the same as in the input data.
+      predictions@data <- merge(
+        x = data@data[, mget(get_id_columns())],
+        y = predictions@data,
+        on = c(familiar:::get_id_columns()),
+        all.x = TRUE,
+        sort = FALSE
+      )
+      
+      # Isolate predicted values.
+      predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
     }
 
     return(predictions)
@@ -379,7 +393,6 @@ setMethod(
       predict_list <- NULL
     }
 
-    # ensemble predictions -----------------------------------------------------
     # Generate ensemble predictions
     if (all(type %in% .get_available_prediction_type_arguments())) {
       if (aggregate_results) {
@@ -420,9 +433,7 @@ setMethod(
     percentiles = NULL,
     ...
   ) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
-    
+
     if (length(type) != 1) {
       ..error_reached_unreachable_code(paste0(
         "Only one type of prediction is expected as argument to .predict. ",
@@ -542,19 +553,22 @@ setMethod(
     data, 
     type = "novelty",
     is_pre_processed = FALSE,
-    ...) {
+    ...
+  ) {
     # Prepare input data.
     data <- process_input_data(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
-      stop_at = "clustering")
-
+      stop_at = "clustering"
+    )
+    
     # Predict novelty.
     prediction_table <- ..predict(
       object = object,
       data = data,
-      type = type)
+      type = type
+    )
 
     return(prediction_table)
   }
@@ -573,10 +587,12 @@ setMethod(
     return(do.call(
       .predict,
       args = c(
-      list(
-        "object" = object,
-        "data" = data),
-      list(...))))
+        list(
+          "object" = object,
+          "data" = data),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -616,7 +632,9 @@ setMethod(
       .predict_novelty,
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 

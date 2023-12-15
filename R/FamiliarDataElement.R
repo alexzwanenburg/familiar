@@ -1339,8 +1339,14 @@ setMethod(
     for (element_class in unique(element_classes)) {
       
       # Create a proto data element to avoid having to pass larger objects than
-      # required.
+      # required. First we copy the first instance of the particular class.
       proto_data_element <- x[which(element_classes == element_class)][[1]]
+      
+      # Check that the proto_data_element is not NULL, because NULL objects
+      # cannot be parsed.
+      if (is.null(proto_data_element)) next
+      
+      # Remove data from the proto data element.
       proto_data_element@data <- NULL
       
       # Run familiarDataElement-specific analysis. This means that we pass the
@@ -1350,7 +1356,8 @@ setMethod(
         .compute_data_element_estimates(
           x = proto_data_element,
           x_list = x[which(element_classes == element_class)],
-          ...))
+          ...
+        ))
     }
     
     if (is_empty(data_element)) return(NULL)

@@ -288,10 +288,7 @@ setMethod(
     object = "familiarNoveltyDetector",
     data = "dataObject"),
   function(object, data, ...) {
-    return(get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "novelty"))
+    return(NULL)
   }
 )
 
