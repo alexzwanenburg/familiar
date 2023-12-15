@@ -684,7 +684,7 @@ setMethod(
       data = data,
       time = time
     )
-    browser()
+
     return(prediction_table)
   }
 )

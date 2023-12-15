@@ -1316,9 +1316,9 @@ setMethod(
     if (ensemble_method == "median") {
       return(data[
         estimation_type != "point",
-        (x@value_colum) := lapply(.SD, stats::median, na.rm = TRUE),
-        by = x@grouping_column,
-        .SDcols = x@value_column
+        (x@value_column) := lapply(.SD, stats::median, na.rm = TRUE),
+        by = c(x@grouping_column),
+        .SDcols = c(x@value_column)
       ][
         , mget(c(x@grouping_column, x@value_column))
       ])
@@ -1326,9 +1326,9 @@ setMethod(
     } else if (ensemble_method == "mean") {
       return(data[
         estimation_type != "point",
-        (x@value_colum) := lapply(.SD, mean, na.rm = TRUE),
-        by = x@grouping_column,
-        .SDcols = x@value_column
+        (x@value_column) := lapply(.SD, mean, na.rm = TRUE),
+        by = c(x@grouping_column),
+        .SDcols = c(x@value_column)
       ][
         , mget(c(x@grouping_column, x@value_column))
       ])
@@ -1373,23 +1373,13 @@ setMethod(
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
       return(data[, mget(c(x@grouping_column, x@value_column))])
       
-    } else if (ensemble_method == "median") {
+    } else {
       # For median, we use 
       return(data[
         estimation_type != "point",
-        (x@value_colum) := lapply(.SD, get_mode),
-        by = x@grouping_column,
-        .SDcols = x@value_column
-      ][
-        , mget(c(x@grouping_column, x@value_column))
-      ])
-      
-    } else if (ensemble_method == "mean") {
-      return(data[
-        estimation_type != "point",
-        (x@value_colum) := lapply(.SD, get_mean_risk_group),
-        by = x@grouping_column,
-        .SDcols = x@value_column
+        (x@value_column) := lapply(.SD, get_mode),
+        by = c(x@grouping_column),
+        .SDcols = c(x@value_column)
       ][
         , mget(c(x@grouping_column, x@value_column))
       ])
@@ -1413,7 +1403,7 @@ setMethod(
       ensemble_method <- "median"
       data <- data[estimation_type != "point"]
     }
-    browser()
+
     # Check if ensembling is actually required -- the computation is somewhat
     # expensive because it is done on the subset of data.
     if (data.table::uniqueN(data, by = x@grouping_column) == nrow(data)) {
@@ -1424,9 +1414,9 @@ setMethod(
       # group.
       return(data[
         estimation_type != "point",
-        (x@value_colum) := lapply(.SD, get_mode),
-        by = x@grouping_column,
-        .SDcols = x@value_column
+        (x@value_column) := lapply(.SD, get_mode),
+        by = c(x@grouping_column),
+        .SDcols = c(x@value_column)
       ][
         , mget(c(x@grouping_column, x@value_column))
       ])
@@ -1434,9 +1424,9 @@ setMethod(
     } else if (ensemble_method == "mean") {
       return(data[
         estimation_type != "point",
-        (x@value_colum) := lapply(.SD, get_mean_risk_group),
-        by = x@grouping_column,
-        .SDcols = x@value_column
+        (x@value_column) := lapply(.SD, get_mean_risk_group),
+        by = c(x@grouping_column),
+        .SDcols = c(x@value_column)
       ][
         , mget(c(x@grouping_column, x@value_column))
       ])

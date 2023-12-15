@@ -6,7 +6,8 @@ NULL
 .get_available_data_elements <- function(
     check_has_estimation_type = FALSE,
     check_has_detail_level = FALSE, 
-    check_has_sample_limit = FALSE) {
+    check_has_sample_limit = FALSE
+) {
   
   # All data elements.
   all_data_elements <- c(
