@@ -259,22 +259,22 @@ as_prediction_table <- function(
   }
   
   # Check the prediction table object for consistency.
-  object <- complete_prediction_table(object)
+  object <- .complete_new_prediction_table(object)
   
   return(object)
 }
 
 
-# complete_prediction_table (generic) ------------------------------------------
+# .complete_new_prediction_table (generic) -------------------------------------
 
 setGeneric(
-  "complete_prediction_table",
-  function(object, ...) standardGeneric("complete_prediction_table")
+  ".complete_new_prediction_table",
+  function(object, ...) standardGeneric(".complete_new_prediction_table")
 )
 
-# complete_prediction_table (general) ------------------------------------------
+# .complete_new_prediction_table (general) -------------------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "familiarDataElementPredictionTable"),
   function(object) {
     # Check that prediction_data, identifier_data and reference_data have the
@@ -311,9 +311,9 @@ setMethod(
   }
 )
 
-## complete_prediction_table (regression) --------------------------------------
+## .complete_new_prediction_table (regression) ---------------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "predictionTableRegression"),
   function(object) {
     
@@ -384,9 +384,9 @@ setMethod(
 )
 
 
-## complete_prediction_table (classification) ----------------------------------
+## .complete_new_prediction_table (classification) -----------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "predictionTableClassification"),
   function(object) {
     
@@ -426,7 +426,7 @@ setMethod(
     if (is.na(object@outcome_type)) {
       object@outcome_type <- ifelse(length(object@classes) == 2, "binomial", "multinomial")
     }
-    if (object@outcome_type %in% c("binomial", "multinomial")) {
+    if (!object@outcome_type %in% c("binomial", "multinomial")) {
       ..error_reached_unreachable_code(paste0(
         "The outcome type of predictionTableClassification objects should be 
         \"binomial\ or \"multinomial\"."))
@@ -612,7 +612,7 @@ setMethod(
     
     if (!is_empty(object@reference_data)) {
       # Check that one set of reference data are provided.
-      if (ncol(object@reference_data != 1)) {
+      if (ncol(object@reference_data) != 1) {
         rlang::abort(
           message = paste0(
             "Only one set of reference values was expected, but (",
@@ -645,9 +645,9 @@ setMethod(
 )
 
 
-## complete_prediction_table (survival) ----------------------------------------
+## .complete_new_prediction_table (survival) -----------------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "predictionTableSurvival"),
   function(object) {
     
@@ -788,9 +788,9 @@ setMethod(
   }
 )
 
-## complete_prediction_table (novelty) -----------------------------------------
+## .complete_new_prediction_table (novelty) ------------------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "predictionTableNovelty"),
   function(object) {
     
@@ -830,9 +830,9 @@ setMethod(
   }
 )
 
-## complete_prediction_table (grouping) ----------------------------------------
+## .complete_new_prediction_table (grouping) -----------------------------------
 setMethod(
-  "complete_prediction_table",
+  ".complete_new_prediction_table",
   signature(object = "predictionTableGrouping"),
   function(object) {
     
@@ -969,7 +969,7 @@ setMethod(
   ".check_predictions_valid",
   signature(object = "predictionTableClassification"),
   function(object, check_type) {
-    
+
     if (is_empty(object)) return(FALSE)
     
     check_fun <- switch(
@@ -978,13 +978,19 @@ setMethod(
       "any" = any
     )
     
-    data_slot <- ifelse(.is_merged_prediction_table(object), "data", "prediction_data")
-    
-    return(all(sapply(
-      slot(object, data_slot), 
-      function(x, check_fun) (check_fun(is.finite(x))),
-      check_fun = check_fun)
-    ))
+    if (.is_merged_prediction_table(object)) {
+      return(all(sapply(
+        object@data[, mget(object@value_column)],
+        function(x, check_fun) (check_fun(is_valid_data(x))),
+        check_fun = check_fun
+      )))
+    } else {
+      return(all(sapply(
+        object@prediction_data,
+        function(x, check_fun) (check_fun(is_valid_data(x))),
+        check_fun = check_fun
+      )))
+    }
   }
 )
 
@@ -1133,6 +1139,61 @@ setMethod(
       object@identifier_data <- object@identifier_data[instance_mask, ]
       object@reference_data <- object@reference_data[instance_mask, ]
       object@prediction_data <- object@prediction_data[instance_mask, ]
+    }
+    
+    return(object)
+  }
+)
+
+
+
+# .complete (general) ----------------------------------------------------------
+setMethod(
+  ".complete",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    object <- .merge_slots_into_data(object)
+    
+    return(object)
+  }
+)
+
+
+
+# .complete (null) -------------------------------------------------------------
+setMethod(
+  ".complete",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
+# .complete (classification) ---------------------------------------------------
+setMethod(
+  ".complete",
+  signature(object = "predictionTableClassification"),
+  function(object, ...) {
+    # Call general method first.
+    object <- callNextMethod()
+
+    if (is_empty(object)) return(object)
+    if (!any_predictions_valid(object)) return(object)
+    
+    # Add predicted class.
+    if (!"predicted_class" %in% colnames(object@data)) {
+      
+      # First define the class with the highest probability.
+      class_indices <- apply(object@data[, mget(object@classes)], 1, which.max, simplify = FALSE)
+      class_indices <- sapply(class_indices, function(x) (ifelse(length(x) == 1, x, NA_integer_)))
+      class_predictions <- factor(class_indices, levels = seq_along(object@classes), labels = object@classes)
+      
+      object@data[, "predicted_class" := class_predictions]
+      
+      # Updated value columns.
+      object@value_column <- c(object@value_column, "predicted_class")
     }
     
     return(object)

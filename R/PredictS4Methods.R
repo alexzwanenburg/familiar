@@ -168,7 +168,7 @@ setMethod(
       object = object,
       check_stringency = "external"
     )
-    browser()
+
     # Propagate to .predict
     predictions <- .predict(
       object = object,
@@ -185,11 +185,9 @@ setMethod(
     if (is(predictions, "familiarDataElementPredictionTable")) {
       # Only return prediction columns for external predict calls.
       
-      # Merge slots into data (this should have already happened).
-      predictions <- .merge_slots_into_data(predictions)
-      
-      # Complete the prediction table (e.g., by predicting the majority class).
-      # TODO: only affects classification tables at the moment.
+      # Complete the object by adding any missing information, such as the
+      # predicted class.
+      predictions <- .complete(predictions)
       
       # Ensure that values are ordered the same as in the input data.
       predictions@data <- merge(

@@ -403,44 +403,46 @@ setMethod(
   signature(
     object = "familiarGLM",
     data = "dataObject"),
-  function(object, data, type = "default", ...) {
+  function(
+    object, 
+    data, 
+    type = "default", 
+    time = NULL,
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE)
+    
+    if (inherits(object@model, "fastglm")) {
+      encoded_data$encoded_data@data[, "intercept__" := 1.0]
+    }
+    
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Add intercept variable, because by default, fastglm does not fit
-      # an intercept.
-      if (inherits(object@model, "fastglm")) {
-        encoded_data$encoded_data@data[, "intercept__" := 1.0]
-      }
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       if (object@outcome_type == "binomial") {
         ## Binomial outcomes ---------------------------------------------------
+
+        class_levels <- get_outcome_class_levels(x = object)
+        prediction_list <- list()
 
         if (inherits(object@model, "fastglm")) {
           # For fastglm::fastglm models.
@@ -448,29 +450,28 @@ setMethod(
             object = object@model,
             newdata = as.matrix(
               encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))]),
-            type = "response"))
+            type = "response"
+          ))
           
         } else {
           # For stats::glm models.
           model_predictions <- suppressWarnings(predict(
             object = object@model,
             newdata = encoded_data$encoded_data@data,
-            type = "response"))
+            type = "response"
+          ))
         }
         
-        # Obtain class levels.
-        class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities (glm always gives probability for the
-        # second class).
-        class_probability_columns <- get_class_probability_name(x = object)
-        prediction_table[, (class_probability_columns[1]) := 1.0 - model_predictions]
-        prediction_table[, (class_probability_columns[2]) := model_predictions]
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-        class_predictions <- factor(class_predictions, levels = class_levels)
-        prediction_table[, "predicted_class" := class_predictions]
+        # Set as list so that the positive class can be directly inferred
+        # without throwing a warning.
+        prediction_list[[tail(class_levels, n = 1L)]] <- model_predictions
+        
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type == "multinomial") {
         ## Multinomial outcomes ------------------------------------------------
@@ -488,23 +489,22 @@ setMethod(
           return(callNextMethod())
         }
 
-        # Obtain class levels.
         class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, ii]
           } else {
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[ii]
           }
         }
 
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-        class_predictions <- factor(class_predictions, levels = class_levels)
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("continuous")) {
         ## Continuous outcomes -------------------------------------------------
@@ -516,7 +516,9 @@ setMethod(
               object = object@model,
               newdata = as.matrix(
                 encoded_data$encoded_data@data[, mget(c(object@feature_order, "intercept__"))]),
-              type = "response"))
+              type = "response"
+            )
+          )
           
         } else {
           # For stats::glm models.
@@ -524,40 +526,26 @@ setMethod(
             predict(
               object = object@model,
               newdata = encoded_data$encoded_data@data,
-              type = "response"))
+              type = "response"
+            )
+          )
         }
 
-        # Add regression.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data
+        )
+        
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      if (inherits(object@model, "fastglm")) {
-        encoded_data$encoded_data@data[, "intercept__" := 1.0]
-      }
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       if (object@outcome_type %in% c("continuous", "binomial")) {
         ## Binomial and continuous outcomes ------------------------------------
@@ -598,6 +586,8 @@ setMethod(
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
