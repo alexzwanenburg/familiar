@@ -507,66 +507,68 @@ setMethod(
   signature(
     object = "familiarGLMnet",
     data = "dataObject"),
-  function(object, data, type = "default", ...) {
+  function(
+    object, 
+    data, 
+    type = "default",
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE)
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       if (object@outcome_type == "binomial") {
         # Binomial outcomes ----------------------------------------------------
 
+        # Obtain class levels.
+        class_levels <- get_outcome_class_levels(x = object)
+        
         # Use the model to predict class probabilities.
         model_predictions <- predict(
           object = object@model,
           newx = as.matrix(
             encoded_data$encoded_data@data[, mget(object@feature_order)]),
           s = as.character(object@hyperparameters$lambda_min),
-          type = "response")
+          type = "response"
+        )
 
-        # Obtain class levels.
-        class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities (glmnet always gives probability for the
-        # second class).
-        class_probability_columns <- get_class_probability_name(x = object)
-        prediction_table[, (class_probability_columns[1]) := 1.0 - model_predictions]
-        prediction_table[, (class_probability_columns[2]) := model_predictions]
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[apply(
-          prediction_table[, mget(class_probability_columns)], 1, which.max)]
+        # Set as list so that the positive class can be directly inferred
+        # without throwing a warning.
+        prediction_list <- list()
+        prediction_list[[tail(class_levels, n = 1L)]] <- model_predictions
         
-        class_predictions <- factor(class_predictions, levels = class_levels)
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type == "multinomial") {
         # Multinomial outcomes -------------------------------------------------
 
+        # Obtain class levels.
+        class_levels <- get_outcome_class_levels(x = object)
+        
         # Use the model to predict class probabilities.
         model_predictions <- predict(
           object = object@model,
@@ -576,40 +578,57 @@ setMethod(
           type = "response"
         )[, , 1]
 
-        # Obtain class levels.
-        class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            # Check if model_predictions is a matrix.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, class_levels[ii]]
           } else {
-            # Or not.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[class_levels[ii]]
           }
         }
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[apply(
-          prediction_table[, mget(class_probability_columns)], 1, which.max)]
         
-        class_predictions <- factor(class_predictions, levels = class_levels)
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
-      } else if (object@outcome_type %in% c("survival", "continuous")) {
-        # Survival and continuous outcomes -------------------------------------
+      } else if (object@outcome_type == "continuous") {
+        # Continuous outcomes --------------------------------------------------
 
         # Use the model for prediction.
         model_predictions <- predict(
           object = object@model,
           newx = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
           s = as.character(object@hyperparameters$lambda_min),
-          type = "response")
+          type = "response"
+        )
 
-        # Add regression.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data
+        )
+        
+      } else if (object@outcome_type == "survival") {
+        # Survival outcomes ----------------------------------------------------
+        
+        # Use the model for prediction.
+        model_predictions <- predict(
+          object = object@model,
+          newx = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+          s = as.character(object@hyperparameters$lambda_min),
+          type = "response"
+        )
+        
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "hazard_ratio",
+          data = data
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
@@ -617,25 +636,20 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
+    } else if (type == "survival_probability" && object@outcome_type == "survival") {
+      # survival probability ---------------------------------------------------
+      
+      # If time is unset, read the max time stored by the model.
+      if (is.null(time)) time <- object@settings$time_max
+      
+      return(.survival_probability_relative_risk(
         object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
+        data = data,
+        time = time
+      ))  
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Use the model to predict class probabilities.
       return(predict(
@@ -644,7 +658,11 @@ setMethod(
           encoded_data$encoded_data@data[, mget(object@feature_order)]),
         s = as.character(object@hyperparameters$lambda_min),
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -658,6 +676,7 @@ setMethod(
     object = "familiarGLMnet",
     data = "dataObject"),
   function(object, data, time, ...) {
+    stop("deprecated -> ..predict")
     if (object@outcome_type != "survival") {
       return(callNextMethod())
     }
@@ -841,22 +860,18 @@ setMethod(
       return(callNextMethod())
     }
 
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # Encode data so that the features are the same as in the training.
-    encoded_data <- encode_categorical_variables(
-      data = data,
-      object = object,
-      encoding_method = "dummy",
-      drop_levels = FALSE)
-
-    # Get an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = encoded_data$encoded_data,
-      type = type)
-
+    # Get the prediction table using the model.
+    prediction_table <- callNextMethod()
+    
+    # Insert NA values.
+    for (current_column in colnames(prediction_table@prediction_data)) {
+      data.table::set(
+        prediction_table@prediction_data,
+        j = current_column,
+        value = NA
+      )
+    }
+    
     return(prediction_table)
   }
 )
@@ -880,25 +895,17 @@ setMethod(
       return(callNextMethod())
     }
 
-    # Get an empty prediction table.
+    # Get a prediction table.
     prediction_table <- callNextMethod()
 
-    if (object@outcome_type %in% c("binomial", "multinomial")) {
-      # Set all class probabilities for the first row to infinite.
-      class_probability_columns <- get_class_probability_name(x = object)
-      for (ii in seq_along(class_probability_columns)) {
-        prediction_table[1L, (class_probability_columns[ii]) := Inf]
-      }
-
-      # Set the class to NA.
-      prediction_table[1L, "predicted_class" := NA]
-      
-    } else if (object@outcome_type %in% c("survival", "continuous")) {
-      # Add regression.
-      prediction_table[1L, "predicted_outcome" := Inf]
-      
-    } else {
-      ..error_outcome_type_not_implemented(object@outcome_type)
+    # Insert NA values.
+    for (current_column in colnames(prediction_table@prediction_data)) {
+      data.table::set(
+        prediction_table@prediction_data,
+        i = 1L,
+        j = current_column,
+        value = NA
+      )
     }
 
     return(prediction_table)
@@ -914,7 +921,7 @@ setMethod(
     data = "dataObject"),
   function(object, data, type = "default", ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
-    outcome <- NULL
+    predicted_outcome <- NULL
     
     # Check if the model was trained.
     if (!model_is_trained(object)) {
@@ -926,34 +933,28 @@ setMethod(
       return(callNextMethod())
     }
     
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-    
-    # Encode data so that the features are the same as in the training.
-    encoded_data <- encode_categorical_variables(
-      data = data,
-      object = object,
-      encoding_method = "dummy",
-      drop_levels = FALSE)
-    
-    # Get an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = encoded_data$encoded_data,
-      type = type)
+    # Get a prediction table.
+    prediction_table <- callNextMethod()
     
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       # Get class levels
       class_levels <- get_outcome_class_levels(x = object)
       
       # Set probability to 1.0 for the column that matches the outcome.
-      class_probability_columns <- get_class_probability_name(x = class_levels)
       for (ii in seq_along(class_levels)) {
-        prediction_table[, (class_probability_columns[ii]) := as.numeric(outcome == class_levels[ii])]
+        prediction_table@prediction_data[
+          , (class_levels[ii]) := as.numeric(data@data$outcome == class_levels[ii])
+        ]
       }
+
+    } else if (object@outcome_type == "continuous") {
+      # Set predicted outcome.
+      prediction_table@prediction_data[, "predicted_outcome" := data@data$outcome]
       
-      # Set the class to the outcome.
-      prediction_table[, "predicted_class" := outcome]
+    } else if (object@outcome_type == "survival") {
+      # Set predicted outcome.
+      prediction_table@prediction_data[, "predicted_outcome" := 1.0 / data@data$outcome_time]
+      prediction_table@prediction_data[, "predicted_outcome" := predicted_outcome - mean(predicted_outcome) + 1.0]
       
     } else {
       ..error_outcome_type_not_implemented(object@outcome_type)
@@ -997,7 +998,7 @@ setMethod(
     if (object@outcome_type != "survival") {
       return(callNextMethod())
     }
-
+    stop("deprecated -> ..predict")
     # If time is unset, read the max time stored by the model.
     if (is.null(time)) time <- object@settings$time_max
 
@@ -1029,7 +1030,7 @@ setMethod(
     if (object@outcome_type != "survival") {
       return(callNextMethod())
     }
-
+    stop("deprecated -> ..predict")
     # If time is unset, read the max time stored by the model.
     if (is.null(time)) time <- object@settings$time_max
 
