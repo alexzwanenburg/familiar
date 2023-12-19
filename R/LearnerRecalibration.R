@@ -10,29 +10,30 @@
     object = object,
     data = data,
     allow_recalibration = FALSE,
-    time = time)
+    time = time
+  )
+  
+  # Convert to data.table.
+  model_predictions <- .as_data_table(model_predictions)
 
   if (object@outcome_type %in% c("binomial", "multinomial")) {
     # Get class levels and class probability column names
     class_levels <- get_outcome_class_levels(x = object)
-    class_probability_columns <- get_class_probability_name(x = class_levels)
 
     # Build a logistic model on top of the predicted class probabilities for
     # each predicted class probability
-    for (ii in seq_along(class_probability_columns)) {
-      # Select current probability column
-      current_class_probability_column <- class_probability_columns[ii]
-
+    for (ii in seq_along(class_levels)) {
       # Set positive class flag
       model_predictions[, "positive_class" := outcome == class_levels[ii]]
 
       # Parse formula
       model_formula <- stats::reformulate(
-        termlabels = current_class_probability_column,
-        response = "positive_class")
+        termlabels = class_levels[ii],
+        response = "positive_class"
+      )
 
       # Remove NA from the data.table
-      model_predictions <- model_predictions[is.finite(get(current_class_probability_column)), ]
+      model_predictions <- model_predictions[is.finite(get(class_levels[ii])), ]
 
       # If the prediction data table returns no or just one (valid) entry,
       # calibration is not possible.
@@ -42,8 +43,10 @@
       calibration_model <- tryCatch(
         stats::glm(model_formula,
           data = model_predictions,
-          family = stats::binomial(link = "logit")),
-        error = identity)
+          family = stats::binomial(link = "logit")
+        ),
+        error = identity
+      )
 
       # Check if the calibration model was created.
       if (inherits(calibration_model, "error")) calibration_model <- NULL
@@ -51,12 +54,14 @@
       # Create calibration model
       calibration_model_list[[class_levels[ii]]] <- calibration_model
     }
+    
   } else if (object@outcome_type == "survival") {
     # Parse formula
     formula <- stats::reformulate(
       termlabels = "predicted_outcome",
-      response = quote(survival::Surv(outcome_time, outcome_event)))
-
+      response = quote(survival::Surv(outcome_time, outcome_event))
+    )
+    
     # Remove NA from the table
     model_predictions <- model_predictions[is.finite(predicted_outcome)]
 
@@ -70,9 +75,11 @@
       survival::coxph(formula,
         data = model_predictions,
         control = model_control,
-        y = FALSE),
-      error = identity)
-
+        y = FALSE
+      ),
+      error = identity
+    )
+    
     # Check if the model trained at all.
     if (inherits(calibration_model, "error")) return(NULL)
 
@@ -89,64 +96,72 @@
 
 
 
-.apply_recalibration <- function(object, predictions) {
+.apply_recalibration <- function(object, prediction_table, data) {
   # Suppress NOTES due to non-standard evaluation in data.table
   prob_sum <- NULL
 
   # Return predictions if calibration models are missing
-  if (is_empty(object@calibration_model)) return(predictions)
+  if (is_empty(object@calibration_model)) return(prediction_table)
 
   # Return predictions if it is empty
-  if (is_empty(predictions)) return(predictions)
+  if (is_empty(prediction_table)) return(prediction_table)
 
+  # Convert to data.table.
+  predictions <- .as_data_table(prediction_table)
+  
   if (object@outcome_type %in% c("binomial", "multinomial")) {
-    # Determine probability columns
-    class_probability_columns <- get_class_probability_name(x = object)
     class_levels <- get_outcome_class_levels(x = object)
-
-    # Iterate over calibration models and reconstruct the outcome data table
-    for (ii in seq_along(class_probability_columns)) {
-      # Get name of current probability column
-      current_class_probability_column <- class_probability_columns[ii]
+    prediction_list <- list()
+    
+    # Iterate over the calibration model for each class and obtain the class
+    # probabilities.
+    for (ii in seq_along(class_levels)) {
 
       # Skip if no calibration model is provided.
-      if (is.null(object@calibration_model[[class_levels[ii]]])) next
+      if (is.null(object@calibration_model[[class_levels[ii]]])) {
+        prediction_list[[class_levels[ii]]] <- predictions[[class_levels[ii]]]
+        next
+      }
 
       # Predict calibrated probabilities using the calibration model for the
       # current column.
-      predicted_probability <- stats::predict.glm(
+      prediction_list[[class_levels[ii]]] <- stats::predict.glm(
         object = object@calibration_model[[class_levels[ii]]],
         newdata = predictions,
-        type = "response")
-
-      # Replace column contents with predicted probabilities.
-      predictions[, (current_class_probability_column) := predicted_probability]
+        type = "response"
+      )
     }
-
-    # Normalise predicted probabilities to 1
-    predictions[, "prob_sum" := rowSums(.SD, na.rm = TRUE), .SDcols = class_probability_columns]
-    predictions[, (class_probability_columns) := lapply(.SD, "/", prob_sum), .SDcols = class_probability_columns]
-
-    # Drop sum of probabilities
+    
+    # Convert list of class probabilities to a data.table.
+    predictions <- data.table::as.data.table(prediction_list)
+    
+    # Normalise predicted probabilities to 1.0.
+    predictions[, "prob_sum" := rowSums(.SD, na.rm = TRUE), .SDcols = class_levels]
+    predictions[, (class_levels) := lapply(.SD, "/", prob_sum), .SDcols = class_levels]
     predictions[, "prob_sum" := NULL]
 
-    # Update predicted outcome with class with maximum predicted probability
-    max_prob_class <- factor(
-      x = class_levels[predictions[, max.col(.SD), .SDcols = class_probability_columns]],
-      levels = class_levels)
-    
-    predictions[, "predicted_class" := max_prob_class]
+    # Create new prediction table object.
+    prediction_table <- as_prediction_table(
+      x = predictions,
+      type = "classification",
+      data = data
+    )
     
   } else if (object@outcome_type == "survival") {
     # Predict cox PH relative risk
     predicted_outcome_value <- predict(
       object = object@calibration_model[[1]],
       newdata = predictions,
-      type = "risk")
+      type = "risk"
+    )
 
-    # Replace in table
-    predictions[, "predicted_outcome" := predicted_outcome_value]
+    # Create new prediction table object.
+    prediction_table <- as_prediction_table(
+      x = predicted_outcome_value,
+      type = "hazard_ratio",
+      data = data
+    )
   }
 
-  return(predictions)
+  return(prediction_table)
 }

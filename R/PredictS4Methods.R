@@ -506,7 +506,8 @@ setMethod(
       if (allow_recalibration) {
         prediction_table <- .apply_recalibration(
           object = object,
-          predictions = prediction_table
+          prediction_table = prediction_table,
+          data = data
         )
       }
       

@@ -106,6 +106,9 @@ as_prediction_table <- function(
   } else if (type == "classification") {
     object <- methods::new("predictionTableClassification")
   
+  } else if (type == "survival") {
+    object <- methods::new("predictionTableSurvival")
+    
   } else if (type == "hazard_ratio") {
     object <- methods::new("predictionTableSurvivalHazardRatio")
     
