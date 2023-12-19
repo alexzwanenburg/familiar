@@ -230,27 +230,22 @@ setMethod(
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE
+    )
+    
     if (type %in% c("default", "survival_probability")) {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       if (object@outcome_type == "survival") {
         if (type == "default") {
@@ -258,15 +253,23 @@ setMethod(
           model_predictions <- predict(
             object = object@model,
             newdata = encoded_data$encoded_data@data,
-            type = "response")
+            type = "response"
+          )
 
-          # Update the prediction table.
-          prediction_table[, "predicted_outcome" := model_predictions]
+          # Store as prediction table.
+          prediction_table <- as_prediction_table(
+            x = model_predictions,
+            type = "expected_survival_time",
+            data = data
+          )
           
         } else if (type == "survival_probability") {
           # To predict survival probability we first compute survival quantiles,
           # which are survival probabilities.
 
+          # If time is unset, read the max time stored by the model.
+          if (is.null(time)) time <- object@settings$time_max
+          
           # Survival quantiles from 1.00 to 0.01
           survival_quantiles <- seq(from = 1.00, to = 0.01, by = -0.01)
 
@@ -275,8 +278,9 @@ setMethod(
             object = object@model,
             newdata = encoded_data$encoded_data@data,
             type = "quantile",
-            p = 1.00 - survival_quantiles)
-
+            p = 1.00 - survival_quantiles
+          )
+          
           # Set id columns
           id_columns <- get_id_columns()
 
@@ -289,8 +293,9 @@ setMethod(
 
           # Combine with identifiers and cast to table.
           failure_table <- cbind(
-            prediction_table[, mget(id_columns)],
-            data.table::as.data.table(failure_matrix))
+            data@data[, mget(id_columns)],
+            data.table::as.data.table(failure_matrix)
+          )
 
           # Remove duplicate entries
           failure_table <- unique(failure_table, by = id_columns)
@@ -300,19 +305,22 @@ setMethod(
             failure_table,
             id.vars = id_columns,
             variable.name = "quantile_variable",
-            value.name = "survival_time")
+            value.name = "survival_time"
+          )
 
           # Create conversion table to convert temporary variables into
           # the event times.
           conversion_table <- data.table::data.table(
             "quantile_variable" = paste0("V", seq_along(survival_quantiles)),
-            "survival_quantile" = survival_quantiles)
+            "survival_quantile" = survival_quantiles
+          )
 
           # Add in
           failure_table <- merge(
             x = failure_table, 
             y = conversion_table, 
-            on = "quantile_variable")
+            on = "quantile_variable"
+          )
 
           # Drop the time_variable column
           failure_table[, "quantile_variable" := NULL]
@@ -336,19 +344,26 @@ setMethod(
               return(output_table)
             },
             time = time, 
-            id_columns = id_columns)
+            id_columns = id_columns
+          )
           
           # Concatenate to single table.
           failure_table <- data.table::rbindlist(failure_table)
           
-          # Remove survival_probability from the prediction table.
-          prediction_table[, "survival_probability" := NULL]
-          
           # Then merge the event table into the prediction table.
           prediction_table <- merge(
-            x = prediction_table,
+            x = data@data[, mget(id_columns)],
             y = failure_table, 
-            by = id_columns)
+            by = id_columns,
+            sort = FALSE
+          )
+          
+          # Store as prediction table
+          prediction_table <- as_prediction_table(
+            x = prediction_table$survival_probability,
+            type = "survival_probability",
+            data = data
+          )
         }
         
       } else {
@@ -357,56 +372,20 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(NULL)
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(NULL)
-
-      # Encode data so that the features are the same as in the
-      # training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Use the model to predict expected survival time.
       return(predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
-  }
-)
-
-
-
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarSurvRegr",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    
-    if (!object@outcome_type %in% c("survival")) return(callNextMethod())
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    return(..predict(
-      object = object, 
-      data = data, 
-      time = time, 
-      type = "survival_probability"))
   }
 )
 
