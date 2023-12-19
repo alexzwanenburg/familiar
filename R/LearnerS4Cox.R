@@ -289,32 +289,6 @@ setMethod(
 
 
 
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarCoxPH",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    if (object@outcome_type != "survival") {
-      return(callNextMethod())
-    }
-    stop("deprecated -> ..predict")
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    return(.survival_probability_relative_risk(
-      object = object,
-      data = data,
-      time = time))
-  }
-)
-
-
-
 #  ..vimp ----------------------------------------------------------------------
 setMethod(
   "..vimp",

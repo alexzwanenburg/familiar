@@ -998,11 +998,7 @@ setMethod(
     object = "familiarModel",
     data = "dataObject"),
   function(object, data, time, ...) {
-    # This is a fall-back option.
-    return(get_placeholder_prediction_table(
-      object = object, 
-      data = data, 
-      type = "survival_probability"))
+    stop("deprecated -> ..predict")
   }
 )
 
@@ -1015,16 +1011,7 @@ setMethod(
     object = "character",
     data = "dataObject"),
   function(object, data, ...) {
-    # Load object.
-    object <- load_familiar_object(object)
-
-    return(do.call(
-      ..predict_survival_probability,
-      args = c(
-        list(
-          "object" = object,
-          "data" = data),
-        list(...))))
+    stop("deprecated -> ..predict")
   }
 )
 

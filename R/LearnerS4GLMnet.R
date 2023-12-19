@@ -669,33 +669,6 @@ setMethod(
 
 
 
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarGLMnet",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    stop("deprecated -> ..predict")
-    if (object@outcome_type != "survival") {
-      return(callNextMethod())
-    }
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    return(.survival_probability_relative_risk(
-      object = object,
-      data = data,
-      time = time))
-  }
-)
-
-
-
 # ..vimp -----------------------------------------------------------------------
 setMethod(
   "..vimp", signature(object = "familiarGLMnet"),
@@ -983,70 +956,6 @@ setMethod(
     } else {
       ..error_reached_unreachable_code("get_prediction_type,familiarGLMnetLassoTest: unknown type")
     }
-  }
-)
-
-
-
-# ..predict_survival_probability (all fail) ------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarGLMnetLassoTestAllFail",
-    data = "dataObject"),
-  function(object, data, time) {
-    if (object@outcome_type != "survival") {
-      return(callNextMethod())
-    }
-    stop("deprecated -> ..predict")
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # Predict, just to obtain a correctly formatted table.
-    survival_table <- .survival_probability_relative_risk(
-      object = object,
-      data = data,
-      time = time)
-
-    # Set predicted values to NA.
-    survival_table[, "survival_probability" := NA_real_]
-
-    return(survival_table)
-  }
-)
-
-
-
-# ..predict_survival_probability (all fail) ------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarGLMnetLassoTestSomeFail",
-    data = "dataObject"),
-  function(object, data, time) {
-    if (object@outcome_type != "survival") {
-      return(callNextMethod())
-    }
-    stop("deprecated -> ..predict")
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # Predict, just to obtain a correctly formatted table.
-    survival_table <- .survival_probability_relative_risk(
-      object = object,
-      data = data,
-      time = time)
-
-    # Set first predicted probability to infinite.
-    survival_table[1L, "survival_probability" := Inf]
-
-    return(survival_table)
   }
 )
 
