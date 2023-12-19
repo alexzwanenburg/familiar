@@ -97,7 +97,7 @@ setMethod(
         # Get classes and their probabilities from the stored model data. In the
         # naive model, the probability of each class is its occurrence in the
         # development data.
-        class_levels <- object@model$frequency$outcome
+        class_levels <- get_outcome_class_levels(object)
         class_probabilities <- object@model$frequency$count / object@model$n
         
         # Fill class probabilities.
