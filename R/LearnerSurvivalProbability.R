@@ -64,61 +64,96 @@ get_baseline_survival <- function(data) {
 }
 
 
+# .survival_probability_relative_risk (generic) --------------------------------
+setGeneric(
+  ".survival_probability_relative_risk",
+  function(object, ...) setGeneric(".survival_probability_relative_risk")
+)
 
-.survival_probability_relative_risk <- function(object, data, time) {
-  if (!is(object, "familiarModel")) {
-    ..error_reached_unreachable_code(
-      ".survival_probability_relative_risk: object is not a familiarModel object.")
+
+# .survival_probability_relative_risk (model) ----------------------------------
+setMethod(
+  ".survival_probability_relative_risk",
+  signature(object = "familiarModel"),
+  function(
+    object,
+    data,
+    time,
+    ...
+  ) {
+    if (!is(data, "dataObject")) {
+      ..error_reached_unreachable_code(
+        ".survival_probability_relative_risk: object is not a dataObject object.")
+    }
+    
+    # Predict relative risks.
+    prediction_table <- .predict(
+      object = object,
+      data = data,
+      type = "default",
+      allow_recalibration = TRUE,
+      time = time
+    )
+    
+    # Convert to probability.
+    prediction_table <- .survival_probability_relative_risk(
+      object = prediction_table,
+      data = data,
+      time = time,
+      model = object,
+      ...
+    )
+    
+    return(prediction_table)
   }
-  if (!is(data, "dataObject")) {
-    ..error_reached_unreachable_code(
-      ".survival_probability_relative_risk: object is not a dataObject object.")
+)
+
+
+# .survival_probability_relative_risk (prediction_table) -----------------------
+setMethod(
+  ".survival_probability_relative_risk",
+  signature(object = "predictionTableSurvivalHazardRatio"),
+  function(
+    object,
+    data,
+    time,
+    model,
+    ...
+  ) {
+    
+    if (!is(data, "dataObject")) {
+      ..error_reached_unreachable_code(
+        ".survival_probability_relative_risk: object is not a dataObject object.")
+    }
+    
+    # Check for several issues that prevent survival probabilities from being
+    # predicted.
+    if (is_empty(object)) return(NULL)
+    if (!any_predictions_valid(object)) return(NULL)
+    if (!has_calibration_info(model)) return(NULL)
+    
+    # Survival in the group is based on proportional hazards assumption, and
+    # uses baseline cumulative hazard and the group's predicted relative risks.
+    # This evaluation comes in handy when performing, e.g. the Nam-D'Agostino
+    # test. It avoids recalculating the baseline hazard. Following Demler,
+    # Paynter and Cook. (Stat. Med. 2015), we compute the survival probability
+    # at t=time_max for each sample.
+    survival_probabilities <- ..survival_probability_relative_risk(
+      object = model,
+      relative_risk = object@prediction_data$predicted_outcome,
+      time = time
+    )
+    
+    # Create prediction table.
+    prediction_table <- as_prediction_table(
+      x = survival_probabilities,
+      type = "survival_probability",
+      data = data
+    )
+    
+    return(prediction_table)
   }
-
-  # Predict relative risks.
-  prediction_table <- .predict(
-    object = object,
-    data = data,
-    type = "default",
-    allow_recalibration = TRUE,
-    time = time
-  )
-  
-  # Check for several issues that prevent survival probabilities from being
-  # predicted.
-  if (is_empty(prediction_table)) return(NULL)
-  if (!any_predictions_valid(prediction_table)) return(NULL)
-  if (!has_calibration_info(object)) return(NULL)
-
-  # Check that prediction table contains hazard ratios.
-  if (!is(prediction_table, "predictionTableSurvivalHazardRatio")) {
-    ..error_reached_unreachable_code(paste0(
-      "survival probability can only be computed using hazard rations ",
-      "(predictionTableSurvivalHazardRatio)"
-    ))
-  }
-  
-  # Survival in the group is based on proportional hazards assumption, and
-  # uses baseline cumulative hazard and the group's predicted relative risks.
-  # This evaluation comes in handy when performing, e.g. the Nam-D'Agostino
-  # test. It avoids recalculating the baseline hazard. Following Demler,
-  # Paynter and Cook. (Stat. Med. 2015), we compute the survival probability
-  # at t=time_max for each sample.
-  survival_probabilities <- ..survival_probability_relative_risk(
-    object = object,
-    relative_risk = prediction_table@prediction_data$predicted_outcome,
-    time = time
-  )
-
-  # Create prediction table.
-  prediction_table <- as_prediction_table(
-    x = survival_probabilities,
-    type = "survival_probability",
-    data = data
-  )
-
-  return(prediction_table)
-}
+)
 
 
 
