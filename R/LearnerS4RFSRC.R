@@ -454,48 +454,63 @@ setMethod(
   signature(
     object = "familiarRFSRC",
     data = "dataObject"),
-  function(object, data, type = "default", time = NULL, ...) {
+  function(
+    object,
+    data, 
+    type = "default",
+    time = NULL, 
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(NULL)
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(NULL)
+    }
+    
     if (type %in% c("default", "survival_probability")) {
       # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type)
 
       # Make predictions using the model.
       model_predictions <- predict(
         object = object@model,
-        newdata = data@data)
+        newdata = data@data
+      )
 
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         # categorical outcomes -------------------------------------------------
 
-        # Set predicted class.
-        prediction_table[, "predicted_class" := model_predictions$class]
-
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
+        # Obtain class levels.
+        class_levels <- colnames(model_predictions$predicted)
         
-        for (ii in seq_along(class_probability_columns)) {
-          prediction_table[, (class_probability_columns[ii]) := model_predictions$predicted[, ii]]
+        # Add class probabilities.
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
+          prediction_list[[class_levels[ii]]] <- model_predictions$predicted[, ii]
         }
+        
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions$predicted]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = as.numeric(model_predictions$predicted),
+          type = "regression",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("survival")) {
         # survival outcomes ----------------------------------------------------
@@ -513,9 +528,10 @@ setMethod(
           prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$chf,
             event_times = event_times,
-            prediction_table = prediction_table,
+            data = data,
             time = time,
-            type = "cumulative_hazard")
+            type = "cumulative_hazard"
+          )
           
         } else if (type == "survival_probability") {
           # Survival probability.
@@ -524,9 +540,10 @@ setMethod(
           prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$survival,
             event_times = event_times,
-            prediction_table = prediction_table,
+            data = data,
             time = time,
-            type = "survival")
+            type = "survival"
+          )
           
         } else {
           ..error_outcome_type_not_implemented(object@outcome_type)
@@ -535,48 +552,19 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
+    } else if (!.is_available_prediction_type(type)) {
       # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
 
       # Make predictions using the model.
       return(predict(
         object = object@model,
         newdata = data@data,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
-  }
-)
-
-
-
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarRFSRC",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    
-    if (!object@outcome_type %in% c("survival")) return(callNextMethod())
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    return(..predict(
-      object = object, 
-      data = data, 
-      time = time, 
-      type = "survival_probability"))
   }
 )
 

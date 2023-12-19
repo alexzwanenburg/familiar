@@ -538,7 +538,7 @@ setMethod(
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         # categorical outcomes -------------------------------------------------
 
-        # Extract class levels from the predictions.
+        # Obtain class levels.
         class_levels <- colnames(model_predictions$predictions)
 
         # Add class probabilities.
@@ -623,33 +623,6 @@ setMethod(
     } else {
       ..error_no_predictions_possible(object, type)
     }
-  }
-)
-
-
-
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarRanger",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    if (!object@outcome_type %in% c("survival")) {
-      return(callNextMethod())
-    }
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    return(..predict(
-      object = object,
-      data = data,
-      time = time,
-      type = "survival_probability"))
   }
 )
 
