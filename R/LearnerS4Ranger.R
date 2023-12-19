@@ -911,6 +911,14 @@ setMethod(
     event_table <- data.table::rbindlist(event_table)
   }
   
+  # Sort as original data.
+  event_table <- merge(
+    x = data@data[, mget(id_columns)],
+    y = event_table, 
+    by = id_columns,
+    sort = FALSE
+  )
+  
   # Convert to prediction table objects.
   if (type == "cumulative_hazard") {
     prediction_table <- as_prediction_table(
