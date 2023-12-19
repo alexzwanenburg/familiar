@@ -1,7 +1,12 @@
-.set_recalibration <- function(object, data, time = NULL) {
+.set_recalibration <- function(
+    object, 
+    data, 
+    time = NULL, 
+    ...
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- predicted_outcome <- NULL
-
+  
   # Initial empty calibration list
   calibration_model_list <- list()
 
@@ -41,7 +46,8 @@
 
       # Generate the calibration model.
       calibration_model <- tryCatch(
-        stats::glm(model_formula,
+        stats::glm(
+          model_formula,
           data = model_predictions,
           family = stats::binomial(link = "logit")
         ),
@@ -72,7 +78,8 @@
     # Generate model
     model_control <- survival::coxph.control(iter.max = 100)
     calibration_model <- tryCatch(
-      survival::coxph(formula,
+      survival::coxph(
+        formula,
         data = model_predictions,
         control = model_control,
         y = FALSE
