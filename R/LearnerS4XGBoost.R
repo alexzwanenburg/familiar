@@ -592,37 +592,39 @@ setMethod(
   "..predict",
   signature(
     object = "familiarXGBoost",
-    data = "dataObject"),
-  function(object, data, type = "default", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default", 
+    time = NULL,
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
+    # Load model through unserialisation.
+    if (inherits(object@model, "raw")) {
+      object@model <- xgboost::xgb.load.raw(object@model)
+    }
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE
+    )
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Load model through unserialisation.
-      if (inherits(object@model, "raw")) {
-        object@model <- xgboost::xgb.load.raw(object@model)
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       # Make predictions. If the booster object is DART type, predict() will
       # perform dropouts, i.e. only some of the trees will be evaluated. This
@@ -639,7 +641,8 @@ setMethod(
           newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
           outputmargin = object@outcome_type == "survival",
           ntreelimit = round(10^object@hyperparameters$n_boost),
-          reshape = TRUE)
+          reshape = TRUE
+        )
         
       } else {
         # From version 1.4 onward, ntreelimit was deprecated, and
@@ -649,7 +652,8 @@ setMethod(
           newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
           outputmargin = object@outcome_type == "survival",
           iterationrange = c(1, round(10^object@hyperparameters$n_boost)),
-          reshape = TRUE)
+          reshape = TRUE
+        )
       }
 
       if (object@outcome_type == "binomial") {
@@ -660,19 +664,15 @@ setMethod(
 
         # Add class probabilities (glm always gives probability for the second
         # class).
-        class_probability_columns <- get_class_probability_name(x = object)
-        prediction_table[, (class_probability_columns[1]) := 1.0 - model_predictions]
-        prediction_table[, (class_probability_columns[2]) := model_predictions]
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+        prediction_list <- list()
+        prediction_list[[tail(class_levels, n = 1L)]] <- model_predictions
         
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
-        
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type == "multinomial") {
         # multinomial outcomes -------------------------------------------------
@@ -680,27 +680,22 @@ setMethod(
         # Obtain class levels.
         class_levels <- get_outcome_class_levels(x = object)
 
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            # Check if model_predictions is a matrix.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, ii]
+            
           } else {
-            # Or not.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[ii]
           }
         }
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
         
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
-        
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("continuous")) {
         # Numerical outcomes ---------------------------------------------------
@@ -708,42 +703,58 @@ setMethod(
         # Map predictions back to original scale.
         model_predictions <- model_predictions * object@outcome_scale + object@outcome_shift
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("survival")) {
         # Survival outcomes ----------------------------------------------------
 
-        # Add predictions to the prediction table.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table. Note that the raw prediction output needs
+        # to be recalibrated.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "survival",
+          data = data
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
       return(prediction_table)
+    
+    } else if (type == "survival_probability" && object@outcome_type == "survival") {
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(NULL)
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(NULL)
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
+      # Only compute for cox-like objectives.
+      if (!as.character(object@hyperparameters$learn_objective) %in% c("cox")) {
+        return(callNextMethod())
+      }
+      
+      # If time is unset, read the max time stored by the model.
+      if (is.null(time)) time <- object@settings$time_max
+      
+      return(.survival_probability_relative_risk(
         object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
+        data = data, 
+        time = time
+      ))
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Note that xgboost:::predict.xgb.Booster does not have a type argument.
       return(predict(
         object = object@model,
         newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -919,7 +930,8 @@ setMethod(
       object@calibration_model <- .set_recalibration(
         object = object,
         data = data,
-        time = time)
+        time = time
+      )
 
       # Return object.
       return(object)
