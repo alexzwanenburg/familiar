@@ -172,68 +172,63 @@ setMethod(
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type)
-
-      # Use the model to predict class probabilities.
-      model_predictions <- predict(
-        object = object@model,
-        newdata = data@data,
-        type = "raw")
-
-      # Obtain class levels.
-      class_levels <- get_outcome_class_levels(x = object)
-
-      # Add class probabilities.
-      class_probability_columns <- get_class_probability_name(x = object)
-      for (ii in seq_along(class_probability_columns)) {
-        prediction_table[, (class_probability_columns[ii]) := model_predictions[, class_levels[ii]]]
-      }
-
-      # Update predicted class based on provided probabilities.
-      class_predictions <- class_levels[apply(
-        prediction_table[, mget(class_probability_columns)], 1, which.max)]
+      # default ----------------------------------------------------------------
       
-      class_predictions <- factor(class_predictions, levels = class_levels)
-      prediction_table[, "predicted_class" := class_predictions]
+      if (object@outcome_type %in% c("binomial", "multinomial")) {
+        
+        # Use the model to predict class probabilities.
+        model_predictions <- predict(
+          object = object@model,
+          newdata = data@data,
+          type = "raw"
+        )
+        
+        # Obtain class levels.
+        class_levels <- get_outcome_class_levels(x = object)
+        
+        # Add class probabilities.
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
+          prediction_list[[class_levels[ii]]] <- model_predictions[, class_levels[ii]]
+        }
+        
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
+        
+      } else {
+        ..error_outcome_type_not_implemented(object@outcome_type)
+      }
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Use the model for prediction.
       return(predict(
         object = object@model,
         newdata = data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
