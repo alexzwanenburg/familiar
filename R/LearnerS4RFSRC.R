@@ -510,7 +510,7 @@ setMethod(
           # Cumulative hazard.
 
           # Get the cumulative hazards at the given time point.
-          prediction_table <- process_random_forest_survival_predictions(
+          prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$chf,
             event_times = event_times,
             prediction_table = prediction_table,
@@ -521,7 +521,7 @@ setMethod(
           # Survival probability.
 
           # Get the survival probability at the given time point.
-          prediction_table <- process_random_forest_survival_predictions(
+          prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$survival,
             event_times = event_times,
             prediction_table = prediction_table,

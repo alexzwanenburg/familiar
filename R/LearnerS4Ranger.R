@@ -484,29 +484,30 @@ setMethod(
   "..predict",
   signature(
     object = "familiarRanger",
-    data = "dataObject"),
-  function(object, data, type = "default", time = NULL, ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    time = NULL, 
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
     if (type %in% c("default", "survival_probability")) {
       # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type)
 
       # Make predictions using the model.
       if (inherits(object@model, "ranger")) {
@@ -515,7 +516,8 @@ setMethod(
           data = data@data,
           type = "response",
           num.threads = 1,
-          verbose = FALSE))
+          verbose = FALSE
+        ))
         
       } else if (inherits(object@model, "holdoutRF")) {
         model_predictions <- suppressWarnings(predict(
@@ -523,13 +525,15 @@ setMethod(
           data = data@data,
           type = "response",
           num.threads = 1,
-          verbose = FALSE))
+          verbose = FALSE
+        ))
+        
       } else {
         ..error_reached_unreachable_code(paste0(
           "..predict,familiarRanger,dataObject: unknown model class detected ",
-          class(object@model), ". Expected: ranger, holdoutRF"))
+          class(object@model), ". Expected: ranger, holdoutRF"
+        ))
       }
-
 
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         # categorical outcomes -------------------------------------------------
@@ -537,31 +541,28 @@ setMethod(
         # Extract class levels from the predictions.
         class_levels <- colnames(model_predictions$predictions)
 
-        # We have to determine the predicted class based on the class
-        # probabilities. We do so by first determining the column with the
-        # maximum probability. Subsequently we read the corresponding class
-        # level, i.e. column name.
-        class_predicted <- class_levels[apply(
-          model_predictions$predictions, 1, which.max)]
-        
-        class_predicted <- factor(
-          x = class_predicted,
-          levels = get_outcome_class_levels(x = object))
-
-        # Set predicted class.
-        prediction_table[, "predicted_class" := class_predicted]
-
         # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = class_levels)
-        for (ii in seq_along(class_probability_columns)) {
-          prediction_table[, (class_probability_columns[ii]) := model_predictions$predictions[, ii]]
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
+          prediction_list[[class_levels[ii]]] <- model_predictions$predictions[, ii]
         }
+        
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions$predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions$predictions,
+          type = "regression",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("survival")) {
         # survival outcomes ----------------------------------------------------
@@ -580,23 +581,25 @@ setMethod(
           # Cumulative hazard.
 
           # Get the cumulative hazards at the given time point.
-          prediction_table <- process_random_forest_survival_predictions(
+          prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$chf,
             event_times = event_times,
-            prediction_table = prediction_table,
+            data = data,
             time = time,
-            type = "cumulative_hazard")
+            type = "cumulative_hazard"
+          )
           
         } else if (type == "survival_probability") {
           # Survival probability.
 
           # Get the survival probability at the given time point.
-          prediction_table <- process_random_forest_survival_predictions(
+          prediction_table <- .random_forest_survival_predictions(
             event_matrix = model_predictions$survival,
             event_times = event_times,
-            prediction_table = prediction_table,
+            data = data,
             time = time,
-            type = "survival")
+            type = "survival"
+          )
         }
         
       } else {
@@ -605,14 +608,8 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(NULL)
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(NULL)
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Make predictions using the model.
       return(predict(
@@ -620,7 +617,11 @@ setMethod(
         data = data@data,
         type = type,
         num.threads = 1,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -822,4 +823,136 @@ setMethod(
   return(paste0(
     .get_available_ranger_vimp_methods(show_general = show_general),
     "_default"))
+}
+
+
+
+.random_forest_survival_predictions <- function(
+    event_matrix, 
+    event_times, 
+    data,
+    time, 
+    type
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  event_time <- NULL
+
+  # Set id columns
+  id_columns <- get_id_columns()
+  
+  # Convert event_matrix to a matrix.
+  if (!is.matrix(event_matrix)) {
+    event_matrix <- matrix(
+      data = event_matrix, 
+      ncol = length(event_matrix)
+    )
+  }
+  
+  # Combine with identifiers and cast to table.
+  event_table <- cbind(
+    data@data[, mget(id_columns)],
+    data.table::as.data.table(event_matrix)
+  )
+  
+  # Remove duplicate entries
+  event_table <- unique(event_table, by = id_columns)
+  
+  # Melt to a long format.
+  event_table <- data.table::melt(
+    event_table,
+    id.vars = id_columns,
+    variable.name = "time_variable",
+    value.name = "value"
+  )
+  
+  # Create conversion table to convert temporary variables into the event times.
+  conversion_table <- data.table::data.table(
+    "time_variable" = paste0("V", seq_along(event_times)),
+    "event_time" = event_times
+  )
+  
+  # Add in event times
+  event_table <- merge(
+    x = event_table, 
+    y = conversion_table, 
+    on = "time_variable"
+  )
+  
+  # Drop the time_variable column
+  event_table[, "time_variable" := NULL]
+  
+  if (time %in% event_times) {
+    # Get the event time directly.
+    event_table <- event_table[event_time == time, ]
+    
+    # Remove event_time column and rename the value column to predicted_outcome.
+    event_table[, "event_time" := NULL]
+    data.table::setnames(x = event_table, old = "value", new = "predicted_outcome")
+    
+  } else {
+    # Add starting values.
+    if (!0 %in% event_times) {
+      # Create initial table
+      initial_event_table <- data.table::copy(event_table[event_time == event_times[1]])
+      
+      # Update values
+      if (type == "cumulative_hazard") {
+        initial_event_table[, ":="("value" = 0.0, "event_time" = 0)]
+        
+      } else if (type == "survival") {
+        initial_event_table[, ":="("value" = 1.0, "event_time" = 0)]
+        
+      } else {
+        ..error_reached_unreachable_code(paste0(
+          ".random_forest_survival_predictions: type was not recognised: ",
+          type))
+      }
+      
+      # Combine with the event table.
+      event_table <- rbind(initial_event_table, event_table)
+    }
+    
+    # Now, interpolate at the given time point.
+    event_table <- lapply(
+      split(event_table, by = id_columns), 
+      function(sample_table, time, id_columns) {
+        # Interpolate values at the given time.
+        value <- stats::approx(
+          x = sample_table$event_time,
+          y = sample_table$value,
+          xout = time,
+          rule = 2
+        )$y
+        
+        # Create an output table
+        output_table <- data.table::copy(sample_table[1, mget(id_columns)])
+        output_table[, "predicted_outcome" := value]
+        
+        return(output_table)
+      },
+      time = time, 
+      id_columns = id_columns
+    )
+    
+    # Concatenate to single table.
+    event_table <- data.table::rbindlist(event_table)
+  }
+  
+  # Convert to prediction table objects.
+  if (type == "cumulative_hazard") {
+    prediction_table <- as_prediction_table(
+      x = event_table$predicted_outcome,
+      type = "cumulative_hazard",
+      data = data
+    )
+    
+  } else {
+    prediction_table <- as_prediction_table(
+      x = event_table$predicted_outcome,
+      type = "survival_probability",
+      data = data
+    )
+  }
+  
+  return(prediction_table)
 }
