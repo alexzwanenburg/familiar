@@ -334,33 +334,42 @@ setMethod(
   "..predict",
   signature(
     object = "familiarSVM",
-    data = "dataObject"),
-  function(object, data, type = "default", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
+      # default ----------------------------------------------------------------
 
       # Get an empty prediction table.
       prediction_table <- get_placeholder_prediction_table(
         object = object,
         data = data,
-        type = type)
+        type = type
+      )
 
       # Make predictions using the model.
       model_predictions <- tryCatch(
         predict(
           object = object@model,
           newdata = data@data,
-          probability = object@outcome_type %in% c("binomial", "multinomial")),
-        error = identity)
+          probability = object@outcome_type %in% c("binomial", "multinomial")
+        ),
+        error = identity
+      )
 
       # Check if the model trained at all.
       if (inherits(model_predictions, "error")) return(callNextMethod())
@@ -373,41 +382,49 @@ setMethod(
 
         # Obtain class levels from the object.
         class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities to the prediction table.
-        class_probability_columns <- get_class_probability_name(x = object)
         
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            # Check if model_predictions is a matrix.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, class_levels[ii]]
           } else {
-            # Or not.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[class_levels[ii]]
           }
         }
 
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-        
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
-        
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data
+        )
         
       } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
       return(prediction_table)
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
+      prediction_table <- predict(
+        object = object@model,
+        newdata = data@data,
+        ...
+      )
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
