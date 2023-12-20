@@ -48,7 +48,8 @@ setGeneric(
     evaluation_times = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_feature_expression")
   }
 )
@@ -72,7 +73,8 @@ setMethod(
     sample_similarity_metric = waiver(),
     evaluation_times = waiver(),
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+  ) {
     
     # Message extraction start
     logger_message(
@@ -155,6 +157,19 @@ setMethod(
     expression_data <- add_model_name(expression_data, object)
     
     return(list(expression_data))
+  }
+)
+
+
+
+# extract_feature_expression (prediction table) --------------------------------
+setMethod(
+  "extract_feature_expression",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("feature expression")
+    
+    return(NULL)
   }
 )
 
