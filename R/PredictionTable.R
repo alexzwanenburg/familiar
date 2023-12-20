@@ -1572,3 +1572,33 @@ setMethod(
   
   return(ensemble_values)
 }
+
+
+
+# add_model_name (familiarDataElement, prediction table)------------------------
+setMethod(
+  "add_model_name",
+  signature(
+    data = "familiarDataElement",
+    object = "familiarDataElementPredictionTable"
+  ),
+  function(data, object) {
+    
+    data <- add_data_element_identifier(
+      x = data,
+      model_name = "custom_prediction_table"
+    )[[1]]
+    
+    return(data)
+  }
+)
+
+
+# load_familiar_object (prediction_table) --------------------------------------
+setMethod(
+  "load_familiar_object", 
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object) {
+    return(object)
+  }
+)

@@ -1,22 +1,8 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 
-as_metric <- function(
-    metric,
-    object = NULL,
-    outcome_type = NULL,
-    ...) {
+as_metric <- function(metric, outcome_type, ...) {
   
-  # Find the outcome type
-  if (is.null(outcome_type)) {
-    if (
-      is(object, "familiarModel") ||
-      is(object, "familiarEnsemble") ||
-      is(object, "familiarVimpMethod")) {
-      outcome_type <- object@outcome_type
-    }
-  }
-
   if (metric %in% .get_available_auc_roc_metrics()) {
     metric_object <- do.call(
       methods::new,
@@ -405,54 +391,57 @@ setMethod(
 setMethod(
   "compute_metric_score",
   signature(metric = "character"),
-  function(metric, data, object, ...) {
-    if (!is(object, "familiarModel") && !is(object, "familiarEnsemble")) {
-      stop(paste0(
-        "compute_metric_score: object should be a familiarModel ",
-        "or familiarEnsemble object."))
+  function(metric, data, object = NULL, ...) {
+    if (is(data, "dataObject")) {
+      if (!is(object, "familiarModel") && !is(object, "familiarEnsemble")) {
+        stop(paste0(
+          "compute_metric_score: object should be a familiarModel ",
+          "or familiarEnsemble object."))
+      }
+      
+      # Get outcome type.
+      outcome_type <- object@outcome_type
+      
+      # Compute prediction table.
+      data <- .predict(
+        object = object,
+        data = data,
+        ...
+      )
+      
+    } else if (is(data, "familiarDataElementPredictionTable")) {
+      # Get outcome type.
+      outcome_type <- data@outcome_type
+      
+    } else {
+      ..error_reached_unreachable_code("data are neither a data object or a prediction table")
     }
-
+    
+    
     # Create metric objects.
     metric_object_list <- lapply(
       metric,
       as_metric,
-      object = object)
+      outcome_type = outcome_type
+    )
 
     # Check that the metrics are available.
     if (!all(sapply(metric_object_list, is_available))) {
-      stop(paste0(
-        "compute_metric_score: the following metrics are not available for ",
-        object@outcome_type, " outcomes: ",
-        paste_s(metric[!sapply(metric_object_list, is_available)])))
-    }
-
-    # Create prediction table, if one is absent.
-    if (is(data, "dataObject")) {
-      data <- do.call(
-        .predict,
-        args = c(
-          list(
-            "object" = object,
-            "data" = data),
-          list(...)))
+      rlang::abort(
+        message = paste0(
+          "compute_metric_score: the following metrics are not available for ",
+          object@outcome_type, " outcomes: ",
+          paste_s(metric[!sapply(metric_object_list, is_available)])
+        )
+      )
     }
 
     # Compute metric values.
     metric_values <- lapply(
       metric_object_list,
-      function(metric, data, object, dots) {
-        do.call(
-          compute_metric_score,
-          args = c(
-            list(
-              "metric" = metric,
-              "data" = data,
-              "object" = object),
-            dots))
-      },
+      compute_metric_score,
       data = data,
-      object = object,
-      dots = list(...)
+      ...
     )
     
     # Set names.
@@ -474,8 +463,10 @@ setMethod(
       # Set the baseline value.
       metric <- set_metric_baseline_value(
         metric = metric,
-        data = data, ...)
-
+        data = data,
+        ...
+      )
+      
       # Check again
       if (is.null(metric@baseline_value)) {
         ..error_reached_unreachable_code(
@@ -487,7 +478,8 @@ setMethod(
     if (is.null(value)) {
       value <- compute_metric_score(
         metric = metric,
-        data = data)
+        data = data
+      )
     }
 
     # Get the baseline_value
@@ -502,14 +494,16 @@ setMethod(
       optimal_value <- ifelse(
         is_higher_better(metric),
         max(metric@value_range),
-        min(metric@value_range))
-
+        min(metric@value_range)
+      )
+      
       # If the baseline value is already perfect, use a small offset instead.
       if (baseline_value == optimal_value) {
         baseline_value <- ifelse(
           is_higher_better(metric),
           optimal_value - 1E-5,
-          optimal_value + 1E-5)
+          optimal_value + 1E-5
+        )
       }
 
       # Compute the objective_value
@@ -523,8 +517,10 @@ setMethod(
     # Ensure that all objective scores fall in the [-1, 1] range.
     if (!is.finite(objective_value)) {
       objective_value <- NA_real_
+      
     } else if (objective_value < -1.0) {
       objective_value <- -1.0
+      
     } else if (objective_value > 1.0) {
       ..error_reached_unreachable_code(paste0(
         "compute_objective_score: objective value exceeds the maximum of 1.0: ",
@@ -559,7 +555,8 @@ setMethod(
         outcome_info <- create_outcome_info_from_data(data = data@data)
         outcome_info <- .compute_outcome_distribution_data(
           object = outcome_info,
-          data = data@data)
+          data = data@data
+        )
       }
       
     } else if (data.table::is.data.table(data)) {
@@ -567,7 +564,8 @@ setMethod(
       outcome_info <- create_outcome_info_from_data(data = data)
       outcome_info <- .compute_outcome_distribution_data(
         object = outcome_info,
-        data = data)
+        data = data
+      )
       
     } else {
       ..error_reached_unreachable_code(paste0(
@@ -575,39 +573,43 @@ setMethod(
         "using the provided data."))
     }
 
-    # Get a placeholder prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = outcome_info,
-      data = data)
-
     # We need to identify the data source for determining baseline values.
     if (metric@outcome_type %in% c("binomial", "multinomial")) {
       # Get the frequency table and find the class with the majority.
       frequency_table <- outcome_info@distribution$frequency
       majority_class <- frequency_table$outcome[which.max(frequency_table$count)]
-
-      # Fill the prediction_table.
-      prediction_table[, "predicted_class" := majority_class]
-
-      # Define probabilities columns
-      outcome_probability_columns <- get_class_probability_name(object)
-
-      for (ii in seq_along(outcome_probability_columns)) {
+      
+      # Get class levels.
+      class_levels <- get_outcome_class_levels(object)
+      
+      prediction_list <- list()
+      for (ii in seq_along(class_levels)) {
         # Update the predicted probabilities with 1.0 for the majority
         # class and 0.0 for minority classes.
-        if (outcome_probability_columns[ii] == get_class_probability_name(majority_class)) {
-          prediction_table[, (outcome_probability_columns[ii]) := 1.0]
+        if (class_levels[ii] == majority_class) {
+          prediction_list[[class_levels[ii]]] <- rep.int(1.0, times = get_n_samples(data))
+          
         } else {
-          prediction_table[, (outcome_probability_columns[ii]) := 0.0]
+          prediction_list[[class_levels[ii]]] <- rep.int(0.0, times = get_n_samples(data))
         }
       }
+      
+      prediction_table <- as_prediction_table(
+        x = prediction_list,
+        type = "classification",
+        data = data
+      )
       
     } else if (metric@outcome_type %in% c("continuous")) {
       # Baseline median value.
       median_value <- outcome_info@distribution$median
 
       # Fill the prediction_table.
-      prediction_table[, "predicted_outcome" := median_value]
+      prediction_table <- as_prediction_table(
+        x = rep.int(median_value, times = get_n_samples(data)),
+        type = "regression",
+        data = data
+      )
       
     } else if (metric@outcome_type %in% c("survival")) {
       # Median baseline survival
@@ -620,10 +622,14 @@ setMethod(
       } else {
         mean_survival_probability <- NA_real_
       }
-
-      # Fill the prediction_table.
-      prediction_table[, "predicted_outcome" := mean_survival_probability]
       
+      # Fill the prediction_table.
+      prediction_table <- as_prediction_table(
+        x = rep.int(mean_survival_probability, times = get_n_samples(data)),
+        type = "survival_probability",
+        data = data
+      )
+
     } else {
       ..error_outcome_type_not_implemented(metric@outcome_type)
     }
@@ -631,15 +637,17 @@ setMethod(
     # Compute metric value
     metric@baseline_value <- compute_metric_score(
       metric = metric,
-      data = prediction_table)
-
+      data = prediction_table
+    )
+    
     # Check the baseline value is a finite value. If it isn't set the value to
     # the extreme value of the range.
     if (!is.finite(metric@baseline_value)) {
       metric@baseline_value <- ifelse(
         is_higher_better(metric),
         min(metric@value_range),
-        max(metric@value_range))
+        max(metric@value_range)
+      )
     }
 
     return(metric)
@@ -662,7 +670,8 @@ setMethod(
   # Initialise metric
   metric_object <- as_metric(
     metric = metric,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # Check if the metric is available.
   metric_available <- is_available(metric_object)
@@ -671,14 +680,20 @@ setMethod(
 
   # Check if the metric is available.
   if (!is_subclass(class(metric_object)[1], "familiarMetric")) {
-    stop(paste0(
-      metric, " is not a valid metric. ",
-      "Please check the vignette for available performance metrics."))
+    rlang::abort(
+      message = paste0(
+        metric, " is not a valid metric. ",
+        "Please check the vignette for available performance metrics."
+      )
+    )
     
   } else if (!metric_available) {
-    stop(paste0(
-      "The ", metric, " metric is not available for ",
-      outcome_type, " outcomes."))
+    rlang::abort(
+      message = paste0(
+        "The ", metric, " metric is not available for ",
+        outcome_type, " outcomes."
+      )
+    )
   }
   
   return(invisible(TRUE))
@@ -700,7 +715,8 @@ setMethod(
   # Initialise metric object.
   metric_object <- as_metric(
     metric = metric,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   return(metric_object@value_range)
 }

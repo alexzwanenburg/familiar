@@ -937,6 +937,182 @@ setMethod(
 
 
 
+setMethod(
+  "extract_dispatcher",
+  signature(
+    object = "familiarDataElementPredictionTable",
+    proto_data_element = "familiarDataElement"),
+  function(
+    cl = NULL,
+    FUN,
+    object,
+    proto_data_element,
+    aggregate_results,
+    has_internal_bootstrap,
+    ...,
+    message_indent = 0L,
+    verbose = TRUE) {
+    
+    # Determine the number of instances we need to find the estimates.
+    if (proto_data_element@estimation_type == "point") {
+      n_instances <- 1L
+      
+    } else if (proto_data_element@estimation_type %in% c("bias_correction", "bc")) {
+      n_instances <- 20L
+      
+    } else if (proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")) {
+      n_instances <- ceiling(signif(20 / (1.00 - proto_data_element@confidence_level)))
+    }
+    
+    # Determine the number of models we need to evaluate. For prediction tables,
+    # this is always 1.
+    n_models <- 1L
+    
+    # Check if the proposed analysis can be executed.
+    if (
+      !has_internal_bootstrap && n_instances > 1L &&
+      !(proto_data_element@detail_level == "hybrid" && n_models >= n_instances)
+    ) {
+      # The required number of instances cannot be created from models alone.
+      
+      # Add a message
+      if (verbose) {
+        message(paste0(
+          "extract_dispatcher,familiarEnsemble,familiarDataElement: ",
+          "too few models to compute confidence intervals."))
+      } 
+      
+      # Set the detail level to ensemble.
+      if (proto_data_element@detail_level == "hybrid") {
+        # Only one ensemble model is formed.
+        proto_data_element@detail_level <- "ensemble"
+        n_models <- 1L
+      } 
+      
+      # Set the estimation type to point estimates.
+      proto_data_element@estimation_type <- "point"
+      n_instances <- 1L
+    } 
+    
+    # Determine the number of bootstraps that should be computed internally.
+    if (has_internal_bootstrap) {
+      if (proto_data_element@detail_level == "hybrid") {
+        n_bootstraps <- ceiling(n_instances / n_models)
+        n_instances <- n_models * n_bootstraps
+        
+      } else {
+        n_bootstraps <- n_instances
+      }
+      
+    } else {
+      n_bootstraps <- 0L
+    }
+    
+    # If one bootstrap is required, that means no bootstraps are required.
+    if (n_bootstraps <= 1L) n_bootstraps <- 0L
+    
+    
+    # Determine the number of parallel cluster nodes.
+    n_nodes <- length(cl)
+    
+    # Determine whether we should perform parallel processing across
+    # models or internally.
+    if (n_nodes > 1) {
+      if (n_models == 1) {
+        # No need to perform parallelisation across models, when there is only 1
+        # model.
+        parallel_external <- FALSE
+        
+      } else if (n_bootstraps == 0) {
+        # No need to perform internal parallelisation in case this is not
+        # necessary. This check is hit when has_internal_bootstrap is false.
+        parallel_external <- TRUE
+        
+      } else if (n_models >= 0.80 * n_nodes) {
+        # Perform external parallelisation if the number of models would occupy
+        # at least 80% of the nodes. This is because the parallel overhead in
+        # any internal bootstrapping takes up more time.
+        parallel_external <- TRUE
+        
+      } else if (n_models > n_bootstraps) {
+        # Perform external parallelisation if the number of bootstraps would
+        # underutilize the nodes compared to the number of nodes.
+        parallel_external <- TRUE
+        
+      } else {
+        parallel_external <- FALSE
+      }
+      
+    } else {
+      # Back-up when the number of nodes is 1 or none.
+      parallel_external <- FALSE
+    }
+    
+    # Dispatch for ensemble models.
+    if (proto_data_element@detail_level == "ensemble") {
+      # Dispatch for results aggregated at the ensemble level.
+      x <- .extract_dispatcher_ensemble(
+        cl = cl,
+        FUN = FUN,
+        object = object,
+        proto_data_element = proto_data_element,
+        aggregate_results = aggregate_results,
+        n_instances = n_instances,
+        n_bootstraps = n_bootstraps,
+        n_models = n_models,
+        parallel_external = parallel_external,
+        message_indent = message_indent,
+        verbose = verbose,
+        ...
+      )
+      
+    } else if (proto_data_element@detail_level == "hybrid") {
+      # Dispatch for results aggregated with hybrid details.
+      x <- .extract_dispatcher_hybrid(
+        cl = cl,
+        FUN = FUN,
+        object = object,
+        proto_data_element = proto_data_element,
+        aggregate_results = aggregate_results,
+        n_instances = n_instances,
+        n_bootstraps = n_bootstraps,
+        n_models = n_models,
+        parallel_external = parallel_external,
+        message_indent = message_indent,
+        verbose = verbose,
+        ...
+      )
+      
+    } else if (proto_data_element@detail_level == "model") {
+      # Dispatch for results aggregated at the model level.
+      x <- .extract_dispatcher_model(
+        cl = cl,
+        FUN = FUN,
+        object = object,
+        proto_data_element = proto_data_element,
+        aggregate_results = aggregate_results,
+        n_instances = n_instances,
+        n_bootstraps = n_bootstraps,
+        n_models = n_models,
+        parallel_external = parallel_external,
+        message_indent = message_indent,
+        verbose = verbose,
+        ...
+      )
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(
+        "extract_dispatcher: encountered an unknown detail_level attribute: ",
+        proto_data_element@detail_level))
+    }
+    
+    return(x)
+  }
+)
+
+
+
+
 .extract_dispatcher_ensemble <- function(
     cl = NULL,
     FUN,
@@ -948,12 +1124,14 @@ setMethod(
     n_models,
     parallel_external,
     ...,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Add ensemble model name.
   proto_data_element <- add_model_name(
     proto_data_element,
-    object = object)
+    object = object
+  )
   
   # Set flag for interval aggregation.
   aggregate_internal <- aggregate_results &&
@@ -973,7 +1151,8 @@ setMethod(
     n_models = n_models,
     verbose = verbose,
     progress_bar = verbose && n_bootstraps > 1,
-    ...)
+    ...
+  )
   
   # Pack to list.
   if (!is.list(x)) x <- list(x)
@@ -1002,7 +1181,8 @@ setMethod(
     n_models,
     parallel_external,
     ...,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Add ensemble model name.
   proto_data_element <- add_model_name(proto_data_element, object = object)
@@ -1015,7 +1195,8 @@ setMethod(
       bootstrap_seed_offset = seq(
         from = 0, 
         by = n_bootstraps,
-        length.out = n_models),
+        length.out = n_models
+      ),
       MoreArgs = c(
         list(
           "cl" = NULL,
@@ -1026,9 +1207,11 @@ setMethod(
           "n_models" = n_models,
           "verbose" = verbose,
           "progress_bar" = verbose && length(object@model_list) == 1 && n_bootstraps > 1),
-        list(...)),
+        list(...)
+      ),
       progress_bar = verbose && length(object@model_list) > 1,
-      chopchop = TRUE)
+      chopchop = TRUE
+    )
     
   } else {
     x <- fam_mapply(
@@ -1038,7 +1221,8 @@ setMethod(
       bootstrap_seed_offset = seq(
         from = 0,
         by = n_bootstraps,
-        length.out = n_models),
+        length.out = n_models
+      ),
       MoreArgs = c(
         list(
           "cl" = cl,
@@ -1049,8 +1233,10 @@ setMethod(
           "n_models" = n_models,
           "verbose" = verbose,
           "progress_bar" = verbose && n_models == 1 && n_bootstraps > 1),
-        list(...)),
-      progress_bar = verbose && n_models > 1)
+        list(...)
+      ),
+      progress_bar = verbose && n_models > 1
+    )
   }
   
   # Merge data elements together. The model_name identifier gets added as data
@@ -1058,7 +1244,8 @@ setMethod(
   x <- merge_data_elements(
     x,
     as_data = "model_name",
-    as_grouping_column = FALSE)
+    as_grouping_column = FALSE
+  )
   
   # Create point estimate from the data.
   if (proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")) {
@@ -1086,12 +1273,14 @@ setMethod(
     n_models,
     parallel_external,
     ...,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Create a list of data-elements.
   proto_data_element <- rep.int(
     list(proto_data_element),
-    times = length(object@model_list))
+    times = length(object@model_list)
+  )
   
   # Add model (not ensemble) names to the prototype data elements.
   proto_data_element <- mapply(
@@ -1110,7 +1299,8 @@ setMethod(
       bootstrap_seed_offset = seq(
         from = 0,
         by = n_bootstraps,
-        length.out = n_models),
+        length.out = n_models
+      ),
       proto_data_element = proto_data_element,
       MoreArgs = c(
         list(
@@ -1121,9 +1311,11 @@ setMethod(
           "n_models" = n_models,
           "verbose" = verbose,
           "progress_bar" = verbose && n_models == 1 && n_bootstraps > 1),
-        list(...)),
+        list(...)
+      ),
       progress_bar = verbose & length(object@model_list) > 1,
-      chopchop = TRUE)
+      chopchop = TRUE
+    )
     
   } else {
     x <- fam_mapply(
@@ -1133,7 +1325,8 @@ setMethod(
       bootstrap_seed_offset = seq(
         from = 0,
         by = n_bootstraps,
-        length.out = n_models),
+        length.out = n_models
+      ),
       proto_data_element = proto_data_element,
       MoreArgs = c(
         list(
@@ -1144,8 +1337,10 @@ setMethod(
           "n_models" = n_models,
           "verbose" = verbose,
           "progress_bar" = verbose && n_models == 1 && n_bootstraps > 1),
-        list(...)),
-      progress_bar = verbose && length(object@model_list) > 1)
+        list(...)
+      ),
+      progress_bar = verbose && length(object@model_list) > 1
+    )
   }
   
   # Merge data elements together.

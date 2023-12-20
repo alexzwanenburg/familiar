@@ -2412,7 +2412,8 @@ test_all_metrics_available <- function(metrics) {
       # Create a metric object
       object <- as_metric(
         metric = metric,
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
 
       # Check if the learner is available for the outcome.
       if (is_available(object)) {
@@ -2533,7 +2534,8 @@ test_all_metrics <- function(
       # Create metric object
       metric_object <- as_metric(
         metric = metric,
-        object = model)
+        outcome_type = outcome_type
+      )
 
       # Test that metric values can be computed for the full model.
       test_fun(
@@ -3132,7 +3134,8 @@ test_all_metrics <- function(
       # Create metric object
       metric_object <- as_metric(
         metric = metric,
-        object = model)
+        outcome_type = outcome_type
+      )
       
       # Test that metric values can be computed for the one-feature model.
       test_fun(
@@ -3342,7 +3345,8 @@ test_all_metrics <- function(
       # Create metric object
       metric_object <- as_metric(
         metric = metric,
-        object = model)
+        outcome_type = outcome_type
+      )
 
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
@@ -3405,7 +3409,8 @@ test_all_metrics <- function(
       # Create metric object
       metric_object <- as_metric(
         metric = metric,
-        object = model)
+        outcome_type = outcome_type
+      )
 
       test_fun(
         paste0(
@@ -3466,7 +3471,8 @@ test_all_metrics <- function(
       # Create metric object
       metric_object <- as_metric(
         metric = metric,
-        object = model)
+        outcome_type = outcome_type
+      )
       
       test_fun(
         paste0(

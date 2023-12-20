@@ -181,13 +181,16 @@ setMethod(
     metric_object_list <- lapply(
       as.character(object@hyperparameters$metric),
       as_metric,
-      object = fam_model)
-
+      outcome_type = object@outcome_type
+    )
+    
     # Add baseline values for each metric.
-    metric_object_list <- lapply(metric_object_list,
+    metric_object_list <- lapply(
+      metric_object_list,
       set_metric_baseline_value,
       object = fam_model,
-      data = data)
+      data = data
+    )
 
     # Generate score table.
     score_table <- data.table::data.table(

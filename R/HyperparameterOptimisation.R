@@ -710,7 +710,8 @@ setMethod(
     metric_object_list <- lapply(
       metric,
       as_metric,
-      object = object)
+      outcome_type = object@outcome_type
+    )
     
     # Add baseline values for each metric.
     metric_object_list <- lapply(

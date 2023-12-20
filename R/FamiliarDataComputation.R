@@ -134,7 +134,12 @@ NULL
     default, 
     data_element) {
   
-  if (is.waive(x)) x <- object@settings$aggregate_results
+  if (is.waive(x) && methods::.hasSlot(object, "settings")) {
+    x <- object@settings$aggregate_results
+    
+  } else if (is.waive(x)) {
+    return(default)
+  }
   
   if (is.null(x)) return(default)
   
@@ -252,7 +257,7 @@ setMethod(
 
 
 
-# extract_data (familiarDataElementPredictionTable) ----------------------------
+# extract_data (prediction table) ----------------------------------------------
 setMethod(
   "extract_data",
   signature(object = "familiarDataElementPredictionTable"),

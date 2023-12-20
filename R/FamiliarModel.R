@@ -654,9 +654,13 @@ setMethod(
     # Load object.
     object <- load_familiar_object(object)
 
-    return(do.call(add_model_name, args = c(list(
-      "data" = data,
-      "object" = object))))
+    return(do.call(
+      add_model_name,
+      args = list(
+        "data" = data,
+        "object" = object
+      )
+    ))
   }
 )
 
