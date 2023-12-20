@@ -199,6 +199,32 @@ setMethod(
 
 
 
+## as_familiar_data (prediction table) -----------------------------------------
+
+#' @rdname as_familiar_data-methods
+setMethod(
+  "as_familiar_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, name = NULL, ...) {
+    # Familiar data
+    fam_data <- do.call(
+      extract_data,
+      args = c(
+        list("object" = object),
+        list(...)
+      )
+    )
+    
+    # Set a placeholder name or a user-provided name for the familiarData
+    # object.
+    fam_data <- set_object_name(x = fam_data, new = name)
+    
+    return(fam_data)
+  }
+)
+
+
+
 ## as_familiar_data (model) ----------------------------------------------------
 
 #' @rdname as_familiar_data-methods
@@ -423,6 +449,33 @@ setMethod(
 )
 
 
+## as_familiar_collection (prediction table) -----------------------------------
+
+#' @rdname as_familiar_collection-methods
+setMethod(
+  "as_familiar_collection",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(
+    object,
+    familiar_data_names = NULL,
+    collection_name = NULL,
+    ...) {
+    # Pass to as_familiar_collection for lists to load and process objects
+    # there.
+    return(do.call(
+      as_familiar_collection,
+      args = c(
+        list(
+          "object" = list(object),
+          "familiar_data_names" = familiar_data_names,
+          "collection_name" = collection_name),
+        list(...))
+      )
+    )
+  }
+)
+
+
 
 ## as_familiar_collection (list) -----------------------------------------------
 
@@ -474,6 +527,21 @@ setMethod(
       stop("A familiarData object can only be constructed from a single familiarEnsemble object.")
     }
 
+    # Convert prediction table objects to familiarData.
+    if (all(sapply(object, is, class2 = "familiarDataElementPredictionTable"))) {
+      object <- do.call(
+        as_familiar_data,
+        args = c(
+          list("object" = object),
+          list(...)
+        )
+      )
+      
+      # Store in list, if required.
+      if (!is(object, "list")) object <- list(object)
+    }
+    
+    # Check if all objects at this moments are familiarData objects.
     if (!all(sapply(object, is, class2 = "familiarData"))) {
       stop("Only familiarData objects can be used to construct a familiarCollection object.")
     }
