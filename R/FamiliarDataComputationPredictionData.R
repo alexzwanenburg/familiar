@@ -30,7 +30,8 @@ setGeneric(
     confidence_level = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_predictions")
   }
 )
@@ -54,7 +55,8 @@ setMethod(
     confidence_level = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     # Extract predictions from the data using the models in the ensemble. Note:
     # we do not call the predict function on the familiarEnsemble directly as
     # this would cause predict to become highly convoluted, in particular with
@@ -158,6 +160,18 @@ setMethod(
       verbose = verbose)
     
     return(performance_data)
+  }
+)
+
+
+
+# extract_predictions (prediction table) ---------------------------------------
+setMethod(
+  "extract_predictions",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    # A prediction table is already a prediction table :)
+    return(.complete(object))
   }
 )
 

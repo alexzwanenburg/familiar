@@ -39,7 +39,7 @@ NULL
   can_set_sample_limit <- c("sample_similarity", "ice_data")
   
   # Data elements that can be computed from prediction table objects.
-  can_use_prediction_table <- c()
+  can_use_prediction_table <- c("prediction_data")
   
   if (check_has_sample_limit) {
     all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
