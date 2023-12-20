@@ -53,7 +53,8 @@ setGeneric(
     feature_similarity_metric = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_univariate_analysis")
   }
 )
@@ -75,7 +76,8 @@ setMethod(
     feature_similarity_threshold = waiver(),
     feature_similarity_metric = waiver(),
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     p_value <- NULL
@@ -203,6 +205,19 @@ setMethod(
     }
     
     return(list(univariate_data, icc_data))
+  }
+)
+
+
+
+# extract_univariate_analysis (prediction table) -------------------------------
+setMethod(
+  "extract_univariate_analysis",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("univariate feature importance")
+    
+    return(NULL)
   }
 )
 
