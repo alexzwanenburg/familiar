@@ -121,6 +121,19 @@ setMethod(
 
 
 
+# extract_model_vimp (prediction table) ----------------------------------------
+setMethod(
+  "extract_model_vimp",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("model-based variable importance")
+    
+    return(NULL)
+  }
+)
+
+
+
 .extract_model_vimp <- function(
     object,
     data,
@@ -269,6 +282,19 @@ setMethod(
     return(data_element)
   }
 )
+
+
+# extract_fs_vimp (prediction table) -------------------------------------------
+setMethod(
+  "extract_fs_vimp",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("variable importance")
+    
+    return(NULL)
+  }
+)
+
 
 
 # merge_data_elements (familiarDataElementVimpData) ----------------------------
