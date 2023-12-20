@@ -45,7 +45,8 @@ setMethod(
   function(
     object,
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+  ) {
     # Extracts hyper-parameters from each model and collects them.
     
     # Message extraction start
@@ -74,6 +75,61 @@ setMethod(
       verbose = verbose)
     
     return(hyperparameter_data)
+  }
+)
+
+
+
+# extract_hyperparameters (familiarEnsemble) -----------------------------------
+setMethod(
+  "extract_hyperparameters",
+  signature(object = "familiarEnsemble"),
+  function(
+    object,
+    message_indent = 0L,
+    verbose = FALSE
+  ) {
+    # Extracts hyper-parameters from each model and collects them.
+    
+    # Message extraction start
+    logger_message(
+      paste0("Extracting hyperparameters from the models in the ensemble."),
+      indent = message_indent,
+      verbose = verbose)
+    
+    # Test if models are properly loaded
+    if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
+    
+    # Test if the any of the models in the ensemble were trained.
+    if (!model_is_trained(object)) return(NULL)
+    
+    proto_data_element <- methods::new("familiarDataElementHyperparameters")
+    
+    # Generate elements to send to dispatch.
+    hyperparameter_data <- extract_dispatcher(
+      FUN = .extract_hyperparameters,
+      cl = NULL,
+      has_internal_bootstrap = FALSE,
+      object = object,
+      proto_data_element = proto_data_element,
+      aggregate_results = FALSE,
+      message_indent = message_indent + 1L,
+      verbose = verbose)
+    
+    return(hyperparameter_data)
+  }
+)
+
+
+
+# extract_hyperparameters (prediction table) -----------------------------------
+setMethod(
+  "extract_hyperparameters",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("model hyperparameters")
+    
+    return(NULL)
   }
 )
 
