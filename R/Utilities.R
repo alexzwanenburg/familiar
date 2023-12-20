@@ -885,12 +885,13 @@ all_empty_slot <- function(object_list, slot_name, slot_element = NULL) {
 
 
 
-.optional_from_slot <- function(object, slot_name, default = NULL) {
+.optional_from_slot <- function(object, slot_name, alternative = NULL) {
   
   if (methods::.hasSlot(object, slot_name)) {
     return(methods::slot(object, slot_name))
+    
   } else {
-    return(default)
+    return(alternative)
   }
 }
 
