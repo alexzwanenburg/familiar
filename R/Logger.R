@@ -34,9 +34,12 @@ logger_message <- function(
 
 logger_warning <- function(
     warn_str,
-    file_name = NULL) {
+    file_name = NULL,
+    warn_class = NULL,
+    call = rlang::caller_env()
+) {
   # Write warning to console and file
-
+  
   if (is.null(file_name)) file_name <- .get_log_file()
 
   # Date and time string
@@ -50,11 +53,16 @@ logger_warning <- function(
     tryCatch(write(
       x = log_str,
       file = file_name,
-      append = TRUE))
+      append = TRUE
+    ))
   }
 
   # Write warning to console
-  warning(warn_str)
+  rlang::warn(
+    message =  warn_str,
+    class = warn_class,
+    call = call
+  )
   
   return(invisible(NULL))
 }

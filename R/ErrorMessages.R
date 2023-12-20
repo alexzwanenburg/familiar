@@ -9,10 +9,33 @@
 
 
 
-..warning_no_comparison_between_models <- function() {
-  logger_warning(paste0(
-    "Cannot create plots to compare directly between models. ",
-    "Please use the hybrid or ensemble detail levels."))
+..warning_no_comparison_between_models <- function(
+    call = rlang::caller_env()
+) {
+  logger_warning(
+    paste0(
+      "Cannot create plots to compare directly between models. ",
+      "Please use the hybrid or ensemble detail levels."
+    ),
+    call = call
+  )
+}
+
+
+
+..warning_no_data_extraction_from_prediction_table <- function(
+    data_element_description,
+    call = rlang::caller_env()
+) {
+  warn_str <- paste0(
+    "Unable to compute ", data_element_description, " using prediction tables."
+  )
+  
+  logger_warning(
+    warn_str = warn_str,
+    warn_class = "prediction_table_no_data_extraction_warning",
+    call = call
+  )
 }
 
 
