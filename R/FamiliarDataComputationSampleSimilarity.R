@@ -59,10 +59,12 @@ setGeneric(
     sample_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_sample_similarity")
   }
 )
+
 
 
 # extract_sample_similarity (familiarEnsemble) ---------------------------------
@@ -80,7 +82,8 @@ setMethod(
     sample_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     
     # Message extraction start
     logger_message(
@@ -143,6 +146,19 @@ setMethod(
       verbose = verbose)
     
     return(similarity_data)
+  }
+)
+
+
+
+# extract_sample_similarity (familiarDataElementPredictionTable) ---------------
+setMethod(
+  "extract_sample_similarity",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("sample similarity")
+    
+    return(NULL)
   }
 )
 

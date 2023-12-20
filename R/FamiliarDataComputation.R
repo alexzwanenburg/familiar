@@ -502,7 +502,7 @@ setMethod(
     # features in the ensemble is generally smaller than that assessed within
     # feature selection..
     
-    # Compute a table containg the pairwise distance between features.
+    # Compute a table containing the pairwise distance between features.
     feature_similarity <- extract_feature_similarity(
       object = object,
       data = data,
