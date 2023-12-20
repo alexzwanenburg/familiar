@@ -506,7 +506,8 @@ setMethod(
       feature_similarity_threshold = feature_similarity_threshold,
       feature_similarity_metric = feature_similarity_metric,
       verbose = verbose,
-      message_indent = message_indent)
+      message_indent = message_indent
+    )
   }
   
   ## Compute distance between samples ----------------------------------------
@@ -524,7 +525,8 @@ setMethod(
       sample_cluster_method = sample_cluster_method,
       sample_linkage_method = sample_linkage_method,
       verbose = verbose,
-      message_indent = message_indent)
+      message_indent = message_indent
+    )
   }
   
   ## Aggregate feature selection variable importance -------------------------
@@ -535,7 +537,8 @@ setMethod(
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute model-specific variable importance ------------------------------
@@ -547,7 +550,8 @@ setMethod(
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute permutation variable importance ---------------------------------
@@ -567,7 +571,8 @@ setMethod(
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute feature expression heatmap --------------------------------------
@@ -586,7 +591,8 @@ setMethod(
       sample_similarity_metric = sample_similarity_metric,
       evaluation_times = evaluation_times,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute univariate feature importance -----------------------------------
@@ -604,7 +610,8 @@ setMethod(
       feature_similarity_threshold = feature_similarity_threshold,
       feature_similarity_metric = feature_similarity_metric,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Aggregate model hyper-parameters ----------------------------------------
@@ -613,7 +620,8 @@ setMethod(
     hyperparameter_info <- extract_hyperparameters(
       object = object,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute model predictions -----------------------------------------------
@@ -630,7 +638,8 @@ setMethod(
       confidence_level = confidence_level,
       evaluation_times = evaluation_times,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute model performance metrics ---------------------------------------
@@ -649,7 +658,8 @@ setMethod(
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute decision curve analysis data ------------------------------------
@@ -667,7 +677,8 @@ setMethod(
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Aggregate stratification data -------------------------------------------
@@ -677,7 +688,8 @@ setMethod(
       object = object,
       detail_level = detail_level,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute risk group stratification ---------------------------------------
@@ -692,7 +704,8 @@ setMethod(
       detail_level = detail_level,
       confidence_level = confidence_level,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Aggregate calibration information ---------------------------------------
@@ -702,7 +715,8 @@ setMethod(
       object = object,
       detail_level = detail_level,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute calibration data ------------------------------------------------
@@ -720,7 +734,8 @@ setMethod(
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute AUC-ROC and AUC-PR ----------------------------------------------
@@ -737,7 +752,8 @@ setMethod(
       bootstrap_ci_method = bootstrap_ci_method,
       confidence_level = confidence_level,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute confusion matrix ------------------------------------------------
@@ -750,7 +766,8 @@ setMethod(
       ensemble_method = ensemble_method,
       detail_level = detail_level,
       message_indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   ## Compute individual conditional expectation ------------------------------
@@ -771,33 +788,46 @@ setMethod(
       is_pre_processed = is_pre_processed,
       message_indent = message_indent,
       verbose = verbose,
-      ...)
+      ...
+    )
   }
   
+  # Set up a placeholder pooling table.
+  if (is(object, "familiarEnsemble")) {
+    pooling_table <- data.table::data.table(
+      "ensemble_data_id" = object@run_table$ensemble_data_id,
+      "ensemble_run_id" = object@run_table$ensemble_run_id,
+      "data_perturb_level" = ifelse(is.na(data@perturb_level), 0, data@perturb_level),
+      "pool_data_id" = 0L,
+      "pool_run_id" = 0,
+      "pool_perturb_level" = 0
+    )
+  } else {
+    pooling_table <- data.table::data.table(
+      "ensemble_data_id" = 0,
+      "ensemble_run_id" = 0,
+      "data_perturb_level" = 0,
+      "pool_data_id" = 0L,
+      "pool_run_id" = 0,
+      "pool_perturb_level" = 0
+    )
+  }
   
-  # Set up a placehold pooling table. This may need to be adapted.
-  pooling_table <- data.table::data.table(
-    "ensemble_data_id" = object@run_table$ensemble_data_id,
-    "ensemble_run_id" = object@run_table$ensemble_run_id,
-    "data_perturb_level" = ifelse(is.na(data@perturb_level), 0, data@perturb_level),
-    "pool_data_id" = 0L,
-    "pool_run_id" = 0,
-    "pool_perturb_level" = 0)
   
   # Create a familiarData object
   fam_data <- methods::new(
     "familiarData",
     outcome_type = object@outcome_type,
-    outcome_info = object@outcome_info,
+    outcome_info = .optional_from_slot(object, "outcome_info", alternative = NULL),
     fs_vimp = fs_vimp_info,
     model_vimp = model_vimp_info,
     permutation_vimp = permutation_vimp,
     hyperparameters = hyperparameter_info,
     hyperparameter_data = NULL,
-    required_features = object@required_features,
-    model_features = object@model_features,
-    learner = object@learner,
-    fs_method = object@fs_method,
+    required_features = .optional_from_slot(object, "required_features", alternative = NULL),
+    model_features = .optional_from_slot(object, "model_features", alternative = NULL),
+    learner = .optional_from_slot(object, "learner", alternative = "custom_learner"),
+    fs_method = .optional_from_slot(object, "fs_method", alternative = "custom_vimp_method"),
     pooling_table = pooling_table,
     prediction_data = prediction_data,
     confusion_matrix = confusion_matrix_info,
@@ -815,7 +845,7 @@ setMethod(
     ice_data = ice_data,
     is_validation = data@load_validation,
     generating_ensemble = get_object_name(object = object, abbreviated = FALSE),
-    project_id = object@project_id
+    project_id = .optional_from_slot(object, "project_id", alternative = NULL)
   )
   
   # Add package version to the data set 
