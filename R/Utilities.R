@@ -885,6 +885,17 @@ all_empty_slot <- function(object_list, slot_name, slot_element = NULL) {
 
 
 
+.optional_from_slot <- function(object, slot_name, default = NULL) {
+  
+  if (methods::.hasSlot(object, slot_name)) {
+    return(methods::slot(object, slot_name))
+  } else {
+    return(default)
+  }
+}
+
+
+
 is_singular_data <- function(x) {
   # Checks if the input data is singular (i.e. only has one value)
   class_x <- class(x)
