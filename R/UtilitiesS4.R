@@ -74,13 +74,6 @@ setMethod(
 
 setMethod(
   "is_empty",
-  signature(x = "predictionTable"),
-  function(x, ...)
-    return(is_empty(x@prediction_dataS))
-)
-
-setMethod(
-  "is_empty",
   signature(x = "vector"),
   function(x, ...) {
     return(length(x) == 0)
