@@ -3,30 +3,6 @@
 NULL
 
 
-# familiarDataElementPredictionTable object ------------------------------------
-setClass(
-  "familiarDataElementPredictionTable",
-  contains = "familiarDataElement",
-  slots = list(
-    "ensemble_method" = "character",
-    "percentiles" = "ANY",
-    "outcome_type" = "ANY",
-    "identifier_data" = "ANY",
-    "reference_data" = "ANY",
-    "prediction_data" = "ANY"
-  ),
-  prototype = methods::prototype(
-    bootstrap_ci_method = "percentile",
-    ensemble_method = "median",
-    percentiles = NULL,
-    outcome_type = NULL,
-    identifier_data = NULL,
-    reference_data = NULL, 
-    prediction_data = NULL
-  )
-)
-
-
 
 # extract_predictions (generic) ------------------------------------------------
 

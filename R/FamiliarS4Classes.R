@@ -1502,46 +1502,25 @@ setClass(
 
 
 
-# predictionTable object -------------------------------------------------------
-
-#' Table with predictions
-#'
-#' ...
-#'
-#' @slot outcome_type Outcome type of the data used to create the object.
-#' @slot outcome_info Outcome information object, which contains additional
-#'   information concerning the outcome, such as class levels.
-#' @slot identifier_data
-#' @slot reference_data
-#' @slot prediction_data
-#' @slot familiar_version Version of the familiar package used to create this
-#'   prediction table.
-#'
-#' @details ...
-#'
-#' @export
-
+# familiarDataElementPredictionTable object ------------------------------------
 setClass(
-  "predictionTable",
+  "familiarDataElementPredictionTable",
+  contains = "familiarDataElement",
   slots = list(
-    # Type of outcome.
-    outcome_type = "character",
-    # Outcome information object.
-    outcome_info = "ANY",
-    # Identifier data.
-    identifier_data = "ANY",
-    # Known outcome values.
-    reference_data = "ANY",
-    # Prediction data objects.
-    prediction_data = "ANY",
-    # Package version for backward compatibility
-    familiar_version = "ANY"),
-  prototype = list(
-    outcome_type = NA_character_,
-    outcome_info = NULL,
+    "ensemble_method" = "character",
+    "percentiles" = "ANY",
+    "outcome_type" = "ANY",
+    "identifier_data" = "ANY",
+    "reference_data" = "ANY",
+    "prediction_data" = "ANY"
+  ),
+  prototype = methods::prototype(
+    bootstrap_ci_method = "percentile",
+    ensemble_method = "median",
+    percentiles = NULL,
+    outcome_type = NULL,
     identifier_data = NULL,
-    reference_data = NULL,
-    prediction_data = NULL,
-    familiar_version = NULL
+    reference_data = NULL, 
+    prediction_data = NULL
   )
 )
