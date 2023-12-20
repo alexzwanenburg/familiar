@@ -17,7 +17,7 @@ NULL
 #'@param aggregate_results Flag that signifies whether results should be
 #'  aggregated for export.
 #'
-#'@inheritDotParams extract_data
+#'@inheritDotParams .extract_data
 #'@inheritDotParams as_familiar_collection
 #'
 #'@details Data, such as model performance and calibration information, is

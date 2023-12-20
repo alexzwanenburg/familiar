@@ -10,7 +10,7 @@ NULL
 #'
 #'@description Collects predicted values from models in a `familiarEnsemble`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with single-model and ensemble predictions.
 #'@md

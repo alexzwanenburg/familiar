@@ -21,7 +21,7 @@ setClass(
 #'@description Computes and collects permutation variable importance from a
 #'  `familiarEnsemble`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@details This function also computes credibility intervals for the ensemble
 #'  model, at the level of `confidence_level`.

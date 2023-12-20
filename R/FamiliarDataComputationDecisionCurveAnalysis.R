@@ -23,7 +23,7 @@ setClass(
 #'  For survival outcomes, the Nam-D'Agostino and Greenwood-Nam-D'Agostino tests
 #'  are performed.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with data.tables containing calibration test information for
 #'  the ensemble model.

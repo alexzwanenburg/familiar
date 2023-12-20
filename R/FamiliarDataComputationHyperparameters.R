@@ -20,7 +20,7 @@ setClass(
 #'
 #'@description Collects hyperparameters from models in a `familiarEnsemble`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list of familiarDataElements with hyperparameters.
 #'@md

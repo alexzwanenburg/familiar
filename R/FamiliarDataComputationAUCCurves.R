@@ -9,7 +9,9 @@ setClass(
   contains = "familiarDataElement",
   prototype = methods::prototype(
     value_column = "y",
-    grouping_column = "x"))
+    grouping_column = "x"
+  )
+)
 
 
 
@@ -19,7 +21,7 @@ setClass(
 #'
 #'@description Computes the ROC curve from a `familiarEnsemble`.
 #''
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@details This function also computes credibility intervals for the ROC curve
 #'  for the ensemble model, at the level of `confidence_level`. In the case of
@@ -47,7 +49,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_auc_data")
   }
 )
@@ -71,7 +74,8 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     # Extract data for plotting AUC curves.
     
     # AUC data can only be prepared for binomial and multinomial outcomes
@@ -81,7 +85,8 @@ setMethod(
     logger_message(
       paste0("Computing receiver-operating characteristic curves."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method

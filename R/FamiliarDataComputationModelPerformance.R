@@ -16,7 +16,7 @@ setClass(
 #'@description Computes and collects discriminative performance metrics from a
 #'  `familiarEnsemble`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@details This method computes credibility intervals for the ensemble model, at
 #'  the level of `confidence_level`. This is a general method. Metrics with

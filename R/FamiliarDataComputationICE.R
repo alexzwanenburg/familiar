@@ -36,7 +36,7 @@ setClass(
 #'@param feature_y_range As `feature_x_range`, but for the second feature in
 #'  case two features are defined.
 #'@param n_sample_points Number of points used to sample continuous features.
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A data.table containing individual conditional expectation plot data.
 #'@md

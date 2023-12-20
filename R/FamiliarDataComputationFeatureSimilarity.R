@@ -33,7 +33,7 @@ setClass(
 #'  used in a `familiarEnsemble` object. This table can be used to cluster
 #'  features, and is exported directly by `export_feature_similarity`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A data.table containing pairwise distance between features. This data
 #'  is only the upper triangular of the complete matrix (i.e. the sparse
@@ -509,7 +509,7 @@ setMethod(
 #'@param export_clustering Add clustering information to data.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams as_familiar_collection

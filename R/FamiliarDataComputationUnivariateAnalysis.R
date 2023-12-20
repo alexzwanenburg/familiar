@@ -32,7 +32,7 @@ setClass(
 #'  in a `familiarEnsemble` object. This assessment includes the computation of
 #'  p and q-values, as well as robustness (in case of repeated measurements).
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with a data.table containing information concerning the
 #'  univariate analysis of important features.

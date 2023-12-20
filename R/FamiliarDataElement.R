@@ -727,7 +727,7 @@ setMethod(
 #'@param has_internal_bootstrap A logical flag that indicates whether `FUN` has
 #'  internal bootstrapping capabilities.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@details This function first determines how many data points need to be
 #'  evaluated to complete the desired estimation, i.e. 1 for point estimates, 20

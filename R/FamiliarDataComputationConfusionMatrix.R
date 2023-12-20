@@ -20,7 +20,7 @@ setClass(
 #'@description Computes and extracts the confusion matrix for predicted and
 #'  observed categorical outcomes used in a `familiarEnsemble` object.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A data.table containing predicted and observed outcome data together
 #'  with a co-occurence count.

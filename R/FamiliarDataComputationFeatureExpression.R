@@ -27,7 +27,7 @@ setClass(
 #'  sample. This is used to determine cluster information, and indicate which
 #'  samples are similar. The table is created by the
 #'  `extract_sample_similarity` method.
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with a data.table containing feature expressions.
 #'@md

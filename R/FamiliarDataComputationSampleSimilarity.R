@@ -38,7 +38,7 @@ setClass(
 #'  This table can be used to cluster samples, and is exported directly by
 #'  `extract_feature_expression`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A data.table containing pairwise distance between samples. This data
 #'  is only the upper triangular of the complete matrix (i.e. the sparse
@@ -331,7 +331,7 @@ setMethod(
 #'@param export_dendrogram Add dendrogram in the data element objects.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection

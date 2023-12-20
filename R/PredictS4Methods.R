@@ -84,7 +84,7 @@ NULL
 #' @param percentiles Currently unused.
 #' @param ... to be documented.
 #'
-#' @inheritParams extract_data
+#' @inheritParams .extract_data
 #'
 #' @details This method is used to predict values for instances specified by the
 #'   `newdata` using the model or ensemble of models specified by the `object`

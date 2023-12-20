@@ -25,7 +25,7 @@ setClass(
 #'@description Aggregate variable importance from models in a
 #'  `familiarEnsemble`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list containing variable importance information.
 #'@md
@@ -159,7 +159,7 @@ setMethod(
 #'  This information can only be obtained as part of the main `summon_familiar`
 #'  process.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list containing feature selection variable importance information.
 #'@md

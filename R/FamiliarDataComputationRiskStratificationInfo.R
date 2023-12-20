@@ -15,7 +15,7 @@ setClass(
 #'
 #'@description Collects risk stratification information.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list of familiarDataElements with risk stratification information.
 #'@md

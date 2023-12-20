@@ -41,7 +41,7 @@ setClass(
 #'  Kaplan-Meier plots, as well as logrank and hazard-ratio tests between the
 #'  respective risk groups.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with data.tables containing information concerning risk group
 #'  stratification.

@@ -149,7 +149,7 @@ setMethod(
 #' @param name Name of the `familiarData` object. If not set, a name is
 #'   automatically generated.
 #'
-#' @inheritDotParams extract_data
+#' @inheritDotParams .extract_data
 #'
 #' @details The `data` argument is required if `familiarEnsemble` or
 #'   `familiarModel` objects are provided.
@@ -311,7 +311,7 @@ setMethod(
 #'   parameter is one or more `familiarData` objects.
 #' @param collection_name Name of the collection.
 #'
-#' @inheritDotParams extract_data
+#' @inheritDotParams .extract_data
 #'
 #' @details A `data` argument is expected if the `object` argument is a
 #'   `familiarEnsemble` object or one or more `familiarModel` objects.
