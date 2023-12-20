@@ -22,7 +22,9 @@ setClass(
     similarity_threshold = NULL,
     dendrogram = NULL,
     value_column = "value",
-    grouping_column = c("feature_name_1", "feature_name_2")))
+    grouping_column = c("feature_name_1", "feature_name_2")
+  )
+)
 
 
 # extract_feature_similarity (generic) -----------------------------------------
@@ -196,6 +198,18 @@ setMethod(
       verbose = verbose)
     
     return(similarity_data)
+  }
+)
+
+
+# extract_feature_similarity (familiarDataElementPredictionTable) --------------
+setMethod(
+  "extract_feature_similarity",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("feature similarity")
+    
+    return(NULL)
   }
 )
 
