@@ -6,7 +6,8 @@ NULL
 .get_available_data_elements <- function(
     check_has_estimation_type = FALSE,
     check_has_detail_level = FALSE, 
-    check_has_sample_limit = FALSE
+    check_has_sample_limit = FALSE,
+    check_from_prediction_table = FALSE
 ) {
   
   # All data elements.
@@ -21,12 +22,14 @@ NULL
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c(
     "auc_data", "calibration_data", "decision_curve_analyis",
-    "model_performance", "permutation_vimp",  "prediction_data", "ice_data")
+    "model_performance", "permutation_vimp",  "prediction_data", "ice_data"
+  )
   
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(
     can_set_estimation_type, "calibration_info", "confusion_matrix",
-    "risk_stratification_data", "risk_stratification_info")
+    "risk_stratification_data", "risk_stratification_info"
+  )
   
   # Data elements that allow for setting an estimation type but not detail
   # level.
@@ -34,6 +37,9 @@ NULL
   
   # Data elements that allow for setting a sample limit.
   can_set_sample_limit <- c("sample_similarity", "ice_data")
+  
+  # Data elements that can be computed from prediction table objects.
+  can_use_prediction_table <- c()
   
   if (check_has_sample_limit) {
     all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
@@ -45,6 +51,10 @@ NULL
   
   if (check_has_detail_level) {
     all_data_elements <- intersect(all_data_elements, can_set_detail_level)
+  }
+  
+  if (check_from_prediction_table) {
+    all_data_elements <- intersect(all_data_elements, can_use_prediction_table)
   }
   
   return(all_data_elements)
@@ -255,7 +265,9 @@ setMethod(
   ) {
     # Generates a familiarData object from the ensemble.
     
-    if (is.waive(data_element)) data_element <- .get_available_data_elements()
+    if (is.waive(data_element)) {
+      data_element <- .get_available_data_elements(check_from_prediction_table = TRUE)
+    }
     
     # Check the data_element argument.
     if (length(data_element) > 0) {
