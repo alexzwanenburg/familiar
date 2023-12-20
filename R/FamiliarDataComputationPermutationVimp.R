@@ -52,7 +52,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_permutation_vimp")
   }
 )
@@ -84,7 +85,8 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Message extraction start
     logger_message(
@@ -272,6 +274,19 @@ setMethod(
       verbose = verbose)
     
     return(vimp_data)
+  }
+)
+
+
+
+# extract_permutation_vimp (prediction table) ----------------------------------
+setMethod(
+  "extract_permutation_vimp",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("permutation variable importance")
+    
+    return(NULL)
   }
 )
 
