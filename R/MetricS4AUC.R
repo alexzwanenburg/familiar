@@ -12,7 +12,9 @@ setClass(
     name = "Area under Receiver Operating Characteristic Curve",
     baseline_value = 0.5,
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -35,26 +37,27 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome <- NULL
 
+    if (is_empty(data)) return(callNextMethod())
+
+    if (!is(data, "predictionTableClassification")) {
+      ..error_data_not_prediction_table(data, "predictionTableClassification")
+    }
+
     # Get the classes and number of classes in data.
-    outcome_classes <- get_outcome_class_levels(
-      data,
-      outcome_type = metric@outcome_type)
+    outcome_classes <- get_outcome_class_levels(data)
     n_classes <- length(outcome_classes)
 
     # Skip calculation if an AUC cannot be computed.
     if (n_classes <= 1) return(callNextMethod())
 
     # Remove any entries that lack valid predictions.
-    data <- remove_nonvalid_predictions(
-      prediction_table = data,
-      outcome_type = metric@outcome_type)
-
+    data <- remove_invalid_predictions(data)
+    
     # Remove any entries that lack observed values.
-    data <- remove_missing_outcomes(
-      data = data,
-      outcome_type = metric@outcome_type)
-
+    data <- filter_missing_outcome(data)
     if (is_empty(data)) return(callNextMethod())
+    
+    data <- .as_data_table(data)
     if (nrow(data) <= 1) return(callNextMethod())
 
     # Define class combinations (>1 in case of multinomial outcomes)
@@ -73,13 +76,10 @@ setMethod(
       positive_class <- class_combinations[1, ii]
       negative_class <- class_combinations[2, ii]
 
-      # Get the probability column name for the positive class.
-      class_probability_column <- get_class_probability_name(x = positive_class)
-
       # Get the probabilities that correspond to the positive and
       # negative class in outcome (g and f in Hand et al.).
-      class_probability_positive <- data[outcome == positive_class, ][[class_probability_column]]
-      class_probability_negative <- data[outcome == negative_class, ][[class_probability_column]]
+      class_probability_positive <- data[outcome == positive_class, ][[positive_class]]
+      class_probability_negative <- data[outcome == negative_class, ][[positive_class]]
 
       # Get number of positive and negative class entries (n0 and n1 in Hand et
       # al.).
@@ -91,7 +91,8 @@ setMethod(
         # Determine probability ranks
         sample_rank <- data.table::frank(
           x = c(class_probability_positive, class_probability_negative),
-          ties.method = "average")
+          ties.method = "average"
+        )
 
         # Calculate AUC
         auc_score[ii] <- (sum(sample_rank[seq_len(n_positive)]) - n_positive * (n_positive + 1) / 2) /

@@ -518,7 +518,7 @@
 #'   details.
 #'
 #'   If unset, every row will be identified as a single sample.
-#' @param series_id_column (**optional**) Name of the column containing series
+#' @param series_id_column (*optional*) Name of the column containing series
 #'   identifiers, which distinguish between measurements that are part of a
 #'   series for a single sample. See `batch_id_column` above for more details.
 #'

@@ -8,7 +8,7 @@ NULL
 
 #'@title Creates a valid data object from input data.
 #'
-#'@description Creates `dataObject` a object from input data. Input data can be
+#'@description Creates a `dataObject` object from input data. Input data can be
 #'  a `data.frame` or `data.table`, a path to such tables on a local or network
 #'  drive, or a path to tabular data that may be converted to these formats.
 #'
@@ -76,8 +76,8 @@ setMethod(
   function(
     data,
     object = NULL,
-    sample_id_column = waiver(),
     batch_id_column = waiver(),
+    sample_id_column = waiver(),
     series_id_column = waiver(),
     development_batch_id = waiver(),
     validation_batch_id = waiver(),
@@ -92,7 +92,8 @@ setMethod(
     include_features = waiver(),
     reference_method = waiver(),
     check_stringency = "strict",
-    ...) {
+    ...
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     type <- NULL

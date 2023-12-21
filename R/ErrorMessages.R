@@ -396,6 +396,19 @@
 
 
 
+..error_data_not_prediction_table <- function(x, expected_class, call = rlang::caller_env()) {
+  rlang::abort(
+    message = paste0(
+      "A prediction table object of class ", expected_class,
+      " was expected, but ", class(x)[1], " was found."
+    ),
+    class = "error_data_incorrect_prediction_table",
+    call = call
+  )
+}
+
+
+
 ..warning_package_not_installed <- function(x, purpose = NULL) {
   
   # Only unique packages.

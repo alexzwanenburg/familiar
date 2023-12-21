@@ -895,7 +895,7 @@ setMethod(
   function(object, data, type = "default", ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
     predicted_outcome <- NULL
-    
+
     # Check if the model was trained.
     if (!model_is_trained(object)) {
       return(callNextMethod())
@@ -905,7 +905,7 @@ setMethod(
     if (is_empty(data)) {
       return(callNextMethod())
     }
-    
+
     # Get a prediction table.
     prediction_table <- callNextMethod()
     
