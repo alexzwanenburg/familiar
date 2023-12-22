@@ -96,41 +96,38 @@ familiar:::test_all_metrics(
 )
 
 # Area under the curve ---------------------------------------------------------
-testthat::test_that(
-  "AUC-ROC is correct",
-  {
-    expected_score <- c(1.0, 0.5, 21 / 25, 0.0, 1.0, 0.5, 61 / 72, 1 / 3)
-    expected_objective <- c(1.0, 0.0, 17 / 25, -1.0, 1.0, 0.0, 25 / 36, -1 / 3)
+testthat::test_that("AUC-ROC is correct", {
+  expected_score <- c(1.0, 0.5, 21 / 25, 0.0, 1.0, 0.5, 61 / 72, 1 / 3)
+  expected_objective <- c(1.0, 0.0, 17 / 25, -1.0, 1.0, 0.0, 25 / 36, -1 / 3)
+  
+  # Iterate over the data sets.
+  for (ii in seq_along(data_list)) {
+    # Create metric object.
+    metric_object <- familiar:::as_metric(
+      metric = "auc_roc",
+      outcome_type = data_list[[ii]]@outcome_type
+    )
     
-    # Iterate over the data sets.
-    for (ii in seq_along(data_list)) {
-      # Create metric object.
-      metric_object <- familiar:::as_metric(
-        metric = "auc_roc",
-        outcome_type = data_list[[ii]]@outcome_type
-      )
-      
-      # Set baseline-value explicitly.
-      metric_object@baseline_value <- 0.5
-      
-      # Check that the metric is available
-      testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
-      
-      # Compute the metric value.
-      score <- familiar:::compute_metric_score(
-        metric = metric_object,
-        data = data_list[[ii]]
-      )
-      
-      # Compute the objective score.
-      objective_score <- familiar:::compute_objective_score(
-        metric = metric_object,
-        data = data_list[[ii]]
-      )
-      
-      # Test the values.
-      testthat::expect_equal(score, expected_score[ii])
-      testthat::expect_equal(objective_score, expected_objective[ii])
-    }
+    # Set baseline-value explicitly.
+    metric_object@baseline_value <- 0.5
+    
+    # Check that the metric is available
+    testthat::expect_true(familiar:::is_available(metric_object))
+    
+    # Compute the metric value.
+    score <- familiar:::compute_metric_score(
+      metric = metric_object,
+      data = data_list[[ii]]
+    )
+    
+    # Compute the objective score.
+    objective_score <- familiar:::compute_objective_score(
+      metric = metric_object,
+      data = data_list[[ii]]
+    )
+    
+    # Test the values.
+    testthat::expect_equal(score, expected_score[ii])
+    testthat::expect_equal(objective_score, expected_objective[ii])
   }
-)
+})
