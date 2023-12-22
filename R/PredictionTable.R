@@ -1714,3 +1714,14 @@ setMethod(
     return(x@classes)
   }
 )
+
+
+# get_n_samples (prediction table) ---------------------------------------------
+setMethod(
+  "get_n_samples",
+  signature(x = "familiarDataElementPredictionTable"),
+  function(x, id_depth = "sample") {
+    data_slot <- ifelse(.is_merged_prediction_table(x), "data", "identifier_data")
+    return(get_n_samples(methods::slot(x, data_slot), id_depth = id_depth))
+  }
+)

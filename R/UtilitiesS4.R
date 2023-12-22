@@ -448,6 +448,10 @@ setMethod("get_n_samples", signature(x = "dataObject"), function(x, id_depth = "
   return(.get_n_samples(x = x@data, id_depth = id_depth))
 })
 
+setMethod("get_n_samples", signature(x = "NULL"), function(x, id_depth = "sample") {
+  return(0L)
+})
+
 
 .get_n_samples <- function(x, id_depth) {
   # Check if x is empty.
