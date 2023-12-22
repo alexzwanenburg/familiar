@@ -347,7 +347,7 @@ test_create_all_identical_data <- function(outcome_type) {
   data@data <- data@data[rep.int(1L, 10)]
 
   # Set unique subject ids.
-  data@data[, "sample_id" := .I]
+  data@data[, "sample_id" := paste0("sample_", seq_len(nrow(data@data)))]
 
   return(data)
 }
@@ -574,11 +574,11 @@ test_create_mostly_prospective_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type %in% c("survival", "competing_risk")) {
-    data@data[sample_id > 1L, ":="(
+    data@data[sample_id != "sample_1", ":="(
       "outcome_time" = NA,
       "outcome_event" = NA)]
   } else {
-    data@data[sample_id > 1L, ":="("outcome" = NA)]
+    data@data[sample_id != "sample_1", ":="("outcome" = NA)]
   }
 
   return(data)
