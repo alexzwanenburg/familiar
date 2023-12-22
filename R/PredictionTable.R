@@ -229,6 +229,7 @@ as_prediction_table <- function(
   
   # Use x to set prediction_data attribute.
   object@prediction_data <- data.table::as.data.table(x)
+  if (is_empty(object@prediction_data)) return(object)
   
   # Use y to set reference_data attribute.
   if (!is.waive(y) && !is.null(y)) {
@@ -244,17 +245,34 @@ as_prediction_table <- function(
   } else if (is(data, "dataObject")) {
     y <- data@data[, mget(.get_outcome_columns(data@outcome_type))]
     object@reference_data <- data.table::copy(y)
+    
+  } else if (is(data, "familiarDataElementPredictionTable")) {
+    if(.is_merged_prediction_table(data)) {
+      y <- data@data[, mget(.get_outcome_columns(data@outcome_type))]
+    } else {
+      y <- data@reference_data[, mget(.get_outcome_columns(data@outcome_type))]
+    }
+    
+    object@reference_data <- data.table::copy(y)
   }
   
   # Use batch_id, sample_id, series_id and repetition_id to set identifier_data
   # attribute.
-  if (is.waive(batch_id) && is.waive(sample_id) && is.waive(series_id) && 
-      is.waive(repetition_id) && is(data, "dataObject")) {
+  if (is.waive(batch_id) && is.waive(sample_id) && is.waive(series_id) && is.waive(repetition_id)) {
+    if (is(data, "dataObject")) {
+      data_slot <- "data"
+    } else if (is(data, "familiarDataElementPredictionTable")) {
+      data_slot <- ifelse(.is_merged_prediction_table(data), "data", "identifier_data")
+    } else {
+      data_slot <- NULL
+    }
     
-    batch_id <- data@data[[get_id_columns(single_column = "batch")]]
-    sample_id <- data@data[[get_id_columns(single_column = "sample")]]
-    series_id <- data@data[[get_id_columns(single_column = "series")]]
-    repetition_id <- data@data[[get_id_columns(single_column = "repetition")]]
+    if (!is.null(data_slot)) {
+      batch_id <- methods::slot(data, data_slot)[[get_id_columns(single_column = "batch")]]
+      sample_id <- methods::slot(data, data_slot)[[get_id_columns(single_column = "sample")]]
+      series_id <- methods::slot(data, data_slot)[[get_id_columns(single_column = "series")]]
+      repetition_id <- methods::slot(data, data_slot)[[get_id_columns(single_column = "repetition")]]
+    }
   }
   
   if (is.waive(batch_id)) {
@@ -298,13 +316,21 @@ as_prediction_table <- function(
   if (methods::.hasSlot(object, "classes")) {
     if (is.waive(class_levels) && is(data, "dataObject")) {
       class_levels <- get_outcome_class_levels(data)
-      
+    
+    } else if (is.waive(class_levels) && is(data, "familiarDataElementPredictionTable")) {
+      if (methods::.hasSlot(data, "classes")) {
+        class_levels <- data@classes
+      }
+    
     } else if (is.waive(class_levels) && !is_empty(object@reference_data)) {
       if (is.factor(object@reference_data[[1]])) {
         class_levels <- levels(object@reference_data[[1]])
       } else {
         class_levels <- unique_na(object@reference_data[[1]])
       }
+    
+    } else if (is.waive(class_levels) && !is_empty(names(x))) {
+      class_levels <- names(x)
       
     } else if (is.waive(class_levels)) {
       class_levels <- paste0("class_", seq_len(ncol(object@prediction_data)))
@@ -318,6 +344,11 @@ as_prediction_table <- function(
   if (methods::.hasSlot(object, "censored")) {
     if (is.waive(censoring_indicator) && is(data, "dataObject")) {
       censoring_indicator <- data@outcome_info@censored
+    
+    } else if (is.waive(censoring_indicator) && is(data, "familiarDataElementPredictionTable")) {
+      if (methods::.hasSlot(data, "censored")) {
+        censoring_indicator <- data@censored
+      }
       
     } else if (is.waive(censoring_indicator)) {
       censoring_indicator <- .get_available_default_censoring_indicator()
@@ -331,6 +362,11 @@ as_prediction_table <- function(
     if (is.waive(event_indicator) && is(data, "dataObject")) {
       event_indicator <- data@outcome_info@event
       
+    } else if (is.waive(event_indicator) && is(data, "familiarDataElementPredictionTable")) {
+      if (methods::.hasSlot(data, "censored")) {
+        event_indicator <- data@event
+      }
+      
     } else if (is.waive(event_indicator)) {
       event_indicator <- .get_available_default_event_indicator()
     }
@@ -339,7 +375,7 @@ as_prediction_table <- function(
   }
   
   # Infer outcome_type based on known information.
-  if (is(data, "dataObject")) {
+  if (is(data, "dataObject") || is(data, "familiarDataElementPredictionTable")) {
     object@outcome_type <- data@outcome_type
   }
   
