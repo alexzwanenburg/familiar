@@ -13,7 +13,9 @@ setClass(
     outcome_type = NA_character_,
     name = "Brier Score",
     value_range = c(0.0, 1.0),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -33,30 +35,30 @@ setMethod(
   "compute_metric_score",
   signature(metric = "familiarMetricBrier"),
   function(metric, data, ...) {
+    
+    if (is_empty(data)) return(callNextMethod())
+    
+    if (!is(data, "predictionTableClassification")) {
+      ..error_data_not_prediction_table(data, "predictionTableClassification")
+    }
+    
     # Get the classes and number of classes in data.
-    outcome_classes <- get_outcome_class_levels(
-      data,
-      outcome_type = metric@outcome_type)
+    outcome_classes <- get_outcome_class_levels(data)
     n_classes <- length(outcome_classes)
 
     # Skip calculation if there are no other classes.
     if (n_classes <= 1) return(callNextMethod())
 
     # Remove any entries that lack valid predictions.
-    data <- remove_nonvalid_predictions(
-      prediction_table = data,
-      outcome_type = metric@outcome_type)
+    data <- remove_invalid_predictions(data)
 
     # Remove any entries that lack observed values.
-    data <- remove_missing_outcomes(
-      data = data,
-      outcome_type = metric@outcome_type)
-
-    # Check that there is any data left.
+    data <- filter_missing_outcome(data)
     if (is_empty(data)) return(callNextMethod())
-
+    
     # Identify the outcome column.
-    outcome_column <- get_outcome_columns(x = metric@outcome_type)
+    outcome_column <- get_outcome_columns(x = data@outcome_type)
+    data <- .as_data_table(data)
 
     # Create empty brier score vector.
     brier_score <- vector(mode = "numeric", length = n_classes)
@@ -66,18 +68,15 @@ setMethod(
       # Find the current positive class
       positive_class <- outcome_classes[ii]
 
-      # Get the probability column name for the positive class.
-      class_probability_column <- get_class_probability_name(x = positive_class)
-
       # Prepare data to compute a Brier score.
-      brier_data <- data.table::copy(data[, mget(c(outcome_column, class_probability_column))])
+      brier_data <- data.table::copy(data[, mget(c(outcome_column, positive_class))])
 
       # Mark positive class as 1, and the rest as 0.
       brier_data[, "positive_outcome" := 0]
       brier_data[get(outcome_column) == positive_class, "positive_outcome" := 1]
 
       # Calculate uncorrected brier score for the current positive class.
-      brier_score[ii] <- sum((brier_data[[class_probability_column]] - brier_data$positive_outcome)^2)
+      brier_score[ii] <- sum((brier_data[[positive_class]] - brier_data$positive_outcome)^2)
     }
 
     # Calculate overall brier score
