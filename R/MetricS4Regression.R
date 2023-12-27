@@ -8,7 +8,8 @@ setClass(
   "familiarMetricRegression",
   contains = "familiarMetric",
   slots = list("robust" = "character"),
-  prototype = list("robust" = "none"))
+  prototype = list("robust" = "none")
+)
 
 
 
@@ -66,7 +67,9 @@ setClass(
   prototype = methods::prototype(
     name = "Mean Absolute Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -78,7 +81,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -109,7 +113,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -142,7 +147,9 @@ setClass(
   prototype = methods::prototype(
     name = "Mean Log Absolute Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -154,7 +161,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -174,7 +182,9 @@ setClass(
   prototype = methods::prototype(
     name = "Mean Squared Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -186,7 +196,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -205,7 +216,9 @@ setClass(
   prototype = methods::prototype(
     name = "Relative Squared Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -217,7 +230,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -251,7 +265,9 @@ setClass(
   prototype = methods::prototype(
     name = "Mean Squared Log Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -263,7 +279,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -285,7 +302,9 @@ setClass(
   prototype = methods::prototype(
     name = "Median Absolute Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -297,8 +316,9 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
-
+      data = data
+    )
+    
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the median absolute error.
@@ -317,7 +337,9 @@ setClass(
   prototype = methods::prototype(
     name = "Root Mean Square Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -329,8 +351,9 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
-
+      data = data
+    )
+    
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the root mean square error.
@@ -361,7 +384,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -395,7 +419,9 @@ setClass(
   prototype = methods::prototype(
     name = "Root Mean Square Log Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -407,7 +433,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -429,7 +456,9 @@ setClass(
   prototype = methods::prototype(
     name = "R squared",
     value_range = c(-Inf, 1),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -441,7 +470,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -486,7 +516,8 @@ setMethod(
     # Prepare data for computing metric values.
     data <- ..process_data_for_regression_metrics(
       metric = metric,
-      data = data)
+      data = data
+    )
 
     if (is_empty(data)) return(callNextMethod())
 
@@ -521,18 +552,21 @@ setMethod(
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- predicted_outcome <- NULL
 
+  if (is_empty(data)) return(NULL)
+  
+  if (!is(data, "predictionTableRegression")) {
+    ..error_data_not_prediction_table(data, "predictionTableRegression")
+  }
+  
   # Remove any entries that lack valid predictions.
-  data <- remove_nonvalid_predictions(
-    prediction_table = data,
-    outcome_type = metric@outcome_type)
-
+  data <- remove_invalid_predictions(data)
+  
   # Remove any entries that lack observed values.
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = metric@outcome_type)
-
-  if (is_empty(data)) return(data)
-
+  data <- filter_missing_outcome(data)
+  if (is_empty(data)) return(NULL)
+  
+  data <- .as_data_table(data)
+  
   if (metric@robust == "trim") {
     # Compute absolute prediction error
     abs_error <- abs(data$outcome - data$predicted_outcome)
@@ -541,7 +575,8 @@ setMethod(
     threshold <- stats::quantile(
       x = abs_error,
       probs = 1 - fraction,
-      na.rm = TRUE)
+      na.rm = TRUE
+    )
 
     # Set mask to identify instances that should be kept.
     mask <- abs_error <= threshold[1]
@@ -557,7 +592,8 @@ setMethod(
     threshold <- stats::quantile(
       x = abs_error,
       probs = 1 - fraction,
-      na.rm = TRUE)
+      na.rm = TRUE
+    )
 
     # Set mask to identify instances that should be updated.
     mask <- !(abs_error <= threshold[1])
@@ -567,6 +603,8 @@ setMethod(
     data[mask & outcome < predicted_outcome, "predicted_outcome" := outcome + threshold]
   }
 
+  if (is_empty(data)) return(NULL)
+  
   return(data)
 }
 
