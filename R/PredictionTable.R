@@ -304,12 +304,15 @@ as_prediction_table <- function(
       .check_number_in_valid_range,
       var_name = "time",
       range = c(0.0, Inf),
-      closed = c(FALSE, TRUE))
+      closed = c(FALSE, TRUE)
+    )
     
     object <- add_data_element_identifier(
       x = object,
       evaluation_time = time
     )
+    
+    object@time <- time
   }
   
   # Use classes to set classes attribute of prediction tables that have it.
@@ -1352,8 +1355,8 @@ setMethod(
     if (data@outcome_type %in% c("survival", "competing_risk")) {
       if (merged_table && !all(c("outcome_time", "outcome_event") %in% data@grouping_column)) return(data)
       
-      outcome_is_valid <- is_valid_data(slot(object, data_slot)$outcome_time) &
-        is_valid_data(slot(object, data_slot)$outcome_event)
+      outcome_is_valid <- is_valid_data(slot(data, data_slot)$outcome_time) &
+        is_valid_data(slot(data, data_slot)$outcome_event)
       
     } else {
       if (merged_table && !("outcome" %in% data@grouping_column)) return(data)
@@ -1389,7 +1392,7 @@ setMethod(
   function(x, ...) {
     x <- .merge_slots_into_data(x)
     
-    return(x@data)
+    return(data.table::copy(x@data))
   }
 )
 

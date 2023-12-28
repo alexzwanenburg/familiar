@@ -284,7 +284,12 @@
 
 
 
-..error_value_outside_allowed_range <- function(x, var_name, range) {
+..error_value_outside_allowed_range <- function(
+    x, 
+    var_name, 
+    range, 
+    call = rlang::caller_env()
+) {
   
   # Determine the string for the allowed value.
   if (is.infinite(range[1]) && is.infinite(range[2])) {
@@ -303,9 +308,16 @@
     allowed_value_text <- paste("have a value between", range[1], "and", range[2])
   }
   
-  stop(paste0(
+  message <- paste0(
     var_name, " is expected to ", allowed_value_text,
-    ". Found: ", paste_s(x)))
+    ". Found: ", paste_s(x)
+  )
+  
+  rlang::abort(
+    message = message,
+    class = "familiar_variable_check_error",
+    call = call
+  )
 }
 
 

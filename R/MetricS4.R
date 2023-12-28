@@ -292,8 +292,7 @@ as_metric <- function(metric, outcome_type, ...) {
         list(
           "Class" = "familiarMetricConcordanceIndexHarrell",
           "metric" = metric,
-          "outcome_type" = outcome_type,
-          "object" = object),
+          "outcome_type" = outcome_type),
         .sanitise_dots(
           "familiarMetricConcordanceIndexHarrell", ...)))
     

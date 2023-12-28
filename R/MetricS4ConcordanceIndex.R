@@ -8,12 +8,8 @@ NULL
 setClass(
   "familiarMetricConcordanceIndex",
   contains = "familiarMetric",
-  slots = list(
-    "time" = "numeric",
-    "prediction_type" = "character"),
-  prototype = list(
-    "time" = Inf,
-    "prediction_type" = "hazard_ratio")
+  slots = list("time" = "numeric"),
+  prototype = list("time" = Inf)
 )
 
 
@@ -26,7 +22,9 @@ setClass(
     name = "Concordance Index",
     baseline_value = 0.5,
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -39,7 +37,8 @@ setMethod(
     time = NULL,
     object = NULL,
     prediction_type = NULL,
-    ...) {
+    ...
+  ) {
     # Update with parent class first.
     .Object <- callNextMethod(.Object, ...)
 
@@ -53,15 +52,6 @@ setMethod(
       is(object, "familiarVimpMethod")) {
       # Obtain time from the outcome info.
       .Object@time <- object@outcome_info@time
-    }
-
-    # Attempt to set the prediction type
-    if (!is.null(prediction_type)) {
-      .Object@prediction_type <- prediction_type
-      
-    } else if (is(object, "familiarModel") || is(object, "familiarEnsemble")) {
-      # Obtain prediction-type from the model or ensemble.
-      .Object@prediction_type <- get_prediction_type(object)
     }
 
     return(.Object)
@@ -89,13 +79,15 @@ setMethod(
     # Compute a standard concordance index.
     score <- .compute_concordance_index(
       metric = metric,
-      data = data)
+      data = data,
+      ...
+    )
 
     # Invert the score for risk-like predictions.
-    if (metric@prediction_type %in% .get_available_risklike_prediction_types()) {
+    if (!is(data, "predictionTableSurvivalTime")) {
       score <- 1.0 - score
     }
-
+    
     return(score)
   }
 )
@@ -105,25 +97,55 @@ setMethod(
 .compute_concordance_index <- function(
     metric,
     data,
-    weight_function = NULL) {
+    time = NULL,
+    weight_function = NULL
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome_time <- outcome_event <- NULL
 
+  if (is_empty(data)) return(NA_real_)
+  
+  if (!is(data, "predictionTableSurvival")) {
+    ..error_data_not_prediction_table(data, "predictionTableSurvival")
+  }
+  
   # Remove any entries that lack valid predictions.
-  data <- remove_nonvalid_predictions(
-    prediction_table = data,
-    outcome_type = metric@outcome_type)
-
+  data <- remove_invalid_predictions(data)
+  
   # Remove any entries that lack observed values.
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = metric@outcome_type)
-
+  data <- filter_missing_outcome(data)
   if (is_empty(data)) return(NA_real_)
 
+  # Determine maximum time for censoring. There are multiple ways to obtain
+  # maximum time, in order of preference:
+  #
+  # 1. From function input.
+  #
+  # 2. From the metric object (metric), which may have inherited it from the
+  # model or model ensemble.
+  #
+  # 3. From the prediction table object (data).
+  #
+  # As fallback, max time is set to infinite.
+  max_time <- time
+  if (is.null(max_time) && is.finite(metric@time)) max_time <- metric@time
+  if (is.null(max_time) && methods::.hasSlot(data, "time")) {
+    if (is.finite(object@time)) max_time <- object@time 
+  }
+  if (is.null(max_time)) max_time <- Inf
+  
+  # Check max_time
+  .check_number_in_valid_range(
+    x = max_time,
+    var_name = "time",
+    range = c(0.0, Inf),
+    closed = c(FALSE, TRUE)
+  )
+  
   # Apply max time. Everything beyond max time is censored for the purpose of
   # computing a concordance index.
-  data[outcome_time > metric@time, "outcome_event" := 0]
+  data <- .as_data_table(data)
+  data[outcome_time > max_time, "outcome_event" := 0]
 
   # All competing risks are treated as censoring for computing the concordance
   # index.
@@ -146,7 +168,8 @@ setMethod(
     x = data$predicted_outcome,
     time = data$outcome_time,
     event = data$outcome_event,
-    weight_function = weight_function)
+    weight_function = weight_function
+  )
 
   return(score)
 }
