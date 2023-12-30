@@ -1,13 +1,15 @@
 # Don't perform any further tests on CRAN due to running time.
 testthat::skip_on_cran()
 
+debug_flag <- FALSE
+
 # Default
 results <- familiar:::test_export_specific(
   export_function = familiar:::export_ice_data,
   data_element = "ice_data",
   sample_limit = 20L,
   create_novelty_detector = FALSE,
-  debug = TRUE
+  debug = debug_flag
 )
 
 testthat::test_that("Sample limit is correctly propagated", {
@@ -27,7 +29,7 @@ results <- familiar:::test_export_specific(
   features = c("nodes"),
   sample_limit = 20L,
   create_novelty_detector = FALSE,
-  debug = TRUE
+  debug = debug_flag
 )
 
 testthat::test_that("A single feature can be specified.", {
@@ -43,7 +45,7 @@ results <- familiar:::test_export_specific(
   features = c("rx", "nodes"),
   sample_limit = 20L,
   create_novelty_detector = FALSE,
-  debug = TRUE
+  debug = debug_flag
 )
 
 testthat::test_that("Two features can be specified.", {
@@ -64,7 +66,7 @@ results <- familiar:::test_export_specific(
   n_sample_points = 5L,
   sample_limit = 20L,
   create_novelty_detector = FALSE,
-  debug = TRUE
+  debug = debug_flag
 )
 
 testthat::test_that("Ranges and features can specified.", {
@@ -85,7 +87,7 @@ results <- familiar:::test_export_specific(
   feature_y_range = c(0, 5, 10, 15),
   sample_limit = 20L,
   create_novelty_detector = FALSE,
-  debug = TRUE
+  debug = debug_flag
 )
 
 testthat::test_that("Ranges and features can specified.", {

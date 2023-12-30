@@ -344,10 +344,10 @@ setGeneric(
 )
 
 
-# ..extract_model_performance_data (model) -------------------------------------
+# ..extract_model_performance_data (model, ensemble) ---------------------------
 setMethod(
   "..extract_model_performance_data",
-  signature(object = "familiarModel"),
+  signature(object = "familiarModelUnion"),
   function(
     object,
     data_element,
@@ -390,54 +390,54 @@ setMethod(
   }
 )
 
-
-# ..extract_model_performance_data (ensemble) ----------------------------------
-setMethod(
-  "..extract_model_performance_data",
-  signature(object = "familiarEnsemble"),
-  function(
-    object,
-    data_element,
-    data,
-    is_pre_processed,
-    ensemble_method,
-    progress_bar = FALSE,
-    verbose = FALSE,
-    message_indent,
-    ...
-  ) {
-    # Ensure that the object is loaded
-    object <- load_familiar_object(object)
-    
-    # Message the user concerning the time at which metrics are computed. This is
-    # only relevant for survival analysis.
-    if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
-      logger_message(
-        paste0(
-          "Computing metric value at time ",
-          data_element@identifiers$evaluation_time, "."),
-        indent = message_indent,
-        verbose = verbose
-      )
-    }
-    
-    # Predict class probabilities.
-    prediction_data <- .predict(
-      object = object,
-      data = data,
-      time = data_element@identifiers$evaluation_time,
-      ensemble_method = ensemble_method,
-      is_pre_processed = is_pre_processed
-    )
-    
-    return(..extract_model_performance_data(
-      object = prediction_data,
-      data_element = data_element,
-      progress_bar = progress_bar,
-      ...
-    ))
-  }
-)
+# 
+# # ..extract_model_performance_data (ensemble) ----------------------------------
+# setMethod(
+#   "..extract_model_performance_data",
+#   signature(object = "familiarEnsemble"),
+#   function(
+#     object,
+#     data_element,
+#     data,
+#     is_pre_processed,
+#     ensemble_method,
+#     progress_bar = FALSE,
+#     verbose = FALSE,
+#     message_indent,
+#     ...
+#   ) {
+#     # Ensure that the object is loaded
+#     object <- load_familiar_object(object)
+#     
+#     # Message the user concerning the time at which metrics are computed. This is
+#     # only relevant for survival analysis.
+#     if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
+#       logger_message(
+#         paste0(
+#           "Computing metric value at time ",
+#           data_element@identifiers$evaluation_time, "."),
+#         indent = message_indent,
+#         verbose = verbose
+#       )
+#     }
+#     
+#     # Predict class probabilities.
+#     prediction_data <- .predict(
+#       object = object,
+#       data = data,
+#       time = data_element@identifiers$evaluation_time,
+#       ensemble_method = ensemble_method,
+#       is_pre_processed = is_pre_processed
+#     )
+#     
+#     return(..extract_model_performance_data(
+#       object = prediction_data,
+#       data_element = data_element,
+#       progress_bar = progress_bar,
+#       ...
+#     ))
+#   }
+# )
 
 
 # ..extract_model_performance_data (prediction_table) --------------------------
@@ -627,7 +627,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_model_performance")
   }
 )
@@ -645,7 +646,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -657,7 +659,8 @@ setMethod(
       aggregate_results = aggregate_results,
       type = "performance",
       subtype = "metric",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -674,7 +677,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -684,7 +688,9 @@ setMethod(
           "object" = object,
           "data_element" = "model_performance",
           "aggregate_results" = aggregate_results),
-        list(...)))
+        list(...)
+      )
+    )
     
     return(do.call(
       export_model_performance,
@@ -694,6 +700,8 @@ setMethod(
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
           "export_collection" = export_collection),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )

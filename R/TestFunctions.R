@@ -5428,7 +5428,8 @@ test_export <- function(
     n_models = 1L,
     create_novelty_detector = FALSE,
     debug = FALSE,
-    parallel = waiver()) {
+    parallel = waiver()
+) {
   if (debug) {
     test_fun <- debug_test_that
   } else {
@@ -5523,8 +5524,10 @@ test_export <- function(
         "continuous" = "gaussian",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
-        "survival" = "cox"))
-
+        "survival" = "cox"
+      )
+    )
+    
     # Full data set ------------------------------------------------------------
 
     if (n_models == 1) {
@@ -5617,13 +5620,13 @@ test_export <- function(
           outcome_type = outcome_type)
         
         if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
+          testthat::expect_in(which_present, TRUE)
           
           if (debug) show(data_elements)
           
           testthat::expect_s4_class(exported_collection, "familiarCollection")
         } else {
-          testthat::expect_equal(all(!which_present), TRUE)
+          testthat::expect_in(which_present, FALSE)
         }
       }
     )

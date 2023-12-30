@@ -249,6 +249,12 @@ setClass("familiarEnsemble",
 )
 
 
+setClassUnion(
+  "familiarModelUnion",
+  members = c("familiarModel", "familiarEnsemble")
+)
+
+
 # familiarData object ----------------------------------------------------------
 
 #' Dataset obtained after evaluating models on a dataset.
