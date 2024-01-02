@@ -106,6 +106,14 @@ setMethod(
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
     
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = FALSE,
+      data_element = "model_performance"
+    )
+    
     proto_data_element <- .create_extract_model_performance_object(
       object = object,
       metric = metric,
@@ -172,6 +180,14 @@ setMethod(
         evaluation_times <- object@time
     }
     
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = FALSE,
+      data_element = "model_performance"
+    )
+    
     proto_data_element <- .create_extract_model_performance_object(
       object = object,
       metric = metric,
@@ -179,7 +195,6 @@ setMethod(
       evaluation_times = evaluation_times,
       detail_level = detail_level,
       estimation_type = estimation_type,
-      aggregate_results = aggregate_results,
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method
     )
@@ -195,7 +210,6 @@ setMethod(
       ensemble_method = ensemble_method,
       metric = metric,
       evaluation_times = evaluation_times,
-      aggregate_results = aggregate_results,
       message_indent = message_indent + 1L,
       verbose = verbose
     )
@@ -213,7 +227,6 @@ setMethod(
     evaluation_times,
     detail_level,
     estimation_type,
-    aggregate_results,
     confidence_level,
     bootstrap_ci_method
 ) {
@@ -269,21 +282,13 @@ setMethod(
     has_internal_bootstrap = TRUE
   )
 
-  # Check whether results should be aggregated.
-  aggregate_results <- .parse_aggregate_results(
-    x = aggregate_results,
-    object = object,
-    default = FALSE,
-    data_element = "model_performance"
-  )
-  
   # Check metric input argument
   sapply(
     metric,
     .check_metric_outcome_type,
     object = object
   )
-  
+
   # Generate a prototype data element.
   proto_data_element <- new(
     "familiarDataElementModelPerformance",
