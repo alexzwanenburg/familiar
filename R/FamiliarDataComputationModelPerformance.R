@@ -6,7 +6,8 @@ NULL
 # familiarDataElementModelPerformance object -----------------------------------
 setClass(
   "familiarDataElementModelPerformance",
-  contains = "familiarDataElement"
+  contains = "familiarDataElement",
+  prototype = methods::prototype(value_column = "value")
 )
 
 # extract_performance (generic) ------------------------------------------------
@@ -495,7 +496,7 @@ setMethod(
     if (aggregate_results) {
       data_elements <- .compute_data_element_estimates(x = data_elements)
     }
-    
+    browser()
     return(data_elements)
   }
 )
