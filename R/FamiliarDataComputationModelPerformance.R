@@ -157,13 +157,13 @@ setMethod(
     data,
     cl = NULL,
     metric = waiver(),
-    ensemble_method = "median",
+    ensemble_method = waiver(),
     evaluation_times = waiver(),
-    detail_level = "ensemble",
-    estimation_type = "bootstrap_confidence_interval",
-    aggregate_results = FALSE,
-    confidence_level = 0.95,
-    bootstrap_ci_method = "bc",
+    detail_level = waiver(),
+    estimation_type = waiver(),
+    aggregate_results = waiver(),
+    confidence_level = waiver(),
+    bootstrap_ci_method = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -176,10 +176,24 @@ setMethod(
       verbose = verbose
     )
     
-    # Load evaluation_times from the object.
+    # Load evaluation_times and ensemble method from the prediction table.
     if (is.waive(evaluation_times) && methods::.hasSlot(object, "time")) {
         evaluation_times <- object@time
     }
+    if (is.waive(ensemble_method)) {
+      ensemble_method <- "median"
+      if (methods::.hasSlot(object, "ensemble_method")) ensemble_method <- object@ensemble_method
+    } 
+    
+    # Set default metric
+    if (is.waive(metric)) metric <- .get_default_metric(outcome_type = object@outcome_type)
+
+    # Default Values.
+    if (is.waive(detail_level)) detail_level <- "ensemble"
+    if (is.waive(estimation_type)) estimation_type <- "bootstrap_confidence_interval" 
+    if (is.waive(confidence_level)) confidence_level <- 0.95
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- "bc"
+    if (is.waive(aggregate_results)) aggregate_results <- FALSE
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
@@ -211,6 +225,7 @@ setMethod(
       ensemble_method = ensemble_method,
       metric = metric,
       evaluation_times = evaluation_times,
+      aggregate_results = aggregate_results,
       message_indent = message_indent + 1L,
       verbose = verbose
     )
@@ -453,6 +468,7 @@ setMethod(
   function(
     object,
     data_element,
+    data = NULL,
     cl = NULL,
     metric,
     aggregate_results,
