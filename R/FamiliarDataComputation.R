@@ -849,7 +849,7 @@ setMethod(
     ice_data = ice_data,
     is_validation = .optional_from_slot(data, "load_validation", alternative = FALSE),
     generating_ensemble = get_object_name(object = object, abbreviated = FALSE),
-    project_id = .optional_from_slot(object, "project_id", alternative = NULL)
+    project_id = .optional_from_slot(object, "project_id", alternative = 0)
   )
   
   # Add package version to the data set 
