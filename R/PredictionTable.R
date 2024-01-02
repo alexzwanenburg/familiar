@@ -1764,3 +1764,20 @@ setMethod(
     return(get_n_samples(methods::slot(x, data_slot), id_depth = id_depth))
   }
 )
+
+
+
+# get_bootstrap_sample (prediction table) --------------------------------------
+setMethod(
+  "get_bootstrap_sample",
+  signature(data = "familiarDataElementPredictionTable"),
+  function(data, seed = NULL, ...) {
+    data <- .merge_slots_into_data(data)
+    data@data <- get_bootstrap_sample(
+      data = data@data,
+      seed = seed
+    )
+    
+    return(data)
+  }
+)
