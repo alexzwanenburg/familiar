@@ -6,8 +6,8 @@ NULL
 # familiarDataElementModelPerformance object -----------------------------------
 setClass(
   "familiarDataElementModelPerformance",
-  contains = "familiarDataElement",
-  prototype = methods::prototype(value_column = "value"))
+  contains = "familiarDataElement"
+)
 
 # extract_performance (generic) ------------------------------------------------
 
