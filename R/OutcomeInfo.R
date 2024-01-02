@@ -160,6 +160,10 @@ get_outcome_info_from_backend <- function() {
   min <- Q1 <- median <- Q3 <- max <- count <- incidence <- NULL
   survival_probability <- survival_probability <- NULL
 
+  # Remove empty elements from x.
+  x <- x[!sapply(x, is.null)]
+  if (length(x) == 0) return(NULL)
+  
   # Copy the first outcome info object
   outcome_info <- x[[1]]
 

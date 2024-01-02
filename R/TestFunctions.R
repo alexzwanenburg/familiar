@@ -5422,6 +5422,7 @@ test_export <- function(
     not_available_any_prospective = FALSE,
     not_available_single_sample = FALSE,
     not_available_extreme_probability = FALSE,
+    use_prediction_table = FALSE,
     ...,
     export_args = list(),
     test_specific_config = FALSE,
@@ -5453,6 +5454,7 @@ test_export <- function(
     # Start local cluster in the overall process.
     cl <- .test_start_cluster(n_cores = 2L)
     on.exit(.terminate_cluster(cl), add = TRUE)
+    
   } else {
     cl <- NULL
   }
@@ -5540,7 +5542,8 @@ test_export <- function(
         hyperparameter_list = hyperparameters,
         learner = "lasso",
         time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
+        create_novelty_detector = create_novelty_detector
+      ))
 
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
@@ -5561,7 +5564,8 @@ test_export <- function(
           learner = "lasso",
           time_max = 1832,
           create_bootstrap = TRUE,
-          create_novelty_detector = create_novelty_detector))
+          create_novelty_detector = create_novelty_detector
+        ))
 
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
@@ -5571,20 +5575,41 @@ test_export <- function(
       }
     }
 
+    if (use_prediction_table) {
+      # Generate data from prediction tables.
+      data_object_1 <- .predict(
+        object = model_full_1,
+        data = full_data,
+        ...
+      )
+      data_object_2 <- .predict(
+        object = model_full_2,
+        data = full_data,
+        ...
+      )
+      
+    } else {
+      # Generate data from models and ensembles.
+      data_object_1 <- model_full_1
+      data_object_2 <- model_full_2
+    }
+    browser()
     # Create familiar data objects.
     data_good_full_1 <- as_familiar_data(
-      object = model_full_1,
+      object = data_object_1,
       data = full_data,
       data_element = data_element,
       cl = cl,
-      ...)
+      ...
+    )
     data_good_full_2 <- as_familiar_data(
-      object = model_full_2,
+      object = data_object_2,
       data = full_data,
       data_element = data_element,
       cl = cl,
-      ...)
-
+      ...
+    )
+    browser()
     # Create a completely intact dataset.
     test_fun(
       paste0(
@@ -5596,19 +5621,24 @@ test_export <- function(
         object <- mapply(
           set_object_name, 
           object, 
-          c("development_1", "development_2", "validation_1", "validation_2"))
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
         
         collection <- suppressWarnings(as_familiar_collection(
           object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
         
         data_elements <- do.call(
           export_function,
           args = c(
             list(
               "object" = collection,
-              "export_collection" = TRUE),
-            export_args))
+              "export_collection" = TRUE
+            ),
+            export_args
+          )
+        )
         
         # Extract collection.
         exported_collection <- data_elements$collection
@@ -5617,7 +5647,8 @@ test_export <- function(
         # Determine which elements are present.
         which_present <- .test_which_data_element_present(
           data_elements,
-          outcome_type = outcome_type)
+          outcome_type = outcome_type
+        )
         
         if (outcome_type %in% outcome_type_available) {
           testthat::expect_in(which_present, TRUE)
@@ -6585,6 +6616,7 @@ test_export_specific <- function(
     ...,
     export_args = list(),
     use_data_set = "full",
+    use_prediction_table = FALSE,
     n_models = 1L,
     create_novelty_detector = FALSE,
     debug = FALSE) {
@@ -6611,8 +6643,10 @@ test_export_specific <- function(
         "continuous" = "gaussian",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
-        "survival" = "cox"))
-
+        "survival" = "cox"
+      )
+    )
+    
     if (n_models == 1) {
       # Train the model.
       model_full_1 <- suppressWarnings(test_train(
@@ -6622,8 +6656,9 @@ test_export_specific <- function(
         hyperparameter_list = hyperparameters,
         learner = "lasso",
         time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
-
+        create_novelty_detector = create_novelty_detector
+      ))
+      
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
       
@@ -6642,8 +6677,9 @@ test_export_specific <- function(
           learner = "lasso",
           time_max = 1832,
           create_bootstrap = TRUE,
-          create_novelty_detector = create_novelty_detector))
-
+          create_novelty_detector = create_novelty_detector
+        ))
+        
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
 
@@ -6652,37 +6688,57 @@ test_export_specific <- function(
       }
     }
 
-    # Create familiar data objects.
-    data_good_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = data,
-      data_element = data_element,
-      ...)
-
-    data_good_full_2 <- as_familiar_data(
-      object = model_full_2,
-      data = data,
-      data_element = data_element,
-      ...)
-
+    if (use_prediction_table) {
+      # Generate data from prediction tables.
+      data_good_full_1 <- as_familiar_data(
+        object = .predict(object = model_full_1, data = data, ...),
+        data_element = data_element,
+        ...
+      )
+      data_good_full_2 <- as_familiar_data(
+        object = .predict(object = model_full_2, data = data, ...),
+        data_element = data_element,
+        ...
+      )
+      
+    } else {
+      # Generate data from models and ensembles.
+      data_good_full_1 <- as_familiar_data(
+        object = model_full_1,
+        data = data,
+        data_element = data_element,
+        ...
+      )
+      data_good_full_2 <- as_familiar_data(
+        object = model_full_2,
+        data = data,
+        data_element = data_element,
+        ...
+      )
+    }
+    
     # Generate data objects and names.
     object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
     object <- mapply(
       set_object_name,
       object, 
-      c("development_1", "development_2", "validation_1", "validation_2"))
-
+      c("development_1", "development_2", "validation_1", "validation_2")
+    )
+    
     # Process to collect.
     collection <- suppressWarnings(as_familiar_collection(
       object,
-      familiar_data_names = c("development", "development", "validation", "validation")))
-
+      familiar_data_names = c("development", "development", "validation", "validation")
+    ))
+    
     # Create data elements.
     data_elements <- do.call(
       export_function,
       args = c(
         list("object" = collection),
-        export_args))
+        export_args
+      )
+    )
     
     # Save data elements and add name.
     current_element <- list(data_elements)

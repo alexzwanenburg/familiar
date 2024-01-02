@@ -584,7 +584,7 @@ setMethod(
       outcome_type = object[[1]]@outcome_type,
       outcome_info = .aggregate_outcome_info(x = lapply(
         object, 
-        function(list_elem) (list_elem@outcome_info))),
+        function(list_elem) (if (methods::.hasSlot(list_elem, "outcome_info")) return(list_elem@outcome_info)))),
       fs_vimp = collect(
         x = object,
         data_slot = "fs_vimp",

@@ -263,7 +263,6 @@ setMethod(
   signature(object = "familiarDataElementPredictionTable"),
   function(
     object,
-    data,
     data_element = waiver(),
     is_pre_processed = FALSE,
     ...
@@ -282,21 +281,9 @@ setMethod(
         values = .get_available_data_elements())
     }
     
-    # Check whether data is a dataObject, and create one otherwise.
-    if (!is(data, "dataObject")) {
-      data <- as_data_object(
-        data = data,
-        object = object,
-        check_stringency = "external_warn")
-      
-      # Set pre-processing level.
-      data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
-    }
-    
     # Pass to .extract_data
     return(.extract_data(
       object = object,
-      data = data,
       data_element = data_element,
       ...
     ))
@@ -469,7 +456,7 @@ setMethod(
 #'@keywords internal
 .extract_data <- function(
     object,
-    data,
+    data = NULL,
     data_element,
     is_pre_processed = FALSE,
     cl = NULL,
@@ -860,7 +847,7 @@ setMethod(
     feature_similarity = feature_similarity,
     sample_similarity = sample_similarity,
     ice_data = ice_data,
-    is_validation = data@load_validation,
+    is_validation = .optional_from_slot(data, "load_validation", alternative = FALSE),
     generating_ensemble = get_object_name(object = object, abbreviated = FALSE),
     project_id = .optional_from_slot(object, "project_id", alternative = NULL)
   )
