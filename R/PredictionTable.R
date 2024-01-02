@@ -1781,3 +1781,15 @@ setMethod(
     return(data)
   }
 )
+
+
+
+# get_object_name (prediction table) -------------------------------------------
+setMethod(
+  "get_object_name",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, abbreviated = FALSE) {
+    
+    return("prediction_table")
+  }
+)
