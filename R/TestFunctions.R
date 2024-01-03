@@ -4983,8 +4983,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 }
 
 
-
-# Generate test sets and expectations for plotting and export functions.
+# .generate_test_collection ----------------------------------------------------
 .generate_test_collection <- coro::generator(function(
     data_element,
     outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
