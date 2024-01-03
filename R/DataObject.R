@@ -1496,10 +1496,6 @@ setMethod(
       
       # Based on available_features input
     } else if (!is.null(available_features)) {
-      
-      # Skip if length equals 0
-      if (length(available_features) == 0) return(data)
-      
       # Determine which features should be removed
       remove_features <- setdiff(get_feature_columns(x = data), available_features)
       
