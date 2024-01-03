@@ -4210,10 +4210,7 @@ test_plots <- function(
         )
         
         # Determine which plots are present.
-        which_present <- .test_which_plot_present(
-          plot_list,
-          outcome_type = collection$collection@outcome_type
-        )
+        which_present <- .test_which_plot_present(plot_list)
         
         if (collection$expectation == "all_present") {
           testthat::expect_true(all(which_present))
