@@ -372,7 +372,7 @@
 
 
 
-..error_cannot_convert_to_familiar_object <- function(object, expected_class) {
+..error_cannot_convert_to_familiar_object <- function(object, expected_class, call = rlang::caller_env()) {
   
   # Determine what classes are allowed as object
   if (expected_class == "familiarModel") {
@@ -388,9 +388,16 @@
     allowed_class <- c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection")
   }
   
-  stop(paste0(
+  message <- paste0(
     "The provided object cannot be converted from ", class(object), " to ", expected_class, ". ",
-    "The object should have one of the following classes, or inherit it: ", paste_s(allowed_class)))
+    "The object should have one of the following classes, or inherit it: ", paste_s(allowed_class)
+  )
+  
+  rlang::abort(
+    message,
+    class = "error_familiar_data_conversion",
+    call = call
+  )
 }
 
 
