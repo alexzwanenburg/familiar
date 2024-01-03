@@ -286,7 +286,7 @@ test_create_data_without_feature <- function(outcome_type) {
 
 
 
-test_create_bootstrapped_data <- function(outcome_type, to_data_object = TRUE) {
+test_create_bootstrapped_data <- function(outcome_type, seed = 1844L, to_data_object = TRUE) {
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- NULL
 
@@ -301,7 +301,7 @@ test_create_bootstrapped_data <- function(outcome_type, to_data_object = TRUE) {
       fam_sample(seq_len(nrow(data@data)),
       size = nrow(data@data),
       replace = TRUE,
-      seed = 1844
+      seed = seed
     )][order(sample_id)]
     
   } else {
@@ -309,7 +309,7 @@ test_create_bootstrapped_data <- function(outcome_type, to_data_object = TRUE) {
       fam_sample(seq_len(nrow(data)),
       size = nrow(data),
       replace = TRUE,
-      seed = 1844
+      seed = seed
     )][order(sample_id)]
   }
 
