@@ -403,6 +403,9 @@ setMethod(
       is_pre_processed = is_pre_processed
     )
     
+    # Capture empty or invalid prediction tables.
+    if (!all_predictions_valid(prediction_data)) return(NULL)
+    
     return(..extract_model_performance_data(
       object = prediction_data,
       data_element = data_element,
