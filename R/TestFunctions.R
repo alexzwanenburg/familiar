@@ -5960,6 +5960,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     not_available_single_feature = FALSE,
     not_available_all_predictions_fail = TRUE,
     not_available_some_predictions_fail = TRUE,
+    not_available_all_prospective = FALSE,
     not_available_any_prospective = FALSE,
     not_available_single_sample = FALSE,
     not_available_extreme_probability = FALSE,
@@ -6030,6 +6031,11 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       .not_available_any_prospective <- any(.not_available_any_prospective == outcome_type)
     }
     
+    .not_available_all_prospective <- not_available_all_prospective
+    if (is.character(.not_available_all_prospective)) {
+      .not_available_all_prospective <- any(.not_available_all_prospective == outcome_type)
+    }
+    
     .not_available_all_predictions_fail <- not_available_all_predictions_fail
     if (is.character(.not_available_all_predictions_fail)) {
       .not_available_all_predictions_fail <- any(.not_available_all_predictions_fail == outcome_type)
@@ -6066,7 +6072,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     if (n_models == 1) {
       # Train the model.
-      model_full_1 <- suppressWarnings(test_train(
+      model_full <- suppressWarnings(test_train(
         cl = cl,
         data = full_data,
         cluster_method = "none",
@@ -6077,18 +6083,14 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         create_novelty_detector = create_novelty_detector
       ))
       
-      model_full_2 <- model_full_1
-      model_full_2@fs_method <- "mifs"
-      
     } else {
       # Train a set of models.
-      model_full_1 <- list()
-      model_full_2 <- list()
+      model_full <- list()
       
       for (ii in seq_len(n_models)) {
-        temp_model_1 <- suppressWarnings(test_train(
+        temp_model <- suppressWarnings(test_train(
           cl = cl,
-          data = full_data,
+          data = test_create_bootstrapped_data(seed = ii),
           cluster_method = "none",
           imputation_method = "simple",
           fs_method = "mim",
@@ -6099,31 +6101,20 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
           create_novelty_detector = create_novelty_detector
         ))
         
-        temp_model_2 <- temp_model_1
-        temp_model_2@fs_method <- "mifs"
-        
-        model_full_1[[ii]] <- temp_model_1
-        model_full_2[[ii]] <- temp_model_2
+        model_full[[ii]] <- temp_model
       }
     }
     
     good_data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+      object = model_full,
       data = full_data,
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
       ...
     )
-    good_data_2 <- ..as_familiar_data_object(
-      object = model_full_2,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
-
+    good_data_2 <- ..duplicate_familiar_data_object(good_data_1)
+    
     familiar_data_list <- mapply(
       set_object_name,
       list(good_data_1, good_data_2, good_data_1, good_data_2),
@@ -6156,8 +6147,8 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     # Fully prospective data ---------------------------------------------------
     
-    data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+    fully_prospective_data <- ..as_familiar_data_object(
+      object = model_full,
       data = test_create_prospective_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6165,7 +6156,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    familiar_data_list <- mapply(set_object_name, list(data_1), c("prospective"))
+    familiar_data_list <- mapply(set_object_name, list(fully_prospective_data), c("prospective"))
     
     familiar_collection <- suppressWarnings(as_familiar_collection(
       familiar_data_list,
@@ -6173,7 +6164,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     ))
     
     test_expectation <- "all_absent"
-    if (outcome_type %in% outcome_type_available && !.not_available_any_prospective) {
+    if (outcome_type %in% outcome_type_available && !.not_available_all_prospective) {
       test_expectation <- "all_present"
     }
     
@@ -6189,12 +6180,12 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "expectation" = test_expectation
     ))
     
-    rm("data_1")
+    rm("fully_prospective_data")
     
     # Mostly prospective data --------------------------------------------------
     
-    data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+    mostly_prospective_data <- ..as_familiar_data_object(
+      object = model_full,
       data = test_create_mostly_prospective_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6202,7 +6193,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    familiar_data_list <- mapply(set_object_name, list(data_1), c("prospective"))
+    familiar_data_list <- mapply(set_object_name, list(mostly_prospective_data), c("prospective"))
     
     familiar_collection <- suppressWarnings(as_familiar_collection(
       familiar_data_list,
@@ -6226,12 +6217,12 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "expectation" = test_expectation
     ))
     
-    rm("data_1")
+    rm("mostly_prospective_data")
     
     # Mostly retrospective data ------------------------------------------------
     
-    data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+    mostly_retrospective_data <- ..as_familiar_data_object(
+      object = model_full,
       data = test_create_partially_prospective_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6239,7 +6230,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    familiar_data_list <- mapply(set_object_name, list(data_1), c("prospective"))
+    familiar_data_list <- mapply(set_object_name, list(mostly_retrospective_data), c("prospective"))
     
     familiar_collection <- suppressWarnings(as_familiar_collection(
       familiar_data_list,
@@ -6261,12 +6252,12 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "expectation" = test_expectation
     ))
     
-    rm("data_1")
+    rm("mostly_retrospective_data")
     
     # Single-instance data -----------------------------------------------------
     
-    data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+    single_instance_data <- ..as_familiar_data_object(
+      object = model_full,
       data = test_create_one_sample_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6274,7 +6265,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    familiar_data_list <- mapply(set_object_name, list(data_1), c("one_sample"))
+    familiar_data_list <- mapply(set_object_name, list(single_instance_data), c("one_sample"))
     
     familiar_collection <- suppressWarnings(as_familiar_collection(
       familiar_data_list,
@@ -6298,12 +6289,12 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "expectation" = test_expectation
     ))
 
-    rm("data_1")
+    rm("single_instance_data")
     
     # Bootstrapped data --------------------------------------------------------
     
-    data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+    bootstrapped_data <- ..as_familiar_data_object(
+      object = model_full,
       data = test_create_bootstrapped_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6311,7 +6302,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    familiar_data_list <- mapply(set_object_name, list(data_1), c("bootstrapped"))
+    familiar_data_list <- mapply(set_object_name, list(bootstrapped_data), c("bootstrapped"))
     
     familiar_collection <- suppressWarnings(as_familiar_collection(
       familiar_data_list,
@@ -6333,7 +6324,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "expectation" = test_expectation
     ))
     
-    rm("data_1")
+    rm("bootstrapped_data")
     
     # Partially absent data ----------------------------------------------------
     
@@ -6357,7 +6348,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     naive_data <- ..as_familiar_data_object(
       object = naive_model,
-      data = full_data,
+      data = test_create_good_data(outcome_type),
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
@@ -6365,7 +6356,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     )
     
     empty_data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+      object = model_full,
       data = test_create_empty_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6403,14 +6394,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     # Fully absent data --------------------------------------------------------
     
-    empty_data_2 <- ..as_familiar_data_object(
-      object = model_full_2,
-      data = test_create_empty_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    empty_data_2 <- ..duplicate_familiar_data_object(empty_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6443,7 +6427,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     # Partially single-instance data -------------------------------------------
     
     one_sample_data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+      object = model_full,
       data = test_create_one_sample_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6451,14 +6435,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    one_sample_data_2 <- ..as_familiar_data_object(
-      object = model_full_2,
-      data = test_create_one_sample_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    one_sample_data_2 <- ..duplicate_familiar_data_object(one_sample_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6491,7 +6468,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     # Partially identical data -------------------------------------------------
     
     identical_sample_data_1 <- ..as_familiar_data_object(
-      object = model_full_1,
+      object = model_full,
       data = test_create_all_identical_data(outcome_type),
       data_element = data_element,
       cl = cl,
@@ -6499,14 +6476,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       ...
     )
     
-    identical_sample_data_2 <- ..as_familiar_data_object(
-      object = model_full_2,
-      data = test_create_all_identical_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    identical_sample_data_2 <- ..duplicate_familiar_data_object(identical_sample_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6540,10 +6510,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     multi_model_data <- list(
       test_create_good_data(outcome_type),
-      test_create_bootstrapped_data(outcome_type),
-      test_create_one_sample_data(outcome_typ)
+      test_create_bootstrapped_data(outcome_type, seed = 1844),
+      test_create_bootstrapped_data(outcome_type, seed = 1863)
     )
-    
+
     multi_model_set <- suppressWarnings(lapply(
       multi_model_data,
       test_train,
@@ -6593,14 +6563,14 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     ))
     
     rm("multi_model_data", "multi_model_set", "naive_model")
-    rm("good_data_1", "good_data_2", "model_full_1", "model_full_2")
+    rm("good_data_1", "good_data_2", "model_full")
     
     # One-feature data ---------------------------------------------------------
     
     # Train the model.
-    model_one_1 <- suppressWarnings(test_train(
+    one_feature_model <- suppressWarnings(test_train(
       cl = cl,
-      data = one_feature_data,
+      data = test_create_single_feature_data(outcome_type),
       cluster_method = "none",
       imputation_method = "simple",
       hyperparameter_list = hyperparameters,
@@ -6609,25 +6579,15 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       create_novelty_detector = create_novelty_detector
     ))
     
-    model_one_2 <- model_one_1
-    model_one_2@fs_method <- "mifs"
-    
     good_one_feature_data_1 <- ..as_familiar_data_object(
-      object = model_one_1,
+      object = one_feature_model,
       data = test_create_single_feature_data(outcome_type),
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
       ...
     )
-    good_one_feature_data_2 <- ..as_familiar_data_object(
-      object = model_one_2,
-      data = test_create_single_feature_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    good_one_feature_data_2 <- ..duplicate_familiar_data_object(good_one_feature_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6660,21 +6620,14 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     # Partially single-instance one-feature data -------------------------------
     
     good_one_sample_one_feature_data_1 <- ..as_familiar_data_object(
-      object = model_one_1,
+      object = one_feature_model,
       data = test_create_single_feature_one_sample_data(outcome_type),
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
       ...
     )
-    good_one_sample_one_feature_data_2 <- ..as_familiar_data_object(
-      object = model_one_2,
-      data = test_create_single_feature_one_sample_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    good_one_sample_one_feature_data_2 <- ..duplicate_familiar_data_object(good_one_sample_one_feature_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6709,21 +6662,14 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     # Partially identical one-feature data -------------------------------------
     
     good_identical_one_feature_data_1 <- ..as_familiar_data_object(
-      object = model_one_1,
+      object = one_feature_model,
       data = test_create_single_feature_invariant_data(outcome_type),
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
       ...
     )
-    good_identical_one_feature_data_2 <- ..as_familiar_data_object(
-      object = model_one_2,
-      data = test_create_single_feature_invariant_data(outcome_type),
-      data_element = data_element,
-      cl = cl,
-      use_prediction_table = use_prediction_table,
-      ...
-    )
+    good_identical_one_feature_data_2 <- ..duplicate_familiar_data_object(good_identical_one_feature_data_1)
     
     familiar_data_list <- mapply(
       set_object_name,
@@ -6754,7 +6700,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     ))
     
     rm("good_identical_one_feature_data_1", "good_identical_one_feature_data_2")
-    rm("good_one_feature_data_1", "good_one_feature_data_2", "model_one_1", "model_one_2")
+    rm("good_one_feature_data_1", "good_one_feature_data_2", "one_feature_model")
     
     # Data with limited censoring ----------------------------------------------
     if (outcome_type %in% c("survival", "competing_risk")) {
@@ -6988,8 +6934,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         "expectation" = test_expectation
       ))
       
-      rm("failing_prediction_data", "model_failing_predictions")
+      rm("extreme_prediction_data", "model_extreme_predictions")
     }
   }
-  
 })
