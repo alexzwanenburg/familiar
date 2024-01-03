@@ -597,6 +597,33 @@ setMethod(
 
 
 
+# .predict (list) --------------------------------------------------------------
+setMethod(
+  ".predict",
+  signature(object = "list"),
+  function(object, data, ...) {
+    if (all(sapply(object, is, class2 = "familiarModel"))) {
+      object <- as_familiar_ensemble(object = object)
+      
+      return(do.call(
+        .predict,
+        args = c(
+          list(
+            "object" = object,
+            "data" = data
+          ),
+          list(...)
+        )
+      ))
+      
+    } else {
+      ..error_reached_unreachable_code(".predict for list expects a list of familiarModel objects")
+    }
+  }
+)
+
+
+
 # .predict_novelty (model) -----------------------------------------------------
 setMethod(
   ".predict_novelty",
