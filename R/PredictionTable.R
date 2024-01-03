@@ -223,6 +223,11 @@ as_prediction_table <- function(
     )
   }
   
+  # Infer outcome_type based on known information.
+  if (is(data, "dataObject") || is(data, "familiarDataElementPredictionTable")) {
+    object@outcome_type <- data@outcome_type
+  }
+  
   if (is_empty(x)) {
     return(object)
   }
@@ -375,11 +380,6 @@ as_prediction_table <- function(
     }
     
     object@event <- event_indicator
-  }
-  
-  # Infer outcome_type based on known information.
-  if (is(data, "dataObject") || is(data, "familiarDataElementPredictionTable")) {
-    object@outcome_type <- data@outcome_type
   }
   
   # Check the prediction table object for consistency.
