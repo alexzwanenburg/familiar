@@ -82,13 +82,9 @@ setMethod(
     time = NULL,
     ...
   ) {
-    
-    # Check if the data is empty.
-    if (is_empty(data)) {
-      return(callNextMethod())
-    }
-    
+
     n_samples <- get_n_samples(data)
+    if (n_samples == 0) return(callNextMethod())
     
     if (type == "default") {
       # default ----------------------------------------------------------------
@@ -177,12 +173,8 @@ setMethod(
     ...
   ) {
     
-    # Check if the data is empty.
-    if (is_empty(data)) {
-      return(callNextMethod())
-    }
-    
     n_samples <- get_n_samples(data)
+    if (n_samples == 0) return(callNextMethod())
 
     if (object@outcome_type == "survival" && type == "default") {
       # For survival outcomes based on survival times, predict the average
@@ -261,12 +253,8 @@ setMethod(
     time = NULL, ...
   ) {
     
-    # Check if the data is empty.
-    if (is_empty(data)) {
-      return(callNextMethod())
-    }
-    
     n_samples <- get_n_samples(data)
+    if (n_samples == 0) return(callNextMethod())
 
     if (object@outcome_type %in% c("survival") &&  type == "default") {
       # For survival outcomes based on survival times, predict the average
