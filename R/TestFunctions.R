@@ -4155,1076 +4155,79 @@ test_hyperparameter_optimisation <- function(
 
 test_plots <- function(
     plot_function,
-    data_element,
-    outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
-    not_available_no_samples = TRUE,
-    not_available_single_feature = FALSE,
-    not_available_all_predictions_fail = TRUE,
-    not_available_some_predictions_fail = TRUE,
-    not_available_all_prospective = FALSE,
-    not_available_any_prospective = FALSE,
-    not_available_single_sample = FALSE,
-    not_available_extreme_probability = FALSE,
     ...,
     plot_args = list(),
-    test_specific_config = FALSE,
-    create_novelty_detector = FALSE,
     debug = FALSE,
-    parallel = waiver()) {
-  
+    parallel = waiver()
+) {
   if (debug) {
     test_fun <- debug_test_that
-    plot_args$draw <- TRUE
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Set parallelisation.
   if (is.waive(parallel)) parallel <- !debug
-
+  
   if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
     options(rf.cores = as.integer(1))
     on.exit(options(rf.cores = -1L), add = TRUE)
-
+    
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
     on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+    
     # Start local cluster in the overall process.
     cl <- .test_start_cluster(n_cores = 2L)
     on.exit(.terminate_cluster(cl), add = TRUE)
+    
   } else {
     cl <- NULL
   }
-
-  # Iterate over the outcome type.
-  for (outcome_type in c("continuous", "survival", "binomial", "multinomial")) {
-    # Obtain data.
-    full_data <- test_create_good_data(outcome_type)
-    identical_sample_data <- test_create_all_identical_data(outcome_type)
-    full_one_sample_data <- test_create_one_sample_data(outcome_type)
-    bootstrapped_data <- test_create_bootstrapped_data(outcome_type)
-    one_feature_data <- test_create_single_feature_data(outcome_type)
-    one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
-    one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
-    empty_data <- test_create_empty_data(outcome_type)
-    multi_data <- test_create_multiple_synthetic_series(outcome_type = outcome_type)
-
-    # Data with different degrees of censoring.
-    one_censored_data <- test_create_good_data_one_censored(outcome_type)
-    few_censored_data <- test_create_good_data_few_censored(outcome_type)
-    no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
-
-    # Prospective datasets with (partially) missing outcomes
-    fully_prospective_data <- test_create_prospective_data(outcome_type)
-    mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
-    partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
-
-    # Set exceptions per outcome type.
-    .not_available_no_samples <- not_available_no_samples
-    if (is.character(.not_available_no_samples)) {
-      .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
-    }
-
-    .not_available_single_feature <- not_available_single_feature
-    if (is.character(.not_available_single_feature)) {
-      .not_available_single_feature <- any(.not_available_single_feature == outcome_type)
-    }
-
-    .not_available_all_predictions_fail <- not_available_all_predictions_fail
-    if (is.character(.not_available_all_predictions_fail)) {
-      .not_available_all_predictions_fail <- any(.not_available_all_predictions_fail == outcome_type)
-    }
-
-    .not_available_some_predictions_fail <- not_available_some_predictions_fail
-    if (is.character(.not_available_some_predictions_fail)) {
-      .not_available_some_predictions_fail <- any(.not_available_some_predictions_fail == outcome_type)
-    }
-
-    .not_available_any_prospective <- not_available_any_prospective
-    if (is.character(.not_available_any_prospective)) {
-      .not_available_any_prospective <- any(.not_available_any_prospective == outcome_type)
-    }
-
-    .not_available_all_prospective <- not_available_all_prospective
-    if (is.character(.not_available_all_prospective)) {
-      .not_available_all_prospective <- any(.not_available_all_prospective == outcome_type)
-    }
-
-    .not_available_single_sample <- not_available_single_sample
-    if (is.character(.not_available_single_sample)) {
-      .not_available_single_sample <- any(.not_available_single_sample == outcome_type)
-    }
-    
-    .not_available_extreme_probability <- not_available_extreme_probability
-    if (is.character(.not_available_extreme_probability)) {
-      .not_available_extreme_probability <- any(.not_available_extreme_probability == outcome_type)
-    }
-
-    # Parse hyperparameter list
-    hyperparameters <- list(
-      "sign_size" = get_n_features(full_data),
-      "family" = switch(
-        outcome_type,
-        "continuous" = "gaussian",
-        "binomial" = "binomial",
-        "multinomial" = "multinomial",
-        "survival" = "cox"))
-
-    # Full data set ------------------------------------------------------------
-
-    # Train the model.
-    model_full_1 <- suppressWarnings(test_train(
-      cl = cl,
-      data = full_data,
-      cluster_method = "none",
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameters,
-      learner = "lasso",
-      time_max = 1832,
-      create_novelty_detector = create_novelty_detector))
-
-    model_full_2 <- model_full_1
-    model_full_2@fs_method <- "mifs"
-
-    # Create familiar data objects.
-    data_good_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_good_full_2 <- as_familiar_data(
-      object = model_full_2,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create a completely intact dataset.
-    test_fun(
-      paste0(
-        "1. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a complete data set."),
-      {
-        object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-        object <- mapply(
-          set_object_name,
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-          list(
-            "object" = collection,
-            "export_collection" = TRUE),
-          plot_args))
-        
-        if (outcome_type %in% outcome_type_available) {
-          # Test which plot elements are present.
-          which_present <- .test_which_plot_present(plot_list$plot_list)
-          testthat::expect_equal(all(which_present), TRUE)
-          
-          # Test that a collection is exported.
-          testthat::expect_s4_class(plot_list$collection, "familiarCollection")
-          
-        } else {
-          # Test which plot elements are present.
-          which_present <- .test_which_plot_present(plot_list)
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-    
-    # Go to next outcome type if only a specific configuration needs to be
-    # tested.
-    if (test_specific_config) next
-
-    # Create familiar data objects without known outcome data.
-    data_prospective_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = fully_prospective_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create plots.
-    test_fun(
-      paste0(
-        "2A. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_all_prospective,
-          "can", "cannot"),
-        " be created for a prospective data set without known outcome."),
-      {
-        object <- list(data_prospective_full_1)
-        object <- mapply(set_object_name, object, c("prospective"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object, 
-          familiar_data_names = c("prospective")))
-        
-        plot_list <- do.call(
-          plot_function, 
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available &&
-            !.not_available_all_prospective) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create familiar data objects with mostly unknown outcome data.
-    data_prospective_most_1 <- as_familiar_data(
-      object = model_full_1,
-      data = mostly_prospective_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create plots.
-    test_fun(
-      paste0(
-      "2B. Plots for ", outcome_type, " outcomes ",
-      ifelse(
-        outcome_type %in% outcome_type_available &&
-          (!.not_available_any_prospective || !.not_available_single_sample),
-        "can", "cannot"),
-      " be created for a prospective data set with one instance with known outcome."),
-      {
-        object <- list(data_prospective_most_1)
-        object <- mapply(set_object_name, object, c("prospective"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("prospective")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available &&
-            (!.not_available_any_prospective || !.not_available_single_sample)) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-    
-    # Create familiar data objects where most outcomes are known.
-    data_prospective_partial_1 <- as_familiar_data(
-      object = model_full_1,
-      data = partially_prospective_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create a completely intact dataset.
-    test_fun(
-      paste0(
-        "2C. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a prospective data set where most instances are known."),
-      {
-        object <- list(data_prospective_partial_1)
-        object <- mapply(set_object_name, object, c("prospective"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("prospective")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create data object with one sample.
-    data_one_sample_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = full_one_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
+  
+  test_collection_generator <- .generate_test_collection(
+    ...,
+    cl = cl
+  )
+  
+  while(TRUE) {
+    # Generate parameters.
+    collection <- test_collection_generator()
+    if (coro::is_exhausted(collection)) break
     
     test_fun(
-      paste0(
-        "2D. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available &&
-                 !.not_available_single_sample,
-               "can", "cannot"),
-        " be created for a prospective data set with one instance."),
+      collection$message,
       {
-        object <- list(data_one_sample_full_1)
-        object <- mapply(set_object_name, object, c("one_sample"))
-        
-        collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names = c("one_sample")))
-        
         plot_list <- do.call(
           plot_function,
           args = c(
-            list("object" = collection),
-            plot_args))
+            list("object" = collection$collection),
+            plot_args
+          )
+        )
         
-        which_present <- .test_which_plot_present(plot_list)
+        # Determine which plots are present.
+        which_present <- .test_which_plot_present(
+          plot_list,
+          outcome_type = collection$collection@outcome_type
+        )
         
-        if (outcome_type %in% outcome_type_available && !.not_available_single_sample) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
+        if (collection$expectation == "all_present") {
+          testthat::expect_true(all(which_present))
+        } else if (collection$expectation == "all_absent") {
+          testthat::expect_true(all(!which_present))
+        } else if (collection$expectation == "any_absent") {
+          testthat::expect_true(any(!which_present))
         } else {
-          testthat::expect_equal(any(!which_present), TRUE)
+          ..error_reached_unreachable_code(paste0("unexpected expectation value:", collection$expectation))
         }
       }
     )
-    
-    # Create data object with bootstrapped data.
-    data_bootstrapped_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = bootstrapped_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    test_fun(
-      paste0(
-        "2E. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a prospective, bootstrapped, data set."),
-      {
-        object <- list(data_bootstrapped_full_1)
-        object <- mapply(set_object_name, object, c("bootstrapped"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("bootstrapped")))
-        
-        plot_list <- do.call(
-          plot_function, 
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Ensemble from multiple datasets.
-    multi_model_set <- suppressWarnings(lapply(
-      multi_data,
-      test_train,
-      cluster_method = "hclust",
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameters,
-      learner = "lasso",
-      cluster_similarity_threshold = 0.7,
-      time_max = 60,
-      create_novelty_detector = create_novelty_detector))
-
-    # Train a naive model.
-    naive_model <- suppressWarnings(
-      train_familiar(
-        data = multi_data[[1]],
-        experimental_design = "fs+mb",
-        cluster_method = "hclust",
-        imputation_method = "simple",
-        fs_method = "no_features",
-        learner = "lasso",
-        hyperparameter = hyperparameters,
-        cluster_similarity_threshold = 0.7,
-        time_max = 60,
-        parallel = FALSE,
-        verbose = FALSE))
-
-    # Replace fs_method attribute
-    naive_model@fs_method <- "none"
-
-    # Add naive model to the multi-model dataset.
-    multi_model_set <- c(multi_model_set, list("naive" = naive_model))
-
-    # Create data from ensemble of multiple models
-    multi_model_full <- as_familiar_data(
-      object = multi_model_set,
-      data = multi_data[[1]],
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Replace fs_method attribute
-    naive_model@fs_method <- "mifs"
-    
-    # Create additional familiar data objects.
-    data_naive_full <- as_familiar_data(
-      object = naive_model,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...
-    )
-    data_empty_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = empty_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_empty_full_2 <- as_familiar_data(
-      object = model_full_2,
-      data = empty_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_one_sample_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = full_one_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_one_sample_full_2 <- as_familiar_data(
-      object = model_full_2,
-      data = full_one_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_identical_full_1 <- as_familiar_data(
-      object = model_full_1,
-      data = identical_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_identical_full_2 <- as_familiar_data(
-      object = model_full_2,
-      data = identical_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create a dataset with a missing quadrant.
-    test_fun(
-      paste0(
-        "3. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a dataset with some missing data and a naive model."),
-      {
-        object <- list(data_good_full_1, data_naive_full, data_empty_full_1, data_good_full_2)
-        object <- mapply(
-          set_object_name,
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(any(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create a dataset with all missing quadrants
-    test_fun(
-      paste0(
-        "4. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_no_samples,
-          "can", "cannot"),
-        " be created for a dataset with completely missing data."),
-      {
-        object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
-        object <- mapply(
-          set_object_name,
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object, 
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function, 
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_no_samples) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create dataset with one-sample quadrants for validation
-    test_fun(
-      paste0(
-        "5. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a dataset where some data only have one sample."),
-      {
-        object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
-        object <- mapply(
-          set_object_name,
-          object, 
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object, 
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function, 
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(any(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create dataset with some quadrants with identical data
-    test_fun(
-      paste0(
-      "6. Plots for ", outcome_type, " outcomes ",
-      ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-      " be created for a dataset where some data only have identical samples."),
-      {
-        object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
-        object <- mapply(
-          set_object_name,
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-    
-    test_fun(
-      paste0(
-        "7. Plots for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a dataset created from an ensemble of multiple models."),
-      {
-        object <- list(multi_model_full)
-        object <- mapply(set_object_name, object, c("development_1"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(all(!which_present), TRUE)
-        }
-      }
-    )
-
-    # One-feature data set -----------------------------------------------------
-
-    # Train the model.
-    model_one_1 <- suppressWarnings(test_train(
-      data = one_feature_data,
-      cluster_method = "none",
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameters,
-      learner = "lasso",
-      time_max = 1832,
-      create_novelty_detector = create_novelty_detector))
-
-    model_one_2 <- model_one_1
-    model_one_2@fs_method <- "mifs"
-
-    # Create familiar data objects.
-    data_good_one_1 <- as_familiar_data(
-      object = model_one_1,
-      data = one_feature_data,
-      data_element = data_element, 
-      cl = cl,
-      ...)
-    data_good_one_2 <- as_familiar_data(
-      object = model_one_2,
-      data = one_feature_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_one_sample_one_1 <- as_familiar_data(
-      object = model_one_1, 
-      data = one_feature_one_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_one_sample_one_2 <- as_familiar_data(
-      object = model_one_2,
-      data = one_feature_one_sample_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_identical_one_1 <- as_familiar_data(
-      object = model_one_1,
-      data = one_feature_invariant_data, 
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_identical_one_2 <- as_familiar_data(
-      object = model_one_2, 
-      data = one_feature_invariant_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    # Create a completely intact, one sample dataset.
-    test_fun(
-      paste0(
-        "8. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_single_feature,
-          "can", "cannot"),
-        " be created for a complete one-feature data set."),
-      {
-        object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
-        object <- mapply(
-          set_object_name,
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create a dataset with a one-sample quadrant.
-    test_fun(
-      paste0(
-        "9. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_single_feature,
-          "can", "cannot"),
-        " be created for a dataset with some one-sample data."),
-      {
-        object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
-        object <- mapply(
-          set_object_name, 
-          object,
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object, 
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-          testthat::expect_equal(any(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-
-    # Create a dataset with some identical data.
-    test_fun(
-      paste0(
-        "10. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_single_feature,
-          "can", "cannot"),
-        " be created for a dataset with some invariant data."),
-      {
-        object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
-        object <- mapply(
-          set_object_name,
-          object, 
-          c("development_1", "development_2", "validation_1", "validation_2"))
-        
-        collection <- suppressWarnings(as_familiar_collection(
-          object,
-          familiar_data_names = c("development", "development", "validation", "validation")))
-        
-        plot_list <- suppressWarnings(do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args)))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-          testthat::expect_equal(any(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-    
-    # Data set with limited censoring ------------------------------------------
-    if (outcome_type %in% c("survival", "competing_risk")) {
-      # Train the model.
-      model_cens_1 <- suppressWarnings(test_train(
-        cl = cl,
-        data = no_censoring_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso",
-        time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
-
-      model_cens_2 <- suppressWarnings(test_train(
-        cl = cl,
-        data = one_censored_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso",
-        time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
-
-      model_cens_3 <- suppressWarnings(test_train(
-        cl = cl,
-        data = few_censored_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso",
-        time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
-
-      data_cens_1 <- as_familiar_data(
-        object = model_cens_1,
-        data = no_censoring_data,
-        data_element = data_element,
-        cl = cl,
-        ...)
-      data_cens_2 <- as_familiar_data(
-        object = model_cens_2,
-        data = one_censored_data,
-        data_element = data_element,
-        cl = cl,
-        ...)
-      data_cens_3 <- as_familiar_data(
-        object = model_cens_3, 
-        data = few_censored_data, 
-        data_element = data_element, 
-        cl = cl, 
-        ...)
-
-      # Create a dataset with some identical data.
-      test_fun(
-        paste0(
-          "11. Plots for ", outcome_type, " outcomes ",
-          ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-          " be created for a data set that includes no or limited censoring."),
-        {
-          object <- list(data_cens_1, data_cens_2, data_cens_3)
-          object <- mapply(
-            set_object_name, 
-            object,
-            c("no_censoring", "one_censored", "few_censored"))
-          
-          collection <- suppressWarnings(as_familiar_collection(
-            object,
-            familiar_data_names = c("no_censoring", "one_censored", "few_censored")))
-          
-          plot_list <- do.call(
-            plot_function,
-            args = c(
-              list("object" = collection),
-              plot_args))
-          
-          which_present <- .test_which_plot_present(plot_list)
-          
-          if (outcome_type %in% outcome_type_available) {
-            testthat::expect_equal(all(which_present), TRUE)
-          } else {
-            testthat::expect_equal(all(!which_present), TRUE)
-          }
-        }
-      )
-    }
-
-    # Without any valid predictions --------------------------------------------
-
-    # Train the model.
-    model_failed_predictions <- suppressWarnings(test_train(
-      cl = cl,
-      data = full_data,
-      cluster_method = "none",
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameters,
-      learner = "lasso_test_all_fail",
-      time_max = 1832,
-      create_novelty_detector = create_novelty_detector))
-
-    failed_prediction_data <- as_familiar_data(
-      object = model_failed_predictions,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    test_fun(
-      paste0(
-        "12. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail,
-          "can", "cannot"),
-        " be created for models yielding only invalid predictions."),
-      {
-        collection <- suppressWarnings(as_familiar_collection(
-          failed_prediction_data,
-          familiar_data_names = c("failed_predictions")))
-        
-        plot_list <- do.call(
-          plot_function, args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-
-    # With some invalid predictions --------------------------------------------
-
-    # Train the model.
-    model_failing_predictions <- suppressWarnings(test_train(
-      cl = cl,
-      data = full_data,
-      cluster_method = "none",
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameters,
-      learner = "lasso_test_some_fail",
-      time_max = 1832,
-      create_novelty_detector = create_novelty_detector))
-
-    failing_prediction_data <- as_familiar_data(
-      object = model_failing_predictions,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-
-    test_fun(
-      paste0(
-        "13. Plots for ", outcome_type, " outcomes ",
-        ifelse(
-          outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail,
-          "can", "cannot"),
-        " be created for models yielding some invalid predictions."),
-      {
-        collection <- suppressWarnings(as_familiar_collection(
-          failing_prediction_data,
-          familiar_data_names = c("failed_predictions")))
-        
-        plot_list <- do.call(
-          plot_function,
-          args = c(
-            list("object" = collection),
-            plot_args))
-        
-        which_present <- .test_which_plot_present(plot_list)
-        
-        if (outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail) {
-          testthat::expect_equal(all(which_present), TRUE)
-          
-        } else if (!outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(!which_present), TRUE)
-          
-        } else {
-          testthat::expect_equal(any(!which_present), TRUE)
-        }
-      }
-    )
-    
-    # With extreme probability values ------------------------------------------
-    
-    # Train the model.
-    if (outcome_type %in% c("binomial", "multinomial")) {
-      model_extreme_predictions <- suppressWarnings(test_train(
-        cl = cl,
-        data = full_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso_test_extreme",
-        time_max = 1832,
-        create_novelty_detector = create_novelty_detector))
-      
-      extreme_prediction_data <- as_familiar_data(
-        object = model_extreme_predictions,
-        data = full_data,
-        data_element = data_element,
-        cl = cl,
-        ...)
-      
-      test_fun(
-        paste0(
-          "14. Plots for ", outcome_type, " outcomes ",
-          ifelse(
-            outcome_type %in% outcome_type_available && !.not_available_extreme_probability,
-            "can", "cannot"),
-          " be created for models yielding extreme predictions."),
-        {
-          collection <- suppressWarnings(as_familiar_collection(
-            extreme_prediction_data,
-            familiar_data_names = c("extreme_predictions")))
-          
-          plot_list <- do.call(
-            plot_function,
-            args = c(
-              list("object" = collection),
-              plot_args))
-          
-          which_present <- .test_which_plot_present(plot_list)
-          
-          if (outcome_type %in% outcome_type_available && !.not_available_extreme_probability) {
-            testthat::expect_equal(all(which_present), TRUE)
-            
-          } else {
-            testthat::expect_equal(any(!which_present), TRUE)
-          }
-        }
-      )
-    }
   }
+ 
 }
 
 
@@ -5237,8 +4240,47 @@ test_plot_ordering <- function(
     experiment_args = list(),
     plot_args = list(),
     create_novelty_detector = FALSE,
+    use_prediction_table = FALSE,
     debug = FALSE,
     parallel = waiver()) {
+
+  ..as_familiar_data_object <- function(
+    object, 
+    data, 
+    data_element, 
+    cl, 
+    use_prediction_table, 
+    ...
+  ) {
+    if (use_prediction_table) {
+      # Generate data from prediction tables.
+      familiar_data_object <- as_familiar_data(
+        object = .predict(object = object, data = data, ...),
+        data_element = data_element,
+        cl = cl,
+        ...
+      )
+      
+    } else {
+      # Generate data from models and ensembles.
+      familiar_data_object <- as_familiar_data(
+        object = object,
+        data = data,
+        data_element = data_element,
+        cl = cl,
+        ...
+      )
+    }
+    
+    return(familiar_data_object)
+  }
+  
+  ..duplicate_familiar_data_object <- function(x) {
+    x <- set_object_name(x)
+    x@fs_method <- "mifs"
+    return(x)
+  }
+  
   # Set debug options.
   if (debug) {
     test_fun <- debug_test_that
@@ -5246,7 +4288,7 @@ test_plot_ordering <- function(
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Set parallelisation.
   if (is.waive(parallel)) parallel <- !debug
 
@@ -5279,7 +4321,6 @@ test_plot_ordering <- function(
     full_data <- test_create_good_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
 
-    # Lasso model --------------------------------------------------------------
     # Parse hyperparameter list
     hyperparameters_lasso <- list(
       "sign_size" = get_n_features(full_data),
@@ -5291,7 +4332,7 @@ test_plot_ordering <- function(
         "survival" = "cox"))
 
     # Train the lasso model.
-    model_full_lasso_1 <- suppressWarnings(do.call(
+    model_full_lasso <- suppressWarnings(do.call(
       test_train,
       args = c(
         list(
@@ -5299,12 +4340,10 @@ test_plot_ordering <- function(
           "hyperparameter_list" = hyperparameters_lasso,
           "learner" = "lasso",
           "create_novelty_detector" = create_novelty_detector),
-        experiment_args)))
-    
-    model_full_lasso_2 <- model_full_lasso_1
-    model_full_lasso_2@fs_method <- "mifs"
+        experiment_args
+      )
+    ))
 
-    # GLM model ----------------------------------------------------------------
     # Parse hyperparameter list
     hyperparameters_glm <- list(
       "sign_size" = get_n_features(full_data),
@@ -5313,10 +4352,12 @@ test_plot_ordering <- function(
         "continuous" = "gaussian",
         "binomial" = "logistic",
         "multinomial" = "multinomial",
-        "survival" = "cox"))
-
+        "survival" = "cox"
+      )
+    )
+    
     # Train the lasso model.
-    model_full_glm_1 <- suppressWarnings(do.call(
+    model_full_glm <- suppressWarnings(do.call(
       test_train,
       args = c(
         list(
@@ -5324,50 +4365,45 @@ test_plot_ordering <- function(
           "hyperparameter_list" = hyperparameters_glm,
           "learner" = "glm",
           "create_novelty_detector" = create_novelty_detector),
-        experiment_args)))
-    
-    model_full_glm_2 <- model_full_glm_1
-    model_full_glm_2@fs_method <- "mifs"
-
-    # Create plot --------------------------------------------------------------
+        experiment_args
+      )
+    ))
 
     # Create familiar data objects.
-    data_good_full_lasso_1 <- as_familiar_data(
-      object = model_full_lasso_1,
+    data_good_full_lasso_1 <- ..as_familiar_data_object(
+      object = model_full_lasso,
       data = full_data,
       data_element = data_element,
       cl = cl,
-      ...)
-    data_good_full_lasso_2 <- as_familiar_data(
-      object = model_full_lasso_2,
+      use_prediction_table = use_prediction_table,
+      ...
+    )
+    data_good_full_lasso_2 <- ..duplicate_familiar_data_object(data_good_full_lasso_1)
+    data_good_full_glm_1 <- ..as_familiar_data_object(
+      object = model_full_glm,
       data = full_data,
       data_element = data_element,
       cl = cl,
-      ...)
-    data_good_full_glm_1 <- as_familiar_data(
-      object = model_full_glm_1,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_good_full_glm_2 <- as_familiar_data(
-      object = model_full_glm_2,
-      data = full_data,
-      data_element = data_element,
-      cl = cl,
-      ...)
-    data_empty_glm_1 <- as_familiar_data(
-      object = model_full_glm_1,
+      use_prediction_table = use_prediction_table,
+      ...
+    )
+    data_good_full_glm_2 <- ..duplicate_familiar_data_object(data_good_full_glm_1)
+    data_empty_glm_1 <- ..as_familiar_data_object(
+      object = model_full_glm,
       data = empty_data,
       data_element = data_element,
       cl = cl,
-      ...)
-    data_empty_lasso_2 <- as_familiar_data(
-      object = model_full_lasso_2,
+      use_prediction_table = use_prediction_table,
+      ...
+    )
+    data_empty_lasso_2 <- ..as_familiar_data_object(
+      object = model_full_lasso,
       data = empty_data,
       data_element = data_element,
       cl = cl,
-      ...)
+      use_prediction_table = use_prediction_table,
+      ...
+    )
     
     # Create a test dataset with multiple components
     test_fun(
@@ -5375,26 +4411,33 @@ test_plot_ordering <- function(
       {
         object <- list(
           data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
-          data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
+          data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2
+        )
         
         object <- mapply(
           set_object_name,
           object,
           c(
             "development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
-            "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+            "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"
+          )
+        )
         
         collection <- suppressWarnings(as_familiar_collection(
           object,
           familiar_data_names = c(
             "development", "development", "validation", "validation",
-            "development", "development", "validation", "validation")))
+            "development", "development", "validation", "validation"
+          )
+        ))
         
         plot_list <- do.call(
           plot_function,
           args = c(
             list("object" = collection),
-            plot_args))
+            plot_args
+          )
+        )
         
         which_present <- .test_which_plot_present(plot_list)
         
@@ -5505,6 +4548,12 @@ test_export_specific <- function(
     debug = FALSE
 ) {
 
+  ..duplicate_familiar_data_object <- function(x) {
+    x <- set_object_name(x)
+    x@fs_method <- "mifs"
+    return(x)
+  }
+  
   # Create list for output.
   out_elements <- list()
 
@@ -5534,7 +4583,7 @@ test_export_specific <- function(
     
     if (n_models == 1) {
       # Train the model.
-      model_full_1 <- suppressWarnings(test_train(
+      model_full <- suppressWarnings(test_train(
         data = main_data,
         cluster_method = "none",
         imputation_method = "simple",
@@ -5544,17 +4593,13 @@ test_export_specific <- function(
         create_novelty_detector = create_novelty_detector
       ))
       
-      model_full_2 <- model_full_1
-      model_full_2@fs_method <- "mifs"
-      
     } else {
       # Train a set of models.
-      model_full_1 <- list()
-      model_full_2 <- list()
+      model_full <- list()
 
       for (ii in seq_len(n_models)) {
-        temp_model_1 <- suppressWarnings(test_train(
-          data = main_data,
+        temp_model <- suppressWarnings(test_train(
+          data = test_create_bootstrapped_data(outcome_type, seed = ii),
           cluster_method = "none",
           imputation_method = "simple",
           fs_method = "mim",
@@ -5565,23 +4610,14 @@ test_export_specific <- function(
           create_novelty_detector = create_novelty_detector
         ))
         
-        temp_model_2 <- temp_model_1
-        temp_model_2@fs_method <- "mifs"
-
-        model_full_1[[ii]] <- temp_model_1
-        model_full_2[[ii]] <- temp_model_2
+        model_full[[ii]] <- temp_model
       }
     }
 
     if (use_prediction_table) {
       # Generate data from prediction tables.
       data_good_full_1 <- as_familiar_data(
-        object = .predict(object = model_full_1, data = data, ...),
-        data_element = data_element,
-        ...
-      )
-      data_good_full_2 <- as_familiar_data(
-        object = .predict(object = model_full_2, data = data, ...),
+        object = .predict(object = model_full, data = data, ...),
         data_element = data_element,
         ...
       )
@@ -5589,18 +4625,14 @@ test_export_specific <- function(
     } else {
       # Generate data from models and ensembles.
       data_good_full_1 <- as_familiar_data(
-        object = model_full_1,
-        data = data,
-        data_element = data_element,
-        ...
-      )
-      data_good_full_2 <- as_familiar_data(
-        object = model_full_2,
+        object = model_full,
         data = data,
         data_element = data_element,
         ...
       )
     }
+    
+    data_good_full_2 <- ..duplicate_familiar_data_object(data_good_full_1)
     
     # Generate data objects and names.
     object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
