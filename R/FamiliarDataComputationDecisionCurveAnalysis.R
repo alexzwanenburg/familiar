@@ -9,7 +9,9 @@ setClass(
   contains = "familiarDataElement",
   prototype = methods::prototype(
     value_column = "net_benefit",
-    grouping_column = "threshold_probability"))
+    grouping_column = "threshold_probability"
+  )
+)
 
 # exract_decision_curve_data (generic) -----------------------------------------
 
@@ -162,13 +164,20 @@ setMethod(
       verbose = verbose
     )
     
-    if (is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
-    if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-    if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
+    if (is.waive(evaluation_times) && methods::.hasSlot(object, "time")) {
+      evaluation_times <- object@time
+    }
+    if (is.waive(ensemble_method)) {
+      ensemble_method <- "median"
+      if (methods::.hasSlot(object, "ensemble_method")) ensemble_method <- object@ensemble_method
+    } 
     
-    # Test if models are properly loaded
-    if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
+    # Default Values.
+    if (is.waive(detail_level)) detail_level <- "ensemble"
+    if (is.waive(estimation_type)) estimation_type <- "bootstrap_confidence_interval" 
+    if (is.waive(confidence_level)) confidence_level <- 0.95
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- "bc"
+    if (is.waive(aggregate_results)) aggregate_results <- FALSE
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
@@ -584,7 +593,8 @@ setMethod(
   if (bootstrap) {
     data <- get_bootstrap_sample(
       data = data,
-      seed = bootstrap_seed)
+      seed = bootstrap_seed
+    )
   } 
   
   # Make a local copy
@@ -592,7 +602,8 @@ setMethod(
   data.table::setnames(
     x = data,
     old = get_class_probability_name(positive_class),
-    new = "probability")
+    new = "probability"
+  )
   
   # Determine positive output.
   data[, "is_positive" := outcome == positive_class]
@@ -621,18 +632,21 @@ setMethod(
   # Set the data attribute.
   intervention_data_element@data <- data.table::data.table(
     "threshold_probability" = threshold_probabilities,
-    "net_benefit" = intervention_net_benefit)
+    "net_benefit" = intervention_net_benefit
+  )
   
   # Set the curve type identifier.
   intervention_data_element <- add_data_element_identifier(
     x = intervention_data_element,
-    curve_type = "intervention_all")
+    curve_type = "intervention_all"
+  )
   
   # Determine the number of true and false positives to determine the net
   # benefit of the model.
   data[, ":="(
     "n_true_positive" = cumsum(is_positive),
-    "n_false_positive" = cumsum(!is_positive))]
+    "n_false_positive" = cumsum(!is_positive)
+  )]
   
   # Compute benefit for the model.
   model_net_benefit <- ..compute_dca_data_net_benefit(data, threshold_probabilities)
@@ -642,16 +656,19 @@ setMethod(
   # Set the data attribute
   data_element@data <- data.table::data.table(
     "threshold_probability" = threshold_probabilities,
-    "net_benefit" = model_net_benefit)
+    "net_benefit" = model_net_benefit
+  )
   
   # Set the curve type identifier.
   data_element <- add_data_element_identifier(
     x = data_element,
-    curve_type = "model")
+    curve_type = "model"
+  )
   
   return(c(
     data_element,
-    intervention_data_element))
+    intervention_data_element
+  ))
 }
 
 
@@ -667,7 +684,8 @@ setMethod(
   if (bootstrap) {
     data <- get_bootstrap_sample(
       data = data,
-      seed = bootstrap_seed)
+      seed = bootstrap_seed
+    )
   }
   
   # Compute benefit for the situation an intervention always happens.
@@ -675,7 +693,8 @@ setMethod(
     data = data,
     x = threshold_probabilities,
     evaluation_time = data_element@identifiers$evaluation_time,
-    intervention = TRUE)
+    intervention = TRUE
+  )
   
   # Copy data element for intervention.
   intervention_data_element <- data_element
@@ -683,35 +702,41 @@ setMethod(
   # Set the data attribute.
   intervention_data_element@data <- data.table::data.table(
     "threshold_probability" = threshold_probabilities,
-    "net_benefit" = intervention_net_benefit)
+    "net_benefit" = intervention_net_benefit
+  )
   
   # Set the curve type identifier.
   intervention_data_element <- add_data_element_identifier(
     x = intervention_data_element,
-    curve_type = "intervention_all")
+    curve_type = "intervention_all"
+  )
   
   # Compute benefit for the model.
   model_net_benefit <- ..compute_dca_data_net_benefit_survival(
     data = data,
     x = threshold_probabilities,
     evaluation_time = data_element@identifiers$evaluation_time,
-    intervention = FALSE)
+    intervention = FALSE
+  )
   
   if (is.null(model_net_benefit)) return(NULL)
   
   # Set the data attribute
   data_element@data <- data.table::data.table(
     "threshold_probability" = threshold_probabilities,
-    "net_benefit" = model_net_benefit)
+    "net_benefit" = model_net_benefit
+  )
   
   # Set the curve type identifier.
   data_element <- add_data_element_identifier(
     x = data_element,
-    curve_type = "model")
+    curve_type = "model"
+  )
   
   return(c(
     data_element,
-    intervention_data_element))
+    intervention_data_element
+  ))
 }
 
 
@@ -731,7 +756,8 @@ setMethod(
   # Determine net benefit.
   data[, ":="(
     "net_benefit" = n_true_positive / n -
-      n_false_positive / n * (probability / (1.0 - probability)))]
+      n_false_positive / n * (probability / (1.0 - probability))
+  )]
   
   # Net benefit should be numeric.
   data <- data[is.finite(net_benefit)]
@@ -753,7 +779,8 @@ setMethod(
     xout = x,
     yleft = n_max_true_positive / n,
     yright = -Inf,
-    method = "linear")$y)
+    method = "linear"
+  )$y)
   
   return(net_benefit)
 }
@@ -819,16 +846,16 @@ setMethod(
         outcome_time <= evaluation_time,
         list(
           "death" = sum(outcome_event == 1),
-          "censored" = sum(outcome_event == 0)),
-        by = "outcome_time"][order(outcome_time)]
+          "censored" = sum(outcome_event == 0)
+        ),
+        by = "outcome_time"
+      ][order(outcome_time)]
       
       if (nrow(surv_group) > 0) {
         # Add group sizes at the start of each interval.
-        surv_group[, "n" := n_surv_group - data.table::shift(
-          cumsum(death + censored),
-          n = 1,
-          fill = 0,
-          type = "lag")]
+        surv_group[
+          , "n" := n_surv_group - data.table::shift(cumsum(death + censored), n = 1, fill = 0, type = "lag")
+        ]
         
         # Compute the probability of survival in the interval
         surv_group[, "survival_in_interval" := (n - death) / n]
@@ -902,7 +929,8 @@ setGeneric(
     object,
     dir_path = NULL,
     aggregate_results = TRUE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_decision_curve_analysis_data")
   }
 )
@@ -919,8 +947,8 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = TRUE, 
-    ...) {
-    
+    ...
+  ) {
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
@@ -930,7 +958,8 @@ setMethod(
       dir_path = dir_path,
       aggregate_results = aggregate_results,
       type = "decision_curve_analysis",
-      subtype = "data"))
+      subtype = "data"
+    ))
   }
 )
 
@@ -946,7 +975,8 @@ setMethod(
     object, 
     dir_path = NULL, 
     aggregate_results = TRUE, 
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -956,7 +986,9 @@ setMethod(
           "object" = object,
           "data_element" = "decision_curve_analyis",
           "aggregate_results" = aggregate_results),
-        list(...)))
+        list(...)
+      )
+    )
     
     return(do.call(
       export_decision_curve_analysis_data,
@@ -965,6 +997,8 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
