@@ -78,30 +78,10 @@ setMethod(
       verbose = verbose
     )
     
-    # Load evaluation_times from the object settings attribute, if it is not
-    # provided.
-    if (is.waive(evaluation_times)) {
-      evaluation_times <- object@settings$eval_times
-    }
-    
-    # Obtain ensemble method from stored settings, if required.
-    if (is.waive(ensemble_method)) {
-      ensemble_method <- object@settings$ensemble_method
-    }
-    
-    # Load confidence alpha from object settings attribute if not provided
-    # externally.
-    if (is.waive(confidence_level)) {
-      confidence_level <- object@settings$confidence_level
-    }
-    
-    # Load the bootstrap method
-    if (is.waive(bootstrap_ci_method)) {
-      bootstrap_ci_method <- object@settings$bootstrap_ci_method
-    }
-    
-    # Load metric(s) from the object settings attribute if not provided
-    # externally.
+    if (is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
+    if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
+    if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
     if (is.waive(metric)) metric <- object@settings$metric
     
     # Test if models are properly loaded
@@ -414,54 +394,6 @@ setMethod(
   }
 )
 
-# 
-# # ..extract_model_performance_data (ensemble) ----------------------------------
-# setMethod(
-#   "..extract_model_performance_data",
-#   signature(object = "familiarEnsemble"),
-#   function(
-#     object,
-#     data_element,
-#     data,
-#     is_pre_processed,
-#     ensemble_method,
-#     progress_bar = FALSE,
-#     verbose = FALSE,
-#     message_indent,
-#     ...
-#   ) {
-#     # Ensure that the object is loaded
-#     object <- load_familiar_object(object)
-#     
-#     # Message the user concerning the time at which metrics are computed. This is
-#     # only relevant for survival analysis.
-#     if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
-#       logger_message(
-#         paste0(
-#           "Computing metric value at time ",
-#           data_element@identifiers$evaluation_time, "."),
-#         indent = message_indent,
-#         verbose = verbose
-#       )
-#     }
-#     
-#     # Predict class probabilities.
-#     prediction_data <- .predict(
-#       object = object,
-#       data = data,
-#       time = data_element@identifiers$evaluation_time,
-#       ensemble_method = ensemble_method,
-#       is_pre_processed = is_pre_processed
-#     )
-#     
-#     return(..extract_model_performance_data(
-#       object = prediction_data,
-#       data_element = data_element,
-#       progress_bar = progress_bar,
-#       ...
-#     ))
-#   }
-# )
 
 
 # ..extract_model_performance_data (prediction_table) --------------------------
