@@ -218,6 +218,7 @@ setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
 
 setGeneric("requires_naive_model", function(object, ...) standardGeneric("requires_naive_model"))
 
+setGeneric("..get_prediction_table_type", function(object, ...) standardGeneric("..get_prediction_table_type"))
 
 
 # familiarNoveltyDetector methods ----------------------------------------------

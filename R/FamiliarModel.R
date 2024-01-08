@@ -875,6 +875,7 @@ setMethod(
 )
 
 
+
 # is_available -----------------------------------------------------------------
 setMethod(
   "is_available",
@@ -968,51 +969,20 @@ setMethod(
     object = "familiarModel",
     data = "dataObject"),
   function(object, data, type = "default", time = NULL, ...) {
-    # This is a fall-back option.
-    if (type == "default") {
-      # default ----------------------------------------------------------------
-      
-      if (object@outcome_type %in% c("binomial", "multinomial")) {
-        prediction_table <- as_prediction_table(
-          x = NULL,
-          type = "classification",
-          data = data
-        )
-        
-      } else if (object@outcome_type %in% c("continuous")) {
-        prediction_table <- as_prediction_table(
-          x = NULL,
-          type = "regression",
-          data = data
-        )
-        
-      } else if (object@outcome_type %in% c("survival")) {
-        prediction_table <- as_prediction_table(
-          x = NULL,
-          type = "hazard_ratio",
-          data = data
-        )
-        
-      } else {
-        ..error_outcome_type_not_implemented(object@outcome_type)
-      }
-      
-    } else if (type == "survival_probability" && object@outcome_type == "survival") {
-      # survival probability ---------------------------------------------------
-      
-      # If time is unset, read the max time stored by the model.
-      if (is.null(time)) time <- object@settings$time_max
-      
-      prediction_table <- as_prediction_table(
-        x = NULL,
-        type = "survival_probability",
-        data = data,
-        time = time
-      )
-      
-    } else {
-      ..error_no_predictions_possible(object, type)
-    }
+    # Fallback method for missing or failing predictions.
+    
+    # Find the type of prediction table that should be created.
+    prediction_table_type <- ..get_prediction_table_type(
+      object = object,
+      type = type
+    )
+    
+    return(as_prediction_table(
+      x = NULL,
+      type = prediction_table_type,
+      data = data,
+      time = time
+    ))
   }
 )
 
@@ -1061,6 +1031,42 @@ setMethod(
     stop("deprecated -> ..predict")
   }
 )
+
+
+# ..get_prediction_table_type (familiarModel) ----------------------------------
+setMethod(
+  "..get_prediction_table_type",
+  signature(object = "familiarModel"),
+  function(object, type, ...) {
+    # This is the default option for familiar models. Learners that require more
+    # specialised prediction table types should specify these types in their own
+    # methods before calling this default method.
+    prediction_table_type <- NULL
+    if (type == "default") {
+      if (object@outcome_type %in% c("binomial", "multinomial")) {
+        prediction_table_type <- "classification"
+        
+      } else if (object@outcome_type %in% c("continuous")) {
+        prediction_table_type <- "regression"
+        
+      } else if (object@outcome_type %in% c("survival")) {
+        prediction_table_type <- "hazard_ratio"
+        
+      } else {
+        ..error_outcome_type_not_implemented(object@outcome_type)
+      }
+      
+    } else if (type == "survival_probability" && object@outcome_type == "survival") {
+      prediction_table_type <- "survival_probability"
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
+    }
+    
+    return(prediction_table_type)
+  }
+)
+
 
 
 

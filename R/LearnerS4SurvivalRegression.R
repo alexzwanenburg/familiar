@@ -391,6 +391,24 @@ setMethod(
 
 
 
+# ..get_prediction_table_type --------------------------------------------------
+setMethod(
+  "..get_prediction_table_type",
+  signature(object = "familiarSurvRegr"),
+  function(object, type, ...) {
+    prediction_table_type <- NULL
+    if (object@outcome_type %in% c("survival") && type == "default") {
+      prediction_table_type <- "expected_survival_time"
+    } else {
+      prediction_table_type <- callNextMethod()
+    }
+    
+    return(prediction_table_type)
+  }
+)
+
+
+
 # ..vimp -----------------------------------------------------------------------
 setMethod(
   "..vimp",

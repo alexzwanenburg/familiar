@@ -760,6 +760,24 @@ setMethod(
 )
 
 
+# ..get_prediction_table_type --------------------------------------------------
+setMethod(
+  "..get_prediction_table_type",
+  signature(object = "familiarXGBoost"),
+  function(object, type, ...) {
+    prediction_table_type <- NULL
+    if (object@outcome_type %in% c("survival") && type == "default") {
+      prediction_table_type <- "survival"
+    } else {
+      prediction_table_type <- callNextMethod()
+    }
+    
+    return(prediction_table_type)
+  }
+)
+
+
+
 
 # ..predict_survival_probability -----------------------------------------------
 setMethod(
