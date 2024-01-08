@@ -79,82 +79,35 @@ setMethod(
     logger_message(
       paste0("Computing data for decision curve analysis."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
-    # Load evaluation_times from the object settings attribute, if it is not provided.
     if (is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
-    
-    # Check evaluation_times argument
-    if (object@outcome_type %in% c("survival")) {
-      sapply(
-        evaluation_times,
-        .check_number_in_valid_range,
-        var_name = "evaluation_times",
-        range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
-    }
-    
-    # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-    
-    # Check ensemble_method argument
-    .check_parameter_value_is_valid(
-      x = ensemble_method,
-      var_name = "ensemble_method",
-      values = .get_available_ensemble_prediction_methods())
-    
-    # Load confidence alpha from object settings attribute if not
-    # provided externally.
     if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-    
-    # Check confidence_level input argument
-    .check_number_in_valid_range(
-      x = confidence_level,
-      var_name = "confidence_level",
-      range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
-    
-    # Load the bootstrap method
     if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
     
-    .check_parameter_value_is_valid(
-      x = bootstrap_ci_method,
-      var_name = "bootstrap_ci_method",
-      values = .get_available_bootstrap_confidence_interval_methods())
-    
-    # Check the level detail.
-    detail_level <- .parse_detail_level(
-      x = detail_level,
-      object = object,
-      default = "hybrid",
-      data_element = "decision_curve_analyis")
-    
-    # Check the estimation type.
-    estimation_type <- .parse_estimation_type(
-      x = estimation_type,
-      object = object,
-      default = "bootstrap_confidence_interval",
-      data_element = "decision_curve_analyis",
-      detail_level = detail_level,
-      has_internal_bootstrap = TRUE)
+    # Test if models are properly loaded
+    if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "decision_curve_analyis")
-    
-    # Test if models are properly loaded
-    if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
+      data_element = "decision_curve_analyis"
+    )
     
     # Generate a prototype data element.
-    proto_data_element <- new(
-      "familiarDataElementDecisionCurve",
+    proto_data_element <- .create_extract_decision_curve_object(
+      object = object,
+      ensemble_method = ensemble_method,
+      evaluation_times = evaluation_times,
       detail_level = detail_level,
       estimation_type = estimation_type,
       confidence_level = confidence_level,
-      bootstrap_ci_method = bootstrap_ci_method)
+      bootstrap_ci_method = bootstrap_ci_method
+    )
     
     # Generate elements to send to dispatch.
     dca_data <- extract_dispatcher(
@@ -169,7 +122,8 @@ setMethod(
       evaluation_times = evaluation_times,
       aggregate_results = aggregate_results,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(dca_data)
   }
@@ -177,7 +131,173 @@ setMethod(
 
 
 
-.extract_decision_curve_data <- function(
+# extract_decision_curve_data (prediction table) -------------------------------
+setMethod(
+  "extract_decision_curve_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(
+    object,
+    data,
+    cl = NULL,
+    ensemble_method = waiver(),
+    evaluation_times = waiver(),
+    detail_level = waiver(),
+    estimation_type = waiver(),
+    aggregate_results = waiver(),
+    confidence_level = waiver(),
+    bootstrap_ci_method = waiver(),
+    is_pre_processed = FALSE,
+    message_indent = 0L,
+    verbose = FALSE,
+    ...) {
+    
+    # Decision curve analysis is only available for categorical and survival
+    # outcomes.
+    if (!object@outcome_type %in% c("binomial", "multinomial", "survival")) return(NULL)
+    
+    # Message extraction start
+    logger_message(
+      paste0("Computing data for decision curve analysis."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    if (is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
+    if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
+    if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
+    
+    # Test if models are properly loaded
+    if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
+    
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = TRUE,
+      data_element = "decision_curve_analyis"
+    )
+    
+    # Generate a prototype data element.
+    proto_data_element <- .create_extract_decision_curve_object(
+      object = object,
+      ensemble_method = ensemble_method,
+      evaluation_times = evaluation_times,
+      detail_level = detail_level,
+      estimation_type = estimation_type,
+      confidence_level = confidence_level,
+      bootstrap_ci_method = bootstrap_ci_method
+    )
+    
+    # Generate elements to send to dispatch.
+    dca_data <- extract_dispatcher(
+      FUN = .extract_decision_curve_data,
+      has_internal_bootstrap = TRUE,
+      cl = cl,
+      object = object,
+      data = data,
+      proto_data_element = proto_data_element,
+      is_pre_processed = is_pre_processed,
+      ensemble_method = ensemble_method,
+      evaluation_times = evaluation_times,
+      aggregate_results = aggregate_results,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    return(dca_data)
+  }
+)
+
+
+
+.create_extract_decision_curve_object <- function(
+    object,
+    ensemble_method,
+    evaluation_times,
+    detail_level,
+    estimation_type,
+    confidence_level,
+    bootstrap_ci_method
+) {
+  
+  # Check evaluation_times argument
+  if (object@outcome_type %in% c("survival")) {
+    sapply(
+      evaluation_times,
+      .check_number_in_valid_range,
+      var_name = "evaluation_times",
+      range = c(0.0, Inf),
+      closed = c(FALSE, TRUE)
+    )
+  }
+  
+  # Check confidence_level input argument
+  .check_number_in_valid_range(
+    x = confidence_level, 
+    var_name = "confidence_level",
+    range = c(0.0, 1.0),
+    closed = c(FALSE, FALSE)
+  )
+  
+  # Check ensemble_method argument
+  .check_parameter_value_is_valid(
+    x = ensemble_method,
+    var_name = "ensemble_method",
+    values = .get_available_ensemble_prediction_methods()
+  )
+  
+  # bootstrap_ci_method
+  .check_parameter_value_is_valid(
+    x = bootstrap_ci_method,
+    var_name = "bootstrap_ci_method",
+    values = .get_available_bootstrap_confidence_interval_methods()
+  )
+  
+  # Check the level detail.
+  detail_level <- .parse_detail_level(
+    x = detail_level,
+    object = object,
+    default = "hybrid",
+    data_element = "decision_curve_analyis"
+  )
+  
+  # Check the estimation type.
+  estimation_type <- .parse_estimation_type(
+    x = estimation_type,
+    object = object,
+    default = "bootstrap_confidence_interval",
+    data_element = "decision_curve_analyis",
+    detail_level = detail_level,
+    has_internal_bootstrap = TRUE
+  )
+
+  # Generate a prototype data element.
+  proto_data_element <- new(
+    "familiarDataElementDecisionCurve",
+    detail_level = detail_level,
+    estimation_type = estimation_type,
+    confidence_level = confidence_level,
+    bootstrap_ci_method = bootstrap_ci_method
+  )
+  
+  return(proto_data_element)
+}
+
+
+
+# .extract_decision_curve_data (generic) --------------------------------------
+setGeneric(
+  ".extract_decision_curve_data",
+  function(object, ...) standardGeneric(".extract_decision_curve_data")
+)
+
+
+# .extract_decision_curve_data (familiarModelUnion) ----------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "familiarModelUnion"),
+  function(
     object,
     data,
     proto_data_element,
@@ -185,43 +305,102 @@ setMethod(
     cl,
     ensemble_method,
     is_pre_processed,
-    ...) {
-  
-  # Ensure that the object is loaded
-  object <- load_familiar_object(object)
-  
-  # Add model name.
-  proto_data_element <- add_model_name(proto_data_element, object = object)
-  
-  # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
-    data_elements <- add_data_element_identifier(
-      x = proto_data_element,
-      evaluation_time = evaluation_times)
+    ...
+  ) {
+    # Ensure that the object is loaded
+    object <- load_familiar_object(object)
     
-  } else if (object@outcome_type %in% c("binomial", "multinomial")) {
+    # Add model name.
+    proto_data_element <- add_model_name(proto_data_element, object = object)
     
-    # Predict class probabilities.
-    prediction_data <- .predict(
-      object = object,
-      data = data,
-      ensemble_method = ensemble_method,
-      is_pre_processed = is_pre_processed)
-    
-    # Check if any predictions are valid.
-    if (!all_predictions_valid(
-      prediction_data,
-      outcome_type = object@outcome_type)) {
-      return(NULL)
+    if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+      # Add evaluation time as a identifier to the data element.
+      data_elements <- add_data_element_identifier(
+        x = proto_data_element,
+        evaluation_time = evaluation_times
+      )
+      
+    } else {
+      data_elements <- list(proto_data_element)
     }
     
-    # Remove data with missing outcomes.
-    prediction_data <- remove_missing_outcomes(
-      data = prediction_data,
-      outcome_type = object@outcome_type)
+    if (object@outcome_type == "survival") {
+      dca_data <- lapply(
+        data_elements,
+        function(data_element, object, data, ensemble_method, is_pre_processed, ...) {
+          prediction_table <- .predict(
+            object = object,
+            data = data,
+            time = data_element@identifiers$evaluation_time,
+            ensemble_method = ensemble_method,
+            is_pre_processed = is_pre_processed,
+            type = "survival_probability"
+          )
+          
+          return(.extract_decision_curve_data(
+            object = prediction_table,
+            proto_data_element = data_element,
+            ...
+          ))
+        },
+        object = object,
+        data = data,
+        ensemble_method = ensemble_method,
+        is_pre_processed = is_pre_processed,
+        ...
+      )
+      
+    } else if (object@outcome_type %in% c("binomial", "multinomial")) {
+      prediction_table <- .predict(
+        object = object,
+        data = data,
+        ensemble_method = ensemble_method,
+        is_pre_processed = is_pre_processed
+      )
+      
+      dca_data <- mapply(
+        .extract_decision_curve_data,
+        proto_data_element = data_elements,
+        MoreArgs = c(
+          list("object" = prediction_table),
+          list(...)
+        ),
+        SIMPLIFY = FALSE
+      )
+      
+    } else {
+      ..error_outcome_type_not_implemented(object@outcome_type)
+    }
     
-    # Check that any prediction data remain.
-    if (is_empty(prediction_data)) return(NULL)
+    return(dca_data)
+  }
+)
+
+
+
+# .extract_decision_curve_data (classification) --------------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "predictionTableClassification"),
+  function(
+    object,
+    proto_data_element,
+    aggregate_results,
+    cl = NULL,
+    progress_bar = FALSE,
+    verbose = FALSE,
+    message_indent = 0L,
+    ...
+  ) {
+    # Check if any predictions are valid.
+    if (!all_predictions_valid(object)) return(NULL)
+    
+    # Remove data with missing outcomes.
+    object <- filter_missing_outcome(object)
+    if (is_empty(object)) return(NULL)
+    
+    data <- .as_data_table(object)
+    if (nrow(data) <= 1) return(NULL)
     
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
@@ -232,93 +411,159 @@ setMethod(
     # Add positive class as an identifier.
     data_elements <- add_data_element_identifier(
       x = proto_data_element,
-      positive_class = outcome_class_levels)
+      positive_class = outcome_class_levels
+    )
     
-  } else {
-    data_elements <- list(proto_data_element)
-  }
-  
-  # Dispatch to function
-  if (object@outcome_type %in% c("binomial", "multinomial")) {
-    dca_data <- lapply(
-      data_elements,
-      .compute_dca_data_categorical,
-      data = prediction_data,
+    # Add bootstrap data.
+    bootstrap_data <- add_data_element_bootstrap(x = data_elements, ...)
+    
+    if (length(bootstrap_data) > 1 && progress_bar) {
+      logger_message(
+        paste0(
+          "Computing decision curves for the ",
+          paste_s(outcome_class_levels),
+          ifelse(length(outcome_class_levels) == 1, " class.", " classes.")),
+        indent = message_indent,
+        verbose = verbose
+      )
+    }
+    
+    # Set test probabilities
+    threshold_probabilities <- seq(
+      from = 0.000, 
+      to = 1.000,
+      by = 0.005
+    )
+    
+    # Iterate over elements.
+    data_elements <- fam_mapply(
       cl = cl,
-      ...)
+      assign = NULL,
+      FUN = .compute_dca_data_categorical_model,
+      data_element = bootstrap_data$data_element,
+      bootstrap = bootstrap_data$bootstrap,
+      bootstrap_seed = bootstrap_data$seed,
+      MoreArgs = list(
+        "data" = data,
+        "threshold_probabilities" = threshold_probabilities
+      ),
+      progress_bar = progress_bar,
+      chopchop = TRUE
+    )
     
-  } else if (object@outcome_type %in% c("survival")) {
-    dca_data <- lapply(
-      data_elements,
-      .compute_dca_data_survival,
-      data = data,
-      object = object,
-      ensemble_method = ensemble_method,
-      is_pre_processed = is_pre_processed,
-      cl = cl,
-      ...)
+    # Merge data elements
+    data_elements <- merge_data_elements(data_elements)
     
-  } else {
-    ..error_outcome_type_not_implemented(object@outcome_type)
+    if (aggregate_results) data_elements <- .compute_data_element_estimates(x = data_elements)
+    
+    return(data_elements)
   }
-  
-  return(dca_data)
-}
+)
 
 
 
-.compute_dca_data_categorical <- function(
-    data_element,
-    data,
+# .extract_decision_curve_data (survival probability) --------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "predictionTableSurvivalProbability"),
+  function(
+    object,
+    proto_data_element,
     aggregate_results,
     cl = NULL,
     progress_bar = FALSE,
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
-  
-  # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
-  
-  if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
-    logger_message(
-      paste0(
-        "Computing decision curves for the \"",
-        data_element@identifiers$positive_class, "\" class."),
-      indent = message_indent,
-      verbose = verbose)
+    ...
+  ) {
+    # Check if any predictions are valid.
+    if (!all_predictions_valid(object)) return(NULL)
+    
+    # Remove data with missing outcomes.
+    object <- filter_missing_outcome(object)
+    if (is_empty(object)) return(NULL)
+    
+    data <- .as_data_table(object)
+    if (nrow(data) <= 1) return(NULL)
+    
+    # Add bootstrap data.
+    bootstrap_data <- add_data_element_bootstrap(x = proto_data_element, ...)
+    
+    # Message the user concerning the time at which the decision curves are
+    # computed. This is only relevant for survival analysis, where survival
+    # probability is time depend.
+    if (length(bootstrap_data) > 0 && progress_bar) {
+      message_str <- "Computing decision curves"
+      if (!is.null(proto_data_element@identifiers$evaluation_time)) {
+        message_str <- c(
+          message_str,
+          "at time ", proto_data_element@identifiers$evaluation_time, "."
+        )
+        
+      } else {
+        message_str <- c(message_str, ".")
+      }
+      
+      logger_message(
+        paste0(message_str),
+        indent = message_indent,
+        verbose = verbose
+      )
+    }
+    
+    # Set test probabilities
+    threshold_probabilities <- seq(
+      from = 0.000,
+      to = 1.000,
+      by = 0.005
+    )
+    
+    # Iterate over elements.
+    data_elements <- fam_mapply(
+      cl = cl,
+      assign = NULL,
+      FUN = .compute_dca_data_survival_model,
+      data_element = bootstrap_data$data_element,
+      bootstrap = bootstrap_data$bootstrap,
+      bootstrap_seed = bootstrap_data$seed,
+      MoreArgs = list(
+        "data" = data,
+        "threshold_probabilities" = threshold_probabilities),
+      progress_bar = progress_bar,
+      chopchop = TRUE
+    )
+    
+    # Merge data elements
+    data_elements <- merge_data_elements(data_elements)
+    
+    if (aggregate_results) data_elements <- .compute_data_element_estimates(x = data_elements)
+    
+    return(data_elements)
   }
-  
-  # Set test probabilities
-  threshold_probabilities <- seq(
-    from = 0.000, 
-    to = 1.000,
-    by = 0.005)
-  
-  # Add bootstrap data.
-  bootstrap_data <- add_data_element_bootstrap(x = data_element, ...)
-  
-  # Iterate over elements.
-  data_elements <- fam_mapply(
-    cl = cl,
-    assign = NULL,
-    FUN = .compute_dca_data_categorical_model,
-    data_element = bootstrap_data$data_element,
-    bootstrap = bootstrap_data$bootstrap,
-    bootstrap_seed = bootstrap_data$seed,
-    MoreArgs = list(
-      "data" = data,
-      "threshold_probabilities" = threshold_probabilities),
-    progress_bar = progress_bar,
-    chopchop = TRUE)
-  
-  # Merge data elements
-  data_elements <- merge_data_elements(data_elements)
-  
-  if (aggregate_results) data_elements <- .compute_data_element_estimates(x = data_elements)
-  
-  return(data_elements)
-}
+)
+
+
+
+# .extract_decision_curve_data (other prediction table) ------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(
+    object,
+    ...
+  ) {
+    warn_str <- paste0(
+      "Decision curves can only be computed using prediction tables that contain ",
+      "either class (binomial or multinomial) or survival probabilities. Found: ",
+      paste_s(class(object))
+    )
+    
+    logger_warning(
+      warn_str = warn_str,
+      warn_class = "prediction_table_no_data_extraction_warning"
+    )
+  }
+)
 
 
 
@@ -409,90 +654,6 @@ setMethod(
     intervention_data_element))
 }
 
-
-
-.compute_dca_data_survival <- function(
-    data_element,
-    data,
-    object,
-    ensemble_method,
-    aggregate_results,
-    is_pre_processed,
-    cl = NULL,
-    progress_bar = FALSE,
-    verbose = FALSE,
-    message_indent = 0L,
-    ...) {
-  
-  # Predict survival probabilities.
-  data <- .predict(
-    object = object,
-    data = data,
-    time = data_element@identifiers$evaluation_time,
-    ensemble_method = ensemble_method,
-    is_pre_processed = is_pre_processed,
-    type = "survival_probability")
-  
-  # Check if any predictions are valid.
-  if (!all_predictions_valid(
-    data,
-    outcome_type = object@outcome_type)) {
-    return(NULL)
-  }
-  
-  # Remove data with missing outcomes.
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = object@outcome_type)
-  
-  # Check that any prediction data remain.
-  if (is_empty(data)) return(NULL)
-  
-  # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
-  
-  # Message the user concerning the time at which the decision curves are
-  # computed. This is only relevant for survival analysis, where survival
-  # probability is time depend.
-  if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
-    logger_message(
-      paste0(
-        "Computing decision curves at time ", 
-        data_element@identifiers$evaluation_time, "."),
-      indent = message_indent,
-      verbose = verbose)
-  }
-  
-  # Set test probabilities
-  threshold_probabilities <- seq(
-    from = 0.000,
-    to = 1.000,
-    by = 0.005)
-  
-  # Add bootstrap data.
-  bootstrap_data <- add_data_element_bootstrap(x = data_element, ...)
-  
-  # Iterate over elements.
-  data_elements <- fam_mapply(
-    cl = cl,
-    assign = NULL,
-    FUN = .compute_dca_data_survival_model,
-    data_element = bootstrap_data$data_element,
-    bootstrap = bootstrap_data$bootstrap,
-    bootstrap_seed = bootstrap_data$seed,
-    MoreArgs = list(
-      "data" = data,
-      "threshold_probabilities" = threshold_probabilities),
-    progress_bar = progress_bar,
-    chopchop = TRUE)
-  
-  # Merge data elements
-  data_elements <- merge_data_elements(data_elements)
-  
-  if (aggregate_results) data_elements <- .compute_data_element_estimates(x = data_elements)
-  
-  return(data_elements)
-}
 
 
 .compute_dca_data_survival_model <- function(
