@@ -4,6 +4,8 @@ setGeneric("save")
 
 setGeneric(".complete", function(object, ...) standardGeneric(".complete"))
 
+setGeneric(".copy", function(object, ...) standardGeneric(".copy"))
+
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))

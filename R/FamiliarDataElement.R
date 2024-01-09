@@ -709,6 +709,33 @@ setMethod(
 
 
 
+setMethod(
+  ".copy",
+  signature(object = "familiarDataElement"),
+  function(object) {
+    slots_present <- methods::slotNames(object)
+    
+    for (current_slot in slots_present) {
+      # Make deepcopy of data.tables present in the dataset.
+      if (data.table::is.data.table(methods::slot(object, current_slot))) {
+        methods::slot(object, current_slot) <- data.table::copy(methods::slot(object, current_slot))
+      }
+    }
+    
+    return(object)
+  }
+)
+
+
+setMethod(
+  ".copy",
+  signature(object = "NULL"),
+  function(object) {
+    return(object)
+  }
+)
+
+
 # extract_dispatcher -----------------------------------------------------------
 
 #'@title Internal function to dispatch extraction functions.
