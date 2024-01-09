@@ -13,22 +13,27 @@ setClass(
     ensemble_method = "median",
     estimation_type = "point",
     type = "risk_stratification",
-    time = NULL))
+    time = NULL
+  )
+)
 
 # familiarDataElementRiskStrata (object) ---------------------------------------
 setClass(
   "familiarDataElementRiskStrata",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 # familiarDataElementRiskHazardRatio (object) ----------------------------------
 setClass(
   "familiarDataElementRiskHazardRatio",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 # familiarDataElementRiskLogrank (object) --------------------------------------
 setClass(
   "familiarDataElementRiskLogrank",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 
 
@@ -59,7 +64,8 @@ setGeneric(
     confidence_level = waiver(),
     message_indent = 0L,
     verbose = FALSE, 
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_risk_stratification_data")
   }
 )
@@ -93,7 +99,8 @@ setMethod(
     logger_message(
       paste0("Assessing stratification into risk groups."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Load confidence alpha from object settings attribute if not provided
     # externally.
@@ -106,7 +113,8 @@ setMethod(
       x = confidence_level, 
       var_name = "confidence_level",
       range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
+      closed = c(FALSE, FALSE)
+    )
     
     # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) {
@@ -117,14 +125,16 @@ setMethod(
     .check_parameter_value_is_valid(
       x = ensemble_method, 
       var_name = "ensemble_method",
-      values = .get_available_ensemble_prediction_methods())
+      values = .get_available_ensemble_prediction_methods()
+    )
     
     # Check the level detail.
     detail_level <- .parse_detail_level(
       x = detail_level,
       object = object,
       default = "ensemble",
-      data_element = "risk_stratification_data")
+      data_element = "risk_stratification_data"
+    )
     
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
@@ -136,7 +146,8 @@ setMethod(
     # Check available stratification methods.
     available_stratification_method <- unique(unlist(lapply(
       model_list,
-      function(fam_model) (fam_model@km_info$stratification_method))))
+      function(fam_model) (fam_model@km_info$stratification_method)
+    )))
     
     # Check that any are available.
     if (is.null(available_stratification_method)) return(NULL)
@@ -151,7 +162,8 @@ setMethod(
     .check_parameter_value_is_valid(
       x = stratification_method,
       var_name = "stratification_method",
-      values = available_stratification_method)
+      values = available_stratification_method
+    )
 
     # Aggregate data. It does not make sense to keep duplicate rows here.
     data <- aggregate_data(data = data)
@@ -160,7 +172,8 @@ setMethod(
     proto_data_element <- new(
       "familiarDataElementRiskStratification",
       detail_level = detail_level,
-      confidence_level = confidence_level)
+      confidence_level = confidence_level
+    )
     
     # Generate elements to send to dispatch.
     performance_data <- extract_dispatcher(
@@ -176,9 +189,61 @@ setMethod(
       ensemble_method = ensemble_method,
       time = object@settings$time_max,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(performance_data)
+  }
+)
+
+
+
+# extract_risk_stratification_data (prediction table) --------------------------
+setMethod(
+  "extract_risk_stratification_data",
+  signature(object = "predictionTableRiskGroups"),
+  function(object, ...) {
+    
+    if (is_empty(object)) return(NULL)
+    
+    # Merge slots into data.
+    object <- .merge_slots_into_data(object)
+    
+    data_element <- new(
+      "familiarDataElementRiskStratification",
+      detail_level = "ensemble",
+      confidence_level = 0.95
+    )
+    
+    # Store the type, outcome_type and ensemble method.
+    data_element@type <- "risk_stratification"
+    data_element@ensemble_method <- object@ensemble_method
+    data_element@outcome_type <- object@outcome_type
+    
+    # Store the prediction data in the data table.
+    data_element@data <- object
+    data_element@grouping_column <- object@grouping_column
+    data_element@value_column <- object@value_column
+    
+    # Set time attribute
+    time <- max(data_element@data$outcome_time)
+    data_element@time <- if (is_empty(time)) Inf else time
+    
+    return(data_element)
+  }
+)
+
+
+
+
+# extract_risk_stratification_data (prediction table) --------------------------
+setMethod(
+  "extract_risk_stratification_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("risk stratification")
+    
+    return(NULL)
   }
 )
 
@@ -189,7 +254,8 @@ setMethod(
     proto_data_element,
     cl = NULL,
     stratification_method,
-    ...) {
+    ...
+) {
   
   # Add model name.
   proto_data_element <- add_model_name(proto_data_element, object = object)
@@ -197,7 +263,8 @@ setMethod(
   # Add stratification methods.
   data_elements <- add_data_element_identifier(
     x = proto_data_element,
-    stratification_method = stratification_method)
+    stratification_method = stratification_method
+  )
   
   # Iterate over data elements.
   data_elements <- lapply(
@@ -205,7 +272,8 @@ setMethod(
     ..extract_risk_stratification_data,
     object = object,
     cl = cl,
-    ...)
+    ...
+  )
   
   return(data_elements)
 }
@@ -220,7 +288,8 @@ setMethod(
     is_pre_processed,
     ensemble_method,
     time,
-    ...) {
+    ...
+) {
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
@@ -233,7 +302,8 @@ setMethod(
     type = "risk_stratification",
     stratification_method = data_element@identifiers$stratification_method,
     is_pre_processed = is_pre_processed,
-    aggregate_results = FALSE)
+    aggregate_results = FALSE
+  )
   
   # Store the type and ensemble method.
   data_element@type <- "risk_stratification"
@@ -251,7 +321,8 @@ setMethod(
   # Set value columns
   data_element@value_column <- setdiff(
     colnames(prediction_data),
-    data_element@grouping_column)
+    data_element@grouping_column
+  )
   
   # Set time attribute
   data_element@time <- time
@@ -264,25 +335,21 @@ setMethod(
 .compute_risk_stratification_curves <- function(x, time_range = NULL) {
   
   if (is_empty(x)) return(NULL)
-  if (!all_predictions_valid(x@data, outcome_type = "survival")) return(NULL)
+  if (!all_predictions_valid(x@data)) return(NULL)
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
       ".compute_risk_stratification_curves: expecting aggregated data.")
   }
   
-  # Copy the data element.
-  data <- data.table::copy(x@data)
+  # Make local copy.
+  data <- .copy(x@data)
   
   # Remove data with missing predictions.
-  data <- remove_nonvalid_predictions(
-    data,
-    outcome_type = "survival")
+  data <- remove_invalid_predictions(data)
   
   # Remove data with missing outcomes.
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = "survival")
+  data <- filter_missing_outcome(data = data)
   
   # Check that any prediction data remain.
   if (is_empty(data)) return(NULL)
@@ -293,16 +360,20 @@ setMethod(
     x,
     grouping_column = c(
       setdiff(x@grouping_column, c(get_non_feature_columns(x = "survival"))),
-      "risk_group"),
-    value_column = "survival")
+      "risk_group"
+    ),
+    value_column = "survival"
+  )
   
   # Collect strata
-  strata <- data[, ..compute_risk_stratification_curves(
+  data <- .merge_slots_into_data(data)
+  strata <- data@data[, ..compute_risk_stratification_curves(
     .SD, 
     confidence_level = data_element@confidence_level,
     time_range = time_range),
     by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event")]
+    .SDcols = c("outcome_time", "outcome_event")
+  ]
   
   # Check that strata are not empty.
   if (is_empty(strata)) return(NULL)
@@ -327,8 +398,10 @@ setMethod(
     survival::survfit(
       Surv(outcome_time, outcome_event) ~ 1,
       data = x,
-      conf.int = confidence_level),
-    error = identity)
+      conf.int = confidence_level
+    ),
+    error = identity
+  )
   
   # Check if the survival curve could be generated at all. Causes could be lack
   # of events, no events beyond the first time point, etc.
@@ -342,7 +415,8 @@ setMethod(
     "n_censor" = km_fit$n.censor,
     "survival" = km_fit$surv,
     "ci_low" = km_fit$lower,
-    "ci_up" = km_fit$upper)
+    "ci_up" = km_fit$upper
+  )
   
   # Add in data at time = 0 if necessary.
   if (min(km_data$time) > 0) {
@@ -354,7 +428,8 @@ setMethod(
       "survival" = 1.00,
       "ci_low" = km_fit$lower[1],
       "ci_up" = 1.0),
-      km_data)
+      km_data
+    )
   }
   
   # Update absent censoring (notably when survival is 0).
@@ -368,28 +443,34 @@ setMethod(
   if (!is.null(time_range)) {
     # Add an entry at the proximal and distal range edges. This prevents the
     # curve from being cut off prematurely, or starting too late.
-    if (is_empty(km_data[time == time_range[1]]) &&
-        time_range[1] > min(km_data$time) &&
-        time_range[1] < max(km_data$time)) {
+    if (
+      is_empty(km_data[time == time_range[1]]) &&
+      time_range[1] > min(km_data$time) &&
+      time_range[1] < max(km_data$time)
+    ) {
       # Select the closest entry prior to the proximal edge, make changes and
       # introduce it back into the data.
       proximal_data <- tail(km_data[time < time_range[1]][order(time)], n = 1L)
       proximal_data[, ":="(
         "time" = time_range[1],
         "n_event" = 0,
-        "n_censor" = 0)]
+        "n_censor" = 0
+      )]
       km_data <- rbind(km_data, proximal_data)[order(time)]
     }
     
-    if (is_empty(km_data[time == time_range[2]]) &&
-        time_range[2] > min(km_data$time) &&
-        time_range[2] < max(km_data$time)) {
+    if (
+      is_empty(km_data[time == time_range[2]]) &&
+      time_range[2] > min(km_data$time) &&
+      time_range[2] < max(km_data$time)
+    ) {
       # Do the same for the distal edge.
       distal_data <- tail(km_data[time < time_range[2]][order(time)], n = 1)
       distal_data[, ":="(
         "time" = time_range[2],
         "n_event" = 0,
-        "n_censor" = 0)]
+        "n_censor" = 0
+      )]
       km_data <- rbind(km_data, distal_data)[order(time)]
     }
     
@@ -415,27 +496,26 @@ setMethod(
       ".compute_risk_stratification_test: expecting aggregated data.")
   }
   
-  # Copy the data element.
-  data <- data.table::copy(x@data)
+  # Make local copy.
+  x@data <- .copy(x@data)
   
-  # Remove data without known outcome time, or failed risk-group predictions.
-  data <- remove_nonvalid_predictions(
-    data,
-    outcome_type = "survival")
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = "survival")
+  # Remove data with missing predictions.
+  x@data <- remove_invalid_predictions(x@data)
   
-  if (is_empty(data)) return(NULL)
+  # Remove data with missing outcomes.
+  x@data <- filter_missing_outcome(x@data)
+  
+  # Check that any prediction data remain.
+  if (is_empty(x@data)) return(NULL)
   
   # Right-censor the data to the desired time window.
   if (!is.null(time_range)) {
     # Right censor data past the time range.
-    data[outcome_time > time_range[2], "outcome_event" := 0]
+    x@data[outcome_time > time_range[2], "outcome_event" := 0]
   } 
   
   # Determine the number of groups.
-  n_groups <- data.table::uniqueN(x@data$risk_group)
+  n_groups <- length(x@data@groups)
   
   # Check that 2 (or more risk groups) are present.
   if (n_groups < 2) return(NULL)
@@ -443,17 +523,20 @@ setMethod(
   # Get data from logrank tests.
   logrank_data <- .compute_risk_stratification_logrank_test(
     x = x,
-    time_range = time_range)
+    time_range = time_range
+  )
   
   # Get data from hazard ratio tests.
   hr_data <- .compute_risk_stratification_hazard_ratio_test(
     x = x,
-    confidence_level = x@confidence_level)
+    confidence_level = x@confidence_level
+  )
   
   # Return test results
   return(list(
     "logrank" = logrank_data,
-    "hazard_ratio" = hr_data))
+    "hazard_ratio" = hr_data
+  ))
 }
 
 
@@ -469,28 +552,35 @@ setMethod(
     x,
     grouping_column = c(setdiff(
       x@grouping_column,
-      c(get_non_feature_columns(x = "survival")))),
-    value_column = c("p_value", "p_value_adjusted"))
+      c(get_non_feature_columns(x = "survival")
+      ))
+    ),
+    value_column = c("p_value", "p_value_adjusted")
+  )
   
   # Compute logrank test over all risk groups.
-  overall_results <- x@data[, ..compute_risk_stratification_logrank_test(
+  data <- .as_data_table(x@data)
+  overall_results <- data[, ..compute_risk_stratification_logrank_test(
     x = .SD),
     by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event", "risk_group")]
+    .SDcols = c("outcome_time", "outcome_event", "risk_group")
+  ]
   
   # Get all pairs
   pairs <- utils::combn(
-    x = unique(x@data$risk_group),
+    x = unique(x@data@groups),
     m = 2L,
-    simplify = FALSE)
+    simplify = FALSE
+  )
   
   # Compute logrank test results over all risk groups.
-  pairwise_results <- x@data[, dmapply(
+  pairwise_results <- data[, dmapply(
     ..compute_risk_stratification_logrank_test,
     selected_groups = pairs,
     MoreArgs = list("x" = .SD)),
     by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event", "risk_group")]
+    .SDcols = c("outcome_time", "outcome_event", "risk_group")
+  ]
   
   # Compute multiple-testing corrected p-value.
   pairwise_results[, "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
@@ -500,7 +590,8 @@ setMethod(
   data_element@data <- data.table::rbindlist(
     list(overall_results, pairwise_results),
     use.names = TRUE,
-    fill = TRUE)
+    fill = TRUE
+  )
   
   return(data_element)
 }
@@ -527,8 +618,10 @@ setMethod(
       survival::Surv(time = outcome_time, event = outcome_event) ~ risk_group,
       data = x,
       subset = NULL,
-      na.action = "na.omit")$chisq,
-    error = identity)
+      na.action = "na.omit"
+    )$chisq,
+    error = identity
+  )
   
   # Check if the test statistic could be computed. Causes could be lack of
   # events, no events beyond the first time point, etc.
@@ -538,7 +631,8 @@ setMethod(
   p_value  <- stats::pchisq(
     q = chi_sq,
     df = n_groups - 1,
-    lower.tail = FALSE)
+    lower.tail = FALSE
+  )
   
   # In case all groups should be compared, add a place-holder name.
   if (is.null(selected_groups)) {
@@ -553,7 +647,8 @@ setMethod(
   test_data <- data.table::data.table(
     "risk_group_1" = risk_group_1,
     "risk_group_2" = risk_group_2,
-    "p_value" = p_value)
+    "p_value" = p_value
+  )
   
   return(as.list(test_data))
 }
@@ -570,11 +665,13 @@ setMethod(
     x,
     grouping_column = c(setdiff(
       x@grouping_column,
-      get_non_feature_columns(x = "survival"))),
-    value_column = c("p_value", "p_value_adjusted"))
+      get_non_feature_columns(x = "survival"))
+    ),
+    value_column = c("p_value", "p_value_adjusted")
+  )
   
   # Isolate data.
-  data <- x@data
+  data <- .as_data_table(x@data)
   data$risk_group <- droplevels(data$risk_group)
   
   # Use the first group as reference for ordinal variables.
@@ -586,9 +683,11 @@ setMethod(
     reference_group = reference_groups,
     MoreArgs = list(
       "x" = .SD,
-      "confidence_level" = confidence_level)),
-    by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event", "risk_group")]
+      "confidence_level" = confidence_level)
+  ),
+  by = c(data_element@grouping_column),
+  .SDcols = c("outcome_time", "outcome_event", "risk_group")
+  ]
   
   # Compute multiple-testing corrected p-value.
   hr_results[, "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
@@ -605,7 +704,8 @@ setMethod(
 ..compute_risk_stratification_hazard_ratio_test <- function(
     x,
     reference_group,
-    confidence_level) {
+    confidence_level
+) {
   
   # Determine the number of groups.
   n_groups <- data.table::uniqueN(x$risk_group)
@@ -631,15 +731,18 @@ setMethod(
   if (!is.ordered(x$risk_group)) {
     x$risk_group <- stats::relevel(
       x$risk_group,
-      ref = reference_group)
+      ref = reference_group
+    )
   }
   
   # Create Cox proportional hazards model.
   model <- suppressWarnings(tryCatch(
     survival::coxph(
       survival::Surv(time = outcome_time, event = outcome_event) ~ risk_group,
-      data = x),
-    error = identity))
+      data = x
+    ),
+    error = identity
+  ))
   
   # Check if the Cox PH model could not be computed. Causes could be lack of
   # events, no events beyond the first time point, etc.
@@ -655,7 +758,8 @@ setMethod(
     "hazard_ratio" = summary_info$conf.int[, 1],
     "ci_low" = summary_info$conf.int[, 3],
     "ci_up" = summary_info$conf.int[, 4],
-    "p_value" = summary_info$coefficients[, 5])
+    "p_value" = summary_info$coefficients[, 5]
+  )
   
   # Return test results
   return(as.list(test_data))
@@ -714,7 +818,8 @@ setGeneric(
     export_strata = TRUE,
     time_range = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_risk_stratification_data")
   }
 )
@@ -733,7 +838,8 @@ setMethod(
     export_strata = TRUE,
     time_range = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -744,13 +850,15 @@ setMethod(
         time_range, 
         var_name = "time_range",
         min = 2,
-        max = 2)
+        max = 2
+      )
       
       sapply(
         time_range,
         .check_number_in_valid_range,
         var_name = "time_range",
-        range = c(0, Inf))
+        range = c(0, Inf)
+      )
     }
     
     if (export_strata) {
@@ -758,14 +866,16 @@ setMethod(
       strata_data <- lapply(
         object@km_data,
         .compute_risk_stratification_curves,
-        time_range = time_range)
+        time_range = time_range
+      )
       
       # Determine hazard ratio and logrank tests. We do this here because the
       # data needs to be aggregated.
       test_data <- lapply(
         object@km_data,
         .compute_risk_stratification_tests,
-        time_range = time_range)
+        time_range = time_range
+      )
       
       # Export raw data.
       raw_data <- .export(
@@ -774,7 +884,8 @@ setMethod(
         dir_path = dir_path,
         aggregate_results = TRUE,
         type = "stratification",
-        subtype = "data")
+        subtype = "data"
+      )
       
       # Export strata.
       strata_data <- .export(
@@ -783,7 +894,8 @@ setMethod(
         dir_path = dir_path,
         aggregate_results = TRUE,
         type = "stratification",
-        subtype = "strata")
+        subtype = "strata"
+      )
       
       # Export logrank data.
       logrank_data <- .export(
@@ -793,7 +905,8 @@ setMethod(
         aggregate_results = TRUE,
         object_class = "familiarDataElementRiskLogrank",
         type = "stratification",
-        subtype = "logrank")
+        subtype = "logrank"
+      )
       
       # Export hazard ratio data.
       hazard_ratio_data <- .export(
@@ -803,18 +916,21 @@ setMethod(
         aggregate_results = TRUE,
         object_class = "familiarDataElementRiskHazardRatio",
         type = "stratification",
-        subtype = "hazard_ratio")
+        subtype = "hazard_ratio"
+      )
       
       data_list <- list(
         "data" = raw_data,
         "strata" = strata_data,
         "logrank" = logrank_data,
-        "hazard_ratio_data" = hazard_ratio_data)
+        "hazard_ratio_data" = hazard_ratio_data
+      )
       
       if (export_collection) {
         data_list <- c(
           data_list,
-          list("collection" = object))
+          list("collection" = object)
+        )
       } 
       
       return(data_list)
@@ -827,7 +943,8 @@ setMethod(
         aggregate_results = TRUE,
         type = "stratification",
         subtype = "data",
-        export_collection = export_collection))
+        export_collection = export_collection
+      ))
     }
   }
 )
@@ -846,7 +963,8 @@ setMethod(
     export_strata = TRUE,
     time_range = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -854,8 +972,11 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "risk_stratification_data"),
-        list(...)))
+          "data_element" = "risk_stratification_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_risk_stratification_data,
@@ -864,7 +985,10 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "export_strata" = export_strata,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
