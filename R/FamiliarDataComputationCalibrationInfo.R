@@ -87,6 +87,19 @@ setMethod(
 
 
 
+# extract_calibration_info (prediction table) ----------------------------------
+setMethod(
+  "extract_calibration_info",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("extract calibration info")
+    
+    return(NULL)
+  }
+)
+
+
+
 .extract_calibration_info <- function(
     object,
     proto_data_element,
