@@ -178,7 +178,7 @@ setMethod(
     if (is.waive(estimation_type)) estimation_type <- "bootstrap_confidence_interval" 
     if (is.waive(confidence_level)) confidence_level <- 0.95
     if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- "bc"
-    if (is.waive(aggregate_results)) aggregate_results <- FALSE
+    if (is.waive(aggregate_results)) aggregate_results <- TRUE
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
