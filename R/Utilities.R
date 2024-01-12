@@ -9,7 +9,19 @@ stop_or_warn <- function(message, as_error = TRUE, call = rlang::caller_env()) {
   }
 }
 
+
+
+is.unset <- function(x) {
+  if (is.null(x)) {
+    return(TRUE)
+  } else if (is.waive(x)) {
+    return(TRUE)
+  } else if (length(x) == 0){ 
+    return(TRUE)
+  } else if (all(is.na(x))) {
+    return(TRUE)
   } else {
+    return(FALSE)
   }
 }
 
