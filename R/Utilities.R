@@ -1,20 +1,15 @@
 #' @include FamiliarS4Generics.R
 
 
-stop_or_warn <- function(message, as_error = TRUE) {
-  # Find the name of the calling environment.
-  calling_function <- environmentName(parent.env)
-
-  if (length(calling_function) > 0) {
-    if (calling_function != "") {
-      message <- paste0(calling_function, ": ", message)
-    }
-  }
-
+stop_or_warn <- function(message, as_error = TRUE, call = rlang::caller_env()) {
   if (as_error) {
-    stop(message, call. = FALSE)
+    rlang::abort(message, call = call)
   } else {
-    warning(message, call. = FALSE)
+    rlang::warn(message, call = call)
+  }
+}
+
+  } else {
   }
 }
 
