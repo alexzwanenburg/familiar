@@ -345,6 +345,7 @@ as_prediction_table <- function(
       } else {
         class_levels <- unique_na(object@reference_data[[1]])
       }
+    }
     if (is.unset(class_levels) && !is_empty(names(x))) {
       class_levels <- names(x)
     }
@@ -958,7 +959,7 @@ setMethod(
   }
 )
 
-## .complete_new_prediction_table (novelty) ------------------------------------
+# .complete_new_prediction_table (novelty) -------------------------------------
 setMethod(
   ".complete_new_prediction_table",
   signature(object = "predictionTableNovelty"),
@@ -1000,7 +1001,7 @@ setMethod(
   }
 )
 
-## .complete_new_prediction_table (grouping) -----------------------------------
+# .complete_new_prediction_table (grouping) ------------------------------------
 setMethod(
   ".complete_new_prediction_table",
   signature(object = "predictionTableGrouping"),
