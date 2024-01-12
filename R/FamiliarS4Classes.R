@@ -628,6 +628,8 @@ setClass("familiarCollection",
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted.
 #' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
 #' @slot data_column_info Object containing column information.
 #' @slot delay_loading logical. Allows delayed loading data, which enables data
 #'   parsing downstream without additional workflow complexity or memory
