@@ -165,7 +165,7 @@
     values) {
 
   # Check if NULL is an allowed value
-  null_allowed <- ifelse(any(is.null(values)), TRUE, FALSE)
+  null_allowed <- any(is.null(values))
   
   if (length(x) == 1) {
   
