@@ -322,25 +322,24 @@ as_prediction_table <- function(
   
   # Use classes to set classes attribute of prediction tables that have it.
   if (methods::.hasSlot(object, "classes")) {
-    if (is.waive(class_levels) && is(data, "dataObject")) {
-      class_levels <- get_outcome_class_levels(data)
-    
-    } else if (is.waive(class_levels) && is(data, "familiarDataElementPredictionTable")) {
+    if (is.unset(class_levels) && is(data, "familiarDataElementPredictionTable")) {
       if (methods::.hasSlot(data, "classes")) {
         class_levels <- data@classes
       }
-    
-    } else if (is.waive(class_levels) && !is_empty(object@reference_data)) {
+    }
+    if (is.unset(class_levels) && is(data, "dataObject")) {
+      class_levels <- get_outcome_class_levels(data)
+    }
+    if (is.unset(class_levels) && !is_empty(object@reference_data)) {
       if (is.factor(object@reference_data[[1]])) {
         class_levels <- levels(object@reference_data[[1]])
       } else {
         class_levels <- unique_na(object@reference_data[[1]])
       }
-    
-    } else if (is.waive(class_levels) && !is_empty(names(x))) {
+    if (is.unset(class_levels) && !is_empty(names(x))) {
       class_levels <- names(x)
-      
-    } else if (is.waive(class_levels)) {
+    }
+    if (is.unset(class_levels)) {
       class_levels <- paste0("class_", seq_len(ncol(object@prediction_data)))
     }
     
@@ -350,15 +349,15 @@ as_prediction_table <- function(
   # Use censored_label to set censored attribute of prediction tables that have
   # it.
   if (methods::.hasSlot(object, "censored")) {
-    if (is.waive(censoring_indicator) && is(data, "dataObject")) {
-      censoring_indicator <- data@outcome_info@censored
-    
-    } else if (is.waive(censoring_indicator) && is(data, "familiarDataElementPredictionTable")) {
+    if (is.unset(censoring_indicator) && is(data, "familiarDataElementPredictionTable")) {
       if (methods::.hasSlot(data, "censored")) {
         censoring_indicator <- data@censored
       }
-      
-    } else if (is.waive(censoring_indicator)) {
+    }
+    if (is.unset(censoring_indicator) && is(data, "dataObject")) {
+      censoring_indicator <- data@outcome_info@censored
+    }
+    if (is.unset(censoring_indicator)) {
       censoring_indicator <- .get_available_default_censoring_indicator()
     }
     
@@ -367,15 +366,15 @@ as_prediction_table <- function(
   
   # Use event_label to set event attribute of prediction tables that have it.
   if (methods::.hasSlot(object, "event")) {
-    if (is.waive(event_indicator) && is(data, "dataObject")) {
-      event_indicator <- data@outcome_info@event
-      
-    } else if (is.waive(event_indicator) && is(data, "familiarDataElementPredictionTable")) {
+    if (is.unset(event_indicator) && is(data, "familiarDataElementPredictionTable")) {
       if (methods::.hasSlot(data, "censored")) {
         event_indicator <- data@event
       }
-      
-    } else if (is.waive(event_indicator)) {
+    }
+    if (is.unset(event_indicator) && is(data, "dataObject")) {
+      event_indicator <- data@outcome_info@event
+    } 
+    if (is.unset(event_indicator)) {
       event_indicator <- .get_available_default_event_indicator()
     }
     
@@ -435,7 +434,7 @@ setMethod(
   }
 )
 
-## .complete_new_prediction_table (regression) ---------------------------------
+# .complete_new_prediction_table (regression) ----------------------------------
 setMethod(
   ".complete_new_prediction_table",
   signature(object = "predictionTableRegression"),
@@ -508,7 +507,7 @@ setMethod(
 )
 
 
-## .complete_new_prediction_table (classification) -----------------------------
+# .complete_new_prediction_table (classification) ------------------------------
 setMethod(
   ".complete_new_prediction_table",
   signature(object = "predictionTableClassification"),
@@ -769,7 +768,7 @@ setMethod(
 )
 
 
-## .complete_new_prediction_table (survival) -----------------------------------
+# .complete_new_prediction_table (survival) ------------------------------------
 setMethod(
   ".complete_new_prediction_table",
   signature(object = "predictionTableSurvival"),
