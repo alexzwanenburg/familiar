@@ -169,7 +169,7 @@ setMethod(
     
     # Attempt to identify the name of the outcome.
     if (is.waive(outcome_name)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (is(object@outcome_info, "outcomeInfo")) {
           
           # Check that the outcome name is not empty.
@@ -180,7 +180,7 @@ setMethod(
     
     # Attempt to identify the outcome columns.
     if (is.waive(outcome_column)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (!is_empty(object@data_column_info)) {
           # Find the model columns.
           outcome_column <- object@data_column_info[type == "outcome_column"]$external
@@ -200,7 +200,7 @@ setMethod(
     
     # Attempt to identify the event indicator.
     if (is.waive(event_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (is(object@outcome_info, "outcomeInfo")) {
           if (length(object@outcome_info@event) > 0) {
             if (!is.na(object@outcome_info@event)) {
@@ -213,7 +213,7 @@ setMethod(
     
     # Attempt to identify the censoring indicator.
     if (is.waive(censoring_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (is(object@outcome_info, "outcomeInfo")) {
           if (length(object@outcome_info@censored) > 0) {
             if (!is.na(object@outcome_info@censored)) {
@@ -226,7 +226,7 @@ setMethod(
     
     # Attempt to identify the competing risk indicator.
     if (is.waive(competing_risk_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (is(object@outcome_info, "outcomeInfo")) {
           if (length(object@outcome_info@competing_risk) > 0) {
             if (!is.na(object@outcome_info@competing_risk)) {
@@ -239,7 +239,7 @@ setMethod(
     
     # Attempt to identify class levels of the outcome.
     if (is.waive(class_levels)) {
-      if (has_model_object & has_outcome_info_slot) {
+      if (has_model_object && has_outcome_info_slot) {
         if (is(object@outcome_info, "outcomeInfo")) {
           if (length(object@outcome_info@levels) > 0) {
             class_levels <- object@outcome_info@levels
@@ -1310,7 +1310,7 @@ setMethod(
           all = FALSE,
           allow.cartesian = TRUE)
         
-      } else if (!is_empty(samples) & is.null(data@sample_set_on_load)) {
+      } else if (!is_empty(samples) && is.null(data@sample_set_on_load)) {
         # Use samples from the samples function argument. allow.cartesian is set
         # to true to allow use with repeated measurements.
         if (all(id_columns %in% colnames(samples))) {
@@ -1560,7 +1560,7 @@ setMethod(
     
     # Check predicted outcome columns.
     if (outcome_type %in% c("survival", "competing_risk")) {
-      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) & is_valid_data(data[["outcome_event"]])
+      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) && is_valid_data(data[["outcome_event"]])
       
     } else if (outcome_type %in% c("continuous")) {
       outcome_is_valid <- is_valid_data(data[["outcome"]])
@@ -1709,13 +1709,13 @@ setMethod(
     invert = FALSE) {
     
     # Check if normalisation was already performed.
-    if (!invert & .as_preprocessing_level(data) >= "normalisation") {
+    if (!invert && .as_preprocessing_level(data) >= "normalisation") {
       ..error_reached_unreachable_code(
         "normalise_features,dataObject: attempting to normalise data that are already normalised.")
     }
     
     # Check if the previous step (transformation) was conducted.
-    if (!invert & .as_preprocessing_level(data) < "transformation") {
+    if (!invert && .as_preprocessing_level(data) < "transformation") {
       ..error_reached_unreachable_code(
         "normalise_features,dataObject: data should be transformed prior to normalisation.")
     }
