@@ -71,7 +71,8 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Decision curve analysis is only available for categorical and survival
     # outcomes.
@@ -186,6 +187,9 @@ setMethod(
       default = TRUE,
       data_element = "decision_curve_analyis"
     )
+    
+    # Copy object to prevent changing the provided object by reference.
+    object <- .copy(object)
     
     # Generate a prototype data element.
     proto_data_element <- .create_extract_decision_curve_object(

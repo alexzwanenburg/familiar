@@ -183,6 +183,9 @@ setMethod(
       data_element = "model_performance"
     )
     
+    # Copy object to prevent changing the provided object by reference.
+    object <- .copy(object)
+    
     proto_data_element <- .create_extract_model_performance_object(
       object = object,
       metric = metric,
