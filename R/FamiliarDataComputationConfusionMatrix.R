@@ -9,7 +9,9 @@ setClass(
   contains = "familiarDataElement",
   prototype = methods::prototype(
     value_column = "count",
-    grouping_column = c("observed_outcome", "expected_outcome")))
+    grouping_column = c("observed_outcome", "expected_outcome")
+  )
+)
 
 
 
