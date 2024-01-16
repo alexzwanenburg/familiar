@@ -256,7 +256,7 @@ setMethod(
     values = .get_available_ensemble_prediction_methods()
   )
   
-  # bootstrap_ci_method
+  # Check bootstrap_ci_method argument
   .check_parameter_value_is_valid(
     x = bootstrap_ci_method,
     var_name = "bootstrap_ci_method",
