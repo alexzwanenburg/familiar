@@ -274,7 +274,9 @@ setMethod(
     if (is_empty(object)) return(NULL)
     
     # Make a local copy with only the required data
-    data <- data.table::copy(.as_data_table(object))[, c("outcome", "predicted_class")]
+    data <- .copy(object)
+    data <- .as_data_table(.complete(object))
+    data <- data[, c("outcome", "predicted_class")]
     
     # Rename outcome columns
     data.table::setnames(
