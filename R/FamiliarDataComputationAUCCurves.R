@@ -160,8 +160,8 @@ setMethod(
     # Extract data for plotting AUC curves.
     
     # AUC data can only be prepared for binomial and multinomial outcomes
-    if (!is("predictionTableClassification")) {
-      ..warning_no_data_extraction_from_prediction_table("AUC data")
+    if (!is(object, "predictionTableClassification")) {
+      ..warning_no_data_extraction_from_prediction_table("AUC curve data")
       
       return(NULL)
     }
@@ -176,7 +176,7 @@ setMethod(
     if (is.waive(ensemble_method)) {
       ensemble_method <- "median"
       if (methods::.hasSlot(object, "ensemble_method")) ensemble_method <- object@ensemble_method
-    } 
+    }
     
     # Default Values.
     if (is.waive(detail_level)) detail_level <- "ensemble"
@@ -192,6 +192,9 @@ setMethod(
       default = TRUE,
       data_element = "auc_data"
     )
+    
+    # Copy object to prevent changing the provided object by reference.
+    object <- .copy(object)
     
     proto_data_element <- .create_extract_auc_data_object(
       object = object,
