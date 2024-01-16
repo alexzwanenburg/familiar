@@ -245,7 +245,7 @@ setMethod(
     )
   }
   
-  # Check confidence_level input argument
+  # Check confidence_level input argument.
   .check_number_in_valid_range(
     x = confidence_level, 
     var_name = "confidence_level",
@@ -253,7 +253,7 @@ setMethod(
     closed = c(FALSE, FALSE)
   )
   
-  # Check ensemble_method argument
+  # Check ensemble_method argument.
   .check_parameter_value_is_valid(
     x = ensemble_method,
     var_name = "ensemble_method",
