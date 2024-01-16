@@ -567,7 +567,7 @@ setMethod(
       prediction_data,
       new_grouping_column = used_class_levels, 
       new_grouping_column_name = "positive_class", 
-      new_value_column_name = "probability",
+      new_value_column_name = "probability"
     )
     
     # Create ice and pd plot data.
