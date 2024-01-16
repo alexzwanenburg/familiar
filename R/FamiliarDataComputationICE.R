@@ -5,14 +5,16 @@ NULL
 # familiarDataElementIndividualConditionalExpectation object -------------------
 setClass(
   "familiarDataElementIndividualConditionalExpectation",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 
 
 # familiarDataElementPartialDependence object ----------------------------------
 setClass(
   "familiarDataElementPartialDependence",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 
 
@@ -62,7 +64,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_ice")
   }
 )
@@ -92,30 +95,33 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Message extraction start
     if (is.null(features)) {
       logger_message(
         paste0(
           "Computing individual conditional expectation and partial dependence ",
-          "data for features in the dataset."),
+          "data for features in the dataset."
+        ),
         indent = message_indent,
-        verbose = verbose)
+        verbose = verbose
+      )
       
     } else {
       logger_message(
         paste0(
           "Computing individual conditional expectation and partial dependence ",
-          "data for the selected features."),
+          "data for the selected features."
+        ),
         indent = message_indent,
-        verbose = verbose)
+        verbose = verbose
+      )
     }
     
     # Load evaluation_times from the object settings attribute, if it is not provided.
-    if (is.waive(evaluation_times)) {
-      evaluation_times <- object@settings$eval_times
-    }
+    if (is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
     
     # Check evaluation_times argument
     if (object@outcome_type %in% c("survival")) {
@@ -124,62 +130,63 @@ setMethod(
         .check_number_in_valid_range,
         var_name = "evaluation_times",
         range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
+        closed = c(FALSE, TRUE)
+      )
     }
     
     # Check n_sample_points argument
     .check_number_in_valid_range(
       x = n_sample_points,
       var_name = "n_sample_points",
-      range = c(1, Inf))
+      range = c(1, Inf)
+    )
     
     # Obtain ensemble method from stored settings, if required.
-    if (is.waive(ensemble_method)) {
-      ensemble_method <- object@settings$ensemble_method
-    }
+    if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
     
     # Check ensemble_method argument
     .check_parameter_value_is_valid(
       x = ensemble_method,
       var_name = "ensemble_method",
-      values = .get_available_ensemble_prediction_methods())
+      values = .get_available_ensemble_prediction_methods()
+    )
     
     # Load confidence alpha from object settings attribute if not provided
     # externally.
-    if (is.waive(confidence_level)) {
-      confidence_level <- object@settings$confidence_level
-    }
+    if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
     
     # Check confidence_level input argument
     .check_number_in_valid_range(
       x = confidence_level,
       var_name = "confidence_level",
       range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
+      closed = c(FALSE, FALSE)
+    )
     
     # Load the bootstrap method
-    if (is.waive(bootstrap_ci_method)) {
-      bootstrap_ci_method <- object@settings$bootstrap_ci_method
-    } 
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
     
     .check_parameter_value_is_valid(
       x = bootstrap_ci_method,
       var_name = "bootstrap_ci_method",
-      values = .get_available_bootstrap_confidence_interval_methods())
+      values = .get_available_bootstrap_confidence_interval_methods()
+    )
     
     # Check the sample limit.
     sample_limit <- .parse_sample_limit(
       x = sample_limit,
       object = object,
       default = Inf,
-      data_element = "ice_data")
+      data_element = "ice_data"
+    )
     
     # Check the level detail.
     detail_level <- .parse_detail_level(
       x = detail_level,
       object = object,
       default = "hybrid",
-      data_element = "ice_data")
+      data_element = "ice_data"
+    )
     
     # Check the estimation type.
     estimation_type <- .parse_estimation_type(
@@ -188,14 +195,16 @@ setMethod(
       default = "bootstrap_confidence_interval",
       data_element = "ice_data",
       detail_level = detail_level,
-      has_internal_bootstrap = FALSE)
+      has_internal_bootstrap = FALSE
+    )
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "ice_data")
+      data_element = "ice_data"
+    )
     
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
@@ -209,7 +218,8 @@ setMethod(
       detail_level = detail_level,
       estimation_type = estimation_type,
       confidence_level = confidence_level,
-      bootstrap_ci_method = bootstrap_ci_method)
+      bootstrap_ci_method = bootstrap_ci_method
+    )
     
     # Generate elements to send to dispatch.
     ice_data <- extract_dispatcher(
@@ -229,9 +239,23 @@ setMethod(
       evaluation_times = evaluation_times,
       aggregate_results = TRUE,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(ice_data)
+  }
+)
+
+
+
+# extract_ice (prediction table) -----------------------------------------------
+setMethod(
+  "extract_ice",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("individual conditional expectation")
+    
+    return(NULL)
   }
 )
 
@@ -251,7 +275,8 @@ setMethod(
     message_indent = 0L,
     verbose = FALSE,
     progress_bar = FALSE,
-    ...) {
+    ...
+) {
   
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
@@ -264,13 +289,15 @@ setMethod(
     object = object,
     data = data,
     stop_at = "signature",
-    is_pre_processed = is_pre_processed)
+    is_pre_processed = is_pre_processed
+  )
   
   # Maintain only important features. The current set is based on the
   # required features.
   data <- filter_features(
     data = data,
-    available_features = object@model_features)
+    available_features = object@model_features
+  )
   
   # Check if the input data is not empty
   if (is_empty(data)) return(NULL)
@@ -279,7 +306,8 @@ setMethod(
   data <- get_subsample(
     data = data,
     size = sample_limit,
-    seed = 0L)
+    seed = 0L
+  )
   
   # Aggregate data.
   data <- aggregate_data(data)
@@ -288,7 +316,8 @@ setMethod(
   if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element, 
-      evaluation_time = evaluation_times)
+      evaluation_time = evaluation_times
+    )
     
   } else {
     data_elements <- list(proto_data_element)
@@ -298,47 +327,54 @@ setMethod(
     
     # Check that the features exist in the data set.
     if (!all(features %in% c(object@model_features))) {
-      warning(paste0(
+      rlang::warn(paste0(
         "Data for individual conditional expectation or partial dependence plots ",
         "could not be computed for ",
         paste_s(setdiff(features, object@model_features)),
-        " feature(s) as they are not used by the model."))
+        " feature(s) as they are not used by the model."
+      ))
     }
     
     # Add features as identifier.
     if (length(features) == 1) {
       data_elements <- add_data_element_identifier(
         x = data_elements,
-        feature_x = features)
+        feature_x = features
+      )
       
     } else if (length(features) == 2) {
       
       if (length(unique(features)) != 2) {
-        stop(paste0(
+        rlang::abort(paste0(
           "Data for individual conditional expectation or partial dependence plots ",
           "could not be computed as the provided features are not unique: ",
-          paste_s(features), "."))
+          paste_s(features), "."
+        ))
       }
       
       data_elements <- add_data_element_identifier(
         x = data_elements,
-        feature_x = features[1])
+        feature_x = features[1]
+      )
       data_elements <- add_data_element_identifier(
         x = data_elements,
-        feature_y = features[2])
+        feature_y = features[2]
+      )
       
     } else {
-      stop(paste0(
+      rlang::abort(paste0(
         "Data for individual conditional expectation or partial dependence plots cannot ",
         "be computed for more than 2 features simultaneously. Found: ",
-        paste_s(features), "."))
+        paste_s(features), "."
+      ))
     }
     
   } else {
     # Add features as identifier.
     data_elements <- add_data_element_identifier(
       x = data_elements,
-      feature_x = object@model_features)
+      feature_x = object@model_features
+    )
   }
   
   # Iterate over elements.
@@ -352,10 +388,13 @@ setMethod(
         "data" = data,
         "object" = object,
         "verbose" = verbose && !progress_bar && n_models == 1,
-        "message_indent" = message_indent),
-      list(...)),
+        "message_indent" = message_indent
+      ),
+      list(...)
+    ),
     progress_bar = progress_bar,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Flatten list of data elements.
   data_elements <- unlist(data_elements)
@@ -383,7 +422,8 @@ setMethod(
     ensemble_method,
     verbose = FALSE,
     message_indent,
-    ...) {
+    ...
+) {
   # Divide feature(s) into points.
   
   # Generate range
@@ -392,16 +432,19 @@ setMethod(
     feature = data_element@identifiers$feature_x,
     column_type = class(data@data[[data_element@identifiers$feature_x]]),
     feature_range = feature_x_range,
-    n = n_sample_points)
+    n = n_sample_points
+  )
   
   # Add feature values.
   data_elements <- add_data_element_identifier(
     x = data_element,
-    feature_x_value = feature_x_range)
+    feature_x_value = feature_x_range
+  )
   
   # Mention feature.
   message_str <- paste0(
-    "Computing ICE / PD curves for \"", data_element@identifiers$feature_x, "\"")
+    "Computing ICE / PD curves for \"", data_element@identifiers$feature_x, "\""
+  )
   
   if (!is.null(data_element@identifiers$feature_y)) {
     feature_y_range <- .create_feature_range(
@@ -409,24 +452,28 @@ setMethod(
       feature = data_element@identifiers$feature_y,
       column_type = class(data@data[[data_element@identifiers$feature_y]]),
       feature_range = feature_y_range,
-      n = n_sample_points)
+      n = n_sample_points
+    )
     
     # Add feature values.
     data_elements <- add_data_element_identifier(
       x = data_elements,
-      feature_y_value = feature_y_range)
+      feature_y_value = feature_y_range
+    )
     
     # Mention feature.
     message_str <- c(
       message_str, 
-      paste0(" and \"", data_element@identifiers$feature_y, "\""))
+      paste0(" and \"", data_element@identifiers$feature_y, "\"")
+    )
   }
   
   # Add evaluation time.
   if (length(data_element@identifiers$evaluation_time) > 0) {
     message_str <- c(
       message_str,
-      paste0(" at time ", data_element@identifiers$evaluation_time, "."))
+      paste0(" at time ", data_element@identifiers$evaluation_time, ".")
+    )
     
   } else {
     message_str <- c(message_str, ".")
@@ -435,7 +482,8 @@ setMethod(
   logger_message(
     paste0(message_str, collapse = ""),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Iterate over elements.
   data_elements <- lapply(
@@ -443,7 +491,8 @@ setMethod(
     ...extract_ice_data,
     data = data,
     object = object,
-    ensemble_method = ensemble_method)
+    ensemble_method = ensemble_method
+  )
   
   return(data_elements)
 }
@@ -482,86 +531,58 @@ setMethod(
     ensemble_method = ensemble_method,
     time = data_element@identifiers$evaluation_time,
     type = type,
-    aggregate_results = TRUE)
+    aggregate_results = TRUE
+  )
   
   # Check that valid prediction data were generated.
-  if (!any_predictions_valid(
-    prediction_data,
-    outcome_type = object@outcome_type)) {
-    return(NULL)
-  }
-  
-  # Select prediction columns
-  if (object@outcome_type %in% c("survival", "competing_risk")) {
-    prediction_columns <- c("survival_probability", "novelty")
-    
-  } else if (object@outcome_type %in% c("binomial", "multinomial")) {
-    prediction_columns <- c(
-      get_class_probability_name(object), "novelty")
-    
-  } else if (object@outcome_type %in% c("continuous")) {
-    prediction_columns <- c("predicted_outcome", "novelty")
-    
-  } else {
-    ..error_no_known_outcome_type(object@outcome_type)
-  }
-  
-  # Select only the prediction columns.
-  ice_data <- prediction_data[, mget(prediction_columns)]
-  
-  # Create unique row names for samples and insert.
-  ice_data[, "sample" := get_unique_row_names(x = data)]
-
-  # Remove data with missing predictions.
-  ice_data <- remove_nonvalid_predictions(
-    ice_data,
-    outcome_type = object@outcome_type)
+  if (!any_predictions_valid(prediction_data)) return(NULL)
+  prediction_data <- .merge_slots_into_data(prediction_data)
+  prediction_data <- remove_invalid_predictions(prediction_data)
   
   # Check if removing invalid predictions leaves any data.
-  if (is_empty(ice_data)) return(NULL)
+  if (is_empty(prediction_data)) return(NULL)
   
   if (object@outcome_type %in% c("binomial", "multinomial")) {
-    
     # Determine class levels.
     class_levels <- get_outcome_class_levels(object)
-    if (object@outcome_type == "binomial") class_levels <- class_levels[2]
     
-    # Find probability names.
-    probability_names <- get_class_probability_name(class_levels)
-    
-    # Convert table from wide to long format.
-    ice_data <- data.table::melt(
-      data = ice_data,
-      measure.vars = probability_names,
-      variable.name = "positive_class",
-      value.name = "probability")
-    
-    # Replace labels by class names.
-    ice_data$positive_class <- factor(
-      x = ice_data$positive_class,
-      levels = probability_names,
-      labels = class_levels)
+    if (object@outcome_type == "binomial") {
+      used_class_levels <- class_levels[2]
+      prediction_data@value_column <- c(
+        setdiff(prediction_data@value_column, class_levels),
+        used_class_levels
+      )
+      
+    } else {
+      used_class_levels <- class_levels
+    }
     
     # Add positive class as identifier.
     data_elements <- add_data_element_identifier(
       x = data_element,
-      positive_class = class_levels)
+      positive_class = used_class_levels
+    )
+    
+    prediction_data <- .convert_value_to_grouping_column(
+      prediction_data,
+      new_grouping_column = used_class_levels, 
+      new_grouping_column_name = "positive_class", 
+      new_value_column_name = "probability",
+    )
     
     # Create ice and pd plot data.
     data_elements <- lapply(
       data_elements,
       .create_ice_and_pd_objects,
-      data = ice_data,
-      outcome_type = object@outcome_type,
-      value_columns = c("probability", "novelty"))
+      data = prediction_data,
+    )
     
    } else {
      # Create ice and pd plot data.
      data_elements <- .create_ice_and_pd_objects(
        data_element,
-       data = ice_data,
-       outcome_type = object@outcome_type,
-       value_columns = prediction_columns)
+       data = prediction_data
+     )
    }
   
   return(data_elements)
@@ -574,14 +595,17 @@ setMethod(
     feature, 
     feature_range, 
     n, 
-    column_type) {
+    column_type
+) {
   
   # Find the feature information associated with the feature.
   feature_info <- feature_info[[feature]]
   
   # Check that the feature info is present.
   if (is.null(feature_info)) {
-    stop(paste0("Feature information could not be found for the ", feature, " feature."))
+    rlang::abort(
+      paste0("Feature information could not be found for the ", feature, " feature.")
+    )
   }
   
   # Determine if the feature is categorical or numerical.
@@ -594,12 +618,13 @@ setMethod(
       feature_range <- factor(feature_levels, levels = feature_levels)
       
     } else if (!all(feature_range %in% feature_levels)) {
-      stop(paste0(
+      rlang::abort(paste0(
         "One or more levels defined in the feature range for creating ",
         "individual conditional expectation and partial dependence plots do not ",
         "match levels found in training data: ",
         paste_s(setdiff(feature_range, feature_levels)),
-        ". Check for misspelled levels."))
+        ". Check for misspelled levels."
+      ))
     }
     # If not null, and no mismatches occur, use feature_range directly.
     
@@ -608,16 +633,18 @@ setMethod(
     if (!is.null(feature_range)) {
       # Check that values are numeric.
       if (!is.numeric(feature_range)) {
-        stop(paste0(
+        rlang::abort(paste0(
           "Numeric values are required to define the feature range for creating ",
-          "individual conditional expectation and partial dependence plots."))
+          "individual conditional expectation and partial dependence plots."
+        ))
       } 
       
       # Check that all values are finite.
       if (any(!is.finite(feature_range))) {
-        stop(paste0(
+        rlang::abort(paste0(
           "Numeric values for creating individual conditional expectation and partial dependence ",
-          " plots should be finite. NA and infinite values are not allowed."))
+          " plots should be finite. NA and infinite values are not allowed."
+        ))
       }
         
       # Sort values.
@@ -630,7 +657,8 @@ setMethod(
           x = c(0.00, 1.00),
           y = feature_range,
           n = n,
-          method = "linear")$y
+          method = "linear"
+        )$y
       }
       
     } else {
@@ -644,14 +672,13 @@ setMethod(
           x = c(0.00, 0.25, 0.50, 0.75, 1.00),
           y = as.numeric(feature_info@distribution$fivenum),
           n = n,
-          method = "hyman")$y
+          method = "hyman"
+        )$y
       }
     }
     
     # Convert to integer if required.
-    if (any(column_type == "integer")) {
-      feature_range <- as.integer(feature_range)
-    }
+    if (any(column_type == "integer")) feature_range <- as.integer(feature_range)
     
     # Select unique values.
     feature_range <- unique(feature_range)
@@ -659,7 +686,8 @@ setMethod(
   } else {
     ..error_reached_unreachable_code(paste0(
       ".create_feature_range: encountered unknown feature type (",
-      feature_info@feature_type, ") for the ", feature, " feature."))
+      feature_info@feature_type, ") for the ", feature, " feature."
+    ))
   }
   
   return(feature_range)
@@ -669,31 +697,22 @@ setMethod(
 
 .create_ice_and_pd_objects <- function(
     data_element,
-    data,
-    outcome_type,
-    value_columns) {
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  positive_class <- NULL
+    data
+) {
   
   # Make a local copy.
-  data <- data.table::copy(data)
+
+  data <- data.table::copy(.as_data_table(data))
   
-  if (outcome_type %in% c("binomial", "multinomial")) {
-    # Select only data corresponding to the positive class.
-    data <- data[positive_class == data_element@identifiers$positive_class]
-    
-    # Drop the positive class column.
-    data[, "positive_class" := NULL]
-  }
+  
   
   # Create ice and pd data elements.
   ice_data_element <- data_element
   
   # Update ice data element.
-  ice_data_element@grouping_column <- "sample"
+  ice_data_element@grouping_column <- data@grouping_column
   ice_data_element@data <- data
-  ice_data_element@value_column <- value_columns
+  ice_data_element@value_column <- data@value_column
   
   # Update pd data element.
   pd_data_element <- .create_pd_object(ice_data_element)
@@ -708,10 +727,13 @@ setMethod(
   # Create partial dependence data.
   pd_data_element <- methods::new(
     "familiarDataElementPartialDependence",
-    ice_data_element)
+    ice_data_element
+  )
   
   # Select grouping columns.
-  grouping_columns <- setdiff(ice_data_element@grouping_column, "sample")
+  grouping_columns <- setdiff(
+    ice_data_element@grouping_column, get_id_columns()
+  )
   
   if (length(grouping_columns) == 0) grouping_columns <- NULL
   
@@ -720,14 +742,18 @@ setMethod(
   # Average data.
   if (length(grouping_columns) > 0) {
     pd_data_element@data <- pd_data_element@data[
-      , lapply(.SD, mean, na.rm = TRUE),
+      ,
+      lapply(.SD, mean, na.rm = TRUE),
       .SDcols = ice_data_element@value_column,
-      by = c(grouping_columns)]
+      by = c(grouping_columns)
+    ]
     
   } else {
     pd_data_element@data <- pd_data_element@data[
-      , lapply(.SD, mean, na.rm = TRUE),
-      .SDcols = ice_data_element@value_column]
+      ,
+      lapply(.SD, mean, na.rm = TRUE),
+      .SDcols = ice_data_element@value_column
+    ]
   }
   
   return(pd_data_element)
@@ -741,25 +767,29 @@ setMethod(
     outcome_type,
     anchor_values = NULL,
     n_samples = NULL,
-    seed) {
+    seed
+) {
   
   if (is_empty(ice_data)) {
     return(list(
       "ice_data" = ice_data,
-      "pd_data" = pd_data))
+      "pd_data" = pd_data
+    ))
   } 
   
   # Find anchor value for the x-feature. It will be NULL if the current feature
   # does does not appear in anchor_values.
   x_anchor <- tryCatch(
     anchor_values[[ice_data@identifiers$feature_x]],
-    error = function(err) (return(NULL)))
+    error = function(err) (return(NULL))
+  )
   
   if (!is.null(x_anchor)) {
     if (length(x_anchor) > 1) {
-      stop(paste0(
+      rlang::abort(paste0(
         "Only a single value can be provided as an anchor value for the ",
-        ice_data@identifiers$feature_x, " feature."))
+        ice_data@identifiers$feature_x, " feature."
+      ))
     } 
   }
   
@@ -768,16 +798,18 @@ setMethod(
   # with the data.
   y_anchor <- tryCatch(
     anchor_values[[ice_data@identifiers$feature_y]],
-    error = function(err) (return(NULL)))
+    error = function(err) (return(NULL))
+  )
   
   if (!is.null(y_anchor)) {
     if (length(y_anchor) > 1) {
-      stop(paste0(
+      rlang::abort(paste0(
         "Only a single value can be provided as an anchor value for the ",
-        ice_data@identifiers$feature_y, " feature."))
+        ice_data@identifiers$feature_y, " feature."
+      ))
     }
   }
-  
+  browser()
   # Rename main value column to a consist name.
   if (outcome_type %in% c("binomial", "multinomial")) {
     old_value_column <- "probability"
