@@ -503,7 +503,7 @@ setMethod(
   data <- data.table::copy(.as_data_table(data))
   data.table::setnames(
     x = data,
-    old = get_class_probability_name(positive_class),
+    old = positive_class,
     new = "probability"
   )
   
