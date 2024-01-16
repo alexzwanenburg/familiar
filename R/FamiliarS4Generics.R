@@ -322,6 +322,8 @@ setGeneric(".extract_slots_from_data", function(x, ...) standardGeneric(".extrac
 
 setGeneric(".as_data_table", function(x, ...) standardGeneric(".as_data_table"))
 
+setGeneric(".convert_value_to_grouping_column", function(x, ...) standardGeneric(".convert_value_to_grouping_column"))
+
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
 

@@ -2086,3 +2086,67 @@ setMethod(
   
   return(invisible(NULL))
 }
+
+
+# .convert_value_to_grouping_column (familiarDataElement) ----------------------
+setMethod(
+  ".convert_value_to_grouping_column",
+  signature(x = "familiarDataElement"),
+  function(
+    x, 
+    new_grouping_column, 
+    new_grouping_column_name, 
+    new_value_column_name,
+    ...
+  ) {
+    if (is_empty(x)) return(x)
+    if (!data.table::is.data.table(x)) return(x)
+    if (!any(new_grouping_column %in% x@value_column)) {
+      rlang::warn("None of the intended grouping columns currently appear as value column.")
+      return(x)
+    }
+    browser()
+    new_grouping_column <- intersect(new_grouping_column, x@value_column)
+    remaining_value_column <- setdiff(x@value_column, new_grouping_column)
+    
+    original_grouping_column <- x@grouping_column
+    if (length(original_grouping_column) == 0) {
+      old_data <- data.table::copy(data@data)
+      old_data[, "_index_id" := .I]
+      original_grouping_column <- "_index_id"
+      
+    } else {
+      old_data <- x@data
+    }
+    
+    data <- data.table::melt(
+      data = old_data,
+      id.vars = original_grouping_column,
+      measure_vars = new_grouping_column,
+      variable.name = new_grouping_column_name,
+      value.name = new_value_column_name
+    )
+    
+    # If any other value columns remain, merge these into data.
+    if (length(remaining_value_column) > 0) {
+      data <- merge(
+        x = data,
+        y = old_data[, mget(c(original_grouping_column, remaining_value_column))],
+        by = original_grouping_column,
+        all = TRUE
+      )
+    }
+    
+    # Drop placeholder grouping column
+    if (any(original_grouping_column == "_index_id")) {
+      data[, "_index_id" := NULL]
+    }
+    
+    # Update data, value column and grouping column.
+    x@data <- data
+    x@value_column <- c(new_value_column_name, remaining_value_column)
+    x@grouping_column <- c(x@grouping_column, new_grouping_column_name)
+    
+    return(x)
+  }
+)
