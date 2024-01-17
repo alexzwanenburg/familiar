@@ -380,14 +380,14 @@ as_prediction_table <- function(
         value_range <- data@observed_value_range
       }
     }
-    if (is.unset(value_range) && is(data, "dataObject")) {
-      value_range <- range(data@outcome_info@distribution$fivenum)
+    if ((is.unset(value_range) || !all(is.finite(value_range))) && is(data, "dataObject")) {
+      value_range <- suppressWarnings(range(data@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
     }
-    if (is.unset(value_range) && !is_empty(object@reference_data)) {
-      value_range <- range(object@reference_data[[1]], na.rm = TRUE, finite = TRUE)
+    if ((is.unset(value_range) || !all(is.finite(value_range))) && !is_empty(object@reference_data)) {
+      value_range <- suppressWarnings(range(object@reference_data[[1]], na.rm = TRUE, finite = TRUE))
     }
-    if (is.unset(value_range)) {
-      value_range <- range(object@prediction_data[[1]], na.rm = TRUE, finite = TRUE)
+    if (is.unset(value_range) || !all(is.finite(value_range))) {
+      value_range <- suppressWarnings(range(object@prediction_data[[1]], na.rm = TRUE, finite = TRUE))
     }
     
     object@observed_value_range <- value_range
