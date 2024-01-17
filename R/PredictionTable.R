@@ -1219,6 +1219,53 @@ setMethod(
 
 
 
+# .drop_reference_data (generic) -----------------------------------------------
+setGeneric(
+  ".drop_reference_data",
+  function(object, ...) standardGeneric(".drop_reference_data")
+) 
+
+
+
+# .drop_reference_data (general) -----------------------------------------------
+setMethod(
+  ".drop_reference_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    if (is_empty(object)) return(object)
+    
+    outcome_columns <- c("outcome", "outcome_time", "outcome_event")
+    if (.is_merged_prediction_table(object)) {
+      present_outcome_columns <- intersect(colnames(object@data), outcome_columns)
+      if (length(present_outcome_columns) == 0) return(object)
+      
+      object@data[, (present_outcome_columns) := NULL]
+      
+      grouping_columns <- setdiff(object@grouping_column, present_outcome_columns)
+      if (length(grouping_columns) == 0) grouping_columns <- NULL
+      object@grouping_column <- grouping_columns
+      
+    } else {
+      object@reference_data <- NULL
+    }
+    
+    return(object)
+  }
+)
+
+
+
+# .drop_reference_data (null) --------------------------------------------------
+setMethod(
+  ".drop_reference_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
 # remove_invalid_predictions (generic) -----------------------------------------
 setGeneric("remove_invalid_predictions", function(object, ...) standardGeneric("remove_invalid_predictions"))
 
