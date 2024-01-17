@@ -1551,16 +1551,17 @@ setMethod(
 setMethod(
   "filter_missing_outcome",
   signature(data = "data.table"),
-  function(data, outcome_type, is_validation = FALSE, ...) {
-    
-    # Suppress NOTES due to non-standard evaluation in data.table
-    outcome <- outcome_time <- outcome_event <- NULL
-    
+  function(
+    data, 
+    outcome_type, 
+    is_validation = FALSE, 
+    ...
+  ) {
     if (is_empty(data)) return(data)
     
     # Check predicted outcome columns.
     if (outcome_type %in% c("survival", "competing_risk")) {
-      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) && is_valid_data(data[["outcome_event"]])
+      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) & is_valid_data(data[["outcome_event"]])
       
     } else if (outcome_type %in% c("continuous")) {
       outcome_is_valid <- is_valid_data(data[["outcome"]])
