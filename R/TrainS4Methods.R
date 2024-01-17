@@ -186,7 +186,8 @@ setMethod(
     # Obtain the final list of hyperparameters.
     param_list <- lapply(
       param_list, 
-      function(hyperparameter_entry) hyperparameter_entry$init_config)
+      function(hyperparameter_entry) hyperparameter_entry$init_config
+    )
 
     # Prepare model and data ---------------------------------------------------
 
@@ -204,7 +205,8 @@ setMethod(
       feature_info = feature_info_list,
       outcome_info = outcome_info,
       settings = settings$eval,
-      project_id = 0)
+      project_id = 0
+    )
 
     # Add package version/
     object <- add_package_version(object = object)
@@ -221,7 +223,10 @@ setMethod(
         data = data,
         samples = fam_sample(
           x = data@data,
-          replace = TRUE))
+          replace = TRUE,
+          seed = 19L
+        )
+      )
     }
 
     # Train model.
