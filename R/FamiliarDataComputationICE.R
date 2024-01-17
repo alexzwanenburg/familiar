@@ -503,7 +503,8 @@ setMethod(
     data_element,
     data,
     object,
-    ensemble_method) {
+    ensemble_method
+) {
   
   # Make a local copy of the data.
   data@data <- data.table::copy(data@data)
@@ -516,13 +517,12 @@ setMethod(
     data@data[, (data_element@identifiers$feature_y) := data_element@identifiers$feature_y_value]
   }
   
-  # Predict both novelty
-  if (object@outcome_type %in% c("survival", "competing_risk")) {
-    type <- c("survival_probability", "novelty")
-    
-  } else {
-    type <- c("default", "novelty")
-  }
+  # Predict both primary outcomes and novelty
+  type <- ifelse(
+    object@outcome_type %in% c("survival", "competing_risk"),
+    "survival_probability", 
+    "default"
+  )
   
   # Compute performance data.
   prediction_data <- .predict(
@@ -533,14 +533,29 @@ setMethod(
     type = type,
     aggregate_results = TRUE
   )
+
+  # Compute novelty values.
+  novelty_data <- .predict(
+    object = object,
+    data = data,
+    ensemble_method = ensemble_method,
+    time = data_element@identifiers$evaluation_time,
+    type = "novelty",
+    aggregate_results = TRUE
+  )
   
   # Check that valid prediction data were generated.
   if (!any_predictions_valid(prediction_data)) return(NULL)
+  prediction_data <- .drop_reference_data(prediction_data)
   prediction_data <- .merge_slots_into_data(prediction_data)
   prediction_data <- remove_invalid_predictions(prediction_data)
   
   # Check if removing invalid predictions leaves any data.
   if (is_empty(prediction_data)) return(NULL)
+  
+  novelty_data <- .drop_reference_data(novelty_data)
+  novelty_data <- .merge_slots_into_data(novelty_data)
+  novelty_data <- remove_invalid_predictions(novelty_data)
   
   if (object@outcome_type %in% c("binomial", "multinomial")) {
     # Determine class levels.
@@ -563,6 +578,7 @@ setMethod(
       positive_class = used_class_levels
     )
     
+    # Make sure that probability is returned.
     prediction_data <- .convert_value_to_grouping_column(
       prediction_data,
       new_grouping_column = used_class_levels, 
@@ -574,14 +590,16 @@ setMethod(
     data_elements <- lapply(
       data_elements,
       .create_ice_and_pd_objects,
-      data = prediction_data,
+      prediction_data = prediction_data,
+      novelty_data = novelty_data
     )
     
    } else {
      # Create ice and pd plot data.
      data_elements <- .create_ice_and_pd_objects(
        data_element,
-       data = prediction_data
+       prediction_data = prediction_data,
+       novelty_data = novelty_data
      )
    }
   
@@ -697,22 +715,29 @@ setMethod(
 
 .create_ice_and_pd_objects <- function(
     data_element,
-    data
+    prediction_data,
+    novelty_data
 ) {
-  
-  # Make a local copy.
-
-  data <- data.table::copy(.as_data_table(data))
-  
-  
-  
   # Create ice and pd data elements.
   ice_data_element <- data_element
   
-  # Update ice data element.
-  ice_data_element@grouping_column <- data@grouping_column
-  ice_data_element@data <- data
-  ice_data_element@value_column <- data@value_column
+  if (is_empty(novelty_data)) {
+    ice_data_element@data <- data.table::copy(.as_data_table(prediction_data))
+    ice_data_element@grouping_column <- prediction_data@grouping_column
+    ice_data_element@value_column <- prediction_data@value_column
+    
+  } else {
+    data <- merge(
+      x = data.table::copy(.as_data_table(prediction_data)),
+      y = data.table::copy(.as_data_table(novelty_data)),
+      by = intersect(prediction_data@grouping_column, novelty_data@grouping_column),
+      all = TRUE
+    )
+    
+    ice_data_element@data <- data
+    ice_data_element@grouping_column <- union(prediction_data@grouping_column, novelty_data@grouping_column)
+    ice_data_element@value_column <- union(prediction_data@value_column, novelty_data@value_column)
+  }
   
   # Update pd data element.
   pd_data_element <- .create_pd_object(ice_data_element)
@@ -736,7 +761,6 @@ setMethod(
   )
   
   if (length(grouping_columns) == 0) grouping_columns <- NULL
-  
   pd_data_element@grouping_column <- grouping_columns
   
   # Average data.
