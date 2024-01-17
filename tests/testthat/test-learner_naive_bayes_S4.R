@@ -1,6 +1,7 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(
-  learners = familiar:::.get_available_naive_bayes_learners(show_general = TRUE))
+  learners = familiar:::.get_available_naive_bayes_learners(show_general = TRUE)
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
@@ -9,15 +10,19 @@ familiar:::test_all_learners_train_predict_vimp(
   learners = familiar:::.get_available_naive_bayes_learners(show_general = FALSE),
   hyperparameter_list = list(
     "binomial" = list("laplace" = 0.0),
-    "multinomial" = list("laplace" = 0.0)),
-  has_vimp = FALSE)
+    "multinomial" = list("laplace" = 0.0)
+  ),
+  has_vimp = FALSE
+)
 
 familiar:::test_all_learners_parallel_train_predict_vimp(
   learners = familiar:::.get_available_naive_bayes_learners(show_general = FALSE),
   hyperparameter_list = list(
     "binomial" = list("laplace" = 0.0),
-    "multinomial" = list("laplace" = 0.0)),
-  has_vimp = FALSE)
+    "multinomial" = list("laplace" = 0.0)
+  ),
+  has_vimp = FALSE
+)
 
 
 # Binomial tests----------------------------------------------------------------
@@ -32,12 +37,14 @@ good_model <- familiar:::test_train(
   imputation_method = "simple",
   hyperparameter_list = list(
     "sign_size" = familiar:::get_n_features(good_data),
-    "laplace" = 0.0),
-  learner = "naive_bayes")
+    "laplace" = 0.0
+  ),
+  learner = "naive_bayes"
+)
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -51,7 +58,7 @@ testthat::test_that("Naive Bayes model has no variable importance", {
   vimp_table <- familiar:::get_vimp_table(good_model)
 
   # Expect that the vimp table is empty.
-  testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
+  testthat::expect_true(familiar:::is_empty(vimp_table))
 })
 
 
@@ -67,12 +74,14 @@ good_model <- suppressWarnings(familiar:::test_train(
   imputation_method = "simple",
   hyperparameter_list = list(
     "sign_size" = familiar:::get_n_features(good_data),
-    "laplace" = 0.0),
-  learner = "naive_bayes"))
+    "laplace" = 0.0
+  ),
+  learner = "naive_bayes"
+))
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -86,7 +95,7 @@ testthat::test_that("Naive Bayes model has no variable importance", {
   vimp_table <- familiar:::get_vimp_table(good_model)
 
   # Expect that the vimp table is empty.
-  testthat::expect_equal(familiar:::is_empty(vimp_table), TRUE)
+  testthat::expect_true(familiar:::is_empty(vimp_table))
 })
 
 
@@ -95,4 +104,5 @@ testthat::skip("Skip hyperparameter optimisation, unless manual.")
 familiar:::test_hyperparameter_optimisation(
   learners = familiar:::.get_available_naive_bayes_learners(show_general = TRUE),
   debug = FALSE,
-  parallel = FALSE)
+  parallel = FALSE
+)
