@@ -511,6 +511,7 @@ setMethod(
     object, 
     data, 
     type = "default",
+    time = NULL,
     ...
   ) {
     # Check that required packages are loaded and installed.
@@ -638,7 +639,7 @@ setMethod(
       
     } else if (type == "survival_probability" && object@outcome_type == "survival") {
       # survival probability ---------------------------------------------------
-      
+
       # If time is unset, read the max time stored by the model.
       if (is.null(time)) time <- object@settings$time_max
       
