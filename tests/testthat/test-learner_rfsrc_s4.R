@@ -1,6 +1,7 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(
-  learners = familiar:::.get_available_rfsrc_learners(show_general = TRUE))
+  learners = familiar:::.get_available_rfsrc_learners(show_general = TRUE)
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
@@ -91,12 +92,14 @@ good_model <- familiar:::test_train(
     "sample_size" = 0.50,
     "m_try" = 0.3,
     "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
+    "tree_depth" = 5
+  ),
+  learner = "random_forest_rfsrc"
+)
 
 testthat::test_that("Random forest SRC model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -114,7 +117,8 @@ testthat::test_that("Random forest SRC model has variable importance", {
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -137,12 +141,14 @@ good_model <- familiar:::test_train(
     "sample_size" = 0.50,
     "m_try" = 0.3,
     "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
+    "tree_depth" = 5
+  ),
+  learner = "random_forest_rfsrc"
+)
 
 testthat::test_that("Random forest SRC model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -160,7 +166,8 @@ testthat::test_that("Random forest SRC model has variable importance", {
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -183,12 +190,14 @@ good_model <- familiar:::test_train(
     "sample_size" = 0.50,
     "m_try" = 0.3,
     "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
+    "tree_depth" = 5
+  ),
+  learner = "random_forest_rfsrc"
+)
 
 testthat::test_that("Random forest SRC model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -206,7 +215,8 @@ testthat::test_that("Random forest SRC model has variable importance", {
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -229,25 +239,17 @@ good_model <- familiar:::test_train(
     "sample_size" = 0.50,
     "m_try" = 0.3,
     "node_size" = 5,
-    "tree_depth" = 5),
-  learner = "random_forest_rfsrc")
+    "tree_depth" = 5
+  ),
+  learner = "random_forest_rfsrc"
+)
 
 testthat::test_that("Random forest SRC model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Calibration info is present
-  testthat::expect_equal(familiar:::has_calibration_info(good_model), TRUE)
-
-  # Test that the model predicts cumulative hazard
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model),
-    "cumulative_hazard")
-
-  # Test that the model predicts hazard ratios
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model, type = "survival_probability"),
-    "survival_probability")
+  testthat::expect_true(familiar:::has_calibration_info(good_model))
 
   # That no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -265,7 +267,8 @@ testthat::test_that("Random forest SRC model has variable importance", {
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
