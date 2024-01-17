@@ -489,7 +489,7 @@ setMethod(
   outcome_time <- NULL
   
   if (is_empty(x)) return(NULL)
-  if (!all_predictions_valid(x@data, outcome_type = "survival")) return(NULL)
+  if (!all_predictions_valid(x@data)) return(NULL)
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
