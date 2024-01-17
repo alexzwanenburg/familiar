@@ -76,7 +76,8 @@ test_all_learners_train_predict_vimp <- function(
       object <- methods::new(
         "familiarModel",
         outcome_type = outcome_type,
-        learner = learner)
+        learner = learner
+      )
 
       # Promote the learner to the right class.
       object <- promote_learner(object = object)
@@ -87,13 +88,15 @@ test_all_learners_train_predict_vimp <- function(
       # Parse hyperparameter list
       hyperparameters <- c(
         hyperparameter_list[[outcome_type]],
-        list("sign_size" = get_n_features(full_data)))
+        list("sign_size" = get_n_features(full_data))
+      )
 
       # Find required hyperparameters
       learner_hyperparameters <- .get_preset_hyperparameters(
         learner = learner,
         outcome_type = outcome_type,
-        names_only = TRUE)
+        names_only = TRUE
+      )
 
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
@@ -108,8 +111,9 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832,
-        trim_model = FALSE))
+        time_max = 3.5,
+        trim_model = FALSE
+      ))
 
       # Create a trimmed model -- this is the only instance were we do that
       # without setting the time-out to infinite to test whether the timeout
@@ -173,37 +177,39 @@ test_all_learners_train_predict_vimp <- function(
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table),
-            !learner %in% c(except_train, except_predict))
+            !learner %in% c(except_train, except_predict)
+          )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
-            # Expect that the predicted_class column is a factor.
-            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-            
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
-              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(prediction_table),
               get_outcome_class_levels(model))
           }
           
           # Expect that the trimmed model produces the same predictions.
           prediction_table_trim <- suppressWarnings(.predict(
             trimmed_model,
-            data = full_data))
+            data = full_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_trim,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
           
           # Expect that the reloaded model produces the same predictions.
           prediction_table_reloaded <- suppressWarnings(.predict(
             reloaded_model,
-            data = full_data))
+            data = full_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_reloaded,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
         }
       )
       
@@ -216,42 +222,45 @@ test_all_learners_train_predict_vimp <- function(
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
             model,
-            data = full_one_sample_data))
+            data = full_one_sample_data
+          ))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table),
-            !learner %in% c(except_train, except_predict))
+            !learner %in% c(except_train, except_predict)
+          )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
-            # Expect that the predicted_class column is a factor.
-            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-            
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
-              levels(prediction_table$predicted_class),
+              get_outcome_class_levels(prediction_table),
               get_outcome_class_levels(model))
           }
           
           # Expect that the trimmed model produces the same predictions.
           prediction_table_trim <- suppressWarnings(.predict(
             trimmed_model,
-            data = full_one_sample_data))
+            data = full_one_sample_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_trim,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
           
           # Expect that the trimmed model produces the same predictions.
           prediction_table_reloaded <- suppressWarnings(.predict(
             reloaded_model,
-            data = full_one_sample_data))
+            data = full_one_sample_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_reloaded,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
         }
       )
       
@@ -264,12 +273,11 @@ test_all_learners_train_predict_vimp <- function(
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
             model,
-            data = empty_data))
+            data = empty_data
+          ))
           
           # Test that the predictions were successfully made.
-          testthat::expect_equal(
-            any_predictions_valid(prediction_table), 
-            FALSE)
+          testthat::expect_false(any_predictions_valid(prediction_table))
         }
       )
       
@@ -285,72 +293,84 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = full_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = full_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect that the reloaded model produces the same predictions.
             prediction_table_reloaded <- suppressWarnings(.predict(
               reloaded_model,
               data = full_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_reloaded,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Predict stratification.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = full_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = full_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect that the reloaded model produces the same predictions.
             prediction_table_reloaded <- suppressWarnings(.predict(
               reloaded_model,
               data = full_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_reloaded,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
         
@@ -364,72 +384,84 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = full_one_sample_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = full_one_sample_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect that the reloaded model produces the same predictions.
             prediction_table_reloaded <- suppressWarnings(.predict(
               reloaded_model,
               data = full_one_sample_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_reloaded,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = full_one_sample_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = full_one_sample_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect that the reloaded model produces the same predictions.
             prediction_table_reloaded <- suppressWarnings(.predict(
               reloaded_model,
               data = full_one_sample_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_reloaded,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
       }
@@ -443,54 +475,45 @@ test_all_learners_train_predict_vimp <- function(
           # Extract the variable importance table.
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             model,
-            data = full_data)))
+            data = full_data
+          )))
           
           # Extract the variable importance table for the trimmed model.
           vimp_table_trim <- suppressWarnings(get_vimp_table(.vimp(
             trimmed_model,
-            data = full_data)))
+            data = full_data
+          )))
           
           # Extract the variable importance table for the reloaded model.
           vimp_table_reloaded <- suppressWarnings(get_vimp_table(.vimp(
             reloaded_model,
-            data = full_data)))
+            data = full_data
+          )))
           
           if (has_vimp) {
             # Get the number of features
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table has two rows.
-            testthat::expect_equal(
-              nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-              TRUE)
-            testthat::expect_equal(
-              nrow(vimp_table_trim) > 0 && nrow(vimp_table_trim) <= n_features,
-              TRUE)
-            testthat::expect_equal(
-              nrow(vimp_table_reloaded) > 0 && nrow(vimp_table_reloaded) <= n_features,
-              TRUE)
+            testthat::expect_true(nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features)
+            testthat::expect_true(nrow(vimp_table_trim) > 0 && nrow(vimp_table_trim) <= n_features)
+            testthat::expect_true(nrow(vimp_table_reloaded) > 0 && nrow(vimp_table_reloaded) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_equal(
-              all(vimp_table$name %in% get_feature_columns(full_data)),
-              TRUE)
-            testthat::expect_equal(
-              all(vimp_table_trim$name %in% get_feature_columns(full_data)),
-              TRUE)
-            testthat::expect_equal(
-              all(vimp_table_reloaded$name %in% get_feature_columns(full_data)),
-              TRUE)
+            testthat::expect_true(all(vimp_table$name %in% get_feature_columns(full_data)))
+            testthat::expect_true(all(vimp_table_trim$name %in% get_feature_columns(full_data)))
+            testthat::expect_true(all(vimp_table_reloaded$name %in% get_feature_columns(full_data)))
             
           } else {
             # Expect that the vimp table has no rows.
-            testthat::expect_equal(is_empty(vimp_table), TRUE)
-            testthat::expect_equal(is_empty(vimp_table_trim), TRUE)
-            testthat::expect_equal(is_empty(vimp_table_reloaded), TRUE)
+            testthat::expect_true(is_empty(vimp_table))
+            testthat::expect_true(is_empty(vimp_table_trim))
+            testthat::expect_true(is_empty(vimp_table_reloaded))
           }
         }
       )
-      
+
       # Bootstrapped dataset ---------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(
@@ -499,9 +522,10 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832,
+        time_max = 3.5,
         create_bootstrap = TRUE,
-        trim_model = FALSE))
+        trim_model = FALSE
+      ))
 
       # Test that models can be created.
       test_fun(
@@ -510,13 +534,11 @@ test_all_learners_train_predict_vimp <- function(
           learner, " using a complete dataset."),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(
-            model_is_trained(model),
-            !learner %in% except_train)
+          testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
           
           if (outcome_type == "survival") {
             # Calibration info is present
-            testthat::expect_equal(has_calibration_info(model), TRUE)
+            testthat::expect_true(has_calibration_info(model))
           }
         }
       )
@@ -533,7 +555,8 @@ test_all_learners_train_predict_vimp <- function(
         learner = learner,
         hyperparameter = hyperparameters,
         parallel = FALSE,
-        verbose = debug))
+        verbose = debug
+      ))
       
       test_fun(
         paste0(
@@ -543,25 +566,27 @@ test_all_learners_train_predict_vimp <- function(
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
             model,
-            data = full_data))
+            data = full_data
+          ))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table),
-            !learner %in% c(except_train, except_naive))
+            !learner %in% c(except_train, except_naive)
+          )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
-            # Expect that the predicted_class column is a factor.
-            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+            testthat::expect_true(is.factor(.complete(prediction_table)@data$predicted_class))
             
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
-              levels(prediction_table$predicted_class),
-              get_outcome_class_levels(model))
+              get_outcome_class_levels(prediction_table),
+              get_outcome_class_levels(model)
+            )
             
           } else if (outcome_type %in% c("continuous", "survival", "competing_risk")) {
             # Expect that the predicted outcome is valid.
-            testthat::expect_equal(is.numeric(prediction_table$predicted_outcome), TRUE)
+            testthat::expect_true(is.numeric(.complete(prediction_table)@data$predicted_outcome))
           }
           
           if (outcome_type %in% c("survival", "competing_risk")) {
@@ -570,12 +595,14 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = full_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_naive))
+              !learner %in% c(except_train, except_naive)
+            )
           }
         }
       )
@@ -588,7 +615,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
       
       # Create a trimmed model.
       trimmed_model <- trim_model(model, timeout = Inf)
@@ -600,13 +628,11 @@ test_all_learners_train_predict_vimp <- function(
           learner, " using a one-feature dataset."),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(
-            model_is_trained(model),
-            !learner %in% except_train)
+          testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
           
           if (outcome_type == "survival") {
             # Calibration info is present
-            testthat::expect_equal(has_calibration_info(model), TRUE)
+            testthat::expect_true(has_calibration_info(model))
           }
         }
       )
@@ -620,32 +646,34 @@ test_all_learners_train_predict_vimp <- function(
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
             model,
-            data = one_feature_data))
+            data = one_feature_data
+          ))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table),
-            !learner %in% c(except_train, except_predict))
+            !learner %in% c(except_train, except_predict)
+          )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
-            # Expect that the predicted_class column is a factor.
-            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-            
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
-              levels(prediction_table$predicted_class),
-              get_outcome_class_levels(model))
+              get_outcome_class_levels(prediction_table),
+              get_outcome_class_levels(model)
+            )
           }
           
           # Expect that the trimmed model produces the same predictions.
           prediction_table_trim <- suppressWarnings(.predict(
             trimmed_model,
-            data = one_feature_data))
+            data = one_feature_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_trim,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
         }
       )
       
@@ -658,32 +686,34 @@ test_all_learners_train_predict_vimp <- function(
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
             model,
-            data = one_feature_one_sample_data))
+            data = one_feature_one_sample_data
+          ))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
             any_predictions_valid(prediction_table),
-            !learner %in% c(except_train, except_predict))
+            !learner %in% c(except_train, except_predict)
+          )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
-            # Expect that the predicted_class column is a factor.
-            testthat::expect_s3_class(prediction_table$predicted_class, "factor")
-            
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
-              levels(prediction_table$predicted_class),
-              get_outcome_class_levels(model))
+              get_outcome_class_levels(prediction_table),
+              get_outcome_class_levels(model)
+            )
           }
           
           # Expect that the trimmed model produces the same predictions.
           prediction_table_trim <- suppressWarnings(.predict(
             trimmed_model,
-            data = one_feature_one_sample_data))
+            data = one_feature_one_sample_data
+          ))
           
           testthat::expect_equal(
             prediction_table,
             prediction_table_trim,
-            ignore_attr = TRUE)
+            ignore_attr = TRUE
+          )
         }
       )
       
@@ -699,48 +729,56 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = one_feature_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_feature_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = one_feature_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_feature_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
           }
         )
         
@@ -754,48 +792,56 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = one_feature_one_sample_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_feature_one_sample_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = one_feature_one_sample_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_feature_one_sample_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
       }
@@ -808,7 +854,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
 
       # Test that models can be created.
       test_fun(
@@ -817,11 +864,11 @@ test_all_learners_train_predict_vimp <- function(
           learner, " using a bad dataset."),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(model_is_trained(model), FALSE)
+          testthat::expect_false(model_is_trained(model))
           
           if (outcome_type == "survival") {
             # Calibration info is absent.
-            testthat::expect_equal(has_calibration_info(model), TRUE)
+            testthat::expect_true(has_calibration_info(model))
           }
         }
       )
@@ -835,7 +882,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
 
       # Test that models can be created.
       test_fun(
@@ -844,7 +892,7 @@ test_all_learners_train_predict_vimp <- function(
           learner, " using a dataset for ."), 
         {
           # Test that the model could not be successfully created.
-          testthat::expect_equal(model_is_trained(model), FALSE)
+          testthat::expect_false(model_is_trained(model))
         }
       )
       
@@ -860,7 +908,8 @@ test_all_learners_train_predict_vimp <- function(
           imputation_method = "simple",
           hyperparameter_list = hyperparameters,
           learner = learner,
-          time_max = 1832))
+          time_max = 3.5
+        ))
 
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
@@ -872,13 +921,11 @@ test_all_learners_train_predict_vimp <- function(
             learner, " using a dataset without censoring."),
           {
             # Test that the model was successfully created.
-            testthat::expect_equal(
-              model_is_trained(model),
-              !learner %in% except_train)
+            testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
             
             if (outcome_type == "survival") {
               # Calibration info is present
-              testthat::expect_equal(has_calibration_info(model), TRUE)
+              testthat::expect_true(has_calibration_info(model))
             }
           }
         )
@@ -892,22 +939,26 @@ test_all_learners_train_predict_vimp <- function(
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
-              data = no_censoring_data))
+              data = no_censoring_data
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
-              data = no_censoring_data))
+              data = no_censoring_data
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
         
@@ -922,48 +973,56 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = no_censoring_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = no_censoring_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = no_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = no_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
           }
         )
       }
@@ -980,7 +1039,8 @@ test_all_learners_train_predict_vimp <- function(
           imputation_method = "simple",
           hyperparameter_list = hyperparameters,
           learner = learner,
-          time_max = 1832))
+          time_max = 3.5
+        ))
 
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
@@ -992,13 +1052,11 @@ test_all_learners_train_predict_vimp <- function(
             learner, " using a dataset with one censored sample."), 
           {
             # Test that the model was successfully created.
-            testthat::expect_equal(
-              model_is_trained(model),
-              !learner %in% except_train)
+            testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
             
             if (outcome_type == "survival") {
               # Calibration info is present
-              testthat::expect_equal(has_calibration_info(model), TRUE)
+              testthat::expect_true(has_calibration_info(model))
             }
           }
         )
@@ -1010,23 +1068,28 @@ test_all_learners_train_predict_vimp <- function(
             learner, " for a dataset with one censored sample."),
           {
             # Expect predictions to be made.
-            prediction_table <- suppressWarnings(.predict(model,
-                                                          data = one_censoring_data))
+            prediction_table <- suppressWarnings(.predict(
+              model,
+              data = one_censoring_data
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
-              data = one_censoring_data))
+              data = one_censoring_data
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
         
@@ -1041,48 +1104,56 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = one_censoring_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_censoring_data,
               type = "survival_probability",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = one_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = one_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
           }
         )
       }
@@ -1100,7 +1171,8 @@ test_all_learners_train_predict_vimp <- function(
           imputation_method = "simple",
           hyperparameter_list = hyperparameters,
           learner = learner,
-          time_max = 1832))
+          time_max = 3.5
+        ))
 
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
@@ -1112,13 +1184,11 @@ test_all_learners_train_predict_vimp <- function(
             " using a dataset with few censored samples."), 
           {
             # Test that the model was successfully created.
-            testthat::expect_equal(
-              model_is_trained(model),
-              !learner %in% except_train)
+            testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
             
             if (outcome_type == "survival") {
               # Calibration info is present
-              testthat::expect_equal(has_calibration_info(model), TRUE)
+              testthat::expect_true(has_calibration_info(model))
             }
           }
         )
@@ -1132,22 +1202,26 @@ test_all_learners_train_predict_vimp <- function(
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
-              data = few_censoring_data))
+              data = few_censoring_data
+            ))
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
-              data = few_censoring_data))
+              data = few_censoring_data
+            ))
             
             testthat::expect_equal(
               prediction_table,
               prediction_table_trim,
-              ignore_attr = TRUE)
+              ignore_attr = TRUE
+            )
           }
         )
         
@@ -1162,7 +1236,7 @@ test_all_learners_train_predict_vimp <- function(
               model,
               data = few_censoring_data,
               type = "survival_probability",
-              time = 1000
+              time = 2.5
             ))
             
             # Expect that the trimmed model produces the same predictions.
@@ -1170,7 +1244,7 @@ test_all_learners_train_predict_vimp <- function(
               trimmed_model,
               data = few_censoring_data,
               type = "survival_probability",
-              time = 1000
+              time = 2.5
             ))
             
             testthat::expect_equal(
@@ -1182,21 +1256,24 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict, except_predict_survival))
+              !learner %in% c(except_train, except_predict, except_predict_survival)
+            )
             
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
               model,
               data = few_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             # Expect that the trimmed model produces the same predictions.
             prediction_table_trim <- suppressWarnings(.predict(
               trimmed_model,
               data = few_censoring_data,
               type = "risk_stratification",
-              time = 1000))
+              time = 2.5
+            ))
             
             testthat::expect_equal(
               prediction_table,
@@ -1207,7 +1284,8 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict))
+              !learner %in% c(except_train, except_predict)
+            )
           }
         )
       }
@@ -1223,7 +1301,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
 
       # Test that models can be created.
       test_fun(
@@ -1232,7 +1311,7 @@ test_all_learners_train_predict_vimp <- function(
           learner, " for a fully prospective dataset."), 
         {
           # Test that the model was not created.
-          testthat::expect_equal(model_is_trained(model), FALSE)
+          testthat::expect_false(model_is_trained(model))
         }
       )
       
@@ -1246,7 +1325,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
 
       # Test that models can be created.
       test_fun(
@@ -1255,7 +1335,7 @@ test_all_learners_train_predict_vimp <- function(
           " for an almost fully prospective dataset, where outcome is known for just a single sample."),
         {
           # Test that the model was not created.
-          testthat::expect_equal(model_is_trained(model), FALSE)
+          testthat::expect_false(model_is_trained(model))
         }
       )
       
@@ -1268,7 +1348,8 @@ test_all_learners_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832))
+        time_max = 3.5
+      ))
       
       # Test that models can be created.
       test_fun(
@@ -1277,9 +1358,7 @@ test_all_learners_train_predict_vimp <- function(
           " for a partially prospective dataset, where outcome is known for most samples."),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(
-            model_is_trained(model),
-            !learner %in% except_train)
+          testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
         }
       )
     }
@@ -1311,23 +1390,27 @@ test_all_learners_parallel_train_predict_vimp <- function(
 
     # Iterate over learners.
     for (learner in learners) {
-      if (!.check_learner_outcome_type(
+      if (
+        !.check_learner_outcome_type(
         learner = learner,
         outcome_type = outcome_type,
-        as_flag = TRUE)) {
+        as_flag = TRUE)
+      ) {
         next
       }
 
       # Parse hyperparameter list
       hyperparameters <- c(
         hyperparameter_list[[outcome_type]],
-        list("sign_size" = get_n_features(full_data)))
+        list("sign_size" = get_n_features(full_data))
+      )
 
       # Find required hyperparameters
       learner_hyperparameters <- .get_preset_hyperparameters(
         learner = learner,
         outcome_type = outcome_type,
-        names_only = TRUE)
+        names_only = TRUE
+      )
 
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
@@ -1345,8 +1428,9 @@ test_all_learners_parallel_train_predict_vimp <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = learner,
-        time_max = 1832,
-        trim_model = FALSE)
+        time_max = 3.5,
+        trim_model = FALSE
+      )
 
       # Test that models can be created.
       testthat::test_that(
@@ -1355,8 +1439,8 @@ test_all_learners_parallel_train_predict_vimp <- function(
           learner, " using a complete dataset."),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(model_is_trained(model_list[[1]]), TRUE)
-          testthat::expect_equal(model_is_trained(model_list[[2]]), TRUE)
+          testthat::expect_true(model_is_trained(model_list[[1]]))
+          testthat::expect_true(model_is_trained(model_list[[2]]))
         }
       )
       
@@ -1371,7 +1455,8 @@ test_all_learners_parallel_train_predict_vimp <- function(
         cl = cl_vimp,
         model_list,
         .vimp,
-        data = full_data)
+        data = full_data
+      )
 
       # Extract the variable importance tables themselves.
       vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
@@ -1387,26 +1472,18 @@ test_all_learners_parallel_train_predict_vimp <- function(
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table has two rows.
-            testthat::expect_equal(
-              nrow(vimp_table_list[[1]]) > 0 && nrow(vimp_table_list[[1]]) <= n_features,
-              TRUE)
-            testthat::expect_equal(
-              nrow(vimp_table_list[[2]]) > 0 && nrow(vimp_table_list[[2]]) <= n_features,
-              TRUE)
+            testthat::expect_true(nrow(vimp_table_list[[1]]) > 0 && nrow(vimp_table_list[[1]]) <= n_features)
+            testthat::expect_true(nrow(vimp_table_list[[2]]) > 0 && nrow(vimp_table_list[[2]]) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_equal(
-              all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)),
-              TRUE)
-            testthat::expect_equal(
-              all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)),
-              TRUE)
+            testthat::expect_true(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)))
+            testthat::expect_true(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)))
             
           } else {
             # Expect that the vimp table has no rows.
-            testthat::expect_equal(is_empty(vimp_table_list[[1]]), TRUE)
-            testthat::expect_equal(is_empty(vimp_table_list[[2]]), TRUE)
+            testthat::expect_true(is_empty(vimp_table_list[[1]]))
+            testthat::expect_true(is_empty(vimp_table_list[[2]]))
           }
         }
       )
@@ -1422,7 +1499,8 @@ test_all_learners_parallel_train_predict_vimp <- function(
         cl = cl_predict,
         model_list,
         .predict,
-        data = full_data)
+        data = full_data
+      )
 
       # Test that models can be used to predict the outcome.
       testthat::test_that(
@@ -2526,7 +2604,7 @@ test_all_metrics <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "glm",
-        time_max = 1832
+        time_max = 3.5
       )
       )
       
@@ -3052,7 +3130,7 @@ test_all_metrics <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "glm",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       # Create metric object
@@ -3256,7 +3334,7 @@ test_all_metrics <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "glm",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       # Create metric object
@@ -3308,7 +3386,7 @@ test_all_metrics <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters_lasso,
         learner = "lasso_test_all_fail",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       # Create metric object
@@ -3366,7 +3444,7 @@ test_all_metrics <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters_lasso,
         learner = "lasso_test_some_fail",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       # Create metric object
@@ -4303,7 +4381,7 @@ test_plot_ordering <- function(
   if (is.null(experiment_args$imputation_method)) experiment_args$imputation_method <- "simple"
   if (is.null(experiment_args$cluster_method)) experiment_args$cluster_method <- "none"
   if (is.null(experiment_args$fs_method)) experiment_args$fs_method <- "mim"
-  if (is.null(experiment_args$time_max)) experiment_args$time_max <- 1832
+  if (is.null(experiment_args$time_max)) experiment_args$time_max <- 3.5
 
   # Iterate over the outcome type.
   for (outcome_type in outcome_type_available) {
@@ -4579,7 +4657,7 @@ test_export_specific <- function(
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso",
-        time_max = 1832,
+        time_max = 3.5,
         create_novelty_detector = create_novelty_detector
       ))
       
@@ -4595,7 +4673,7 @@ test_export_specific <- function(
           fs_method = "mim",
           hyperparameter_list = hyperparameters,
           learner = "lasso",
-          time_max = 1832,
+          time_max = 3.5,
           create_bootstrap = TRUE,
           create_novelty_detector = create_novelty_detector
         ))
@@ -4721,7 +4799,7 @@ integrated_test <- function(
               data = full_data,
               learner = learner,
               hyperparameter = hyperparameters,
-              time_max = 1832,
+              time_max = 3.5,
               verbose = debug,
               ...)),
             .warning_good)
@@ -4731,7 +4809,7 @@ integrated_test <- function(
             data = full_data,
             learner = learner,
             hyperparameter = hyperparameters,
-            time_max = 1832,
+            time_max = 3.5,
             verbose = debug,
             ...))
         }
@@ -4776,7 +4854,7 @@ integrated_test <- function(
               learner = learner,
               hyperparameter = hyperparameters,
               feature_max_fraction_missing = 0.95,
-              time_max = 1832,
+              time_max = 3.5,
               verbose = debug,
               ...)),
             .warning_bad)
@@ -4790,7 +4868,7 @@ integrated_test <- function(
             learner = learner,
             hyperparameter = hyperparameters,
             feature_max_fraction_missing = 0.95,
-            time_max = 1832,
+            time_max = 3.5,
             verbose = debug,
             ...))
         }
@@ -5100,7 +5178,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso",
-        time_max = 1832,
+        time_max = 3.5,
         create_novelty_detector = create_novelty_detector
       ))
       
@@ -5117,7 +5195,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
           fs_method = "mim",
           hyperparameter_list = hyperparameters,
           learner = "lasso",
-          time_max = 1832,
+          time_max = 3.5,
           create_bootstrap = TRUE,
           create_novelty_detector = create_novelty_detector
         ))
@@ -5543,7 +5621,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       hyperparameter_list = hyperparameters,
       learner = "lasso",
       cluster_similarity_threshold = 0.7,
-      time_max = 1832,
+      time_max = 3.5,
       create_novelty_detector = create_novelty_detector
     ))
     
@@ -5596,7 +5674,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       imputation_method = "simple",
       hyperparameter_list = hyperparameters,
       learner = "lasso",
-      time_max = 1832,
+      time_max = 3.5,
       create_novelty_detector = create_novelty_detector
     ))
     
@@ -5733,7 +5811,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       model_cens_2 <- suppressWarnings(test_train(
@@ -5743,7 +5821,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       model_cens_3 <- suppressWarnings(test_train(
@@ -5753,7 +5831,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso",
-        time_max = 1832
+        time_max = 3.5
       ))
       
       data_cens_1 <- as_familiar_data(
@@ -5821,7 +5899,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       imputation_method = "simple",
       hyperparameter_list = hyperparameters,
       learner = "lasso_test_all_fail",
-      time_max = 1832,
+      time_max = 3.5,
       create_novelty_detector = create_novelty_detector
     ))
     
@@ -5869,7 +5947,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       imputation_method = "simple",
       hyperparameter_list = hyperparameters,
       learner = "lasso_test_some_fail",
-      time_max = 1832,
+      time_max = 3.5,
       create_novelty_detector = create_novelty_detector
     ))
     
@@ -5918,7 +5996,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         imputation_method = "simple",
         hyperparameter_list = hyperparameters,
         learner = "lasso_test_extreme",
-        time_max = 1832,
+        time_max = 3.5,
         create_novelty_detector = create_novelty_detector
       ))
       
