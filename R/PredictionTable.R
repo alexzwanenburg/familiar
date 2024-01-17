@@ -1375,6 +1375,17 @@ setMethod(
 
 
 
+# remove_invalid_predictions (null) --------------------------------------------
+setMethod(
+  "remove_invalid_predictions",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
 # .complete (general) ----------------------------------------------------------
 setMethod(
   ".complete",
