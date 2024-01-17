@@ -1286,8 +1286,10 @@ setMethod(
       instance_mask <- is.finite(object@prediction_data$predicted_outcome)
       
       object@identifier_data <- object@identifier_data[instance_mask, ]
-      object@reference_data <- object@reference_data[instance_mask, ]
       object@prediction_data <- object@prediction_data[instance_mask, ]
+      if (!is_empty(object@reference_data)) {
+        object@reference_data <- object@reference_data[instance_mask, ]
+      }
     }
     
     return(object)
@@ -1315,8 +1317,10 @@ setMethod(
       )
       
       object@identifier_data <- object@identifier_data[instance_mask, ]
-      object@reference_data <- object@reference_data[instance_mask, ]
       object@prediction_data <- object@prediction_data[instance_mask, ]
+      if (!is_empty(object@reference_data)) {
+        object@reference_data <- object@reference_data[instance_mask, ]
+      }
     }
     
     return(object)
@@ -1340,8 +1344,10 @@ setMethod(
       instance_mask <- is.finite(object@prediction_data$novelty)
       
       object@identifier_data <- object@identifier_data[instance_mask, ]
-      object@reference_data <- object@reference_data[instance_mask, ]
       object@prediction_data <- object@prediction_data[instance_mask, ]
+      if (!is_empty(object@reference_data)) {
+        object@reference_data <- object@reference_data[instance_mask, ]
+      }
     }
     
     return(object)
@@ -1349,7 +1355,7 @@ setMethod(
 )
 
 
-# remove_invalid_predictions (general) -----------------------------------------
+# remove_invalid_predictions (grouping) ----------------------------------------
 setMethod(
   "remove_invalid_predictions",
   signature(object = "predictionTableGrouping"),
@@ -1365,8 +1371,10 @@ setMethod(
       instance_mask <- is.finite(object@prediction_data$group)
       
       object@identifier_data <- object@identifier_data[instance_mask, ]
-      object@reference_data <- object@reference_data[instance_mask, ]
       object@prediction_data <- object@prediction_data[instance_mask, ]
+      if (!is_empty(object@reference_data)) {
+        object@reference_data <- object@reference_data[instance_mask, ]
+      }
     }
     
     return(object)
