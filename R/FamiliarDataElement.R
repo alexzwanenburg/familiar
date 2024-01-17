@@ -2099,13 +2099,14 @@ setMethod(
     new_value_column_name,
     ...
   ) {
+    
     if (is_empty(x)) return(x)
-    if (!data.table::is.data.table(x)) return(x)
+    if (!data.table::is.data.table(x@data)) return(x)
     if (!any(new_grouping_column %in% x@value_column)) {
       rlang::warn("None of the intended grouping columns currently appear as value column.")
       return(x)
     }
-    browser()
+
     new_grouping_column <- intersect(new_grouping_column, x@value_column)
     remaining_value_column <- setdiff(x@value_column, new_grouping_column)
     
