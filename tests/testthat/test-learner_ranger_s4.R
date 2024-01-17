@@ -1,6 +1,7 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(
-  learners = familiar:::.get_available_ranger_learners(show_general = TRUE))
+  learners = familiar:::.get_available_ranger_learners(show_general = TRUE)
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
