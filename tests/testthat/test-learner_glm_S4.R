@@ -145,7 +145,7 @@ good_model <- familiar:::test_train(
   cluster_method = "none",
   imputation_method = "simple",
   hyperparameter_list = list("sign_size" = familiar:::get_n_features(good_data)),
-  time_max = 1832,
+  time_max = 3.5,
   learner = "glm")
 
 testthat::test_that("Generalised linear model trained correctly", {

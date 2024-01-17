@@ -217,7 +217,7 @@ good_model <- familiar:::test_train(
     "learning_rate" = -1,
     "lambda" = 0.0,
     "alpha" = -6.0),
-  time_max = 1832,
+  time_max = 3.5,
   learner = "xgboost_lm_cox")
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {

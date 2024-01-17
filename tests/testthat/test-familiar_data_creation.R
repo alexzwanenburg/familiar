@@ -24,7 +24,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
   
   testthat::test_that(
     paste0(
@@ -105,7 +105,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
 
   testthat::test_that(
     paste0(
@@ -152,7 +152,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
 
   testthat::test_that(
     paste0(

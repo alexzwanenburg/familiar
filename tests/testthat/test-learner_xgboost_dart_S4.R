@@ -291,7 +291,7 @@ good_model <- familiar:::test_train(
     "gamma" = -6.0,
     "sample_type" = "uniform",
     "rate_drop" = 0.0),
-  time_max = 1832,
+  time_max = 3.5,
   learner = "xgboost_dart_cox")
 
 testthat::test_that("Extreme gradient boosting dart tree model trained correctly", {

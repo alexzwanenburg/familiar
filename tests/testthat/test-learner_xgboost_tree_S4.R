@@ -266,7 +266,7 @@ good_model <- familiar:::test_train(
     "tree_depth" = 3,
     "sample_size" = 1.0,
     "gamma" = -6.0),
-  time_max = 1832,
+  time_max = 3.5,
   learner = "xgboost_tree_cox")
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
