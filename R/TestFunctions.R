@@ -172,7 +172,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type),
+            any_predictions_valid(prediction_table),
             !learner %in% c(except_train, except_predict))
           
           if (outcome_type %in% c("binomial", "multinomial")) {
@@ -220,7 +220,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type),
+            any_predictions_valid(prediction_table),
             !learner %in% c(except_train, except_predict))
           
           if (outcome_type %in% c("binomial", "multinomial")) {
@@ -268,7 +268,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type), 
+            any_predictions_valid(prediction_table), 
             FALSE)
         }
       )
@@ -289,7 +289,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect that the trimmed model produces the same predictions.
@@ -325,7 +325,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -368,7 +368,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect that the trimmed model produces the same predictions.
@@ -404,7 +404,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -547,7 +547,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type),
+            any_predictions_valid(prediction_table),
             !learner %in% c(except_train, except_naive))
           
           if (outcome_type %in% c("binomial", "multinomial")) {
@@ -574,7 +574,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_naive))
           }
         }
@@ -624,7 +624,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type),
+            any_predictions_valid(prediction_table),
             !learner %in% c(except_train, except_predict))
           
           if (outcome_type %in% c("binomial", "multinomial")) {
@@ -662,7 +662,7 @@ test_all_learners_train_predict_vimp <- function(
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(
-            any_predictions_valid(prediction_table, outcome_type),
+            any_predictions_valid(prediction_table),
             !learner %in% c(except_train, except_predict))
           
           if (outcome_type %in% c("binomial", "multinomial")) {
@@ -715,7 +715,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect predictions to be made.
@@ -739,7 +739,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
           }
         )
@@ -758,7 +758,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect that the trimmed model produces the same predictions.
@@ -782,7 +782,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -896,7 +896,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -938,7 +938,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect predictions to be made.
@@ -962,7 +962,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
           }
         )
@@ -1015,7 +1015,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -1057,7 +1057,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect predictions to be made.
@@ -1081,7 +1081,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
           }
         )
@@ -1136,7 +1136,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
             
             # Expect that the trimmed model produces the same predictions.
@@ -1181,7 +1181,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict, except_predict_survival))
             
             # Expect predictions to be made.
@@ -1206,7 +1206,7 @@ test_all_learners_train_predict_vimp <- function(
             
             # Test that the predictions were successfully made.
             testthat::expect_equal(
-              any_predictions_valid(prediction_table, outcome_type),
+              any_predictions_valid(prediction_table),
               !learner %in% c(except_train, except_predict))
           }
         )
@@ -1431,12 +1431,8 @@ test_all_learners_parallel_train_predict_vimp <- function(
           learner, " for a complete dataset."),
         {
           # Test that the predictions were successfully made.
-          testthat::expect_equal(
-            any_predictions_valid(prediction_list[[1]], outcome_type),
-            TRUE)
-          testthat::expect_equal(
-            any_predictions_valid(prediction_list[[2]], outcome_type), 
-            TRUE)
+          testthat::expect_true(any_predictions_valid(prediction_list[[1]]))
+          testthat::expect_true(any_predictions_valid(prediction_list[[2]]))
         }
       )
       
@@ -1571,7 +1567,7 @@ test_all_novelty_detectors <- function(
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_table, type = "novelty"),
+          any_predictions_valid(prediction_table),
           !detector %in% c(except_train, except_predict))
         
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -1599,7 +1595,7 @@ test_all_novelty_detectors <- function(
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_table, type = "novelty"),
+          any_predictions_valid(prediction_table),
           !detector %in% c(except_train, except_predict))
         
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -1622,12 +1618,9 @@ test_all_novelty_detectors <- function(
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
           model,
-          data = empty_data))
-        
-        # Test that the predictions were successfully made.
-        testthat::expect_equal(
-          any_predictions_valid(prediction_table, type = "novelty"),
-          FALSE)
+          data = empty_data
+        ))
+        testthat::expect_false(any_predictions_valid(prediction_table))
       }
     )
     
@@ -1669,7 +1662,7 @@ test_all_novelty_detectors <- function(
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_table, type = "novelty"),
+          any_predictions_valid(prediction_table),
           !detector %in% c(except_train, except_predict))
         
         # Expect that the trimmed novelty detector produces the same
@@ -1698,7 +1691,7 @@ test_all_novelty_detectors <- function(
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_table, type = "novelty"),
+          any_predictions_valid(prediction_table),
           !detector %in% c(except_train, except_predict))
         
         # Expect that the trimmed novelty detector produces the same
@@ -1832,10 +1825,10 @@ test_all_novelty_detectors_parallel <- function(
       {
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_list[[1]], type = "novelty"),
+          any_predictions_valid(prediction_list[[1]]),
           !detector %in% c(except_train, except_predict))
         testthat::expect_equal(
-          any_predictions_valid(prediction_list[[2]], type = "novelty"),
+          any_predictions_valid(prediction_list[[2]]),
           !detector %in% c(except_train, except_predict))
       }
     )
