@@ -257,17 +257,22 @@ as_prediction_table <- function(
     }
     
   } else if (is(data, "dataObject")) {
-    y <- data@data[, mget(.get_outcome_columns(data@outcome_type))]
-    object@reference_data <- data.table::copy(y)
-    
-  } else if (is(data, "familiarDataElementPredictionTable")) {
-    if(.is_merged_prediction_table(data)) {
-      y <- data@data[, mget(.get_outcome_columns(data@outcome_type))]
-    } else {
-      y <- data@reference_data[, mget(.get_outcome_columns(data@outcome_type))]
+    outcome_columns <- .get_outcome_columns(data@outcome_type)
+    if (length(outcome_columns) > 0) {
+      y <- data@data[, mget(outcome_columns)]
+      object@reference_data <- data.table::copy(y)
     }
     
-    object@reference_data <- data.table::copy(y)
+  } else if (is(data, "familiarDataElementPredictionTable")) {
+    outcome_columns <- .get_outcome_columns(data@outcome_type)
+    if(.is_merged_prediction_table(data) && length(outcome_columns) > 0) {
+      y <- data@data[, mget(outcome_columns)]
+      object@reference_data <- data.table::copy(y)
+      
+    } else if (length(outcome_columns) > 0) {
+      y <- data@reference_data[, mget(outcome_columns)]
+      object@reference_data <- data.table::copy(y)
+    }
   }
   
   # Use batch_id, sample_id, series_id and repetition_id to set identifier_data
