@@ -22,7 +22,7 @@ test_create_good_data <- function(
   feature_2a <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
   feature_2b <- feature_2a + fam_runif(n = n_series_instances, min = -0.05, max = 0.05, rstream_object = r)
   feature_3a <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
-  feature_3b <- feature_3a + fam_runif(n = n_series_instances, min = -0.05, max = 0.05, rstream_object = r)
+  feature_3b <- feature_3a + fam_runif(n = n_series_instances, min = -0.20, max = 0.20, rstream_object = r)
   feature_4 <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
   
   # Determine the raw outcome.
