@@ -181,10 +181,33 @@ test_all_learners_train_predict_vimp <- function(
           )
           
           if (outcome_type %in% c("binomial", "multinomial")) {
+            testthat::expect_s4_class(prediction_table, "predictionTableClassification")
+            
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
               get_outcome_class_levels(prediction_table),
-              get_outcome_class_levels(model))
+              get_outcome_class_levels(model)
+            )
+            
+          } else if (outcome_type == "continuous") {
+            testthat::expect_s4_class(prediction_table, "predictionTableRegression")
+            
+          } else if (outcome_type %in% c("survival")) {
+            testthat::expect_s4_class(prediction_table, "predictionTableSurvival")
+            
+            # Check prediction of survival probability.
+            testthat::expect_s4_class(
+              suppressWarnings(.predict(model, data = full_data, type = "survival_probability")),
+              "predictionTableSurvivalProbability"
+            )
+            
+            # Check prediction of risk groups.
+            testthat::expect_s4_class(
+              suppressWarnings(.predict(model, data = full_data, type = "risk_stratification")),
+              "predictionTableRiskGroups"
+            )
+          } else {
+            ..error_outcome_type_not_implemented(outcome_type)
           }
           
           # Expect that the trimmed model produces the same predictions.
