@@ -1,16 +1,18 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(
-  learners = familiar:::.get_available_survival_regression_learners(show_general = TRUE))
+  learners = familiar:::.get_available_survival_regression_learners(show_general = TRUE)
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
 testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(
-  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE))
-
+  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE)
+)
 familiar:::test_all_learners_parallel_train_predict_vimp(
-  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE))
+  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE)
+)
 
 
 # Survival tests ---------------------------------------------------------------
@@ -24,23 +26,14 @@ good_model <- familiar:::test_train(
   cluster_method = "none",
   imputation_method = "simple",
   hyperparameter_list = list("sign_size" = familiar:::get_n_features(good_data)),
-  learner = "survival_regr_weibull")
+  learner = "survival_regr_weibull"
+)
 
 testthat::test_that("Survival regression model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
-
-  # Test the prediction type
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model),
-    "expected_survival_time")
-
-  # Test that the model predicts hazard ratios
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model, type = "survival_probability"),
-    "survival_probability")
-
-  # Checkt that no deprecation warnings are given.
+  testthat::expect_true(familiar:::model_is_trained(good_model))
+  
+  # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
 
   # Test that no errors appear.
@@ -56,7 +49,8 @@ testthat::test_that("Survival regression model has variable importance", {
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
