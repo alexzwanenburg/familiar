@@ -163,8 +163,6 @@ setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_c
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
 
-setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
-
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
 setGeneric("has_optimised_hyperparameters", function(object, ...) standardGeneric("has_optimised_hyperparameters"))

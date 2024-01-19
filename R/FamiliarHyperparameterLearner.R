@@ -356,10 +356,11 @@ setMethod(
     data = "data.table"),
   function(object, data, type = "default", ...) {
     # Like ..train, this method is a capture-all for when predictions fail.
-    return(get_placeholder_prediction_table(
+    return(.get_placeholder_hyperparameter_prediction_table(
       object = object,
       data = data,
-      type = type))
+      type = type
+    ))
   }
 )
 
@@ -422,4 +423,44 @@ setMethod(
     x = fam_hyperparameter_model,
     purpose = "train",
     message_type = "backend_error")
+}
+
+
+
+.get_placeholder_hyperparameter_prediction_table <- function(object, data, type = "default") {
+  # Find the id columns.
+  id_columns <- intersect(c("param_id", "run_id"), colnames(data))
+  
+  if (length(id_columns) > 0) {
+    # Create a placeholder by only keeping the identifier columns.
+    prediction_table <- data.table::copy(data[, mget(id_columns)])
+    
+  } else {
+    # Add a placeholder parameter identifier as scaffolding.
+    prediction_table <- data.table::data.table(param_id = rep_len(NA_integer_, nrow(data)))
+  }
+  
+  # Add placeholder columns.
+  if (type == "default") {
+    prediction_table[, "mu" := as.double(NA)]
+    
+  } else if (type == "sd") {
+    prediction_table[, ":="(
+      "mu" = as.double(NA),
+      "sigma" = as.double(NA))]
+    
+  } else if (type == "percentile") {
+    prediction_table[, "percentile" := as.double(NA)]
+    
+  } else if (type == "raw") {
+    prediction_table[, "raw_1" := as.double(NA)]
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(
+      ".get_placeholder_hyperparameter_prediction_table: ",
+      "Encountered an unknown prediction type: ", type
+    ))
+  }
+  
+  return(prediction_table)
 }

@@ -109,7 +109,7 @@ setMethod(
     }
 
     # Get an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
+    prediction_table <- .get_placeholder_hyperparameter_prediction_table(
       object = object,
       data = data,
       type = type)
