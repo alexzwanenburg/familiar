@@ -354,13 +354,6 @@ setMethod(
     if (type == "default") {
       # default ----------------------------------------------------------------
 
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type
-      )
-
       # Make predictions using the model.
       model_predictions <- tryCatch(
         predict(
@@ -417,11 +410,11 @@ setMethod(
       
     } else if (!.is_available_prediction_type(type)) {
       # user-specified method --------------------------------------------------
-      prediction_table <- predict(
+      return(predict(
         object = object@model,
         newdata = data@data,
         ...
-      )
+      ))
       
     } else {
       ..error_no_predictions_possible(object, type)
