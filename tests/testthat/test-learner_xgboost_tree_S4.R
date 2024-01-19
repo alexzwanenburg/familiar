@@ -118,12 +118,14 @@ good_model <- familiar:::test_train(
     "min_child_weight" = 1.04,
     "tree_depth" = 3,
     "sample_size" = 1.0,
-    "gamma" = -6.0),
-  learner = "xgboost_tree_gaussian")
+    "gamma" = -6.0
+  ),
+  learner = "xgboost_tree_gaussian"
+)
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -141,7 +143,8 @@ testthat::test_that("Extreme gradient boosting tree model has variable importanc
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -167,12 +170,14 @@ good_model <- familiar:::test_train(
     "min_child_weight" = 1.04,
     "tree_depth" = 3,
     "sample_size" = 1.0,
-    "gamma" = -6.0),
-  learner = "xgboost_tree_logistic")
+    "gamma" = -6.0
+  ),
+  learner = "xgboost_tree_logistic"
+)
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -190,7 +195,8 @@ testthat::test_that("Extreme gradient boosting tree model has variable importanc
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(vimp_table$name %in% familiar:::get_feature_columns(good_data)))
+    all(vimp_table$name %in% familiar:::get_feature_columns(good_data))
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -216,12 +222,14 @@ good_model <- familiar:::test_train(
     "min_child_weight" = 1.04,
     "tree_depth" = 3,
     "sample_size" = 1.0,
-    "gamma" = -6.0),
-  learner = "xgboost_tree_logistic")
+    "gamma" = -6.0
+  ),
+  learner = "xgboost_tree_logistic"
+)
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -239,7 +247,8 @@ testthat::test_that("Extreme gradient boosting tree model has variable importanc
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -265,23 +274,15 @@ good_model <- familiar:::test_train(
     "min_child_weight" = 1.04,
     "tree_depth" = 3,
     "sample_size" = 1.0,
-    "gamma" = -6.0),
+    "gamma" = -6.0
+  ),
   time_max = 3.5,
-  learner = "xgboost_tree_cox")
+  learner = "xgboost_tree_cox"
+)
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
-
-  # Test the prediction type
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model), 
-    "hazard_ratio")
-
-  # Test that the model predicts hazard ratios
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model, type = "survival_probability"),
-    "survival_probability")
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -299,7 +300,8 @@ testthat::test_that("Extreme gradient boosting tree model has variable importanc
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")

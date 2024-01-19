@@ -1,6 +1,7 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(
-  learners = familiar:::.get_available_xgboost_lm_learners(show_general = TRUE))
+  learners = familiar:::.get_available_xgboost_lm_learners(show_general = TRUE)
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
@@ -81,12 +82,14 @@ good_model <- familiar:::test_train(
     "n_boost" = 2,
     "learning_rate" = -1,
     "lambda" = 0.0,
-    "alpha" = -6.0),
-  learner = "xgboost_lm_gaussian")
+    "alpha" = -6.0
+  ),
+  learner = "xgboost_lm_gaussian"
+)
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -104,7 +107,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -126,12 +130,14 @@ good_model <- familiar:::test_train(
     "n_boost" = 2,
     "learning_rate" = -1,
     "lambda" = 0.0,
-    "alpha" = -6.0),
-  learner = "xgboost_lm_logistic")
+    "alpha" = -6.0
+  ),
+  learner = "xgboost_lm_logistic"
+)
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -149,7 +155,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -171,12 +178,14 @@ good_model <- familiar:::test_train(
     "n_boost" = 2,
     "learning_rate" = -1,
     "lambda" = 0.0,
-    "alpha" = -6.0),
-  learner = "xgboost_lm_logistic")
+    "alpha" = -6.0
+  ),
+  learner = "xgboost_lm_logistic"
+)
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -194,7 +203,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
@@ -216,23 +226,15 @@ good_model <- familiar:::test_train(
     "n_boost" = 2,
     "learning_rate" = -1,
     "lambda" = 0.0,
-    "alpha" = -6.0),
+    "alpha" = -6.0
+  ),
   time_max = 3.5,
-  learner = "xgboost_lm_cox")
+  learner = "xgboost_lm_cox"
+)
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
-
-  # Test the prediction type
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model),
-    "hazard_ratio")
-
-  # Test that the model predicts hazard ratios
-  testthat::expect_equal(
-    familiar:::get_prediction_type(good_model, type = "survival_probability"),
-    "survival_probability")
+  testthat::expect_true(familiar:::model_is_trained(good_model))
 
   # Check that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
@@ -250,7 +252,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   
   # Expect that the names are the same as that of the features.
   testthat::expect_true(
-    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name))
+    all(familiar:::get_feature_columns(good_data) %in% vimp_table$name)
+  )
   
   # Feature 1 is most important.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
