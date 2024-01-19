@@ -164,19 +164,24 @@ setMethod(
     iteration_list <- .create_bootstraps(
       n_iter = object@hyperparameters$n_bootstrap,
       outcome_type = object@outcome_type,
-      data = data@data)
+      data = data@data
+    )
 
     # Create a generic model.
     fam_model <- promote_learner(
-      object = methods::new("familiarModel",
-      outcome_type = object@outcome_type,
-      learner = as.character(object@hyperparameters$learner),
-      fs_method = "none",
-      feature_info = object@feature_info,
-      outcome_info = .compute_outcome_distribution_data(
-        object = object@outcome_info, 
-        data = data)))
-
+      object = methods::new(
+        "familiarModel",
+        outcome_type = object@outcome_type,
+        learner = as.character(object@hyperparameters$learner),
+        fs_method = "none",
+        feature_info = object@feature_info,
+        outcome_info = .compute_outcome_distribution_data(
+          object = object@outcome_info, 
+          data = data
+        )
+      )
+    )
+    
     # Create metric objects.
     metric_object_list <- lapply(
       as.character(object@hyperparameters$metric),
@@ -198,7 +203,8 @@ setMethod(
       "available" = TRUE,
       "selected" = FALSE,
       "select_step" = 0,
-      "score" = as.double(NA))
+      "score" = as.double(NA)
+    )
 
     # Find signature features, if any.
     signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
@@ -214,18 +220,23 @@ setMethod(
         metric_objects = metric_object_list,
         data = data,
         iteration_list = iteration_list,
-        fixed_set = signature_feature)
+        fixed_set = signature_feature
+      )
 
       # Set max_objective_score.
       max_objective_score <- objective_score$score
 
       # Update the score table.
-      score_table[name %in% signature_feature, ":="(
-        "score" = max_objective_score,
-        "available" = FALSE,
-        "selected" = TRUE,
-        "select_step" = seq_len(length(signature_feature)))]
-
+      score_table[
+        name %in% signature_feature,
+        ":="(
+          "score" = max_objective_score,
+          "available" = FALSE,
+          "selected" = TRUE,
+          "select_step" = seq_len(length(signature_feature))
+        )
+      ]
+      
       # Iteration counter.
       ii <- length(signature_feature) + 1
       
@@ -241,7 +252,8 @@ setMethod(
         metric_objects = metric_object_list,
         data = data,
         iteration_list = iteration_list,
-        fixed_set = NULL)
+        fixed_set = NULL
+      )
 
       # Combine into data.table.
       objective_score <- data.table::rbindlist(objective_score)
@@ -249,13 +261,16 @@ setMethod(
       # In case of univariate regression, return at this point.
       if (is(object, "familiarUnivariateRegressionVimp")) {
         # Create variable importance object.
-        vimp_object <- methods::new("vimpTable",
+        vimp_object <- methods::new(
+          "vimpTable",
           vimp_table = data.table::data.table(
             "score" = objective_score$score,
-            "name" = objective_score$name),
+            "name" = objective_score$name
+          ),
           score_aggregation = "max",
-          invert = TRUE)
-
+          invert = TRUE
+        )
+        
         return(vimp_object)
       }
 
@@ -266,12 +281,16 @@ setMethod(
       best_feature <- objective_score[score == max_objective_score]$name
 
       # Update the score_table.
-      score_table[name %in% best_feature, ":="(
-        "score" = max_objective_score,
-        "available" = FALSE,
-        "selected" = TRUE,
-        "select_step" = 1)]
-
+      score_table[
+        name %in% best_feature,
+        ":="(
+          "score" = max_objective_score,
+          "available" = FALSE,
+          "selected" = TRUE,
+          "select_step" = 1
+        )
+      ]
+      
       # Identify features to be dropped.
       n_available <- nrow(objective_score) - length(best_feature)
       n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
@@ -300,7 +319,8 @@ setMethod(
       iteration_list <- .create_bootstraps(
         n_iter = object@hyperparameters$n_bootstrap,
         outcome_type = object@outcome_type,
-        data = data@data)
+        data = data@data
+      )
 
       # Compute objective score for every feature.
       objective_score <- lapply(
@@ -310,7 +330,8 @@ setMethod(
         metric_objects = metric_object_list,
         data = data,
         iteration_list = iteration_list,
-        fixed_set = selected_features)
+        fixed_set = selected_features
+      )
 
       # Combine into data.table.
       objective_score <- data.table::rbindlist(objective_score)
@@ -323,12 +344,16 @@ setMethod(
       if (max_objective_score <= previous_objective_score) break
 
       # Update the score_table.
-      score_table[name %in% best_feature, ":="(
-        "score" = max_objective_score,
-        "available" = FALSE,
-        "selected" = TRUE,
-        "select_step" = ii)]
-
+      score_table[
+        name %in% best_feature, 
+        ":="(
+          "score" = max_objective_score,
+          "available" = FALSE,
+          "selected" = TRUE,
+          "select_step" = ii
+        )
+      ]
+      
       # Identify features to be dropped.
       n_available <- nrow(objective_score) - length(best_feature)
       n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
@@ -364,9 +389,11 @@ setMethod(
       "vimpTable",
       vimp_table = data.table::data.table(
         "score" = vimp_table$select_step,
-        "name" = vimp_table$name),
+        "name" = vimp_table$name
+      ),
       score_aggregation = "max",
-      invert = FALSE)
+      invert = FALSE
+    )
 
     return(vimp_object)
   }
@@ -387,8 +414,20 @@ setMethod(
   # Remove features that are neither in feature nor fixed_set.
   data <- filter_features(
     data,
-    available_features = c(feature, fixed_set))
-
+    available_features = c(feature, fixed_set)
+  )
+  
+  # Find features that are required for processing the data and building the
+  # model.
+  fam_model@required_features <- get_required_features(
+    x = data,
+    feature_info_list = fam_model@feature_info
+  )
+  fam_model@model_features <- get_model_features(
+    x = data,
+    feature_info_list = fam_model@feature_info
+  )
+  
   # Iterate over bootstraps.
   performance_data <- lapply(
     seq_along(iteration_list$train_list),
@@ -396,10 +435,12 @@ setMethod(
       # Select train and test data.
       train_data <- select_data_from_samples(
         data = data,
-        samples = iteration_list$train_list[[bootstrap_id]])
+        samples = iteration_list$train_list[[bootstrap_id]]
+      )
       test_data <- select_data_from_samples(
         data = data,
-        samples = iteration_list$valid_list[[bootstrap_id]])
+        samples = iteration_list$valid_list[[bootstrap_id]]
+      )
       
       # Update the familiar model.
       fam_model@hyperparameters$sign_size <- length(c(feature, fixed_set))
@@ -408,60 +449,70 @@ setMethod(
       parameter_list <- get_default_hyperparameters(
         object = fam_model,
         data = train_data,
-        user_list = fam_model@hyperparameters)
+        user_list = fam_model@hyperparameters
+      )
       
       # Update the parameter list With user-defined variables.
       parameter_list <- .update_hyperparameters(
         parameter_list = parameter_list,
-        user_list = fam_model@hyperparameters)
+        user_list = fam_model@hyperparameters
+      )
       
       # Update hyperparameters to set any fixed parameters.
       fam_model@hyperparameters <- lapply(
         parameter_list,
-        function(list_entry) list_entry$init_config)
+        function(list_entry) list_entry$init_config
+      )
       
       # Set additional parameters, e.g. the learner family.
       fam_model <- ..set_vimp_parameters(
         object = fam_model,
-        method = fam_model@learner)
+        method = fam_model@learner
+      )
       
       # Train the model using the train data.
       fam_model <- suppressWarnings(.train(
         object = fam_model,
         data = train_data,
         get_additional_info = FALSE,
-        trim_model = FALSE))
+        trim_model = FALSE
+      ))
       
       # Compute score using the metrics.
       score_table <- mapply(
-        function(data, data_set, object, metric_objects, settings) {
+        function(data, data_set, object, metric_objects) {
           # Get metric names.
           metric_names <- sapply(
             metric_objects, 
-            function(metric_object) metric_object@metric)
+            function(metric_object) metric_object@metric
+          )
           
           # Predict for the in-bag and out-of-bag datasets.
           prediction_table <- .predict(
             object = object,
-            data = data)
+            data = data
+          )
           
           # Compute objective scores.
           metrics_objective_score <- sapply(
             metric_objects,
             compute_objective_score,
-            data = prediction_table)
+            data = prediction_table
+          )
           
           # Return as data.table.
           return(data.table::data.table(
             "metric" = metric_names,
             "data_set" = data_set,
-            "objective_score" = metrics_objective_score))
+            "objective_score" = metrics_objective_score
+          ))
         },
         data = list(train_data, test_data),
         data_set = c("training", "validation"),
         MoreArgs = list(
           "object" = fam_model,
-          "metric_objects" = metric_objects),
+          "metric_objects" = metric_objects
+        ),
         SIMPLIFY = FALSE
       )
       
@@ -474,7 +525,8 @@ setMethod(
       # Set the column order.
       data.table::setcolorder(
         x = score_table,
-        neworder = c("run_id"))
+        neworder = c("run_id")
+      )
       
       return(score_table)
     },
@@ -487,15 +539,18 @@ setMethod(
   # Combine performance data to a single table and compute optimisation scores.
   performance_data <- .compute_metric_optimisation_score(
     score_table = data.table::rbindlist(performance_data),
-    optimisation_function = "max_validation")
+    optimisation_function = "max_validation"
+  )
 
   # Compute the summary score.
   performance_data <- .summarise_metric_optimisation_score(
     score_table = performance_data,
-    method = "median")
+    method = "median"
+  )
 
   # Return sample mean and standard deviation of the objective score.
   return(data.table::data.table(
     "name" = feature,
-    "score" = performance_data$optimisation_score))
+    "score" = performance_data$optimisation_score
+  ))
 }
