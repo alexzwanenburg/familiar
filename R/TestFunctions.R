@@ -194,7 +194,7 @@ test_all_learners_train_predict_vimp <- function(
             
           } else if (outcome_type %in% c("survival")) {
             testthat::expect_s4_class(prediction_table, "predictionTableSurvival")
-            
+
             # Check prediction of survival probability.
             testthat::expect_s4_class(
               suppressWarnings(.predict(model, data = full_data, type = "survival_probability")),

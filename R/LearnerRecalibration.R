@@ -18,6 +18,8 @@
     time = time
   )
   
+  if (!all_predictions_valid(model_predictions)) return(NULL)
+  
   # Convert to data.table.
   model_predictions <- .as_data_table(model_predictions)
 
