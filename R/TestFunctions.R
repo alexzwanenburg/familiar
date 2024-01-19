@@ -1985,7 +1985,8 @@ test_all_vimp_methods_available <- function(vimp_methods) {
 test_all_vimp_methods <- function(
     vimp_methods,
     hyperparameter_list = NULL,
-    debug = FALSE) {
+    debug = FALSE
+) {
   if (debug) {
     test_fun <- debug_test_that
   } else {
@@ -2015,7 +2016,8 @@ test_all_vimp_methods <- function(
       object <- methods::new(
         "familiarVimpMethod",
         outcome_type = outcome_type,
-        vimp_method = vimp_method)
+        vimp_method = vimp_method
+      )
 
       # Promote the learner to the right class.
       object <- promote_vimp_method(object = object)
@@ -2030,7 +2032,8 @@ test_all_vimp_methods <- function(
       vimp_method_hyperparameters <- .get_preset_hyperparameters(
         fs_method = vimp_method,
         outcome_type = outcome_type,
-        names_only = TRUE)
+        names_only = TRUE
+      )
 
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
@@ -2045,7 +2048,8 @@ test_all_vimp_methods <- function(
         vimp_method_parameter_list = hyperparameters,
         outcome_type = outcome_type,
         cluster_method = "none",
-        imputation_method = "simple")
+        imputation_method = "simple"
+      )
       
       test_fun(
         paste0(
@@ -2054,21 +2058,27 @@ test_all_vimp_methods <- function(
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            full_data)))
+            full_data
+          )))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
           
-          # Expect that the vimp table is not empty..
-          testthat::expect_equal(
-            nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-            TRUE)
+          # Expect that the vimp table is not empty.
+          testthat::expect_true(
+            nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features
+          )
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(
-            all(vimp_table$name %in% get_feature_columns(full_data)),
-            TRUE)
+          testthat::expect_true(
+            all(vimp_table$name %in% get_feature_columns(full_data))
+          )
+          
+          # Expect that not all features have the same rank.
+          if (nrow(vimp_table) > 1) {
+            testthat::expect_true(!all(vimp_table$rank == 1L))
+          }
         }
       )
       

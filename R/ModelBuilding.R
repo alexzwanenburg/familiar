@@ -94,15 +94,17 @@ build_model <- function(run, hpo_list) {
   file_paths <- get_file_paths()
   
   # Data will be loaded at run time in .train
-  data <- methods::new("dataObject",
-                       data = NULL,
-                       preprocessing_level = "none",
-                       outcome_type = settings$data$outcome_type,
-                       delay_loading = TRUE,
-                       perturb_level = tail(run$run_table, n = 1)$perturb_level,
-                       load_validation = FALSE,
-                       aggregate_on_load = FALSE,
-                       outcome_info = create_outcome_info(settings = settings))
+  data <- methods::new(
+    "dataObject",
+    data = NULL,
+    preprocessing_level = "none",
+    outcome_type = settings$data$outcome_type,
+    delay_loading = TRUE,
+    perturb_level = tail(run$run_table, n = 1)$perturb_level,
+    load_validation = FALSE,
+    aggregate_on_load = FALSE,
+    outcome_info = create_outcome_info(settings = settings)
+  )
   
   # Load feature_info_list
   feature_info_list <- .get_feature_info_list(run = run)
@@ -146,17 +148,19 @@ build_model <- function(run, hpo_list) {
   rank_table <- get_vimp_table(vimp_table)
   
   # Create familiar model
-  fam_model <- methods::new("familiarModel",
-                            outcome_type = settings$data$outcome_type,
-                            learner = run$learner,
-                            fs_method = run$fs_method,
-                            run_table = run$run_table,
-                            hyperparameters = hyperparameter_object@hyperparameters,
-                            hyperparameter_data = hyperparameter_object@hyperparameter_data,
-                            feature_info = feature_info_list,
-                            outcome_info = .get_outcome_info(),
-                            project_id = project_list$project_id,
-                            settings = settings$eval)
+  fam_model <- methods::new(
+    "familiarModel",
+    outcome_type = settings$data$outcome_type,
+    learner = run$learner,
+    fs_method = run$fs_method,
+    run_table = run$run_table,
+    hyperparameters = hyperparameter_object@hyperparameters,
+    hyperparameter_data = hyperparameter_object@hyperparameter_data,
+    feature_info = feature_info_list,
+    outcome_info = .get_outcome_info(),
+    project_id = project_list$project_id,
+    settings = settings$eval
+  )
   
   # Select features
   fam_model <- set_signature(
