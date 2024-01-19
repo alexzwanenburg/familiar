@@ -188,8 +188,6 @@ setGeneric("..train_naive", function(object, data, ...) standardGeneric("..train
 
 setGeneric("..predict", function(object, data, ...) standardGeneric("..predict"))
 
-setGeneric("..predict_survival_probability", function(object, data, time, ...) standardGeneric("..predict_survival_probability"))
-
 setGeneric("..set_recalibration_model", function(object, data, ...) standardGeneric("..set_recalibration_model"))
 
 setGeneric("..vimp", function(object, ...) standardGeneric("..vimp"))

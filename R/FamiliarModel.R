@@ -1008,31 +1008,6 @@ setMethod(
 
 
 
-# ..predict_survival_probability (familiarModel, dataObject) -------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarModel",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    stop("deprecated -> ..predict")
-  }
-)
-
-
-
-# ..predict_survival_probability (character, dataObject) -----------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "character",
-    data = "dataObject"),
-  function(object, data, ...) {
-    stop("deprecated -> ..predict")
-  }
-)
-
-
 # ..get_prediction_table_type (familiarModel) ----------------------------------
 setMethod(
   "..get_prediction_table_type",
