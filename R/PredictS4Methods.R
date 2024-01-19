@@ -491,8 +491,8 @@ setMethod(
       )
     )
     
-    if (type %in% c("default", "survival_probability")) {
-      # default, survival_probability ------------------------------------------
+    if (type == "default") {
+      # default ----------------------------------------------------------------
       
       # Predict using the model and the standard type.
       prediction_table <- ..predict(
@@ -501,8 +501,8 @@ setMethod(
         type = type,
         time = time
       )
-
-      # Recalibrate the predictions.
+      
+      # Recalibrate the default predictions.
       if (allow_recalibration) {
         prediction_table <- .apply_recalibration(
           object = object,
@@ -510,6 +510,17 @@ setMethod(
           data = data
         )
       }
+      
+    } else if (type == "survival_probability") {
+      # survival probability ---------------------------------------------------
+      
+      # Predict using the model and the standard type.
+      prediction_table <- ..predict(
+        object = object,
+        data = data,
+        type = type,
+        time = time
+      )
       
     } else if (type == "risk_stratification") {
       # risk stratification ----------------------------------------------------
