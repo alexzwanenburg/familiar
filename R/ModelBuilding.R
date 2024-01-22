@@ -182,7 +182,9 @@ build_model <- function(run, hpo_list) {
     object = fam_model,
     data = data,
     detector = settings$mb$novelty_detector,
-    user_list = settings$mb$detector_parameters[[settings$mb$novelty_detector]])
+    user_list = settings$mb$detector_parameters[[settings$mb$novelty_detector]],
+    get_additional_info = TRUE
+  )
   
   # Add model name
   fam_model <- set_object_name(fam_model)

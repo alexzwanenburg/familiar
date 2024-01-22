@@ -241,7 +241,9 @@ setMethod(
     object <- .train_novelty_detector(
       object = object,
       data = data,
-      detector = ifelse(create_novelty_detector, "isolation_forest", "none"))
+      detector = ifelse(create_novelty_detector, "isolation_forest", "none"),
+      get_additional_info = TRUE
+    )
 
     # Generate a placeholder name for the familiarModel object
     object <- set_object_name(x = object)

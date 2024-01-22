@@ -171,7 +171,8 @@ setMethod(
     get_additional_info = FALSE,
     is_pre_processed = FALSE,
     trim_model = TRUE,
-    ...) {
+    ...
+  ) {
     # Train method for novelty detectors.
 
     # Check if the class of object is a subclass of familiarModel.
@@ -184,7 +185,8 @@ setMethod(
       required_features = object@required_features,
       model_features = object@novelty_features,
       run_table = object@run_table,
-      project_id = object@project_id)
+      project_id = object@project_id
+    )
 
     # Promote to the correct type of detector.
     fam_detector <- promote_detector(object = fam_detector)
@@ -202,13 +204,16 @@ setMethod(
       fam_detector <- optimise_hyperparameters(
         object = fam_detector,
         data = data,
-        ...)
+        ...
+      )
     }
 
     # Train the novelty detector.
     fam_detector <- .train(
       object = fam_detector,
-      data = data)
+      data = data,
+      get_additional_info = get_additional_info
+    )
 
     # Add the detector to the familiarModel object.
     object@novelty_detector <- fam_detector
