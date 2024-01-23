@@ -30,6 +30,12 @@
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
+# Version 1.4.6 (Talented Toad)
+
+## Bug fixes
+
+- Fixes unused arguments appearing in documentation.
+
 # Version 1.4.5 (Reminiscing Rat)
 
 ## Bug fixes
