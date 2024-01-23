@@ -1,6 +1,6 @@
 #' Internal function for creating or retrieving iteration data
 #'
-#' @param file_dir Path to directory where iteration files are stored.
+#' @param file_paths Set of paths to relevant files and directories.
 #' @param data Data set as loaded using the `.load_data` function.
 #' @param experiment_setup data.table with subsampler information at different
 #'   levels of the experimental design.

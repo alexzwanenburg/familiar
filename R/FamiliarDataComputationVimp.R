@@ -20,10 +20,6 @@ setClass("familiarDataElementVimpData",
 #'@description Aggregate variable importance from models in a
 #'  `familiarEnsemble`.
 #'
-#'@param feature_similarity_table Table containing pairwise distance between
-#'  features. This is used to determine cluster information, and indicate
-#'  co-clustered important features. The table is created by the
-#'  `extract_feature_similarity` method.
 #'@inheritParams extract_data
 #'
 #'@return A list containing variable importance information.
