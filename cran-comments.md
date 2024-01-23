@@ -1,4 +1,4 @@
-Update familiar to version 1.4.1
+Update familiar to version 1.4.6
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
@@ -12,27 +12,34 @@ R CMD check was run on R-hub using rhub::check_for_cran(), producing the followi
 
 ----------------------------------
 Windows Server 2022, R-devel, 64 bit:
-0 errors | 0 warnings | 3 notes
+0 errors | 0 warnings | 4 notes
 
 * checking installed package size ... NOTE
   installed size is  5.8Mb
   sub-directories of 1Mb or more:
     R      3.5Mb
     doc    1.0Mb
-    help   1.1Mb
+    help   1.2Mb
 
-**Maintainer**: The size of the R-directory is due to source code. Addressing the size of the R directory would require creating a set of mutually dependent  packages. This would likely result in a larger footprint across the packages.  
+**Maintainer**: The size of the R-directory is due to source code. Addressing the size of the R directory would require creating a set of mutually dependent packages. This would likely result in a larger footprint across the packages.  
 
-* checking HTML version of manual ... [37s] NOTE
+* checking HTML version of manual ... [39s] NOTE
 Skipping checking math rendering: package 'V8' unavailable
 
 **Maintainer**: I am not sure what the cause is, but it might be because the V8 package was not available on rhub.
-    
+
+* checking for non-standard things in the check directory ... NOTE
+Found the following files/directories:
+  ''NULL''
+
+**Maintainer**: I am not sure what the cause is. However, NULL is not present as a directory or file.  
+
 * checking for detritus in the temp directory ... NOTE
 Found the following files/directories:
   'lastMiKTeXException'
 
 **Maintainer**: This note only appeared on the Windows server test. It didn't appear locally (Windows 10) or the other builds.
+
 
 
 ----------------------------------
