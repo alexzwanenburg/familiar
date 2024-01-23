@@ -1,22 +1,19 @@
-citHeader("To cite the \"familiar\" package in publications, please use:")
-
-citEntry(entry = "Misc",
-         title   = paste0(meta$Package, ": ", meta$Title),
-         author  = c(person("Alex", "Zwanenburg"),
-                     person("Steffen", "Löck")),
-         year    = 2021,
-         url     = "https://github.com/alexzwanenburg/familiar",
-         textVersion = paste0("Alex Zwanenburg and Steffen Löck. ",
-                              paste0(meta$Package, ": ", meta$Title), " (2021). ",
-                              "https://github.com/alexzwanenburg/familiar")
+bibentry(
+  bibtype  = "Misc",
+  title    = paste0(meta$Package, ": ", meta$Title),
+  author   = c(
+    person("Alex", "Zwanenburg"),
+    person("Steffen", "Löck")
+  ),
+  year     = 2021,
+  url      = "https://github.com/alexzwanenburg/familiar"
 )
 
-citEntry(entry = "Manual",
-         header  = "If you cite the manual, vignettes or other part of the documentation, please use:",
-         title   = "familiar: Vignettes and Documentation",
-         author  = c(person("Alex", "Zwanenburg")),
-         year    = 2021,
-         url     = "https://github.com/alexzwanenburg/familiar",
-         textVersion = paste0("Alex Zwanenburg. ",
-                              "familiar: Vignettes and Documentation (2021). ",
-                              "https://github.com/alexzwanenburg/familiar"))
+bibentry(
+  bibtype = "Manual",
+  header  = "If you cite the manual, vignettes or other part of the documentation, please use:",
+  title   = "familiar: Vignettes and Documentation",
+  author  = c(person("Alex", "Zwanenburg")),
+  year    = 2021,
+  url     = "https://github.com/alexzwanenburg/familiar",
+)
