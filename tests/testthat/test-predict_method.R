@@ -20,40 +20,46 @@ fam_model <- familiar:::test_train(
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(
   object = fam_model,
-  newdata = familiar:::test_create_good_data("survival", to_data_object = FALSE)
+  newdata = familiar:::test_create_good_data("survival", to_data_object = FALSE),
+  .as_prediction_table = TRUE
 )
 
 # Survival probability.
 predictions_surv <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "survival_probability"
+  type = "survival_probability",
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
 predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
-  newdata = familiar:::test_create_good_data("survival", to_data_object = FALSE)
+  newdata = familiar:::test_create_good_data("survival", to_data_object = FALSE),
+  .as_prediction_table = TRUE
 )
 
 # Risk stratification.
 predictions_risk <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "risk_stratification"
+  type = "risk_stratification",
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Survival models can predict using external data.", {
@@ -86,7 +92,8 @@ data <- familiar:::test_create_one_sample_data("survival")
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -94,21 +101,24 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_one_sample_data(
     "survival", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Survival probability.
 predictions_surv <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "survival_probability"
+  type = "survival_probability",
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -116,14 +126,16 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_one_sample_data(
     "survival", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Risk stratification.
 predictions_risk <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "risk_stratification"
+  type = "risk_stratification",
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Surival models can predict single instances using external data.", {
@@ -166,7 +178,8 @@ fam_model <- familiar:::test_train(
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -174,14 +187,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_good_data(
     "binomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -189,7 +204,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_good_data(
     "binomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Binomial models can predict using external data.", {
@@ -226,14 +242,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_one_sample_data(
     "binomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -241,7 +259,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_one_sample_data(
     "binomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Binomial models can predict single instances using external data.", {
@@ -280,7 +299,8 @@ fam_model <- familiar:::test_train(
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -288,14 +308,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_good_data(
     "multinomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -303,7 +325,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_good_data(
     "multinomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Multinomial models can predict using external data.", {
@@ -340,14 +363,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_one_sample_data(
     "multinomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -355,7 +380,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_one_sample_data(
     "multinomial", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Multinomial models can predict single instances using external data.", {
@@ -394,7 +420,8 @@ fam_model <- familiar:::test_train(
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -402,14 +429,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_good_data(
     "continuous", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -417,7 +446,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_good_data(
     "continuous", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Continuous models can predict using external data.", {
@@ -446,7 +476,8 @@ data <- familiar:::test_create_one_sample_data("continuous")
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -454,14 +485,16 @@ predictions_2 <- familiar::predict(
   object = fam_model,
   newdata = familiar:::test_create_one_sample_data(
     "continuous", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
   newdata = data,
-  type = "novelty"
+  type = "novelty",
+  .as_prediction_table = TRUE
 )
 
 # Novelty predictions using data.table.
@@ -469,7 +502,8 @@ predictions_novelty_2 <- familiar::predict(
   object = fam_model@novelty_detector,
   newdata = familiar:::test_create_one_sample_data(
     "continuous", to_data_object = FALSE
-  )
+  ),
+  .as_prediction_table = TRUE
 )
 
 testthat::test_that("Continuous models can predict single instances using external data.", {

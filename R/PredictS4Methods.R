@@ -44,8 +44,8 @@ NULL
 #'   supported:
 #'
 #'  * `default`: Default prediction, i.e. value estimates for `continuous`
-#'  outcomes, predicted class probabilities and class for `binomial` and
-#'  `multinomial` and the model response for `survival` outcomes.
+#'   outcomes, predicted class probabilities and class for `binomial` and
+#'   `multinomial` and the model response for `survival` outcomes.
 #'
 #'  * `survival_probability`: Predicts survival probabilities at the time
 #'   specified by `time`. Only applicable to `survival` outcomes. Some models
@@ -82,6 +82,8 @@ NULL
 #'   `stratification_method` and any threshold values that come with the model
 #'   are ignored, and `stratification_threshold` is used instead.
 #' @param percentiles Currently unused.
+#' @param .as_prediction_table Selects whether a data.table or prediction table
+#'   object should be returned.
 #' @param ... to be documented.
 #'
 #' @inheritParams .extract_data
@@ -114,7 +116,9 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    .as_prediction_table = FALSE,
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
 
@@ -129,6 +133,7 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
+      .as_prediction_table = .as_prediction_table,
       ...
     )
 
@@ -154,6 +159,7 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
+    .as_prediction_table = FALSE,
     ...
   ) {
     if (missing(newdata)) rlang::abort("newdata must be provided.")
@@ -199,7 +205,9 @@ setMethod(
       )
       
       # Isolate predicted values.
-      predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
+      if (!.as_prediction_table) {
+        predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
+      }
     }
 
     return(predictions)
@@ -217,6 +225,7 @@ setMethod(
     object,
     newdata,
     type = "novelty",
+    .as_prediction_table = FALSE,
     ...
   ) {
     if (missing(newdata)) stop("newdata must be provided.")
@@ -255,7 +264,9 @@ setMethod(
       )
       
       # Isolate predicted values.
-      predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
+      if (!.as_prediction_table) {
+        predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
+      }
     }
 
     return(predictions)
@@ -279,6 +290,7 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
+    .as_prediction_table = FALSE,
     ...
   ) {
     # Create ensemble.
@@ -295,6 +307,7 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
+      .as_prediction_table = .as_prediction_table,
       ...
     )
     
@@ -320,6 +333,7 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
+    .as_prediction_table = FALSE,
     ...
   ) {
     # Create ensemble.
@@ -336,6 +350,7 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
+      .as_prediction_table = .as_prediction_table,
       ...
     )
     
