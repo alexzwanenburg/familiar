@@ -20,7 +20,10 @@ NULL
 #' @exportMethod as_familiar_ensemble
 #' @md
 #' @rdname as_familiar_ensemble-methods
-setGeneric("as_familiar_ensemble", function(object, ...) standardGeneric("as_familiar_ensemble"))
+setGeneric(
+  "as_familiar_ensemble",
+  function(object, ...) standardGeneric("as_familiar_ensemble")
+)
 
 
 
@@ -52,6 +55,22 @@ setMethod(
 )
 
 
+## as_familiar_ensemble (novelty) ----------------------------------------------
+
+#' @rdname as_familiar_ensemble-methods
+setMethod(
+  "as_familiar_ensemble",
+  signature(object = "familiarNoveltyDetector"),
+  function(object, ...) {
+    # A separate familiar novelty detector is encapsulated in a list, and then
+    # transformed.
+    return(do.call(
+      as_familiar_ensemble,
+      args = list("object" = list(object))
+    ))
+  }
+)
+
 
 ## as_familiar_ensemble (list) -------------------------------------------------
 
@@ -69,8 +88,14 @@ setMethod(
     if (length(object) == 1 && all(sapply(object, is, "familiarEnsemble"))) {
       return(object[[1]])
       
-    } else if (!all(sapply(object, is, "familiarModel"))) {
-      stop("familiarEnsemble objects can only be constructed from familiarModel objects.")
+    } else if (
+      !all(sapply(object, is, "familiarModel")) &&
+      !all(sapply(object, is, "familiarNoveltyDetector"))
+    ) {
+      rlang::abort(paste0(
+        "familiarEnsemble objects can only be constructed from familiarModel ",
+        "or familiarNoveltyDetector objects."
+      ))
     }
 
     # Generate a placeholder pooling table
@@ -79,17 +104,27 @@ setMethod(
       "run_id" = 0L,
       "can_pre_process" = TRUE, 
       "perturbation" = "new_data",
-      "perturb_level" = 0L)
+      "perturb_level" = 0L
+    )
 
+    vimp_method <- ifelse(
+      methods::.hasSlot(object[[1]], "fs_method"),
+      object[[1]]@fs_method,
+      "none"
+    )
+    
     # Generate a skeleton familiarEnsemble
-    fam_ensemble <- methods::new("familiarEnsemble",
+    fam_ensemble <- methods::new(
+      "familiarEnsemble",
       model_list = object,
       learner = object[[1]]@learner,
-      fs_method = object[[1]]@fs_method,
+      fs_method = vimp_method,
       run_table = list(
         "run_table" = run_table, 
         "ensemble_data_id" = 0L, 
-        "ensemble_run_id" = 0L))
+        "ensemble_run_id" = 0L
+      )
+    )
 
     # Add package version.
     fam_ensemble <- add_package_version(object = fam_ensemble)
@@ -722,7 +757,7 @@ setMethod(
     # Determine if file(s) exist
     existing_files <- sapply(object, file.exists)
     if (!all(existing_files)) {
-      stop(paste0(
+      rlang::abort(paste0(
         "Not all files could be found: ",
         paste_s(object[!existing_files])))
     }
@@ -731,14 +766,18 @@ setMethod(
     fam_object <- lapply(object, readRDS)
 
     # Check that all objects have the correct class.
-    if (!(all(sapply(fam_object, is, class2 = "familiarModel")) ||
-          all(sapply(fam_object, is, class2 = "familiarEnsemble")) ||
-          all(sapply(fam_object, is, class2 = "familiarData")) ||
-          all(sapply(fam_object, is, class2 = "familiarCollection")))) {
-      stop(paste0(
+    if (!(
+      all(sapply(fam_object, is, class2 = "familiarModel")) ||
+      all(sapply(fam_object, is, class2 = "familiarNoveltyDetector")) ||
+      all(sapply(fam_object, is, class2 = "familiarEnsemble")) ||
+      all(sapply(fam_object, is, class2 = "familiarData")) ||
+      all(sapply(fam_object, is, class2 = "familiarCollection"))
+    )) {
+      rlang::abort(paste0(
         "Could not load familiar objects because they are not uniquely ",
-        "familiarModel, familiarEnsemble, familiarData or ",
-        "familiarCollection objects."))
+        "familiarModel, familiarNoveltyDetector, familiarEnsemble, familiarData or ",
+        "familiarCollection objects."
+      ))
     }
 
     # Update the objects for backward compatibility
@@ -749,7 +788,8 @@ setMethod(
       fam_object <- mapply(
         ..update_model_list, 
         object = fam_object, 
-        dir_path = object)
+        dir_path = object
+      )
     }
 
     # Unlist if the input is singular.
@@ -770,14 +810,18 @@ setMethod(
     fam_object <- lapply(object, load_familiar_object)
 
     # Check that all objects have the correct class.
-    if (!(all(sapply(fam_object, is, class2 = "familiarModel")) ||
-          all(sapply(fam_object, is, class2 = "familiarEnsemble")) ||
-          all(sapply(fam_object, is, class2 = "familiarData")) ||
-          all(sapply(fam_object, is, class2 = "familiarCollection")))) {
-      stop(paste0(
+    if (!(
+      all(sapply(fam_object, is, class2 = "familiarModel")) ||
+      all(sapply(fam_object, is, class2 = "familiarNoveltyDetector")) ||
+      all(sapply(fam_object, is, class2 = "familiarEnsemble")) ||
+      all(sapply(fam_object, is, class2 = "familiarData")) ||
+      all(sapply(fam_object, is, class2 = "familiarCollection"))
+    )) {
+      rlang::abort(paste0(
         "Could not load familiar objects because they are not uniquely ",
-        "familiarModel, familiarEnsemble, familiarData or familiarCollection ",
-        "objects."))
+        "familiarModel, familiarNoveltyDetector, familiarEnsemble, familiarData ",
+        "or familiarCollection objects."
+      ))
     }
 
     # Update the objects for backward compatibility
@@ -798,7 +842,9 @@ setMethod(
     # been loaded. Else throw an error.
 
     if (is_any(object, class2 = c(
-      "familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))) {
+      "familiarModel", "familiarNoveltyDetector",
+      "familiarEnsemble", "familiarData", "familiarCollection"
+    ))) {
       # Make sure the S4 object is updated.
       object <- update_object(object = object)
 

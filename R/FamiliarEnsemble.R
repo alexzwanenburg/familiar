@@ -24,29 +24,66 @@ setMethod(
     # If no models were trained, select all models, otherwise select only the
     # models that were trained.
     if (any(trained_mask)) model_list <- model_list[trained_mask]
-
-    # Add outcome_type and outcome_info to object. These slots are required in
-    # some of the other aggregators.
-    object@outcome_type <- model_list[[1]]@outcome_type
-    object@outcome_info <- .aggregate_outcome_info(
-      x = lapply(
-        model_list,
-        function(list_elem) (list_elem@outcome_info)))
-
+browser()
+    
+    if (is(model_list[[1]], "familiarModel")) {
+      # Add outcome_type and outcome_info to object. These slots are required in
+      # some of the other aggregators.
+      object@outcome_type <- model_list[[1]]@outcome_type
+      object@outcome_info <- .aggregate_outcome_info(
+        x = lapply(
+          model_list,
+          function(list_elem) (list_elem@outcome_info)
+        )
+      )
+      
+      # Find all important features for novelty detection.
+      novelty_features <- unique(unlist(lapply(
+        model_list, 
+        function(fam_model) (fam_model@novelty_features)
+      )))
+      
+      # Aggregate calibration info
+      calibration_info <- extract_calibration_info(
+        object = object,
+        detail_level = "hybrid")
+      calibration_info <- .compute_data_element_estimates(calibration_info)
+      
+      if (is_empty(calibration_info)) {
+        calibration_info <- NULL
+      } else {
+        calibration_info <- calibration_info[[1]]@data
+      }
+      
+      # Get settings
+      settings <- model_list[[1]]@settings
+      
+    } else if (is(model_list[[1]], "familiarNoveltyDetector")) {
+      # Add outcome_type and outcome_info to object.
+      object@outcome_type <- "unsupervised"
+      object@outcome_info <- NULL
+      
+      # Find all important features for novelty detection.
+      novelty_features <- unique(unlist(lapply(
+        model_list, 
+        function(fam_model) (fam_model@model_features)
+      )))
+      
+      calibration_info <- NULL
+      settings <- NULL
+    }
+    
     # Find all required features
     required_features <- unique(unlist(lapply(
       model_list,
-      function(fam_model) (fam_model@required_features))))
+      function(fam_model) (fam_model@required_features)
+    )))
 
     # Find all important features for the model.
     model_features <- unique(unlist(lapply(
       model_list,
-      function(fam_model) (fam_model@model_features))))
-
-    # Find all important features for novelty detection.
-    novelty_features <- unique(unlist(lapply(
-      model_list, 
-      function(fam_model) (fam_model@novelty_features))))
+      function(fam_model) (fam_model@model_features)
+    )))
 
     # Aggregate feature information
     if (length(required_features) > 0) {
@@ -62,18 +99,6 @@ setMethod(
       
     } else {
       feature_info_list <- NULL
-    }
-
-    # Aggregate calibration info
-    calibration_info <- extract_calibration_info(
-      object = object,
-      detail_level = "hybrid")
-    calibration_info <- .compute_data_element_estimates(calibration_info)
-    
-    if (is_empty(calibration_info)) {
-      calibration_info <- NULL
-    } else {
-      calibration_info <- calibration_info[[1]]@data
     }
 
     # Generate a new version of the ensemble to avoid unnecessary copying.
@@ -92,7 +117,7 @@ setMethod(
       calibration_info = calibration_info,
       model_dir_path = object@model_dir_path,
       auto_detach = object@auto_detach,
-      settings = model_list[[1]]@settings,
+      settings = settings,
       project_id = model_list[[1]]@project_id
     )
 
@@ -226,6 +251,9 @@ setMethod(
     if (is(object@model_list[[ii]], "familiarModel")) {
       return(object@model_list[[ii]])
     }
+    if (is(object@model_list[[ii]], "familiarNoveltyDetector")) {
+      return(object@model_list[[ii]])
+    }
     
     # If the model has been detached, load, and then dispatch.
     # First check if the file exists.
@@ -329,8 +357,12 @@ setMethod(
       # Generate the file name from the model.
       model_file_name <- get_object_name(
         object = object@model_list[[ii]],
-        abbreviated = FALSE)
+        abbreviated = FALSE
+      )
       model_file_name <- paste0(model_file_name, ".RDS")
+      
+    } else if (is(object@model_list[[ii]], "familiarNoveltyDetector")) {
+      return(NULL)
       
     } else {
       # Generate the file name from the stored string.
@@ -442,17 +474,21 @@ setMethod(
     for (ii in seq_along(object@model_list)) {
       # Skip if the current entry is an attached familiarModel object.
       if (is(object@model_list[[ii]], "familiarModel")) next
+      if (is(object@model_list[[ii]], "familiarNoveltyDetector")) next
 
       # Stop if the current entry is not a character.
       if (!is.character(object@model_list[[ii]])) {
-        stop(paste0(
+        rlang::abort(paste0(
           "The current entry in the model list is not a character string ",
-          "or a familiarModel object."))
+          "or a familiarModel object."
+        ))
       }
 
       # Skip if the entry points to a file and not a directory.
-      if (file.exists(object@model_list[[ii]]) &&
-          !dir.exists(object@model_list[[ii]])) next
+      if (
+        file.exists(object@model_list[[ii]]) &&
+        !dir.exists(object@model_list[[ii]])
+      ) next
 
       # Identify the file path, if any.
       model_file_path <- ..get_model_file_path(
@@ -476,6 +512,8 @@ setMethod(
         function(list_entry) {
           if (is(list_entry, "familiarModel")) {
             return(TRUE)
+          } else if (is(list_entry, "familiarNoveltyDetector")) {
+            return(TRUE)
           } else if (file.exists(list_entry)) {
             return(TRUE)
           }
@@ -484,19 +522,21 @@ setMethod(
       
       # Throw an error if any model does not exist.
       if (all(!model_exists)) {
-        stop(paste0(
+        rlang::abort(paste0(
           "None of the models could be found: ",
           paste_s(unlist(object@model_list)),
           ". \n\nThis is likely because the models are no longer found in the ",
           "same location as they were created. ",
           "Use the update_model_dir_path method to update the path for the ",
-          "directory containing the models."))
+          "directory containing the models."
+        ))
       }
 
       if (any(!model_exists)) {
-        stop(paste0(
+        rlang::abort(paste0(
           "The following models in the ensemble could not be found: ",
-          paste_s(unlist(object@model_list[!model_exists])), "."))
+          paste_s(unlist(object@model_list[!model_exists])), "."
+        ))
       }
     }
 
@@ -510,15 +550,16 @@ setMethod(
         model_file_path <- ..get_model_file_path(
           ii = 1,
           object = object, 
-          dir_path = dir_path)
+          dir_path = dir_path
+        )
 
         # Set the model_file_path explicitly.
         if (!is.null(model_file_path)) object@model_dir_path <- dirname(model_file_path)
       }
 
       # Check that a model directory path has been set and exists.
-      if (is.na(object@model_dir_path)) stop("The model directory could not be found.")
-      if (!dir.exists(object@model_dir_path)) stop("The model directory could not be found.")
+      if (is.na(object@model_dir_path)) rlang::abort("The model directory could not be found.")
+      if (!dir.exists(object@model_dir_path)) rlang::abort("The model directory could not be found.")
     }
 
     return(object)

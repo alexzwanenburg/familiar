@@ -393,3 +393,36 @@ setMethod(
     return(object)
   }
 )
+
+
+
+# get_object_name (model) ------------------------------------------------------
+setMethod(
+  "get_object_name",
+  signature(object = "familiarNoveltyDetector"),
+  function(object, abbreviated = FALSE) {
+    
+    
+    # Extract data and run id
+    model_data_id <- tail(object@run_table, n = 1)$data_id
+    model_run_id <- tail(object@run_table, n = 1)$run_id
+    
+    if (abbreviated) {
+      # Create an abbreviated name
+      model_name <- paste0("model.", model_data_id, ".", model_run_id)
+      
+    } else {
+      # Create the full name of the model
+      model_name <- get_object_file_name(
+        learner = object@learner,
+        fs_method = object@fs_method,
+        project_id = object@project_id,
+        data_id = model_data_id,
+        run_id = model_run_id,
+        object_type = "familiarModel",
+        with_extension = FALSE)
+    }
+    
+    return(model_name)
+  }
+)
