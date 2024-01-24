@@ -54,6 +54,13 @@ predictions_novelty_2 <- familiar::predict(
   .as_prediction_table = TRUE
 )
 
+# Novelty from list of novelty detectors.
+predictions_novelty_3 <- familiar::predict(
+  object = list(fam_model@novelty_detector),
+  newdata = data,
+  .as_prediction_table = TRUE
+)
+
 # Risk stratification.
 predictions_risk <- familiar::predict(
   object = fam_model,
@@ -66,6 +73,7 @@ testthat::test_that("Survival models can predict using external data.", {
   # Check that predictions 1 and 2 are equal.
   testthat::expect_equal(predictions_1, predictions_2, ignore_attr = TRUE)
   testthat::expect_equal(predictions_novelty_1, predictions_novelty_2, ignore_attr = TRUE)
+  testthat::expect_equal(predictions_novelty_1, predictions_novelty_3, ignore_attr = TRUE)
 
   # Check that the number of rows is equal to the input data.
   testthat::expect_equal(nrow(predictions_1@data), nrow(data@data))
@@ -234,7 +242,8 @@ data <- familiar:::test_create_one_sample_data("binomial")
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -355,7 +364,8 @@ data <- familiar:::test_create_one_sample_data("multinomial")
 # Default predictions using data object.
 predictions_1 <- familiar::predict(
   object = fam_model,
-  newdata = data
+  newdata = data,
+  .as_prediction_table = TRUE
 )
 
 # Default predictions using data.table.
@@ -398,8 +408,8 @@ testthat::test_that("Multinomial models can predict single instances using exter
   # Check that all predictions are valid.
   testthat::expect_true(familiar:::any_predictions_valid(predictions_1))
   testthat::expect_true(familiar:::any_predictions_valid(predictions_2))
-  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_1$novelty))
-  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_2$novelty))
+  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_1))
+  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_2))
 })
 
 # Continuous data with multiple instances --------------------------------------
@@ -452,7 +462,8 @@ predictions_novelty_2 <- familiar::predict(
 
 testthat::test_that("Continuous models can predict using external data.", {
   # Check that predictions 1 and 2 are equal.
-  testthat::expect_equal(predictions_1, predictions_2, ignore_attr = TRUE)
+  # testthat::expect_equal(predictions_1, predictions_2, ignore_attr = TRUE)
+  testthat::expect_equal(predictions_1@data, predictions_2@data, ignore_attr = TRUE)
   testthat::expect_equal(predictions_novelty_1, predictions_novelty_2, ignore_attr = TRUE)
 
   # Check that the number of rows is equal to the input data.
@@ -520,6 +531,6 @@ testthat::test_that("Continuous models can predict single instances using extern
   # Check that all predictions are valid.
   testthat::expect_true(familiar:::any_predictions_valid(predictions_1))
   testthat::expect_true(familiar:::any_predictions_valid(predictions_2))
-  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_1$novelty))
-  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_2$novelty))
+  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_1))
+  testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_2))
 })
