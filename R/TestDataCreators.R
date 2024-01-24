@@ -62,7 +62,9 @@ test_create_good_data <- function(
       fam_sample(
         seq_len(n_series_instances),
         size = ceiling(0.4 * n_series_instances),
-        replace = FALSE)
+        replace = FALSE,
+        rstream_object = r
+      )
     ] <- 0L
     
   } else {
