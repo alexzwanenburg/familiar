@@ -231,43 +231,41 @@ setMethod(
     type <- c("default", "novelty")
   }
   
-  # Compute performance data.
-  prediction_data <- .predict(
-    object = object,
-    data = data,
-    ensemble_method = ensemble_method,
-    time = data_element@identifiers$evaluation_time,
-    type = type,
-    is_pre_processed = is_pre_processed,
-    aggregate_results = FALSE)
-  
-  # Store the type and ensemble method.
-  data_element@type <- type
-  data_element@ensemble_method <- ensemble_method
-  
-  if (object@outcome_type %in% c("binomial", "multinomial")) {
-    class_levels <- get_outcome_class_levels(x = object)
-    
-  } else {
-    class_levels <- NULL
+  data_element_list <- list()
+  for (ii in seq_along(type)) {
+    data_element_list[[ii]] <- .predict(
+      object = object,
+      data = data,
+      ensemble_method = ensemble_method,
+      time = data_element@identifiers$evaluation_time,
+      type = type[ii],
+      is_pre_processed = is_pre_processed,
+      aggregate_results = FALSE
+    )
   }
   
-  # Set outcome type and class levels.
-  data_element@outcome_type <- object@outcome_type
-  data_element@class_levels <- class_levels
+  data_element_list <- unlist(data_element_list)
+  data_element_list <- data_element_list[!sapply(data_element_list, is_empty)]
+  if (is_empty(data_element_list)) return(NULL)
   
-  # Store the prediction data in the data table.
-  data_element@data <- prediction_data
+  # Inherit from data_element
+  data_element_list <- lapply(
+    data_element_list,
+    function(x, ref) {
+      x@ensemble_method <- ref@ensemble_method
+      x@identifiers <- c(x@identifiers, ref@identifiers)
+      x@detail_level <- ref@detail_level
+      x@estimation_type <- ref@estimation_type
+      x@confidence_level <- ref@confidence_level
+      x@bootstrap_ci_method <- ref@bootstrap_ci_method
+      
+      return(.merge_slots_into_data(x))
+      
+    },
+    ref = data_element
+  )
   
-  # Set grouping columns
-  data_element@grouping_column <- get_non_feature_columns(object)
-  
-  # Set value columns
-  data_element@value_column <- setdiff(
-    colnames(prediction_data),
-    data_element@grouping_column)
-  
-  return(data_element)
+  return(data_element_list)
 }
 
 
@@ -435,13 +433,54 @@ setMethod(
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
+    prediction_table_classes <- sapply(object@prediction_data, class)
+    if (is_empty(prediction_table_classes)) return(NULL)
+    
+    prediction_objects <- lapply(object@prediction_data, .copy)
+    prediction_objects <- lapply(prediction_objects, .complete)
+    prediction_objects <- merge_data_elements(
+      prediction_objects,
+      as_data = "all",
+      as_grouping_column = TRUE,
+      force_data_table = TRUE
+    )
+    
+    # Merge prediction objects into a single table.
+    if (length(prediction_objects) > 1) {
+      export_object <- methods::new(
+        "familiarDataElementPredictionTable",
+        data = prediction_objects[[1]]@data,
+        value_column = prediction_objects[[1]]@value_column,
+        grouping_column = prediction_objects[[1]]@grouping_column
+      )
+      
+      for (ii in seq_along(prediction_objects)) {
+        if (ii == 1) next
+        
+        grouping_columns <- intersect(export_object@grouping_column, prediction_objects[[ii]]@grouping_column)
+        
+        export_object@data <- merge(
+          x = export_object@data,
+          y = prediction_objects[[ii]]@data[, mget(c(grouping_columns, prediction_objects[[ii]]@value_column))],
+          by = grouping_columns,
+          all = TRUE,
+          sort = FALSE
+        )
+        export_object@value_column <- union(export_object@value_column, prediction_objects[[ii]]@value_column)
+        export_object@grouping_column <- union(export_object@grouping_column, prediction_objects[[ii]]@grouping_column)
+      }
+    }
+    
+    object@prediction_data <- list(export_object)
+    
     return(.export(
       x = object,
       data_slot = "prediction_data",
       dir_path = dir_path,
       type = "prediction",
       subtype = NULL,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
