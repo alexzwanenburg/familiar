@@ -44,26 +44,14 @@ Found the following files/directories:
 
 ----------------------------------
 Fedora Linux, R-devel, clang, gfortran:
-0 errors | 0 warnings | 3 notes
-
-* checking package dependencies ... NOTE
-Packages suggested but not available for checking: 'fastglm'
-
-**Maintainer**: The package uses stats::glm as a fallback if fastglm is not available.
+0 errors | 0 warnings | 1 notes
 
 * checking installed package size ... NOTE
   installed size is  5.8Mb
   sub-directories of 1Mb or more:
     R      3.5Mb
     doc    1.0Mb
-    help   1.1Mb
-    
-* checking HTML version of manual ... NOTE
-Skipping checking HTML validation: no command 'tidy' found
-Skipping checking math rendering: package 'V8' unavailable
-
-
-**Maintainer**: I am unsure what causes this note. It doesn't appear locally.
+    help   1.2Mb
 
 
 
@@ -74,10 +62,9 @@ Ubuntu Linux 20.04.1 LTS, R-release, GCC:
 * checking installed package size ... NOTE
   installed size is  5.9Mb
   sub-directories of 1Mb or more:
-    R      3.5Mb
     doc    1.0Mb
-    help   1.2Mb
-
+    help   1.1Mb
+    R      3.6Mb
 
 
 
