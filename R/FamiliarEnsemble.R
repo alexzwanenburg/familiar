@@ -24,8 +24,7 @@ setMethod(
     # If no models were trained, select all models, otherwise select only the
     # models that were trained.
     if (any(trained_mask)) model_list <- model_list[trained_mask]
-browser()
-    
+
     if (is(model_list[[1]], "familiarModel")) {
       # Add outcome_type and outcome_info to object. These slots are required in
       # some of the other aggregators.

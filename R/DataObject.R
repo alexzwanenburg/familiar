@@ -167,27 +167,6 @@ setMethod(
     # Development and validation batch ids are not incorporated into
     # familiarModel or familiarEnsemble objects.
     
-    # Attempt to identify the name of the outcome.
-    if (is.waive(outcome_name)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          
-          # Check that the outcome name is not empty.
-          if (length(object@outcome_info@name) >= 1) outcome_name <- object@outcome_info@name
-        }
-      }
-    }
-    
-    # Attempt to identify the outcome columns.
-    if (is.waive(outcome_column)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (!is_empty(object@data_column_info)) {
-          # Find the model columns.
-          outcome_column <- object@data_column_info[type == "outcome_column"]$external
-        }
-      }
-    }
-    
     # Attempt to identify the type of outcome.
     if (is.waive(outcome_type)) {
       if (is(object, "familiarNoveltyDetector")) {
@@ -198,51 +177,74 @@ setMethod(
       }
     }
     
-    # Attempt to identify the event indicator.
-    if (is.waive(event_indicator)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@event) > 0) {
-            if (!is.na(object@outcome_info@event)) {
-              event_indicator <- object@outcome_info@event
-            } 
+    if (outcome_type != "unsupervised") {
+      # Attempt to identify the name of the outcome.
+      if (is.waive(outcome_name)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            
+            # Check that the outcome name is not empty.
+            if (length(object@outcome_info@name) >= 1) outcome_name <- object@outcome_info@name
           }
         }
       }
-    }
-    
-    # Attempt to identify the censoring indicator.
-    if (is.waive(censoring_indicator)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@censored) > 0) {
-            if (!is.na(object@outcome_info@censored)) {
-              censoring_indicator <- object@outcome_info@censored
-            } 
+      
+      # Attempt to identify the outcome columns.
+      if (is.waive(outcome_column)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (!is_empty(object@data_column_info)) {
+            # Find the model columns.
+            outcome_column <- object@data_column_info[type == "outcome_column"]$external
           }
         }
       }
-    }
-    
-    # Attempt to identify the competing risk indicator.
-    if (is.waive(competing_risk_indicator)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@competing_risk) > 0) {
-            if (!is.na(object@outcome_info@competing_risk)) {
-              competing_risk_indicator <- object@outcome_info@competing_risk
-            } 
+      
+      # Attempt to identify the event indicator.
+      if (is.waive(event_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@event) > 0) {
+              if (!is.na(object@outcome_info@event)) {
+                event_indicator <- object@outcome_info@event
+              } 
+            }
           }
         }
       }
-    }
-    
-    # Attempt to identify class levels of the outcome.
-    if (is.waive(class_levels)) {
-      if (has_model_object && has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@levels) > 0) {
-            class_levels <- object@outcome_info@levels
+      
+      # Attempt to identify the censoring indicator.
+      if (is.waive(censoring_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@censored) > 0) {
+              if (!is.na(object@outcome_info@censored)) {
+                censoring_indicator <- object@outcome_info@censored
+              } 
+            }
+          }
+        }
+      }
+      
+      # Attempt to identify the competing risk indicator.
+      if (is.waive(competing_risk_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@competing_risk) > 0) {
+              if (!is.na(object@outcome_info@competing_risk)) {
+                competing_risk_indicator <- object@outcome_info@competing_risk
+              } 
+            }
+          }
+        }
+      }
+      
+      # Attempt to identify class levels of the outcome.
+      if (is.waive(class_levels)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@levels) > 0) {
+              class_levels <- object@outcome_info@levels
+            }
           }
         }
       }
@@ -566,8 +568,8 @@ setMethod(
     # Loads data from internal memory
     
     if (!(is(object, "familiarModel") ||
-         is(object, "familiarVimpMethod") ||
-         is(object, "familiarNoveltyDetector"))) {
+          is(object, "familiarVimpMethod") ||
+          is(object, "familiarNoveltyDetector"))) {
       ..error_reached_unreachable_code(paste0(
         "load_delayed_data: object is expected to be a familiarModel, ",
         "familiarVimpMethod or familiarNoveltyDetector."))
@@ -638,7 +640,7 @@ setMethod(
     new_data <- select_data_from_samples(
       data = new_data,
       samples = sample_identifiers)
-
+    
     if (new_data@aggregate_on_load) {
       
       # Aggregate data if required
@@ -675,7 +677,7 @@ setMethod(
     
     # Read project list
     iteration_list <- get_project_list()$iter_list
-
+    
     # Read required features
     required_features <- object@required_features
     
@@ -709,7 +711,7 @@ setMethod(
       sample_identifiers <- data.table::rbindlist(lapply(
         seq_len(nrow(combined_run_table)),
         function(ii, run_table, iteration_list, train_or_validate) {
-        
+          
           sample_identifiers <- .get_sample_identifiers(
             iteration_list = iteration_list,
             data_id = run_table$data_id[ii],
@@ -1401,7 +1403,7 @@ setMethod(
     # Determine the number of different entries
     
     if (all(data@data$repetition_id == 1)) return(data)
-
+    
     # Identify feature columns for repeated measurement data.
     feature_columns <- get_feature_columns(x = data)
     

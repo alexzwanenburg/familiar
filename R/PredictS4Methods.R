@@ -225,49 +225,23 @@ setMethod(
     object,
     newdata,
     type = "novelty",
+    ensemble_method = "median",
     .as_prediction_table = FALSE,
     ...
   ) {
-    if (missing(newdata)) stop("newdata must be provided.")
-    if (is_empty(newdata)) ..error_data_set_is_empty()
-
-    # Make sure the ensemble model object is updated.
-    object <- update_object(object = object)
-
-    # Parse newdata to data object
-    data <- as_data_object(
-      data = newdata,
-      object = object,
-      check_stringency = "external"
-    )
+    # Create ensemble.
+    object <- as_familiar_ensemble(object = object)
     
-    # Propagate to .predict
-    predictions <- .predict(
+    # Create predictions.
+    predictions <- predict(
       object = object,
-      data = data,
-      type = type
+      newdata = newdata,
+      type = type,
+      time = time,
+      ensemble_method = ensemble_method,
+      .as_prediction_table = .as_prediction_table,
+      ...
     )
-
-    if (is(predictions, "familiarDataElementPredictionTable")) {
-      # Only return prediction columns for external predict calls.
-      
-      # Merge slots into data (this should have already happened).
-      predictions <- .merge_slots_into_data(predictions)
-      
-      # Ensure that values are ordered the same as in the input data.
-      predictions@data <- merge(
-        x = data@data[, mget(get_id_columns())],
-        y = predictions@data,
-        on = c(familiar:::get_id_columns()),
-        all.x = TRUE,
-        sort = FALSE
-      )
-      
-      # Isolate predicted values.
-      if (!.as_prediction_table) {
-        predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
-      }
-    }
 
     return(predictions)
   }

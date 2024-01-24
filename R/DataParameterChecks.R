@@ -176,23 +176,27 @@
     # exclude_features.
     if (outcome_type == "unsupervised") {
       if (!is.null(settings$data$outcome_col)) {
-        warning(paste0(
+        rlang::warn(paste0(
           paste_s(settings$data$outcome_col), " was selected as an outcome column, but ",
           "unsupervised learners and novelty detectors do not require ",
-          "outcome columns."))
+          "outcome columns."
+        ))
         
         settings$data$exclude_features <- c(
           settings$data$exclude_features,
-          settings$data$outcome_col)
+          settings$data$outcome_col
+        )
         settings$data$outcome_col <- NULL
       }
     }
   }
   
   # Check for presence of outcome column
-  if (is.null(settings$data$outcome_col) &&
-      outcome_type != "unsupervised" &&
-      check_stringency == "strict") {
+  if (
+    is.null(settings$data$outcome_col) &&
+    outcome_type != "unsupervised" &&
+    check_stringency == "strict"
+  ) {
     
     # Attempt to determine the outcome_col from the set difference of all
     # features and the union of signature, include_features and
