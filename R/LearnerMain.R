@@ -160,10 +160,6 @@ setMethod(
 #'
 #' @param data dataObject class object which contains the data on which the
 #'   preset parameters are determined.
-#' @param outcome_type Type of oucome. Default settings are determined, among
-#'   others by the the outcome type. For example, one default signature size
-#'   depends on the number of events for `survival` outcomes, based on rules of
-#'   thumb.
 #' @param restrict_samples Logical indicating whether the signature size should
 #'   be limited by the number of samples in addition to the number of available
 #'   features. This may help convergence of OLS-based methods.
