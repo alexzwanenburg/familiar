@@ -837,6 +837,10 @@ setMethod(
     # Get the prediction table using the model.
     prediction_table <- callNextMethod()
     
+    if (is_empty(prediction_table)) {
+      return(prediction_table)
+    }
+    
     # Insert NA values.
     for (current_column in colnames(prediction_table@prediction_data)) {
       data.table::set(
@@ -872,6 +876,10 @@ setMethod(
     # Get a prediction table.
     prediction_table <- callNextMethod()
 
+    if (is_empty(prediction_table)) {
+      return(prediction_table)
+    }
+    
     # Insert NA values.
     for (current_column in colnames(prediction_table@prediction_data)) {
       data.table::set(
@@ -909,6 +917,10 @@ setMethod(
 
     # Get a prediction table.
     prediction_table <- callNextMethod()
+    
+    if (is_empty(prediction_table)) {
+      return(prediction_table)
+    }
     
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       # Get class levels
