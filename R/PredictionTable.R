@@ -1911,3 +1911,78 @@ setMethod(
     return("prediction_table")
   }
 )
+
+
+
+# #export_prediction_data (collection) -----------------------------------------
+
+#'@rdname export_prediction_data-methods
+setMethod(
+  "export_prediction_data",
+  signature(object = "familiarCollection"),
+  function(
+    object,
+    dir_path = NULL,
+    export_collection = FALSE,
+    ...) {
+    
+    # Make sure the collection object is updated.
+    object <- update_object(object = object)
+    
+    .export_looper <- function(object, object_class, subtype, dir_path, export_collection) {
+      .export(
+        x = object,
+        data_slot = "prediction_data",
+        dir_path = dir_path,
+        object_class = object_class,
+        type = "prediction",
+        subtype = subtype,
+        export_collection = export_collection
+      )
+    }
+    
+    object_class <- c(
+      "predictionTableRegression",
+      "predictionTableSurvival",
+      "predictionTableSurvivalHazardRatio",
+      "predictionTableSurvivalCumulativeHazard",
+      "predictionTableSurvivalTime",
+      "predictionTableSurvivalProbability",
+      "predictionTableGrouping",
+      "predictionTableRiskGroups",
+      "predictionTableClassification",
+      "predictionTableNovelty"
+    )
+    
+    subtype <- c(
+      "regression",
+      "survival_generic",
+      "hazard_ratio",
+      "cumulative_hazard",
+      "expected_survival_time",
+      "survival_probability",
+      "grouping",
+      "risk_stratification",
+      "classification",
+      "novelty"
+    )
+
+    export_data <- mapply(
+      FUN = .export_looper,
+      object_class = object_class,
+      subtype = subtype,
+      MoreArgs = list(
+        "object" = object,
+        "dir_path" = dir_path,
+        "export_collection" = export_collection
+      ),
+      SIMPLIFY = FALSE,
+      USE.NAMES = FALSE
+    )
+    
+    names(export_data) <- subtype
+    export_data <- export_data[!sapply(export_data, is_empty)]
+    
+    return(export_data)
+  }
+)
