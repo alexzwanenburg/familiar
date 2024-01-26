@@ -5222,7 +5222,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       for (ii in seq_len(n_models)) {
         temp_model <- suppressWarnings(test_train(
           cl = cl,
-          data = test_create_bootstrapped_data(seed = ii),
+          data = test_create_bootstrapped_data(
+            outcome_type = outcome_type,
+            seed = ii
+          ),
           cluster_method = "none",
           imputation_method = "simple",
           fs_method = "mim",
