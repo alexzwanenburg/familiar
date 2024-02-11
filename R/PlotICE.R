@@ -683,11 +683,11 @@ setMethod(
     if (show_2d) {
       dropped_identifiers <- c("feature_x_value", "feature_y_value")
     } else if (show_ice) {
-      dropped_identifiers <- c("sample", "feature_x_value")
+      dropped_identifiers <- c(get_id_columns(), "feature_x_value")
     } else {
       dropped_identifiers <- c("feature_x_value")
     }
-
+browser()
     # Determine splitting variables present in the dataset.
     if (show_ice) {
       plot_data <- identify_element_sets(

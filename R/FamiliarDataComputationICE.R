@@ -833,16 +833,13 @@ setMethod(
       ))
     }
   }
-  browser()
+
   # Rename main value column to a consist name.
   if (outcome_type %in% c("binomial", "multinomial")) {
     old_value_column <- "probability"
     
-  } else if (outcome_type %in% c("continuous")) {
+  } else if (outcome_type %in% c("continuous", "survival")) {
     old_value_column <- "predicted_outcome"
-    
-  } else if (outcome_type %in% c("survival")) {
-    old_value_column <- "survival_probability"
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
