@@ -455,66 +455,6 @@ setMethod(
   }
 )
 
-# ..extract_model_performance_data <- function(
-#     data_element,
-#     object,
-#     data,
-#     cl = NULL,
-#     is_pre_processed,
-#     ensemble_method,
-#     metric,
-#     aggregate_results,
-#     progress_bar = FALSE,
-#     verbose = FALSE,
-#     message_indent,
-#     ...) {
-#   
-# # Check if any predictions are valid.
-#   if (!all_predictions_valid(
-#     prediction_data,
-#     outcome_type = object@outcome_type)) {
-#     return(NULL)
-#   }
-#   
-#   # Remove data with missing outcomes.
-#   prediction_data <- remove_missing_outcomes(
-#     data = prediction_data,
-#     outcome_type = object@outcome_type)
-#   
-#   # Check that any prediction data remain.
-#   if (is_empty(prediction_data)) return(NULL)
-#   
-#   # Add metric as an identifier.
-#   data_elements <- add_data_element_identifier(
-#     x = data_element,
-#     metric = metric)
-#   
-#   # Add bootstrap data.
-#   bootstrap_data <- add_data_element_bootstrap(x = data_elements, ...)
-#   
-#   # Iterate over elements.
-#   data_elements <- fam_mapply(
-#     cl = cl,
-#     assign = NULL,
-#     FUN = .compute_model_performance,
-#     data_element = bootstrap_data$data_element,
-#     bootstrap = bootstrap_data$bootstrap,
-#     bootstrap_seed = bootstrap_data$seed,
-#     MoreArgs = list(
-#       "object" = object,
-#       "data" = prediction_data),
-#     progress_bar = progress_bar,
-#     chopchop = TRUE)
-#   
-#   # Merge data elements
-#   data_elements <- merge_data_elements(data_elements)
-#   
-#   if (aggregate_results) data_elements <- .compute_data_element_estimates(x = data_elements)
-#   
-#   return(data_elements)
-#   
-# }
-
 
 
 .compute_model_performance <- function(

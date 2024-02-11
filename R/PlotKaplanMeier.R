@@ -273,6 +273,7 @@ setMethod(
     export_collection = FALSE,
     ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
+    outcome_event <- .NATURAL <- NULL
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -280,7 +281,8 @@ setMethod(
     # Get input data
     x <- export_risk_stratification_data(
       object = object,
-      export_strata = FALSE)
+      export_strata = FALSE
+    )
     
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
@@ -301,13 +303,13 @@ setMethod(
       # Get x directly.
       x <- x[[1]]
     }
-
+    
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
-    if (!all_predictions_valid(x@data, outcome_type = "survival")) return(NULL)
+    if (!all_predictions_valid(x)) return(NULL)
 
     # Remove non-valid risk groups
-    x@data <- x@data[!is.na(risk_group)]
+    x <- remove_invalid_predictions(x)
 
     # Check package requirements for plotting.
     if (!require_package(
@@ -335,9 +337,15 @@ setMethod(
     } else {
       y_label_shared <- "row"
     }
-
+    
     # x_range
-    if (is.null(x_range)) x_range <- c(0, x@time)
+    if (is.null(x_range)) {
+      time_max <- object@outcome_info@time
+      if (is.infinite(time_max)) {
+        time_max <- .get_default_time_max(x@data[outcome_event == 1, ]$outcome_time)
+      }
+      x_range <- c(0, time_max)
+    }
 
     # x_breaks
     if (is.null(x_breaks)) {
@@ -473,7 +481,7 @@ setMethod(
       # Generate split.
       if (!is.null(current_split)) {
         x_split <- methods::new(
-          "familiarDataElementRiskStratification",
+          "predictionTableRiskGroups",
           x,
           data = x@data[current_split, on = .NATURAL])
         
@@ -487,9 +495,7 @@ setMethod(
       }
 
       if (is_empty(x_split)) next
-      if (!any_predictions_valid(x_split@data, outcome_type = "survival")) {
-        return(NULL)
-      }
+      if (!any_predictions_valid(x_split)) next
 
       if (is.waive(plot_title)) {
         plot_title <- "Kaplan-Meier survival curve"
@@ -500,11 +506,11 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
-        additional_subtitle <- c(
-          additional_subtitle,
-          .add_time_to_plot_subtitle(x_split@time))
-      }
+      # if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
+      #   additional_subtitle <- c(
+      #     additional_subtitle,
+      #     .add_time_to_plot_subtitle(x_split@time))
+      # }
 
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
@@ -640,14 +646,14 @@ setMethod(
     # Generate the split in case there is a faceting variable.
     if (!is.null(facet_by)) {
       x_split <- methods::new(
-        "familiarDataElementRiskStratification",
+        "predictionTableRiskGroups",
         x,
         data = x@data[current_split, on = .NATURAL]
       )
     } else {
       x_split <- x
     }
-
+    
     # Compute strata for the current split.
     strata <- .compute_risk_stratification_curves(
       x = x_split,
@@ -959,7 +965,6 @@ setMethod(
       p <- p + ggplot2::geom_point(
         data = x[n_censor > 0],
         shape = censor_shape,
-        show.legend = FALSE)
         show.legend = FALSE
       )
       

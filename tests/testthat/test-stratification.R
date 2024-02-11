@@ -55,7 +55,7 @@ for (stratification_method in stratification_methods) {
   
   testthat::test_that("Risk groups are formed.", {
     testthat::expect_equal(fam_model@km_info$stratification_method, stratification_method)
-    testthat::expect_true(!any(is.na(predictions_risk$risk_group)))
+    testthat::expect_true(!any(is.na(predictions_risk$group)))
   })
 }
 

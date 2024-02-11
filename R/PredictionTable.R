@@ -1478,7 +1478,7 @@ setMethod(
       outcome_type <- data@outcome_type
     }
     
-    if (data@outcome_type %in% c("survival", "competing_risk")) {
+    if (outcome_type %in% c("survival", "competing_risk")) {
       if (merged_table && !all(c("outcome_time", "outcome_event") %in% data@grouping_column)) return(data)
       
       outcome_is_valid <- is_valid_data(slot(data, data_slot)$outcome_time) &

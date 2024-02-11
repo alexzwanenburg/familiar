@@ -1,21 +1,8 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
-#' @include FamiliarDataComputationPredictionData.R
+#' @include PredictionTable.R
 NULL
 
-# familiarDataElementRiskStratification (object) -------------------------------
-setClass(
-  "familiarDataElementRiskStratification",
-  contains = "familiarDataElementPredictionTable",
-  slots = list("time" = "ANY"),
-  prototype = methods::prototype(
-    bootstrap_ci_method = "percentile",
-    ensemble_method = "median",
-    estimation_type = "point",
-    type = "risk_stratification",
-    time = NULL
-  )
-)
 
 # familiarDataElementRiskStrata (object) ---------------------------------------
 setClass(
@@ -87,7 +74,8 @@ setMethod(
     stratification_method = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     
     # This mostly follows the same routines as extract_prediction_data. In
     # addition, tests are created during export.
@@ -170,9 +158,10 @@ setMethod(
     
     # Generate a prototype data element.
     proto_data_element <- new(
-      "familiarDataElementRiskStratification",
+      "predictionTableRiskGroups",
       detail_level = detail_level,
-      confidence_level = confidence_level
+      confidence_level = confidence_level,
+      estimation_type = "point"
     )
     
     # Generate elements to send to dispatch.
@@ -203,33 +192,9 @@ setMethod(
   "extract_risk_stratification_data",
   signature(object = "predictionTableRiskGroups"),
   function(object, ...) {
-    
     if (is_empty(object)) return(NULL)
     
-    # Merge slots into data.
-    object <- .merge_slots_into_data(object)
-    
-    data_element <- new(
-      "familiarDataElementRiskStratification",
-      detail_level = "ensemble",
-      confidence_level = 0.95
-    )
-    
-    # Store the type, outcome_type and ensemble method.
-    data_element@type <- "risk_stratification"
-    data_element@ensemble_method <- object@ensemble_method
-    data_element@outcome_type <- object@outcome_type
-    
-    # Store the prediction data in the data table.
-    data_element@data <- object
-    data_element@grouping_column <- object@grouping_column
-    data_element@value_column <- object@value_column
-    
-    # Set time attribute
-    time <- max(data_element@data$outcome_time)
-    data_element@time <- if (is_empty(time)) Inf else time
-    
-    return(data_element)
+    return(object)
   }
 )
 
@@ -256,7 +221,6 @@ setMethod(
     stratification_method,
     ...
 ) {
-  
   # Add model name.
   proto_data_element <- add_model_name(proto_data_element, object = object)
   
@@ -301,33 +265,21 @@ setMethod(
     time = time,
     type = "risk_stratification",
     stratification_method = data_element@identifiers$stratification_method,
-    is_pre_processed = is_pre_processed,
-    aggregate_results = FALSE
+    is_pre_processed = is_pre_processed
   )
+
+  if (is_empty(prediction_data)) return(NULL)
   
-  # Store the type and ensemble method.
-  data_element@type <- "risk_stratification"
-  data_element@ensemble_method <- ensemble_method
+  # We will actually use prediction_data from here, but need to update some
+  # attributes.
+  prediction_data@detail_level <- data_element@detail_level
+  prediction_data@estimation_type <- data_element@estimation_type
+  prediction_data@confidence_level <- data_element@confidence_level
+  prediction_data@bootstrap_ci_method <- data_element@bootstrap_ci_method
+  prediction_data@is_aggregated <- FALSE
+  prediction_data@identifiers <- c(prediction_data@identifiers, data_element@identifiers)
   
-  # Set outcome type.
-  data_element@outcome_type <- object@outcome_type
-  
-  # Store the prediction data in the data table.
-  data_element@data <- prediction_data
-  
-  # Set grouping columns
-  data_element@grouping_column <- get_non_feature_columns(object)
-  
-  # Set value columns
-  data_element@value_column <- setdiff(
-    colnames(prediction_data),
-    data_element@grouping_column
-  )
-  
-  # Set time attribute
-  data_element@time <- time
-  
-  return(data_element)
+  return(prediction_data)
 }
 
 
@@ -335,32 +287,32 @@ setMethod(
 .compute_risk_stratification_curves <- function(x, time_range = NULL) {
   
   if (is_empty(x)) return(NULL)
-  if (!all_predictions_valid(x@data)) return(NULL)
+  if (!all_predictions_valid(x)) return(NULL)
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
       ".compute_risk_stratification_curves: expecting aggregated data.")
   }
-  
+
   # Make local copy.
-  data <- .copy(x@data)
+  data <- .copy(x)
   
   # Remove data with missing predictions.
   data <- remove_invalid_predictions(data)
   
   # Remove data with missing outcomes.
-  data <- filter_missing_outcome(data = data)
+  data <- filter_missing_outcome(data, outcome_type = "survival")
   
   # Check that any prediction data remain.
   if (is_empty(data)) return(NULL)
   
   # Create new element with strata based on x.
   data_element <- methods::new(
-    "familiarDataElementRiskLogrank",
+    "familiarDataElementRiskStrata",
     x,
     grouping_column = c(
       setdiff(x@grouping_column, c(get_non_feature_columns(x = "survival"))),
-      "risk_group"
+      "group"
     ),
     value_column = "survival"
   )
@@ -489,7 +441,6 @@ setMethod(
   outcome_time <- NULL
   
   if (is_empty(x)) return(NULL)
-  if (!all_predictions_valid(x@data)) return(NULL)
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
@@ -497,28 +448,23 @@ setMethod(
   }
   
   # Make local copy.
-  x@data <- .copy(x@data)
+  x <- .copy(x)
   
-  # Remove data with missing predictions.
-  x@data <- remove_invalid_predictions(x@data)
-  
-  # Remove data with missing outcomes.
-  x@data <- filter_missing_outcome(x@data)
+  # Remove data with missing predictions or missing outcomes.
+  x <- remove_invalid_predictions(x)
+  x <- filter_missing_outcome(x, outcome_type = "survival")
   
   # Check that any prediction data remain.
-  if (is_empty(x@data)) return(NULL)
+  if (is_empty(x)) return(NULL)
   
   # Right-censor the data to the desired time window.
   if (!is.null(time_range)) {
     # Right censor data past the time range.
     x@data[outcome_time > time_range[2], "outcome_event" := 0]
   } 
-  
-  # Determine the number of groups.
-  n_groups <- length(x@data@groups)
-  
+
   # Check that 2 (or more risk groups) are present.
-  if (n_groups < 2) return(NULL)
+  if (length(x@groups) < 2) return(NULL)
   
   # Get data from logrank tests.
   logrank_data <- .compute_risk_stratification_logrank_test(
@@ -552,23 +498,23 @@ setMethod(
     x,
     grouping_column = c(setdiff(
       x@grouping_column,
-      c(get_non_feature_columns(x = "survival")
-      ))
-    ),
+      c(get_non_feature_columns(x = "survival"))
+    )),
     value_column = c("p_value", "p_value_adjusted")
   )
   
   # Compute logrank test over all risk groups.
-  data <- .as_data_table(x@data)
-  overall_results <- data[, ..compute_risk_stratification_logrank_test(
-    x = .SD),
+  data <- .as_data_table(x)
+  overall_results <- data[
+    ,
+    ..compute_risk_stratification_logrank_test(x = .SD),
     by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event", "risk_group")
+    .SDcols = c("outcome_time", "outcome_event", "group")
   ]
   
   # Get all pairs
   pairs <- utils::combn(
-    x = unique(x@data@groups),
+    x = x@groups,
     m = 2L,
     simplify = FALSE
   )
@@ -579,18 +525,19 @@ setMethod(
     selected_groups = pairs,
     MoreArgs = list("x" = .SD)),
     by = c(data_element@grouping_column),
-    .SDcols = c("outcome_time", "outcome_event", "risk_group")
+    .SDcols = c("outcome_time", "outcome_event", "group")
   ]
   
   # Compute multiple-testing corrected p-value.
-  pairwise_results[, "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
-                   by = c(data_element@grouping_column)]
+  pairwise_results[
+    ,
+    "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
+    by = c(data_element@grouping_column)
+  ]
   
   # Combine to single table and return.
   data_element@data <- data.table::rbindlist(
-    list(overall_results, pairwise_results),
-    use.names = TRUE,
-    fill = TRUE
+    list(overall_results, pairwise_results), use.names = TRUE, fill = TRUE
   )
   
   return(data_element)
@@ -601,13 +548,13 @@ setMethod(
 ..compute_risk_stratification_logrank_test <- function(x, selected_groups = NULL) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  risk_group <- NULL
+  group <- NULL
   
   # Select indicated risk groups and make sure they are both present.
-  if (!is.null(selected_groups)) x <- x[risk_group %in% selected_groups]
+  if (!is.null(selected_groups)) x <- x[group %in% selected_groups]
   
   # Determine the number of groups.
-  n_groups <- data.table::uniqueN(x$risk_group)
+  n_groups <- data.table::uniqueN(x$group)
   
   # Check that 2 (or more risk groups) are present.
   if (n_groups < 2) return(NULL)
@@ -615,7 +562,7 @@ setMethod(
   # Determine chi-square of log-rank test
   chi_sq <- tryCatch(
     survival::survdiff(
-      survival::Surv(time = outcome_time, event = outcome_event) ~ risk_group,
+      survival::Surv(time = outcome_time, event = outcome_event) ~ group,
       data = x,
       subset = NULL,
       na.action = "na.omit"
@@ -636,17 +583,17 @@ setMethod(
   
   # In case all groups should be compared, add a place-holder name.
   if (is.null(selected_groups)) {
-    risk_group_1 <- risk_group_2 <- "all"
+    group_1 <- group_2 <- "all"
     
   } else {
-    risk_group_1 <- selected_groups[1]
-    risk_group_2 <- selected_groups[2]
+    group_1 <- selected_groups[1]
+    group_2 <- selected_groups[2]
   }
   
   # Set data.
   test_data <- data.table::data.table(
-    "risk_group_1" = risk_group_1,
-    "risk_group_2" = risk_group_2,
+    "group_1" = group_1,
+    "group_2" = group_2,
     "p_value" = p_value
   )
   
@@ -665,33 +612,39 @@ setMethod(
     x,
     grouping_column = c(setdiff(
       x@grouping_column,
-      get_non_feature_columns(x = "survival"))
-    ),
+      get_non_feature_columns(x = "survival")
+    )),
     value_column = c("p_value", "p_value_adjusted")
   )
   
   # Isolate data.
-  data <- .as_data_table(x@data)
-  data$risk_group <- droplevels(data$risk_group)
+  data <- .as_data_table(x)
+  data$group <- droplevels(data$group)
   
   # Use the first group as reference for ordinal variables.
-  reference_groups <- levels(data$risk_group)[1]
+  reference_groups <- levels(data$group)[1]
   
   # Compute hazard test results over all risk groups.
-  hr_results <- data[, dmapply(
-    ..compute_risk_stratification_hazard_ratio_test,
-    reference_group = reference_groups,
-    MoreArgs = list(
-      "x" = .SD,
-      "confidence_level" = confidence_level)
-  ),
-  by = c(data_element@grouping_column),
-  .SDcols = c("outcome_time", "outcome_event", "risk_group")
+  hr_results <- data[
+    ,
+    dmapply(
+      ..compute_risk_stratification_hazard_ratio_test,
+      reference_group = reference_groups,
+      MoreArgs = list(
+        "x" = .SD,
+        "confidence_level" = confidence_level
+      )
+    ),
+    by = c(data_element@grouping_column),
+    .SDcols = c("outcome_time", "outcome_event", "group")
   ]
   
   # Compute multiple-testing corrected p-value.
-  hr_results[, "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
-             by = c(data_element@grouping_column)]
+  hr_results[
+    ,
+    "p_value_adjusted" := stats::p.adjust(p_value, method = "holm"),
+    by = c(data_element@grouping_column)
+  ]
   
   # Store to data element.
   data_element@data <- hr_results
@@ -708,29 +661,29 @@ setMethod(
 ) {
   
   # Determine the number of groups.
-  n_groups <- data.table::uniqueN(x$risk_group)
+  n_groups <- data.table::uniqueN(x$group)
   
   # Check that 2 (or more risk groups) are present.
   if (n_groups < 2) return(NULL)
   
   # Check if the reference group is present.
-  if (!any(x$risk_group == reference_group)) return(NULL)
+  if (!any(x$group == reference_group)) return(NULL)
   
   # Make local copy of x.
   x <- data.table::copy(x)
   
-  # Force the risk_group column to be categorical.
-  if (is.factor(x$risk_group)) {
-    x$risk_group <- droplevels(x$risk_group)
+  # Force the group column to be categorical.
+  if (is.factor(x$group)) {
+    x$group <- droplevels(x$group)
     
   } else {
-    x$risk_group <- as.factor(x = x$risk_group)
+    x$group <- as.factor(x$group)
   }
   
   # Reset the reference risk group
-  if (!is.ordered(x$risk_group)) {
-    x$risk_group <- stats::relevel(
-      x$risk_group,
+  if (!is.ordered(x$group)) {
+    x$group <- stats::relevel(
+      x$group,
       ref = reference_group
     )
   }
@@ -738,7 +691,7 @@ setMethod(
   # Create Cox proportional hazards model.
   model <- suppressWarnings(tryCatch(
     survival::coxph(
-      survival::Surv(time = outcome_time, event = outcome_event) ~ risk_group,
+      survival::Surv(time = outcome_time, event = outcome_event) ~ group,
       data = x
     ),
     error = identity
@@ -754,7 +707,7 @@ setMethod(
   # Fill test data.
   test_data <- data.table::data.table(
     "reference_group" = reference_group,
-    "risk_group" = levels(x$risk_group)[-1],
+    "group" = levels(x$group)[-1],
     "hazard_ratio" = summary_info$conf.int[, 1],
     "ci_low" = summary_info$conf.int[, 3],
     "ci_up" = summary_info$conf.int[, 4],
