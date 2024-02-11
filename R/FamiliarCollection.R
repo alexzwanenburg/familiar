@@ -811,7 +811,7 @@ setMethod(
     } else if (upd_slot == "km_group_labels") {
       data <- unique(c(
         "low", "moderate", "high",
-        unlist(lapply(x@km_data, function(x) (levels(x@data$risk_group))))))
+        unlist(lapply(x@km_data, function(x) (levels(x@data$group))))))
       
     } else if (upd_slot == "class_labels") {
       data <- get_outcome_class_levels(x)

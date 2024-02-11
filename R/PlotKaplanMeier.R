@@ -25,7 +25,7 @@ NULL
 #' @param show_logrank (*optional*) Specifies whether the results of a logrank
 #'   test to assess differences between the risk strata is annotated in the
 #'   plot. A log-rank test can only be shown when `color_by` and `linestyle_by`
-#'   are either unset, or only contain `risk_group`.
+#'   are either unset, or only contain `group`.
 #' @param show_survival_table (*optional*) Specifies whether a survival table is
 #'   shown below the Kaplan-Meier survival curves. Survival in the risk strata
 #'   is assessed for each of the breaks in `x_breaks`.
@@ -50,10 +50,10 @@ NULL
 #'   `x_label` and `y_label` arguments.
 #'
 #'   Available splitting variables are: `fs_method`, `learner`, `data_set`,
-#'   `risk_group` and `stratification_method`. By default, separate figures are
+#'   `group` and `stratification_method`. By default, separate figures are
 #'   created for each combination of `fs_method` and `learner`, with faceting by
 #'   `data_set`, colouring of the strata in each individual plot by
-#'   `risk_group`.
+#'   `group`.
 #'
 #'   Available palettes for `discrete_palette` are those listed by
 #'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -273,7 +273,6 @@ setMethod(
     export_collection = FALSE,
     ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
-    risk_group <- .NATURAL <- NULL
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -397,7 +396,7 @@ setMethod(
         is.null(linetype_by) &&
         is.null(facet_by)) {
       split_by <- c("fs_method", "learner", "stratification_method")
-      color_by <- c("risk_group")
+      color_by <- c("group")
       facet_by <- c("data_set")
     }
 
@@ -409,8 +408,7 @@ setMethod(
       linetype_by = linetype_by,
       facet_by = facet_by,
       available = c(
-        "fs_method", "learner", "data_set",
-        "risk_group", "stratification_method"))
+        "fs_method", "learner", "data_set", "group", "stratification_method"))
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -426,9 +424,9 @@ setMethod(
       combine_legend = combine_legend)
 
     # Set show_logrank to FALSE in case color_by and linetype_by
-    # contain more than risk_group at most.
+    # contain more than group at most.
     if (!is.null(union(color_by, linetype_by))) {
-      if (!all(union(color_by, linetype_by) == "risk_group")) {
+      if (!all(union(color_by, linetype_by) == "group")) {
         show_logrank <- FALSE
       }
     }
@@ -447,7 +445,8 @@ setMethod(
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption)
+      caption = caption
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -459,7 +458,8 @@ setMethod(
       data_split <- split(
         unique(x@data[, mget(split_by)]),
         by = split_by,
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       data_split <- list(NULL)
@@ -483,7 +483,7 @@ setMethod(
 
       if ("stratification_method" %in% split_by) {
         # Check that only relevant risk groups are present.
-        x_split@data$risk_group <- droplevels(x_split@data$risk_group)
+        x_split@data$group <- droplevels(x_split@data$group)
       }
 
       if (is_empty(x_split)) next
@@ -784,7 +784,7 @@ setMethod(
     censor_shape,
     show_logrank) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  n_censor <- risk_group_1 <- NULL
+  n_censor <- group_1 <- NULL
   
   if (!is_empty(x)) x <- x@data
   if (!is_empty(h)) h <- h@data
@@ -795,7 +795,8 @@ setMethod(
     color_by = color_by,
     linetype_by = linetype_by,
     discrete_palette = discrete_palette,
-    combine_legend = combine_legend)
+    combine_legend = combine_legend
+  )
   
   # Extract data
   x <- guide_list$data
@@ -805,7 +806,10 @@ setMethod(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("time"),
-      y = !!sym("survival")))
+      y = !!sym("survival")
+    )
+  )
+  
   p <- p + ggtheme
 
   # Create step function
@@ -859,7 +863,8 @@ setMethod(
   if (show_logrank && !is_empty(h)) {
     # Parse p-value
     p_value_label <- paste0(
-      "p: ", as.character(signif(h[risk_group_1 == "all"]$p_value, 2)))
+      "p: ", as.character(signif(h[group_1 == "all"]$p_value, 2))
+    )
 
     # Obtain default settings.
     text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
@@ -875,7 +880,8 @@ setMethod(
       fontface = text_settings$face,
       size = text_settings$geom_text_size,
       vjust = "inward",
-      hjust = "inward")
+      hjust = "inward"
+    )
   }
 
   # Plot confidence intervals
@@ -885,25 +891,29 @@ setMethod(
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
 
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
         
       } else {
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
           colour = !!sym("color_breaks"),
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
 
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
           colour = !!sym("color_breaks"),
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
       }
       
     } else if (conf_int_style[1] == "ribbon") {
@@ -918,13 +928,15 @@ setMethod(
             ymin = !!sym("ci_low"),
             ymax = !!sym("ci_up")),
           alpha = conf_int_alpha,
-          na.rm = TRUE)
+          na.rm = TRUE
+        )
         
       } else {
         # Create special data for ribbon so that it becomes a step ribbon.
         x_ribbon <- data.table::rbindlist(lapply(
           split(x, by = "color_breaks"),
-          .prepare_km_conf_int_plot_data))
+          .prepare_km_conf_int_plot_data
+        ))
         
         p <- p + ggplot2::geom_ribbon(
           data = x_ribbon,
@@ -932,9 +944,11 @@ setMethod(
             x = !!sym("time"),
             ymin = !!sym("ci_low"),
             ymax = !!sym("ci_up"),
-            fill = !!sym("color_breaks")),
+            fill = !!sym("color_breaks")
+          ),
           alpha = conf_int_alpha,
-          na.rm = TRUE)
+          na.rm = TRUE
+        )
       }
     }
   }
@@ -946,15 +960,19 @@ setMethod(
         data = x[n_censor > 0],
         shape = censor_shape,
         show.legend = FALSE)
+        show.legend = FALSE
+      )
       
     } else {
       p <- p + ggplot2::geom_point(
         data = x[n_censor > 0],
         mapping = ggplot2::aes(
           colour = !!sym("color_breaks"),
-          fill = !!sym("color_breaks")),
+          fill = !!sym("color_breaks")
+        ),
         shape = censor_shape,
-        show.legend = FALSE)
+        show.legend = FALSE
+      )
     }
   }
 
@@ -968,13 +986,15 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Determine how things are facetted.
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -983,20 +1003,20 @@ setMethod(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
     }
   }
 
   # Plot to Cartesian coordinates.
-  p <- p + ggplot2::coord_cartesian(
-    xlim = x_range,
-    ylim = y_range)
+  p <- p + ggplot2::coord_cartesian(xlim = x_range, ylim = y_range)
 
   return(p)
 }

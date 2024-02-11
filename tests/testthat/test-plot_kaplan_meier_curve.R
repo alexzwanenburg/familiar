@@ -29,7 +29,7 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("survival"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
-    "color_by" = "risk_group"),
+    "color_by" = "group"),
   debug = debug_flag
 )
 
@@ -42,7 +42,7 @@ familiar:::test_plot_ordering(
     stratification_method = "fixed"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
-    "color_by" = "risk_group"),
+    "color_by" = "group"),
   debug = debug_flag
 )
 
@@ -56,7 +56,7 @@ familiar:::test_plot_ordering(
     stratification_threshold = c(0.20, 0.40, 0.60, 0.80)),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
-    "color_by" = "risk_group"),
+    "color_by" = "group"),
   debug = debug_flag
 )
 
@@ -70,7 +70,7 @@ familiar:::test_plot_ordering(
     stratification_threshold = c(0.20, 0.40, 0.60, 0.80)),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
-    "color_by" = "risk_group",
+    "color_by" = "group",
     "split_by" = "stratification_method"),
   debug = debug_flag
 )

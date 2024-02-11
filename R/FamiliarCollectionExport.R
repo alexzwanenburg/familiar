@@ -407,7 +407,7 @@ setMethod(
     has_learner <- "learner" %in% columns
     has_fs_method <- "fs_method" %in% columns
     has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature") %in% columns)
-    has_risk_group <- any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns)
+    has_risk_group <- any(c("reference_group", "group", "group_1", "group_2") %in% columns)
     has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome") %in% columns) &&
       object@outcome_type == "multinomial"
     has_categorical_outcome <- any(c("observed_outcome", "expected_outcome") %in% columns) &&
@@ -479,7 +479,8 @@ setMethod(
     
     if (has_risk_group) {
       for (current_column_name in c(
-        "risk_group", "risk_group_1", "risk_group_2", "reference_group")) {
+        "reference_group", "group", "group_1", "group_2"
+      )) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
