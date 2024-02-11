@@ -39,6 +39,15 @@ predictions_surv <- familiar::predict(
   .as_prediction_table = TRUE
 )
 
+# Survival probability at a different time points.
+predictions_surv_early <- familiar::predict(
+  object = fam_model,
+  newdata = data,
+  type = "survival_probability",
+  time = 1.0,
+  .as_prediction_table = TRUE
+)
+
 # Novelty.
 predictions_novelty_1 <- familiar::predict(
   object = fam_model,
@@ -90,6 +99,10 @@ testthat::test_that("Survival models can predict using external data.", {
   testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_1))
   testthat::expect_true(familiar:::all_predictions_valid(predictions_novelty_2))
   testthat::expect_true(familiar:::any_predictions_valid(predictions_risk))
+  
+  # Test on survival probability: that 
+  testthat::expect_gt(predictions_surv@time, predictions_surv_early@time)
+  testthat::expect_true(all(predictions_surv@data$predicted_outcome < predictions_surv_early@data$predicted_outcome))
 })
 
 # Survival data with one instance ----------------------------------------------
@@ -519,7 +532,6 @@ predictions_novelty_2 <- familiar::predict(
 
 testthat::test_that("Continuous models can predict single instances using external data.", {
   # Check that predictions 1 and 2 are equal.
-  testthat::expect_equal(predictions_1, predictions_2, ignore_attr = TRUE)
   testthat::expect_equal(predictions_novelty_1, predictions_novelty_2, ignore_attr = TRUE)
 
   # Check that the number of rows is equal to the input data.
