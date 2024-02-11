@@ -4244,18 +4244,15 @@
         
       } else if (!is.null(development_batch_id)) {
         # 98th percentile of all outcome times in the training cohorts.
-        settings$time_max <- stats::quantile(
-          data[outcome_event == 1 & batch_id %in% development_batch_id]$outcome_time,
-          probs = 0.98,
-          na.rm = TRUE,
-          names = FALSE)
+        settings$time_max <- .get_default_time_max(
+          data[outcome_event == 1 & batch_id %in% development_batch_id]$outcome_time
+        )
         
       } else {
-        # 98th percentile of all outcome times.
-        settings$time_max <- stats::quantile(data[outcome_event == 1]$outcome_time,
-          probs = 0.98,
-          na.rm = TRUE,
-          names = FALSE)
+        # 98th percentile of all outcome times in the training cohorts.
+        settings$time_max <- .get_default_time_max(
+          data[outcome_event == 1]$outcome_time
+        )
       }
     }
 
@@ -4350,5 +4347,21 @@
   return(c(
     "paths", "data", "run", "preprocessing", "feature_selection",
     "model_development", "hyperparameter_optimisation", "evaluation"
+  ))
+}
+
+
+
+.get_default_time_max <- function(x) {
+  if (is_empty(x)) return(Inf)
+  if (all(!is.finite(x))) return(Inf)
+  
+  x <- x[is.finite(x)]
+  
+  return(stats::quantile(
+    x,
+    probs = 0.98,
+    na.rm = TRUE,
+    names = FALSE
   ))
 }
