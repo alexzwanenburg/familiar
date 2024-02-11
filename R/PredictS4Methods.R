@@ -777,120 +777,12 @@ setMethod(
 
 
 
-remove_nonvalid_predictions <- function(prediction_table, outcome_type) {
-  # TODO: REMOVE THIS FUNCTION: it is replaced by remove_invalid_predictions.
-  stop("This function has been replaced by remove_invalid_predictions.")
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- predicted_class <- survival_probability <- risk_group <- NULL
-
-  if (is_empty(prediction_table)) return(prediction_table)
-
-  # Check predicted outcome columns.
-  if (outcome_type %in% c("survival", "competing_risk")) {
-    if ("predicted_outcome" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[is.finite(predicted_outcome), ]
-    }
-    if ("survival_probability" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[is.finite(survival_probability), ]
-    }
-    if ("risk_group" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[!is.na(risk_group), ]
-    }
-    
-  } else if (outcome_type %in% c("continuous")) {
-    prediction_table <- prediction_table[is.finite(predicted_outcome), ]
-    
-  } else if (outcome_type %in% c("binomial", "multinomial")) {
-    # predicted_class may be absent (e.g. for ICE-tables), so we need check if
-    # it exists.
-    if ("predicted_class" %in% colnames(prediction_table)) {
-      # Mask based on predicted_class.
-      prediction_table <- prediction_table[!is.na(predicted_class), ]
-      
-    } else {
-      # Mask probability columns.
-      class_probability_columns <- grepl(
-        pattern = "predicted_class_probability_",
-        x = colnames(prediction_table))
-
-      # Get the names of the probability columns.
-      class_probability_columns <- colnames(prediction_table)[class_probability_columns]
-
-      # Create mask for valid instances.
-      instance_mask <- rep.int(TRUE, nrow(prediction_table))
-      for (ii in class_probability_columns) {
-        instance_mask <- instance_mask & is.finite(prediction_table[[ii]])
-      }
-
-      # Apply mask to the prediction table.
-      prediction_table <- prediction_table[instance_mask, ]
-    }
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-
-  return(prediction_table)
-}
-
-
-
-# remove_missing_outcomes (data.table) -----------------------------------------
-setMethod(
-  "remove_missing_outcomes",
-  signature(data = "data.table"),
-  function(data, outcome_type) {
-    stop("remove_missing_outcomes is replaced by filter_missing_outcome")
-    
-    # Suppress NOTES due to non-standard evaluation in data.table
-    outcome <- outcome_time <- outcome_event <- NULL
-
-    if (is_empty(data)) return(data)
-
-    # Check predicted outcome columns.
-    if (outcome_type %in% c("survival", "competing_risk")) {
-      data <- data[is.finite(outcome_time) & !is.na(outcome_event), ]
-    } else if (outcome_type %in% c("continuous")) {
-      data <- data[is.finite(outcome), ]
-    } else if (outcome_type %in% c("binomial", "multinomial")) {
-      data <- data[!is.na(outcome), ]
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-
-    return(data)
-  }
-)
-
-
-# remove_missing_outcomes (dataObject) -----------------------------------------
-setMethod(
-  "remove_missing_outcomes", 
-  signature(data = "dataObject"),
-  function(data, outcome_type = NULL) {
-    if (is_empty(data)) return(data)
-
-    if (is.null(outcome_type)) outcome_type <- data@outcome_type
-
-    # Update data attribute
-    data@data <- remove_missing_outcomes(
-      data = data@data,
-      outcome_type = outcome_type)
-
-    return(data)
-  }
-)
-
 
 # remove_missing_outcomes (ANY) ------------------------------------------------
 setMethod(
   "remove_missing_outcomes",
   signature(data = "ANY"),
-  function(data, outcome_type = NULL) {
-    if (is_empty(data)) return(data)
-
-    ..error_reached_unreachable_code(
-      "remove_missing_outcomes,ANY: data does not have a known object class, nor is empty.")
+  function(data, outcome_type) {
+    stop("remove_missing_outcomes is replaced by filter_missing_outcome")
   }
 )
