@@ -1468,7 +1468,7 @@ setMethod(
     merged_table <- .is_merged_prediction_table(data)
     data_slot <- ifelse(merged_table, "data", "reference_data")
     
-    if (is_empty(data@reference_data)) return(data)
+    if (is_empty(slot(data, data_slot))) return(data)
     
     if (data@outcome_type %in% c("survival", "competing_risk")) {
       if (merged_table && !all(c("outcome_time", "outcome_event") %in% data@grouping_column)) return(data)
