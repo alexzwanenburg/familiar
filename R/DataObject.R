@@ -96,7 +96,7 @@ setMethod(
   ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
-    type <- NULL
+    type <- outcome_event <- NULL
     
     # Determine whether the object contains data concerning columns, and
     # outcome. Note that user-provided names always take precedence.
@@ -312,6 +312,12 @@ setMethod(
       outcome_info <- object@outcome_info
       
     } else {
+      if (settings$data$outcome_type %in% c("survival", "competing_risk")) {
+        # Update time max.
+        if (is.null(settings$eval$time_max)) {
+          settings$eval$time_max <- .get_default_time_max(data[outcome_event == 1]$outcome_time)
+        }
+      }
       outcome_info <- create_outcome_info(settings = settings)
     }
     
