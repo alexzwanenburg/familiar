@@ -1458,7 +1458,7 @@ setMethod(
 setMethod(
   "filter_missing_outcome",
   signature(data = "familiarDataElementPredictionTable"),
-  function(data, is_validation = FALSE, ...) {
+  function(data, is_validation = FALSE, outcome_type = NULL, ...) {
     # This method removes instances where reference data are missing.
     # See other methods for filter_missing_outcome in DataObject.R.
     
@@ -1470,16 +1470,26 @@ setMethod(
     
     if (is_empty(slot(data, data_slot))) return(data)
     
+    # Determine outcome type. This is not merely a shortcut, e.g. for some
+    # prediction tables (e.g. predictionTableRiskGroups) the outcome type is
+    # unsupervised (which is correct), but outcome columns might still be
+    # present.
+    if (is.null(outcome_type)) {
+      outcome_type <- data@outcome_type
+    }
+    
     if (data@outcome_type %in% c("survival", "competing_risk")) {
       if (merged_table && !all(c("outcome_time", "outcome_event") %in% data@grouping_column)) return(data)
       
       outcome_is_valid <- is_valid_data(slot(data, data_slot)$outcome_time) &
         is_valid_data(slot(data, data_slot)$outcome_event)
       
-    } else {
+    } else if (outcome_type %in% c("binomial", "multinomial", "continuous")) {
       if (merged_table && !("outcome" %in% data@grouping_column)) return(data)
       
       outcome_is_valid <- is_valid_data(slot(data, data_slot)$outcome)
+    } else {
+      ..error_outcome_type_not_implemented(outcome_type)
     }
     
     if (is_validation) {
