@@ -362,7 +362,8 @@ setMethod(
           prediction_table <- as_prediction_table(
             x = prediction_table$survival_probability,
             type = "survival_probability",
-            data = data
+            data = data,
+            time = time
           )
         }
         

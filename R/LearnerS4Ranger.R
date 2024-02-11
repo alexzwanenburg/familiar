@@ -942,14 +942,16 @@ setMethod(
     prediction_table <- as_prediction_table(
       x = event_table$predicted_outcome,
       type = "cumulative_hazard",
-      data = data
+      data = data,
+      time = time
     )
     
   } else {
     prediction_table <- as_prediction_table(
       x = event_table$predicted_outcome,
       type = "survival_probability",
-      data = data
+      data = data,
+      time = time
     )
   }
   

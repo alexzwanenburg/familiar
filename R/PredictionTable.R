@@ -20,11 +20,13 @@ setClass(
   contains = "familiarDataElementPredictionTable",
   slots = list(
     "censored" = "character",
-    "event" = "character"
+    "event" = "character",
+    "time" = "numeric"
   ),
   prototype = list(
     "censored" = NA_character_,
-    "event" = NA_character_
+    "event" = NA_character_,
+    "time" = Inf
   )
 )
 
@@ -329,7 +331,7 @@ as_prediction_table <- function(
     object <- add_data_element_identifier(
       x = object,
       evaluation_time = time
-    )
+    )[[1]]
     
     object@time <- time
   }
