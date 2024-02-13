@@ -426,7 +426,7 @@ setMethod(
 ) {
   
   # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
+  if (get_n_samples(data) <= 1) return(NULL)
   
   if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
     logger_message(
