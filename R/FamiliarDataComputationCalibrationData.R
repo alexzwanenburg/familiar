@@ -478,7 +478,7 @@ setMethod(
     # Add distribution data.
     if (!is.list(data_element)) data_element <- list(data_element)
     
-    density_data <- mapply(
+    density_data <- lapply(
       data_element,
       .compute_calibration_data_density,
       object = object
@@ -531,64 +531,17 @@ setMethod(
     object <- get_bootstrap_sample(data = object, seed = bootstrap_seed)
   }
   
+  # Compute calibration, linear and gof test data.
   calibration_data <- ..compute_calibration_data(
     object,
     data_element = data_element
   )
   
-  # Extract data
-  if (object@outcome_type %in% c("survival")) {
-    # Calibration grouping data for survival outcomes.
-    calibration_data <- .compute_calibration_data_survival(
-      data = data,
-      time = data_element@identifiers$evaluation_time,
-      n_groups = ifelse(data_element@estimation_type == "point", 20L, 1L))
-    
-    # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(
-      calibration_data = calibration_data,
-      outcome_type = object@outcome_type)
-    
-    # Nam-D'Agostino tests
-    calibration_gof_test <- .compute_calibration_nam_dagostino(
-      calibration_data = calibration_data)
-    
-  } else if (object@outcome_type %in% c("binomial", "multinomial")) {
-    # Calibration grouping data for categorical outcomes.
-    calibration_data <- .compute_calibration_data_categorical(
-      data = data,
-      positive_class = data_element@identifiers$positive_class,
-      n_groups = ifelse(data_element@estimation_type == "point", 20L, 1L))
-    
-    # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(
-      calibration_data = calibration_data,
-      outcome_type = object@outcome_type)
-    
-    # Hosmer-Lemeshow tests
-    calibration_gof_test <- .compute_calibration_hosmer_lemeshow(
-      calibration_data = calibration_data)
-    
-  } else if (object@outcome_type %in% c("continuous")) {
-    # Calibration grouping data for numerical outcomes.
-    calibration_data <- .compute_calibration_data_regression(
-      object = object,
-      data = data,
-      n_groups = ifelse(data_element@estimation_type == "point", 20L, 1L))
-    
-    # Calibration-in-the-large and calibration slope
-    calibration_at_large <- .compute_calibration_linear_fit(
-      calibration_data = calibration_data,
-      outcome_type = object@outcome_type)
-    
-    # Hosmer-Lemeshow tests
-    calibration_gof_test <- .compute_calibration_hosmer_lemeshow(
-      calibration_data = calibration_data)
-    
-  } else {
-    ..error_outcome_type_not_implemented(object@outcome_type)
-  }
-  
+  # Extract data.
+  calibration_at_large <- calibration_data$linear
+  calibration_gof_test <- calibration_data$gof_test
+  calibration_data <- calibration_data$calibration
+
   if (!is_empty(calibration_data) && data_element@estimation_type != "point") {
     # Interpolate data to regular expected values, unless point data is used.
     calibration_data <- calibration_data[
@@ -818,8 +771,7 @@ setMethod(
     # Iterate over groups
     calibration_data <- lapply(
       seq_along(repeated_groups),
-      function(ii, groups, data) {
-        
+      function(ii, object, groups, data) {
         return(...compute_calibration_data(
           object = object,
           data = data,
@@ -919,7 +871,7 @@ setMethod(
     
     # Iterate over groups
     calibration_data <- lapply(
-      seq_len(length(repeated_groups)),
+      seq_along(repeated_groups),
       function(ii, object, groups, data) {
         return(...compute_calibration_data(
           object = object,
