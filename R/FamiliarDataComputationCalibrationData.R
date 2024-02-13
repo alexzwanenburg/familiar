@@ -625,7 +625,7 @@ setMethod(
     data <- data.table::copy(.as_data_table(object))
     data.table::setnames(
       data,
-      old = c("outcome_time", "outcome_event", "survival_probability"),
+      old = c("outcome_time", "outcome_event", "predicted_outcome"),
       new = c("time", "event", "exp_prob")
     )
     
@@ -1131,7 +1131,7 @@ setMethod(
     # Rename the survival column to standard name.
     data.table::setnames(
       data,
-      old = "survival_probability",
+      old = "predicted_outcome",
       new = "expected"
     )
     
