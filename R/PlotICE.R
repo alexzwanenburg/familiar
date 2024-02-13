@@ -546,18 +546,21 @@ setMethod(
     # Get input data.
     ice_data <- export_ice_data(
       object = object,
-      aggregate_results = TRUE)
-    
+      aggregate_results = TRUE
+    )
+
     pd_data <- export_partial_dependence_data(
       object = object,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     # Check anchor values.
     if (length(ice_data) > 0 && !is.null(anchor_values)) {
       # Determine feature names.
       feature_names <- unique(c(
         sapply(ice_data, function(x) (x@identifiers$feature_x)),
-        sapply(ice_data, function(x) (x@identifiers$feature_y))))
+        sapply(ice_data, function(x) (x@identifiers$feature_y))
+      ))
 
       # Check if names are provided to anchor values.
       if (length(feature_names) > 1 && length(names(anchor_values)) == 0) {
@@ -610,7 +613,7 @@ setMethod(
       show_ice <- FALSE
       n_max_samples_shown <- NULL
     }
-
+    
     # Update the output so that it is more consistent.
     data <- mapply(
       .update_ice_and_pd_output,
@@ -621,13 +624,30 @@ setMethod(
         "anchor_values" = anchor_values,
         "n_samples" = n_max_samples_shown,
         "seed" = sample.int(n = 10000L, size = 1L)),
-      SIMPLIFY = FALSE)
+      SIMPLIFY = FALSE
+    )
     
     # Flatten nested list.
     data <- .flatten_nested_list(data)
     ice_data <- data$ice_data
     pd_data <- data$pd_data
-
+    
+    # Add in sample to ice_data, and drop identifier columns.
+    ice_data <- lapply(
+      ice_data,
+      function(x) {
+        x@data[, "sample" := get_unique_row_names(x=x@data)]
+        for (id_column in get_id_columns()) {
+          x@data[, (id_column) := NULL]
+        }
+        
+        x@grouping_column <- setdiff(x@grouping_column, get_id_columns())
+        x@grouping_column <- c(x@grouping_column, "sample")
+        
+        return(x)
+      }
+    )
+    
     # Check that show_pd and show_ice are not both FALSE.
     if (!show_pd && !show_ice) {
       warning(paste0(
@@ -683,11 +703,11 @@ setMethod(
     if (show_2d) {
       dropped_identifiers <- c("feature_x_value", "feature_y_value")
     } else if (show_ice) {
-      dropped_identifiers <- c(get_id_columns(), "feature_x_value")
+      dropped_identifiers <- c("sample", "feature_x_value")
     } else {
       dropped_identifiers <- c("feature_x_value")
     }
-browser()
+    
     # Determine splitting variables present in the dataset.
     if (show_ice) {
       plot_data <- identify_element_sets(
@@ -988,7 +1008,7 @@ browser()
           additional = additional_subtitle,
           x = x_split[[ii]])
       }
-
+      
       # Generate plot
       p <- .plot_ice(
         x = x_split[[ii]],
@@ -1350,7 +1370,7 @@ browser()
       data_present <- FALSE
     }
   }
-
+  
   # Set value range
   if (is.null(value_range) && value_scales == "facet" && data_present) {
     if (show_ice) {
@@ -1452,9 +1472,9 @@ browser()
   .check_input_plot_args(
     x_label = x_label,
     y_label = y_label)
-
+  
   # Update show_novelty to check for non-finite values in the novelty data.
-  show_novelty <- show_novelty && all(is.finite(plot_data$novelty))
+  show_novelty <- show_novelty && !is.null(plot_data$novelty) && all(is.finite(plot_data$novelty))
 
   if (show_novelty) {
     # Find the correct novelty-range
@@ -2001,7 +2021,7 @@ browser()
   }
 
   # Update show_novelty to check for non-finite values in the novelty data.
-  show_novelty <- show_novelty && all(is.finite(plot_data$novelty))
+  show_novelty <- show_novelty && !is.null(plot_data$novelty) && all(is.finite(plot_data$novelty))
 
   if (show_novelty) {
     # Find the correct novelty-range

@@ -425,7 +425,7 @@ setMethod(
     ...
 ) {
   # Divide feature(s) into points.
-  
+
   # Generate range
   feature_x_range <- .create_feature_range(
     feature_info = object@feature_info,
@@ -516,7 +516,7 @@ setMethod(
   if (!is.null(data_element@identifiers$feature_y)) {
     data@data[, (data_element@identifiers$feature_y) := data_element@identifiers$feature_y_value]
   }
-  
+
   # Predict both primary outcomes and novelty
   type <- ifelse(
     object@outcome_type %in% c("survival", "competing_risk"),
@@ -558,6 +558,7 @@ setMethod(
   novelty_data <- remove_invalid_predictions(novelty_data)
   
   if (object@outcome_type %in% c("binomial", "multinomial")) {
+    
     # Determine class levels.
     class_levels <- get_outcome_class_levels(object)
     
@@ -572,12 +573,6 @@ setMethod(
       used_class_levels <- class_levels
     }
     
-    # Add positive class as identifier.
-    data_elements <- add_data_element_identifier(
-      x = data_element,
-      positive_class = used_class_levels
-    )
-    
     # Make sure that probability is returned.
     prediction_data <- .convert_value_to_grouping_column(
       prediction_data,
@@ -585,23 +580,14 @@ setMethod(
       new_grouping_column_name = "positive_class", 
       new_value_column_name = "probability"
     )
-    
-    # Create ice and pd plot data.
-    data_elements <- lapply(
-      data_elements,
-      .create_ice_and_pd_objects,
-      prediction_data = prediction_data,
-      novelty_data = novelty_data
-    )
-    
-   } else {
-     # Create ice and pd plot data.
-     data_elements <- .create_ice_and_pd_objects(
-       data_element,
-       prediction_data = prediction_data,
-       novelty_data = novelty_data
-     )
-   }
+  }
+  
+  # Create ice and pd plot data.
+  data_elements <- .create_ice_and_pd_objects(
+    data_element,
+    prediction_data = prediction_data,
+    novelty_data = novelty_data
+  )
   
   return(data_elements)
 }
@@ -720,7 +706,7 @@ setMethod(
 ) {
   # Create ice and pd data elements.
   ice_data_element <- data_element
-  
+
   if (is_empty(novelty_data)) {
     ice_data_element@data <- data.table::copy(.as_data_table(prediction_data))
     ice_data_element@grouping_column <- prediction_data@grouping_column
@@ -858,20 +844,24 @@ setMethod(
   data.table::setnames(
     x = ice_data@data,
     old = old_value_column,
-    new = new_value_column)
+    new = new_value_column
+  )
   data.table::setnames(
     x = pd_data@data, 
     old = old_value_column,
-    new = new_value_column)
+    new = new_value_column
+  )
   
   # Update value column attributes.
   ice_data@value_column <- c(
     new_value_column,
-    setdiff(ice_data@value_column, old_value_column))
+    setdiff(ice_data@value_column, old_value_column)
+  )
   pd_data@value_column <- c(
     new_value_column,
-    setdiff(pd_data@value_column, old_value_column))
-  
+    setdiff(pd_data@value_column, old_value_column)
+  )
+
   if (!is.null(x_anchor) || !is.null(y_anchor)) {
     
     # Update individual conditional expectation data.
@@ -881,7 +871,8 @@ setMethod(
       y_anchor = y_anchor,
       value_column = new_value_column,
       outcome_type = outcome_type,
-      anchor_values = anchor_values)
+      anchor_values = anchor_values
+    )
     
     # Update partial dependence data.
     pd_data <- .create_pd_object(ice_data)
@@ -904,7 +895,8 @@ setMethod(
   
   return(list(
     "ice_data" = ice_data,
-    "pd_data" = pd_data))
+    "pd_data" = pd_data
+  ))
 }
 
 
@@ -930,31 +922,39 @@ setMethod(
     
     # Subtract anchor value for 2D plots with x and y anchors.
     if (length(grouping_columns) > 0) {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_2D,
-        x = feature_x_value,
-        x_anchor = x_anchor,
-        y = feature_y_value,
-        y_anchor = y_anchor,
-        value_offset = value,
-        x_name = x@identifiers$feature_x,
-        y_name = x@identifiers$feature_y),
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_2D,
+          x = feature_x_value,
+          x_anchor = x_anchor,
+          y = feature_y_value,
+          y_anchor = y_anchor,
+          value_offset = value,
+          x_name = x@identifiers$feature_x,
+          y_name = x@identifiers$feature_y
+        ),
         by = c(grouping_columns),
-        .SDcols = value_column]
+        .SDcols = value_column
+      ]
       
     } else {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_1D,
-        x = feature_x_value,
-        x_anchor = x_anchor,
-        y = feature_y_value,
-        y_anchor = y_anchor,
-        value_offset = value,
-        x_name = x@identifiers$feature_x,
-        y_name = x@identifiers$feature_y),
-        .SDcols = value_column]
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_1D,
+          x = feature_x_value,
+          x_anchor = x_anchor,
+          y = feature_y_value,
+          y_anchor = y_anchor,
+          value_offset = value,
+          x_name = x@identifiers$feature_x,
+          y_name = x@identifiers$feature_y
+        ),
+        .SDcols = value_column
+      ]
     }
     
   } else if (!is.null(x_anchor)) {
@@ -963,25 +963,33 @@ setMethod(
     
     # Subtract anchor value for x anchor.
     if (length(grouping_columns) > 0) {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_1D,
-        x = feature_x_value,
-        x_anchor = x_anchor,
-        value_offset = value,
-        name = x@identifiers$feature_x),
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_1D,
+          x = feature_x_value,
+          x_anchor = x_anchor,
+          value_offset = value,
+          name = x@identifiers$feature_x
+        ),
         by = c(grouping_columns),
-        .SDcols = value_column]
+        .SDcols = value_column
+      ]
       
     } else {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_1D,
-        x = feature_x_value,
-        x_anchor = x_anchor,
-        value_offset = value,
-        name = x@identifiers$feature_x),
-        .SDcols = value_column]
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_1D,
+          x = feature_x_value,
+          x_anchor = x_anchor,
+          value_offset = value,
+          name = x@identifiers$feature_x
+        ),
+        .SDcols = value_column
+      ]
     }
     
   } else if (!is.null(y_anchor)) {
@@ -990,25 +998,33 @@ setMethod(
     
     # Subtract anchor value for y anchor.
     if (length(grouping_columns) > 0) {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_1D,
-        x = feature_y_value,
-        x_anchor = y_anchor,
-        value_offset = value,
-        name = x@identifiers$feature_y),
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_1D,
+          x = feature_y_value,
+          x_anchor = y_anchor,
+          value_offset = value,
+          name = x@identifiers$feature_y
+        ),
         by = c(grouping_columns),
-        .SDcols = value_column]
+        .SDcols = value_column
+      ]
       
     } else {
-      x@data[, (value_column) := lapply(
-        .SD,
-        ..anchor_ice_values_1D,
-        x = feature_y_value,
-        x_anchor = y_anchor,
-        value_offset = value,
-        name = x@identifiers$feature_y),
-        .SDcols = value_column]
+      x@data[
+        ,
+        (value_column) := lapply(
+          .SD,
+          ..anchor_ice_values_1D,
+          x = feature_y_value,
+          x_anchor = y_anchor,
+          value_offset = value,
+          name = x@identifiers$feature_y
+        ),
+        .SDcols = value_column
+      ]
     }
     
   } else {
@@ -1028,6 +1044,10 @@ setMethod(
   
   if (is.null(n_samples)) return(x)
 
+  if (is.null(x$sample)) {
+    ..error_reached_unreachable_code("sample column was not defined")
+  }
+  
   # Select unique sample identifiers.
   sample_identifiers <- unique(x$sample)
   
@@ -1039,7 +1059,8 @@ setMethod(
     x = sample_identifiers,
     size = n_samples,
     replace = FALSE,
-    seed = seed) 
+    seed = seed
+  )
   
   x <- x[sample %in% selected_identifiers]
   
@@ -1316,7 +1337,7 @@ setMethod(
     x_list, 
     aggregate_results = FALSE,
     ...) {
-    
+
     if (aggregate_results) {
       x_list <- .compute_data_element_estimates(x_list)
     }
