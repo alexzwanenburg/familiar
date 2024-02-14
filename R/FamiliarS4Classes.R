@@ -1515,6 +1515,8 @@ setClass(
   "familiarDataElementPredictionTable",
   contains = "familiarDataElement",
   slots = list(
+    "learner" = "character",
+    "fs_method" = "character",
     "ensemble_method" = "character",
     "percentiles" = "ANY",
     "outcome_type" = "ANY",
@@ -1524,6 +1526,8 @@ setClass(
   ),
   prototype = methods::prototype(
     bootstrap_ci_method = "percentile",
+    learner = "custom_learner",
+    fs_method = "custom_vimp_method",
     ensemble_method = "median",
     percentiles = NULL,
     outcome_type = NULL,

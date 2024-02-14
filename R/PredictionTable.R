@@ -167,8 +167,15 @@ setClass(
 #'
 #'   This parameter is only relevant for `survival` outcomes.
 #' @param value_range Range of observed, **not predicted**, values.
-#' 
+#'
 #'   This parameter is only relevant for `continuous` outcomes.
+#'
+#' @param learner The type of learner that generated the predictions.
+#' @param vimp_method The type of variable importance method for identifying the
+#'   features included by the learner that generated the predictions.
+#' @param model_object A familiarModel or familiarEnsemble that can be used (and
+#'   is used internally) for setting several of the other arguments of this
+#'   function.
 #' @param data A familiar dataObject object that can be used (and is used
 #'   internally) for setting many of the other arguments of this function.
 #'
@@ -189,6 +196,9 @@ as_prediction_table <- function(
     value_range = waiver(),
     event_indicator = waiver(),
     censoring_indicator = waiver(),
+    learner = waiver(),
+    vimp_method = waiver(),
+    model_object = NULL,
     data = NULL
 ) {
   
@@ -237,6 +247,22 @@ as_prediction_table <- function(
   # Infer outcome_type based on known information.
   if (is(data, "dataObject") || is(data, "familiarDataElementPredictionTable")) {
     object@outcome_type <- data@outcome_type
+  } else if (is(model_object, "familiarModelUnion")) {
+    object@outcome_type <- model_object@outcome_type
+  }
+  
+  # Set learner.
+  if (!is.waive(learner)) {
+    object@learner <- learner
+  } else if (is(model_object, "familiarModelUnion")) {
+    object@learner <- model_object@learner
+  }
+  
+  # Set vimp method.
+  if (!is.waive(vimp_method)) {
+    object@fs_method <- vimp_method
+  } else if (is(model_object, "familiarModelUnion")) {
+    object@fs_method <- model_object@fs_method
   }
   
   if (is_empty(x)) {
@@ -346,6 +372,9 @@ as_prediction_table <- function(
     if (is.unset(class_levels) && is(data, "dataObject")) {
       class_levels <- get_outcome_class_levels(data)
     }
+    if (is.unset(class_levels) && is(model_object, "familiarModelUnion")) {
+      class_levels <- get_outcome_class_levels(model_object)
+    }
     if (is.unset(class_levels) && !is_empty(object@reference_data)) {
       if (is.factor(object@reference_data[[1]])) {
         class_levels <- levels(object@reference_data[[1]])
@@ -390,6 +419,9 @@ as_prediction_table <- function(
     if ((is.unset(value_range) || !all(is.finite(value_range))) && is(data, "dataObject")) {
       value_range <- suppressWarnings(range(data@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
     }
+    if ((is.unset(value_range) || !all(is.finite(value_range))) && is(model_object, "familiarModelUnion")) {
+      value_range <- suppressWarnings(range(model_object@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+    }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && !is_empty(object@reference_data)) {
       value_range <- suppressWarnings(range(object@reference_data[[1]], na.rm = TRUE, finite = TRUE))
     }
@@ -412,6 +444,9 @@ as_prediction_table <- function(
     if (is.unset(censoring_indicator) && is(data, "dataObject")) {
       censoring_indicator <- data@outcome_info@censored
     }
+    if (is.unset(censoring_indicator) && is(model_object, "familiarModelUnion")) {
+      censoring_indicator <- model_object@outcome_info@censored 
+    }
     if (is.unset(censoring_indicator)) {
       censoring_indicator <- .get_available_default_censoring_indicator()
     }
@@ -429,6 +464,9 @@ as_prediction_table <- function(
     if (is.unset(event_indicator) && is(data, "dataObject")) {
       event_indicator <- data@outcome_info@event
     } 
+    if (is.unset(event_indicator) && is(model_object, "familiarModelUnion")) {
+      event_indicator <- model_object@outcome_info@event 
+    }
     if (is.unset(event_indicator)) {
       event_indicator <- .get_available_default_event_indicator()
     }
