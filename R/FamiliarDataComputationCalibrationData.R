@@ -621,7 +621,7 @@ setMethod(
     
     # Set time and n_groups.
     time <- data_element@identifiers$evaluation_time
-    n_groups <- ifelse(data_element@estimation_type == "point", 20L, 1L)
+    n_groups <- 1L
     
     # Rename the survival column to standard name.
     data <- data.table::copy(.as_data_table(object))
@@ -729,7 +729,7 @@ setMethod(
     observed_class <- exp_prob <- NULL
     
     positive_class <- data_element@identifiers$positive_class
-    n_groups <- ifelse(data_element@estimation_type == "point", 20L, 1L)
+    n_groups <- 1L
     
     # Identify the real outcome columns
     outcome_column <- get_outcome_columns(x = "binomial")
@@ -834,8 +834,7 @@ setMethod(
     
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome <- predicted_outcome <- NULL
-    
-    n_groups <- ifelse(data_element@estimation_type == "point", 20L, 1L)
+    n_groups <- 1L
     
     # Extract data.
     data <- data.table::copy(.as_data_table(object))
