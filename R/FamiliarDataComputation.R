@@ -817,7 +817,14 @@ setMethod(
     )
   }
   
-  
+  # Set up outcome information object.
+  if (is(object, "familiarEnsemble")) {
+    outcome_info <- object@outcome_info
+    
+  } else {
+    outcome_info <- .create_outcome_info(object)
+  }
+
   # Create a familiarData object
   fam_data <- methods::new(
     "familiarData",

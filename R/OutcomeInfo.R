@@ -41,46 +41,143 @@ create_outcome_info <- function(settings) {
 }
 
 
-
-create_outcome_info_from_data <- function(data) {
-  # This is typically an outcomeInfo object created at runtime, without access
-  # to outcome_info in the global backend, or attached to an object.
-
-  outcome_info <- methods::new("outcomeInfo",
-    name = character(0L),
-    outcome_type = data@outcome_type,
-    outcome_column = get_outcome_columns(x = data))
-
-  if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
-    # Set class levels
-    outcome_info@levels <- get_outcome_class_levels(x = data)
-
-    # Set flag indicating that the outcome is ordinal (currently not enabled)
-    outcome_info@ordered <- is.ordered(data@data[[outcome_info@outcome_column]])
-
-    # Set reference level of the outcome
-    outcome_info@reference <- outcome_info@levels[1]
+# .create_outcome_info (model, ensemble) ---------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "familiarModelUnion"),
+  function(object, ...) {
+    return(object@outcome_info)
   }
+)
 
-  if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
-    # Set maximum time
-    outcome_info@time <- Inf
 
-    # Set indicator for censoring
-    outcome_info@censored <- "0"
-
-    # Set indicator for events
-    outcome_info@event <- "1"
+# .create_outcome_info (data object) -------------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "dataObject"),
+  function(object, ...) {
+    
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = data@outcome_type,
+      outcome_column = get_outcome_columns(x = data)
+    )
+    
+    if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
+      # Set class levels
+      outcome_info@levels <- get_outcome_class_levels(x = data)
+      
+      # Set flag indicating that the outcome is ordinal (currently not enabled)
+      outcome_info@ordered <- is.ordered(data@data[[outcome_info@outcome_column]])
+      
+      # Set reference level of the outcome
+      outcome_info@reference <- outcome_info@levels[1]
+    }
+    
+    if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
+      # Set maximum time
+      outcome_info@time <- Inf
+      
+      # Set indicator for censoring
+      outcome_info@censored <- "0"
+      
+      # Set indicator for events
+      outcome_info@event <- "1"
+    }
+    
+    if (outcome_info@outcome_type %in% c("competing_risk")) {
+      # Set indicator for competing risks
+      outcome_info@competing_risk <- as.character(setdiff(
+        unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)
+      ))
+    }
+    
+    return(outcome_info)
   }
+)
 
-  if (outcome_info@outcome_type %in% c("competing_risk")) {
-    # Set indicator for competing risks
-    outcome_info@competing_risk <- as.character(setdiff(
-      unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)))
+
+
+# .create_outcome_info (data.table) --------------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "data.table"),
+  function(object, outcome_type, ...) {
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = outcome_type,
+      outcome_column = get_outcome_columns(outcome_type = outcome_type)
+    )
+    
+    if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
+      # Set class levels
+      outcome_info@levels <- get_outcome_class_levels(x = data)
+      
+      # Set flag indicating that the outcome is ordinal (currently not enabled)
+      outcome_info@ordered <- is.ordered(data[[outcome_info@outcome_column]])
+      
+      # Set reference level of the outcome
+      outcome_info@reference <- outcome_info@levels[1]
+    }
+    
+    if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
+      # Set maximum time
+      outcome_info@time <- Inf
+      
+      # Set indicator for censoring
+      outcome_info@censored <- "0"
+      
+      # Set indicator for events
+      outcome_info@event <- "1"
+    }
+    
+    if (outcome_info@outcome_type %in% c("competing_risk")) {
+      # Set indicator for competing risks
+      outcome_info@competing_risk <- as.character(setdiff(
+        unique_na(data[[outcome_info@outcome_column[2]]]), c(0, 1)
+      ))
+    }
+    
+    return(outcome_info)
   }
+)
 
-  return(outcome_info)
-}
+
+# .create_outcome_info (prediction table) --------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = object@outcome_type,
+      outcome_column = get_outcome_columns(object@outcome_type)
+    )
+    
+    if (.hasSlot(object, "classes")) {
+      outcome_info@levels <- object@classes
+      outcome_info@ordered <- is.ordered(object@classes)
+      outcome_info@reference <- outcome_info@levels[1]
+    }
+    
+    if (.hasSlot(object, "time")) {
+      outcome_info@time <- object@time
+    }
+    
+    if (.hasSlot(object, "event")) {
+      outcome_info@event <- object@event
+    }
+    
+    if (.hasSlot(object, "censored")) {
+      outcome_info@censored <- object@censored
+    }
+    
+    return(outcome_info)
+  }
+)
 
 
 
@@ -145,7 +242,7 @@ get_outcome_info_from_backend <- function() {
 
   # Finally, attempt to infer from dataObject
   if (inherits(x, "dataObject")) {
-    return(create_outcome_info_from_data(data = x))
+    return(.create_outcome_info(data))
   }
 
   if (is.null(outcome_info)) {

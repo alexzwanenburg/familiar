@@ -551,7 +551,7 @@ setMethod(
         
       } else {
         # Compute outcome information from scratch.
-        outcome_info <- create_outcome_info_from_data(data = data@data)
+        outcome_info <- .create_outcome_info(data)
         outcome_info <- .compute_outcome_distribution_data(
           object = outcome_info,
           data = data@data
@@ -560,7 +560,7 @@ setMethod(
       
     } else if (data.table::is.data.table(data)) {
       # Compute outcome information from scratch.
-      outcome_info <- create_outcome_info_from_data(data = data)
+      outcome_info <- .create_outcome_info(data, outcome_type = metric@outcome_type)
       outcome_info <- .compute_outcome_distribution_data(
         object = outcome_info,
         data = data

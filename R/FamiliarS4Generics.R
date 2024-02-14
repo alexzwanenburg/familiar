@@ -175,6 +175,8 @@ setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample")
 
 setGeneric("create_instance_weights", function(data, ...) standardGeneric("create_instance_weights"))
 
+setGeneric(".create_outcome_info", function(object, ...) standardGeneric(".create_outcome_info"))
+
 
 
 # familiarModel methods --------------------------------------------------------
