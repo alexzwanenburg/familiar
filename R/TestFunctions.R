@@ -4497,7 +4497,8 @@ test_plot_ordering <- function(
       use_prediction_table = use_prediction_table,
       ...
     )
-    data_empty_lasso_2 <- ..as_familiar_data_object(
+    # data_empty_glm_2 <- ..duplicate_familiar_data_object(data_empty_glm_1)
+    data_empty_lasso_1 <- ..as_familiar_data_object(
       object = model_full_lasso,
       data = empty_data,
       data_element = data_element,
@@ -4505,7 +4506,9 @@ test_plot_ordering <- function(
       use_prediction_table = use_prediction_table,
       ...
     )
+    data_empty_lasso_2 <- ..duplicate_familiar_data_object(data_empty_lasso_1)
     
+    browser()
     # Create a test dataset with multiple components
     test_fun(
       paste0("Plots for ", outcome_type, " outcomes can be created."),
