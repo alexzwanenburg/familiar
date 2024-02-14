@@ -67,7 +67,7 @@ setGeneric(
 )
 
 
-# extract_calibration_data -----------------------------------------------------
+# extract_calibration_data (ensemble) ------------------------------------------
 setMethod(
   "extract_calibration_data",
   signature(object = "familiarEnsemble"),
@@ -152,7 +152,7 @@ setMethod(
 
 
 
-# extract_calibration_data -----------------------------------------------------
+# extract_calibration_data (prediction table) ----------------------------------
 setMethod(
   "extract_calibration_data",
   signature(object = "familiarDataElementPredictionTable"),
@@ -323,7 +323,6 @@ setMethod(
     cl,
     ...
 ) {
-  
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
@@ -342,13 +341,16 @@ setMethod(
   }
   
   # Iterate over data elements.
-  calibration_data <- lapply(
-    data_elements,
+  calibration_data <- mapply(
     ..extract_calibration_data,
-    object = object,
-    aggregate_results = aggregate_results,
-    cl = cl,
-    ...
+    data_element = data_elements,
+    MoreArgs = list(
+      object = object,
+      aggregate_results = aggregate_results,
+      cl = cl,
+      ...
+    ),
+    SIMPLIFY = FALSE
   )
   
   return(calibration_data)
@@ -468,7 +470,7 @@ setMethod(
         positive_class =  get_outcome_class_levels(object)
       )
     }
-    
+
     # Add bootstrap data.
     bootstrap_data <- add_data_element_bootstrap(
       x = data_element,
@@ -500,7 +502,7 @@ setMethod(
     # Flatten list of data elements.
     data_elements <- unlist(data_elements)
     if (!is.list(data_elements)) data_elements <- list(data_elements)
-    
+
     # Add in density data elements.
     data_elements <- c(data_elements, density_data)
     
