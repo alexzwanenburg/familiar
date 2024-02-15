@@ -551,7 +551,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = prediction_list,
           type = "classification",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("continuous")) {
@@ -561,7 +562,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = model_predictions$predictions,
           type = "regression",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("survival")) {
@@ -943,7 +945,8 @@ setMethod(
       x = event_table$predicted_outcome,
       type = "cumulative_hazard",
       data = data,
-      time = time
+      time = time,
+      model_object = object
     )
     
   } else {
@@ -951,7 +954,8 @@ setMethod(
       x = event_table$predicted_outcome,
       type = "survival_probability",
       data = data,
-      time = time
+      time = time,
+      model_object = object
     )
   }
   

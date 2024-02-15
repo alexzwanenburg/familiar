@@ -596,7 +596,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = prediction_list,
         type = "classification",
-        data = data
+        data = data,
+        model_object = object
       )
       
     } else if (metric@outcome_type %in% c("continuous")) {
@@ -607,7 +608,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(median_value, times = get_n_samples(data)),
         type = "regression",
-        data = data
+        data = data,
+        model_object = object
       )
       
     } else if (metric@outcome_type %in% c("survival")) {
@@ -626,7 +628,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(mean_survival_probability, times = get_n_samples(data)),
         type = "survival_probability",
-        data = data
+        data = data,
+        model_object = object
       )
 
     } else {

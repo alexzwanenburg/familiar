@@ -106,7 +106,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = prediction_list,
           type = "classification",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("continuous")) {
@@ -115,7 +116,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = rep.int(object@model$median, n_samples),
           type = "regression",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("survival")) {
@@ -124,7 +126,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = rep.int(1.0, n_samples),
           type = "hazard_ratio",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else {
@@ -201,7 +204,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(survival_time, n_samples),
         type = "expected_survival_time",
-        data = data
+        data = data,
+        model_object = object
       )
       
     } else if (object@outcome_type == "survival" && type == "survival_probability") {
@@ -210,7 +214,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(1.0, n_samples),
         type = "hazard_ratio",
-        data = data
+        data = data,
+        model_object = object
       )
       
       # If time is unset, read the max time stored by the model.
@@ -278,7 +283,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(cumulative_incidence, n_samples),
         type = "cumulative_hazard",
-        data = data
+        data = data,
+        model_object = object
       )
       
     } else if (object@outcome_type == "survival" && type == "survival_probability") {
@@ -287,7 +293,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = rep.int(1.0, n_samples),
         type = "hazard_ratio",
-        data = data
+        data = data,
+        model_object = object
       )
       
       # If time is unset, read the max time stored by the model.

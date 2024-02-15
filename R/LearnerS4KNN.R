@@ -276,7 +276,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = prediction_list,
           type = "classification",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("continuous")) {
@@ -292,7 +293,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = model_predictions,
           type = "regression",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else {

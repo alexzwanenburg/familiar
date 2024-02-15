@@ -207,7 +207,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = prediction_list,
           type = "classification",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else {

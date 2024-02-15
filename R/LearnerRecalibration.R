@@ -153,7 +153,8 @@
     prediction_table <- as_prediction_table(
       x = predictions,
       type = "classification",
-      data = data
+      data = data,
+      model_object = object
     )
     
   } else if (object@outcome_type == "survival") {
@@ -168,7 +169,8 @@
     prediction_table <- as_prediction_table(
       x = predicted_outcome_value,
       type = "hazard_ratio",
-      data = data
+      data = data,
+      model_object = object
     )
   }
 

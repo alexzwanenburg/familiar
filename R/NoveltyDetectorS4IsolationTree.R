@@ -238,7 +238,8 @@ setMethod(
     prediction_table <- as_prediction_table(
       x = novelty_values,
       type = "novelty",
-      data = data
+      data = data,
+      model_object = object
     )
 
     return(prediction_table)

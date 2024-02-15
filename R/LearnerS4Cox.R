@@ -246,7 +246,8 @@ setMethod(
       prediction_table <- as_prediction_table(
         x = model_predictions,
         type = "hazard_ratio",
-        data = data
+        data = data,
+        model_object = object
       )
       
       return(prediction_table)

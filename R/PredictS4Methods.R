@@ -726,7 +726,8 @@ setMethod(
       x = assigned_risk_group,
       type = "risk_stratification",
       data = data,
-      time = time
+      time = time,
+      model_object = object
     )
 
     return(prediction_table)

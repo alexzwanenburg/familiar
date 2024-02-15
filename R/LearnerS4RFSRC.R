@@ -499,7 +499,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = prediction_list,
           type = "classification",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("continuous")) {
@@ -509,7 +510,8 @@ setMethod(
         prediction_table <- as_prediction_table(
           x = as.numeric(model_predictions$predicted),
           type = "regression",
-          data = data
+          data = data,
+          model_object = object
         )
         
       } else if (object@outcome_type %in% c("survival")) {

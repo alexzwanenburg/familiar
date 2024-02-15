@@ -986,7 +986,8 @@ setMethod(
       x = NULL,
       type = prediction_table_type,
       data = data,
-      time = time
+      time = time,
+      model_object = object
     ))
   }
 )

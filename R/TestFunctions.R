@@ -4508,7 +4508,6 @@ test_plot_ordering <- function(
     )
     data_empty_lasso_2 <- ..duplicate_familiar_data_object(data_empty_lasso_1)
     
-    browser()
     # Create a test dataset with multiple components
     test_fun(
       paste0("Plots for ", outcome_type, " outcomes can be created."),

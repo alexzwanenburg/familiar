@@ -260,7 +260,8 @@ setMethod(
           prediction_table <- as_prediction_table(
             x = model_predictions,
             type = "expected_survival_time",
-            data = data
+            data = data,
+            model_object = object
           )
           
         } else if (type == "survival_probability") {
@@ -363,7 +364,8 @@ setMethod(
             x = prediction_table$survival_probability,
             type = "survival_probability",
             data = data,
-            time = time
+            time = time,
+            model_object = object
           )
         }
         
