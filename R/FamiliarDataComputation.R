@@ -818,18 +818,13 @@ setMethod(
   }
   
   # Set up outcome information object.
-  if (is(object, "familiarEnsemble")) {
-    outcome_info <- object@outcome_info
-    
-  } else {
-    outcome_info <- .create_outcome_info(object)
-  }
-
+  outcome_info <- .create_outcome_info(object)
+  
   # Create a familiarData object
   fam_data <- methods::new(
     "familiarData",
     outcome_type = object@outcome_type,
-    outcome_info = .optional_from_slot(object, "outcome_info", alternative = NULL),
+    outcome_info = outcome_info,
     fs_vimp = fs_vimp_info,
     model_vimp = model_vimp_info,
     permutation_vimp = permutation_vimp,
