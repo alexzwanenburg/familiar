@@ -67,6 +67,15 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
+  use_prediction_table = TRUE,
+  debug = debug_flag
+)
+
+# Test alignment of different plots, with missing data.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_confusion_matrix,
+  data_element = "confusion_matrix",
+  outcome_type_available = c("binomial", "multinomial"),
   plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
   debug = debug_flag
 )

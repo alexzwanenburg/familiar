@@ -76,7 +76,7 @@ setMethod(
     proto_data_element <- .create_extract_confusion_matrix_object(
       object = object,
       ensemble_method = ensemble_method,
-      detail_level = detail_level,
+      detail_level = detail_level
     )
     
     # Generate elements to send to dispatch.
@@ -139,7 +139,7 @@ setMethod(
     proto_data_element <- .create_extract_confusion_matrix_object(
       object = object,
       ensemble_method = ensemble_method,
-      detail_level = detail_level,
+      detail_level = detail_level
     )
     
     # Generate elements to send to dispatch.
@@ -210,7 +210,7 @@ setMethod(
   # Add model name.
   data_element <- add_model_name(proto_data_element, object = object)
   
-  return(..extract_calibration_data(
+  return(..extract_confusion_matrix(
     object = object,
     data_element = data_element,
     ...
@@ -245,6 +245,8 @@ setMethod(
       ensemble_method = ensemble_method,
       is_pre_processed = is_pre_processed
     )
+    
+    if (is_empty(prediction_data)) return(NULL)
     
     return(..extract_confusion_matrix(
       object = prediction_data,
