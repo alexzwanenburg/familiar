@@ -55,6 +55,18 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
+# Test alignment of different plots, with missing data. Survival requires
+# survival probability and cannot be generated.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_decision_curve,
+  data_element = "decision_curve_analyis",
+  estimation_type = "point",
+  outcome_type_available = c("binomial", "multinomial", "survival"),
+  use_prediction_table = TRUE,
+  debug = debug_flag
+)
+
+
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_decision_curve,

@@ -575,6 +575,8 @@ setMethod(
       warn_str = warn_str,
       warn_class = "prediction_table_no_data_extraction_warning"
     )
+    
+    return(NULL)
   }
 )
 
@@ -605,7 +607,7 @@ setMethod(
   data <- data.table::copy(data)
   data.table::setnames(
     x = data,
-    old = get_class_probability_name(positive_class),
+    old = positive_class,
     new = "probability"
   )
   
@@ -798,7 +800,7 @@ setMethod(
     intervention = FALSE) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  survival_probability <- outcome_event <- outcome_time <- NULL
+  predicted_outcome <- outcome_event <- outcome_time <- NULL
   death <- censored <- n <- NULL
   
   # Prepare net benefit.
@@ -822,7 +824,7 @@ setMethod(
   previous_group_size <- n_group_size + 1
   for (ii in seq_along(p_threshold)) {
     # Select the group of patients
-    surv_group <- data.table::copy(data[survival_probability >= x[ii]])
+    surv_group <- data.table::copy(data[predicted_outcome >= x[ii]])
     
     # Get the total group size of the group where predicted survival probability
     # exceeds the threshold probability.
