@@ -1576,6 +1576,7 @@ setMethod(
     
     # Do not merge prediction tables that are already merged.
     if (.is_merged_prediction_table(x)) return(x)
+    if (is_empty(x)) return(x)
     
     # Set grouping and value columns.
     x@grouping_column <- c(x@grouping_column, colnames(x@identifier_data), colnames(x@reference_data))
