@@ -27,6 +27,15 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
+  outcome_type_available = c("binomial", "multinomial"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
   metric = c("auc_roc", "accuracy"),
   outcome_type_available = c("binomial", "multinomial"),
   plot_args = list(
@@ -59,6 +68,15 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
+  outcome_type_available = c("continuous"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
   metric = c("rmse", "mae"),
   outcome_type_available = c("continuous"),
   plot_args = list(
@@ -85,6 +103,15 @@ familiar:::test_plot_ordering(
   data_element = "model_performance",
   outcome_type_available = c("survival"),
   plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
+  outcome_type_available = c("survival"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
   debug = debug_flag
 )
 
