@@ -4342,6 +4342,7 @@ test_plot_ordering <- function(
     plot_args = list(),
     create_novelty_detector = FALSE,
     use_prediction_table = FALSE,
+    prediction_type = NULL,
     debug = FALSE,
     parallel = waiver()) {
 
@@ -4351,12 +4352,15 @@ test_plot_ordering <- function(
     data_element, 
     cl, 
     use_prediction_table, 
+    prediction_type,
     ...
   ) {
     if (use_prediction_table) {
+      if (is.null(prediction_type)) prediction_type <- "default"
+      
       # Generate data from prediction tables.
       familiar_data_object <- as_familiar_data(
-        object = .predict(object = object, data = data, ...),
+        object = .predict(object = object, data = data, type = prediction_type, ...),
         data_element = data_element,
         cl = cl,
         ...
@@ -4477,6 +4481,7 @@ test_plot_ordering <- function(
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
+      prediction_type = prediction_type[[outcome_type]],
       ...
     )
     data_good_full_lasso_2 <- ..duplicate_familiar_data_object(data_good_full_lasso_1)
@@ -4486,6 +4491,7 @@ test_plot_ordering <- function(
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
+      prediction_type = prediction_type[[outcome_type]],
       ...
     )
     data_good_full_glm_2 <- ..duplicate_familiar_data_object(data_good_full_glm_1)
@@ -4495,6 +4501,7 @@ test_plot_ordering <- function(
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
+      prediction_type = prediction_type[[outcome_type]],
       ...
     )
     # data_empty_glm_2 <- ..duplicate_familiar_data_object(data_empty_glm_1)
@@ -4504,6 +4511,7 @@ test_plot_ordering <- function(
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
+      prediction_type = prediction_type[[outcome_type]],
       ...
     )
     data_empty_lasso_2 <- ..duplicate_familiar_data_object(data_empty_lasso_1)

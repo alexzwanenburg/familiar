@@ -63,6 +63,7 @@ familiar:::test_plot_ordering(
   estimation_type = "point",
   outcome_type_available = c("binomial", "multinomial", "survival"),
   use_prediction_table = TRUE,
+  prediction_type = list("survival" = "survival_probability"),
   debug = debug_flag
 )
 
