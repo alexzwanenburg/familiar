@@ -60,16 +60,16 @@ setMethod(
     outcome_info <- methods::new(
       "outcomeInfo",
       name = character(0L),
-      outcome_type = data@outcome_type,
-      outcome_column = get_outcome_columns(x = data)
+      outcome_type = object@outcome_type,
+      outcome_column = get_outcome_columns(x = object)
     )
     
     if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
       # Set class levels
-      outcome_info@levels <- get_outcome_class_levels(x = data)
+      outcome_info@levels <- get_outcome_class_levels(x = object)
       
       # Set flag indicating that the outcome is ordinal (currently not enabled)
-      outcome_info@ordered <- is.ordered(data@data[[outcome_info@outcome_column]])
+      outcome_info@ordered <- is.ordered(object@data[[outcome_info@outcome_column]])
       
       # Set reference level of the outcome
       outcome_info@reference <- outcome_info@levels[1]
@@ -89,7 +89,7 @@ setMethod(
     if (outcome_info@outcome_type %in% c("competing_risk")) {
       # Set indicator for competing risks
       outcome_info@competing_risk <- as.character(setdiff(
-        unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)
+        unique_na(object@data[[outcome_info@outcome_column[2]]]), c(0, 1)
       ))
     }
     
@@ -113,10 +113,10 @@ setMethod(
     
     if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
       # Set class levels
-      outcome_info@levels <- get_outcome_class_levels(x = data)
+      outcome_info@levels <- get_outcome_class_levels(x = object, outcome_type = outcome_info@outcome_type)
       
       # Set flag indicating that the outcome is ordinal (currently not enabled)
-      outcome_info@ordered <- is.ordered(data[[outcome_info@outcome_column]])
+      outcome_info@ordered <- is.ordered(object[[outcome_info@outcome_column]])
       
       # Set reference level of the outcome
       outcome_info@reference <- outcome_info@levels[1]
@@ -136,7 +136,7 @@ setMethod(
     if (outcome_info@outcome_type %in% c("competing_risk")) {
       # Set indicator for competing risks
       outcome_info@competing_risk <- as.character(setdiff(
-        unique_na(data[[outcome_info@outcome_column[2]]]), c(0, 1)
+        unique_na(object[[outcome_info@outcome_column[2]]]), c(0, 1)
       ))
     }
     
@@ -242,7 +242,7 @@ get_outcome_info_from_backend <- function() {
 
   # Finally, attempt to infer from dataObject
   if (inherits(x, "dataObject")) {
-    return(.create_outcome_info(data))
+    return(.create_outcome_info(x))
   }
 
   if (is.null(outcome_info)) {

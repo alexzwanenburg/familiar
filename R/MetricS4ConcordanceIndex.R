@@ -130,7 +130,7 @@ setMethod(
   max_time <- time
   if (is.null(max_time) && is.finite(metric@time)) max_time <- metric@time
   if (is.null(max_time) && methods::.hasSlot(data, "time")) {
-    if (is.finite(object@time)) max_time <- object@time 
+    if (is.finite(data@time)) max_time <- data@time 
   }
   if (is.null(max_time)) max_time <- Inf
   
