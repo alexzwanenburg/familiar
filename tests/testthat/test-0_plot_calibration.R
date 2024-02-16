@@ -92,13 +92,12 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
-# Test alignment of different plots from prediction tables. Note that survival
-# prediction tables do not work because these specifically need to contain
-# survival probabilities.
+# Test alignment of different plots from prediction tables.
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("continuous", "binomial", "multinomial"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  prediction_type = list("survival" = "survival_probability"),
   use_prediction_table = TRUE,
   debug = debug_flag
 )
