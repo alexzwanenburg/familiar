@@ -156,7 +156,23 @@ setMethod(
     
     # Decision curve analysis is only available for categorical and survival
     # outcomes.
-    if (!object@outcome_type %in% c("binomial", "multinomial", "survival")) return(NULL)
+    if (!(
+      is(object, "predictionTableSurvivalProbability") || 
+      is(object, "predictionTableClassification")
+    )) {
+      warn_str <- paste0(
+        "Decision curves can only be computed using prediction tables that contain ",
+        "either class (binomial or multinomial) or survival probabilities. Found: ",
+        paste_s(class(object))
+      )
+      
+      logger_warning(
+        warn_str = warn_str,
+        warn_class = "prediction_table_no_data_extraction_warning"
+      )
+      
+      return(NULL)
+    } 
     
     # Message extraction start
     logger_message(
@@ -554,32 +570,6 @@ setMethod(
     return(data_elements)
   }
 )
-
-
-
-# .extract_decision_curve_data (other prediction table) ------------------------
-setMethod(
-  ".extract_decision_curve_data",
-  signature(object = "familiarDataElementPredictionTable"),
-  function(
-    object,
-    ...
-  ) {
-    warn_str <- paste0(
-      "Decision curves can only be computed using prediction tables that contain ",
-      "either class (binomial or multinomial) or survival probabilities. Found: ",
-      paste_s(class(object))
-    )
-    
-    logger_warning(
-      warn_str = warn_str,
-      warn_class = "prediction_table_no_data_extraction_warning"
-    )
-    
-    return(NULL)
-  }
-)
-
 
 
 .compute_dca_data_categorical_model <- function(
