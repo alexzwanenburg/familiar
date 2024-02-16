@@ -710,10 +710,10 @@ setMethod(
       data = data,
       time = time
     )
-
-    # Check for valid predictions,
-    if (is_empty(predictions)) return(NULL)
-    if (!any_predictions_valid(predictions)) return(NULL)
+ 
+#     # Check for valid predictions -- DO NOT CHECK HERE TO PREVENT passing empty
+#     if (is_empty(predictions)) return(NULL)
+#     if (!any_predictions_valid(predictions)) return(NULL)
 
     # Find risk groups for each instance.
     assigned_risk_group <- .apply_risk_threshold(
@@ -729,7 +729,7 @@ setMethod(
       time = time,
       model_object = object
     )
-
+    
     return(prediction_table)
   }
 )
