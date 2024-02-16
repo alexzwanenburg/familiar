@@ -218,6 +218,13 @@ setMethod(
       bootstrap_ci_method = bootstrap_ci_method
     )
     
+    if (is(object, "predictionTableSurvivalProbability")) {
+      proto_data_element <- add_data_element_identifier(
+        x = proto_data_element,
+        evaluation_time = object@time
+      )[[1]]
+    }
+    
     # Generate elements to send to dispatch.
     dca_data <- extract_dispatcher(
       FUN = .extract_decision_curve_data,
@@ -505,6 +512,7 @@ setMethod(
     message_indent = 0L,
     ...
   ) {
+
     # Check if any predictions are valid.
     if (!all_predictions_valid(object)) return(NULL)
     
