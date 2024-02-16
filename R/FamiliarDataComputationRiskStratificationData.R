@@ -191,8 +191,33 @@ setMethod(
 setMethod(
   "extract_risk_stratification_data",
   signature(object = "predictionTableRiskGroups"),
-  function(object, ...) {
+  function(
+    object,
+    confidence_level = waiver(),
+    ...
+  ) {
     if (is_empty(object)) return(NULL)
+    
+    # Ensure that all slots are merged into data.
+    object <- .copy(object)
+    object <- .merge_slots_into_data(object)
+    
+    # Load confidence alpha from object settings attribute if not provided
+    # externally.
+    if (is.waive(confidence_level)) {
+      confidence_level <- 0.95
+    }
+    
+    # Check confidence_level input argument
+    .check_number_in_valid_range(
+      x = confidence_level, 
+      var_name = "confidence_level",
+      range = c(0.0, 1.0),
+      closed = c(FALSE, FALSE)
+    )
+    
+    # Set confidence level.
+    object@confidence_level <- confidence_level
     
     return(object)
   }
@@ -268,6 +293,9 @@ setMethod(
     is_pre_processed = is_pre_processed
   )
 
+  # Ensure that all slots are merged into data.
+  prediction_data <- .merge_slots_into_data(prediction_data)
+  
   if (is_empty(prediction_data)) return(NULL)
   
   # We will actually use prediction_data from here, but need to update some
