@@ -150,7 +150,7 @@ setMethod(
       type = "survival_probability",
       data = data,
       time = time,
-      model_object = object
+      model_object = model
     )
     
     return(prediction_table)
