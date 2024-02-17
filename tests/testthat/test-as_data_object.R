@@ -10,26 +10,30 @@ fam_model <- familiar:::test_train(
   imputation_method = "simple",
   hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
   learner = "cox",
-  create_novelty_detector = TRUE)
+  create_novelty_detector = TRUE
+)
 
 # Feature levels are correctly ordered -----------------------------------------
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Change order of features.
-data$rx <- factor(
-  x = data$rx,
-  levels = c("Lev", "Lev+5FU", "Obs"))
+data$feature_3a <- factor(
+  x = data$feature_3a,
+  levels = rev(levels(data$feature_3a))
+)
 
 testthat::test_that("Feature levels are correctly ordered", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
-      levels(parsed_data@data$rx),
-      c("Obs", "Lev", "Lev+5FU"))
+      levels(parsed_data@data$feature_3a),
+      c("round", "square")
+    )
   }
 })
 
@@ -37,18 +41,20 @@ testthat::test_that("Feature levels are correctly ordered", {
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Keep features as characters,
-data$rx <- as.character(data$rx)
+data$feature_3a <- as.character(data$feature_3a)
 
 testthat::test_that("Feature levels are correctly set", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
-      levels(parsed_data@data$rx),
-      c("Obs", "Lev", "Lev+5FU"))
+      levels(parsed_data@data$feature_3a),
+      c("round", "square")
+    )
   }
 })
 
@@ -58,31 +64,32 @@ testthat::test_that("Feature levels are correctly set", {
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Change order of features.
-data$adhere <- factor(
-  x = data$adhere,
-  levels = c("TRUE", "FALSE"),
-  ordered = TRUE)
+data$feature_4 <- factor(
+  x = data$feature_4,
+  levels = c("best", "better", "good"),
+  ordered = TRUE
+)
 
 testthat::test_that("Feature levels are correctly ordered", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
-      levels(parsed_data@data$adhere),
-      c("FALSE", "TRUE"))
-    testthat::expect_equal(
-      is.ordered(parsed_data@data$adhere),
-      TRUE)
+      levels(parsed_data@data$feature_4),
+      c("good", "better", "best")
+    )
+    testthat::expect_true(is.ordered(parsed_data@data$feature_4))
   }
 })
 
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Keep features as characters,
-data$adhere <- as.character(data$adhere)
+data$feature_4 <- as.character(data$feature_4)
 
 testthat::test_that("Feature levels are correctly set", {
   for (strictness in c("strict", "external_warn", "external")) {
@@ -92,11 +99,10 @@ testthat::test_that("Feature levels are correctly set", {
       check_stringency = strictness)
 
     testthat::expect_equal(
-      levels(parsed_data@data$adhere),
-      c("FALSE", "TRUE"))
-    testthat::expect_equal(
-      is.ordered(parsed_data@data$adhere),
-      TRUE)
+      levels(parsed_data@data$feature_4),
+      c("good", "better", "best")
+    )
+    testthat::expect_true(is.ordered(parsed_data@data$feature_4))
   }
 })
 
@@ -107,18 +113,20 @@ testthat::test_that("Feature levels are correctly set", {
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Remove a feature level.
-data[rx == "Lev+5FU", "rx" := "Lev"]
+data[feature_4 == "better", "feature_4" := "best"]
 
 testthat::test_that("Feature levels are correctly ordered", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
-      levels(parsed_data@data$rx),
-      c("Obs", "Lev", "Lev+5FU"))
+      levels(parsed_data@data$feature_4),
+      c("good", "better", "best")
+    )
   }
 })
 
@@ -127,119 +135,147 @@ testthat::test_that("Feature levels are correctly ordered", {
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Add new level to categorical features.
-data[c(1, 2, 3), "rx" := "Cisplatin"]
+data[c(1, 2, 3), "feature_3a" := "extra_square"]
 
 testthat::test_that("Extra levels are detected", {
   for (strictness in c("strict", "external_warn", "external")) {
     testthat::expect_error(familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness))
+      check_stringency = strictness
+    ))
   }
 })
 
 
 # Test methods to set reference levels -----------------------------------------
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
-data$rx <- stats::relevel(data$rx, ref = "Lev")
-original_true <- data$adhere == "TRUE"
-data[adhere == "FALSE", "adhere" := "TRUE"]
-data[original_true, "adhere" := "FALSE"]
+data$feature_3a <- stats::relevel(data$feature_3a, ref = "square")
 
 testthat::test_that("Auto-method does not re-order existing levels.", {
   parsed_data <- familiar::as_data_object(
     data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id",
+    series_id_column = "series_id",
+    outcome_column = c("outcome_time", "outcome_event"),
     outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "auto")
+    include_features = c("feature_3a", "feature_3b"),
+    reference_method = "auto"
+  )
 
   testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Lev")
+    head(levels(parsed_data@data$feature_3a), n = 1L), "square"
+  )
   testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    head(levels(parsed_data@data$feature_3b), n = 1L), "sphere"
+  )
 })
 
 testthat::test_that("Always-method re-orders existing levels.", {
   parsed_data <- familiar::as_data_object(
     data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id",
+    series_id_column = "series_id",
+    outcome_column = c("outcome_time", "outcome_event"),
     outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "always")
+    include_features = c("feature_3a", "feature_3b"),
+    reference_method = "always"
+  )
 
   testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Obs")
+    head(levels(parsed_data@data$feature_3a), n = 1L), "round"
+  )
   testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    head(levels(parsed_data@data$feature_3b), n = 1L), "sphere"
+  )
 })
 
 testthat::test_that("Never-method does not re-order existing levels.", {
   parsed_data <- familiar::as_data_object(
     data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id",
+    series_id_column = "series_id",
+    outcome_column = c("outcome_time", "outcome_event"),
     outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "never")
+    include_features = c("feature_3a", "feature_3b"),
+    reference_method = "never"
+  )
 
   testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Lev")
+    head(levels(parsed_data@data$feature_3a), n = 1L), "square"
+  )
   testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    head(levels(parsed_data@data$feature_3b), n = 1L), "sphere"
+  )
 })
 
 # Now for automatic conversion of categorical variables.
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
-data$rx <- as.character(data$rx)
-data$adhere <- as.logical(data$adhere)
+data$feature_3a <- as.character(data$feature_3a)
+data[, "feature_3_extra" := feature_3a == "square"]
 
 testthat::test_that("Auto-method re-orders existing levels.", {
   parsed_data <- familiar::as_data_object(
     data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id",
+    series_id_column = "series_id",
+    outcome_column = c("outcome_time", "outcome_event"),
     outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "auto")
-
+    include_features = c("feature_3a", "feature_3_extra"),
+    reference_method = "auto"
+  )
+  
   testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Obs")
+    head(levels(parsed_data@data$feature_3a), n = 1L), "round"
+  )
   testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    head(levels(parsed_data@data$feature_3_extra), n = 1L), "FALSE"
+  )
 })
 
 testthat::test_that(
   "Always-method re-orders existing levels.", {
-  parsed_data <- familiar::as_data_object(
-    data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
-    outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "always")
-
-  testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Obs")
-  testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    parsed_data <- familiar::as_data_object(
+      data = data.table::copy(data),
+      batch_id_column = "batch_id",
+      sample_id_column = "sample_id",
+      series_id_column = "series_id",
+      outcome_column = c("outcome_time", "outcome_event"),
+      outcome_type = "survival",
+      include_features = c("feature_3a", "feature_3_extra"),
+      reference_method = "always"
+    )
+    
+    testthat::expect_equal(
+      head(levels(parsed_data@data$feature_3a), n = 1L), "round"
+    )
+    testthat::expect_equal(
+      head(levels(parsed_data@data$feature_3_extra), n = 1L), "FALSE"
+    )
 })
 
 testthat::test_that("Never-method sorts existing levels.", {
   parsed_data <- familiar::as_data_object(
     data = data.table::copy(data),
-    sample_id_column = "id",
-    outcome_column = c("time", "status"),
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id",
+    series_id_column = "series_id",
+    outcome_column = c("outcome_time", "outcome_event"),
     outcome_type = "survival",
-    include_features = c("nodes", "rx", "adhere"),
-    reference_method = "never")
-
+    include_features = c("feature_3a", "feature_3_extra"),
+    reference_method = "never"
+  )
+  
   testthat::expect_equal(
-    head(levels(parsed_data@data$rx), n = 1L), "Lev")
+    head(levels(parsed_data@data$feature_3a), n = 1L), "round"
+  )
   testthat::expect_equal(
-    head(levels(parsed_data@data$adhere), n = 1L), "FALSE")
+    head(levels(parsed_data@data$feature_3_extra), n = 1L), "FALSE"
+  )
 })
 
 
@@ -252,11 +288,10 @@ testthat::test_that("Censoring is correctly transferred", {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
-    testthat::expect_equal(
-      all(parsed_data@data$outcome_event %in% c(0, 1)),
-      TRUE)
+    testthat::expect_true(all(parsed_data@data$outcome_event %in% c(0, 1)))
   }
 })
 
@@ -267,9 +302,9 @@ data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 manual_data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Update status column to specific
-manual_data$status <- as.character(data$status)
-manual_data[status == "0", "status" := "alive"]
-manual_data[status == "1", "status" := "dead"]
+manual_data$outcome_event <- as.character(data$outcome_event)
+manual_data[outcome_event == "0", "outcome_event" := "alive"]
+manual_data[outcome_event == "1", "outcome_event" := "dead"]
 
 testthat::test_that("Censoring and event identifiers can be manually set", {
   for (strictness in c("strict", "external_warn", "external")) {
@@ -279,17 +314,19 @@ testthat::test_that("Censoring and event identifiers can be manually set", {
       object = fam_model,
       event_indicator = "dead",
       censoring_indicator = "alive",
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     # With original event identifiers.
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
-    testthat::expect_equal(
-      all(manual_parsed_data@data$outcome_event == parsed_data@data$outcome_event),
-      TRUE)
+    testthat::expect_true(
+      all(manual_parsed_data@data$outcome_event == parsed_data@data$outcome_event)
+    )
   }
 })
 
@@ -299,9 +336,9 @@ testthat::test_that("Censoring and event identifiers can be manually set", {
 data <- familiar:::test_create_good_data("survival", to_data_object = FALSE)
 
 # Update status column to specific
-data$status <- as.character(data$status)
-data[status == "0", "status" := "alive"]
-data[status == "1", "status" := "dead"]
+data$outcome_event <- as.character(data$outcome_event)
+data[outcome_event == "0", "outcome_event" := "alive"]
+data[outcome_event == "1", "outcome_event" := "dead"]
 
 testthat::test_that("Censoring and event identifiers are not known", {
   for (strictness in c("strict", "external_warn", "external")) {
@@ -312,23 +349,26 @@ testthat::test_that("Censoring and event identifiers are not known", {
       testthat::expect_error(familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness))
+        check_stringency = strictness
+      ))
       
     } else if (strictness == "external_warn") {
       warns <- testthat::capture_warnings(familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness))
+        check_stringency = strictness
+      ))
 
-      testthat::expect_equal(any(grepl("event indicator", warns)), TRUE)
-      testthat::expect_equal(any(grepl("censoring indicator", warns)), TRUE)
+      testthat::expect_true(any(grepl("event indicator", warns)))
+      testthat::expect_true(any(grepl("censoring indicator", warns)))
       
     } else if (strictness == "external") {
       # With original event identifiers.
       parsed_data <- familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness)
+        check_stringency = strictness
+      )
     }
   }
 })
@@ -348,17 +388,18 @@ fam_model <- familiar:::test_train(
   learner = "cox",
   event_indicator = "dead",
   censoring_indicator = "alive",
-  create_novelty_detector = TRUE)
+  create_novelty_detector = TRUE
+)
 
 testthat::test_that("Non-standard censoring and event identifiers are automatically transferred", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
-    testthat::expect_equal(
-      all(parsed_data@data$outcome_event %in% c(0, 1)), TRUE)
+    testthat::expect_true(all(parsed_data@data$outcome_event %in% c(0, 1)))
   }
 })
 
@@ -374,7 +415,8 @@ fam_model <- familiar:::test_train(
   imputation_method = "simple",
   hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
   learner = "glm_logistic",
-  create_novelty_detector = TRUE)
+  create_novelty_detector = TRUE
+)
 
 # Create test dataset.
 data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
@@ -384,11 +426,13 @@ testthat::test_that("Class levels are correctly ordered", {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
       levels(parsed_data@data$outcome),
-      c("benign", "malignant"))
+      c("red", "green")
+    )
   }
 })
 
@@ -398,27 +442,30 @@ testthat::test_that("Class levels are correctly ordered", {
 data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
 
 # Reorder class levels
-data$cell_malignancy <- factor(
-  x = data$cell_malignancy,
-  levels = c("malignant", "benign"))
+data$outcome <- factor(
+  x = data$outcome,
+  levels = c("green", "red")
+)
 
 testthat::test_that("Class levels are ordered according to expectations", {
   for (strictness in c("strict", "external_warn", "external")) {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
 
     testthat::expect_equal(
       levels(parsed_data@data$outcome),
-      c("benign", "malignant"))
+      c("red", "green")
+    )
   }
 })
 
 
 # Missing class levels ---------------------------------------------------------
 data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
-data[cell_malignancy == "benign", cell_malignancy := "malignant"]
+data[outcome == "red", outcome := "green"]
 
 testthat::test_that("Class levels are ordered according to expectations", {
   for (strictness in c("strict", "external_warn", "external")) {
@@ -426,7 +473,8 @@ testthat::test_that("Class levels are ordered according to expectations", {
       testthat::expect_error(familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness))
+        check_stringency = strictness
+      ))
       
     } else {
       # Class levels may be missing for external_warn and external strictness
@@ -434,11 +482,12 @@ testthat::test_that("Class levels are ordered according to expectations", {
       parsed_data <- familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness)
+        check_stringency = strictness
+      )
 
       testthat::expect_equal(
         levels(parsed_data@data$outcome),
-        c("benign", "malignant"))
+        c("red", "green"))
     }
   }
 })
@@ -449,7 +498,7 @@ testthat::test_that("Class levels are ordered according to expectations", {
 data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
 
 # Add new level
-data[c(1, 2, 3), "cell_malignancy" := "unknown"]
+data[c(1, 2, 3), "outcome" := "blue"]
 
 testthat::test_that("Additional class levels are detected", {
   for (strictness in c("strict", "external_warn", "external")) {
@@ -457,13 +506,15 @@ testthat::test_that("Additional class levels are detected", {
       testthat::expect_error(familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness))
+        check_stringency = strictness
+      ))
       
     } else {
       parsed_data <- familiar::as_data_object(
         data = data.table::copy(data),
         object = fam_model,
-        check_stringency = strictness)
+        check_stringency = strictness
+      )
     }
   }
 })
@@ -482,7 +533,8 @@ fam_naive_model <- familiar:::test_train(
   hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
   learner = "glm_logistic",
   create_novelty_detector = TRUE,
-  create_naive = TRUE)
+  create_naive = TRUE
+)
   
 data <- familiar:::test_create_good_data("binomial", to_data_object = FALSE)
 
@@ -491,10 +543,12 @@ testthat::test_that("Naive models can be used to convert data objects.", {
     parsed_data <- familiar::as_data_object(
       data = data.table::copy(data),
       object = fam_model,
-      check_stringency = strictness)
+      check_stringency = strictness
+    )
     
     testthat::expect_equal(
       levels(parsed_data@data$outcome),
-      c("benign", "malignant"))
+      c("red", "green")
+    )
   }
 })
