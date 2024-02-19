@@ -775,15 +775,3 @@ setMethod(
 .get_available_ensemble_prediction_methods <- function() {
   return(c("median", "mean"))
 }
-
-
-
-
-# remove_missing_outcomes (ANY) ------------------------------------------------
-setMethod(
-  "remove_missing_outcomes",
-  signature(data = "ANY"),
-  function(data, outcome_type) {
-    stop("remove_missing_outcomes is replaced by filter_missing_outcome")
-  }
-)

@@ -120,9 +120,7 @@ setMethod(
     
     ## Univariate p-values -----------------------------------------------------
     # Remove data with missing outcomes.
-    feature_data <- remove_missing_outcomes(
-      data = data,
-      outcome_type = object@outcome_type)
+    feature_data <- filter_missing_outcome(data)
     
     if (is_empty(feature_data)) {
       # Check that data are not empty
