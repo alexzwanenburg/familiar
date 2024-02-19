@@ -239,7 +239,7 @@ setMethod(
       SIMPLIFY = FALSE)
     
     # Combine to table and add group ids and model ids.
-    id_table <- data.table::rbindlist(id_table, use.names = TRUE)
+    id_table <- data.table::rbindlist(id_table, use.names = TRUE, fill = TRUE)
     
     # Drop identifiers.
     if (!is.null(drop_identiers)) {
