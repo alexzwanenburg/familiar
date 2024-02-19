@@ -446,10 +446,14 @@ as_prediction_table <- function(
       }
     }
     if (is.unset(censoring_indicator) && is(data, "dataObject")) {
-      censoring_indicator <- data@outcome_info@censored
+      if (is(data@outcome_info, "outcomeInfo")) {
+        censoring_indicator <- data@outcome_info@censored
+      }
     }
     if (is.unset(censoring_indicator) && is(model_object, "familiarModelUnion")) {
-      censoring_indicator <- model_object@outcome_info@censored 
+      if (is(model_object@outcome_info, "outcomeInfo")) {
+        censoring_indicator <- model_object@outcome_info@censored 
+      }
     }
     if (is.unset(censoring_indicator)) {
       censoring_indicator <- .get_available_default_censoring_indicator()
@@ -466,10 +470,14 @@ as_prediction_table <- function(
       }
     }
     if (is.unset(event_indicator) && is(data, "dataObject")) {
-      event_indicator <- data@outcome_info@event
+      if (is(data@outcome_info, "outcomeInfo")) {
+        event_indicator <- data@outcome_info@event
+      }
     } 
     if (is.unset(event_indicator) && is(model_object, "familiarModelUnion")) {
-      event_indicator <- model_object@outcome_info@event 
+      if (is(model_object@outcome_info, "outcomeInfo")) {
+        event_indicator <- model_object@outcome_info@event 
+      }
     }
     if (is.unset(event_indicator)) {
       event_indicator <- .get_available_default_event_indicator()
