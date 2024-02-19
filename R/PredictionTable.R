@@ -417,10 +417,14 @@ as_prediction_table <- function(
       }
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && is(data, "dataObject")) {
-      value_range <- suppressWarnings(range(data@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+      if (is(data@outcome_info, "outcomeInfo")) {
+        value_range <- suppressWarnings(range(data@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+      }
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && is(model_object, "familiarModelUnion")) {
-      value_range <- suppressWarnings(range(model_object@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+      if (is(model_object@outcome_info, "outcomeInfo")) {
+        value_range <- suppressWarnings(range(model_object@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+      }
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && !is_empty(object@reference_data)) {
       value_range <- suppressWarnings(range(object@reference_data[[1]], na.rm = TRUE, finite = TRUE))
