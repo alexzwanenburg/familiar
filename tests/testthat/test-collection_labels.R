@@ -10,7 +10,8 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
     outcome_type,
     "continuous" = "glm_gaussian",
     "multinomial" = "glm_multinomial",
-    "survival" = "cox")
+    "survival" = "cox"
+  )
 
   # Data elements to skip.
   skip_data_elements <- c("ice_data", "permutation_vimp")
@@ -24,7 +25,8 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
     learner = learner,
     estimation_type = "point",
     skip_evaluation_elements = skip_data_elements,
-    parallel = FALSE)
+    parallel = FALSE
+  )
 
   # Test both familiarCollection and familiarModel objects.
   familiar_collection_list <- list(
@@ -34,7 +36,9 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
       data = data,
       familiar_data_names = "development",
       estimation_type = "point",
-      data_element = setdiff(familiar:::.get_available_data_elements(), skip_data_elements)))
+      data_element = setdiff(familiar:::.get_available_data_elements(), skip_data_elements)
+    )
+  )
 
   # class names ----------------------------------------------------------------
   for (collection in familiar_collection_list) {
@@ -52,23 +56,27 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
           collection <- familiar::set_class_names(
             collection,
             old = rev(class_names),
-            new = rev(new_class_names))
+            new = rev(new_class_names)
+          )
 
           # Expect that the labels are the same and have the same order as the
           # original labels.
           testthat::expect_equal(
             familiar::get_class_names(collection),
-            new_class_names)
+            new_class_names
+          )
 
           # Reorder levels.
           collection <- familiar::set_class_names(
             collection,
-            order = rev(new_class_names))
+            order = rev(new_class_names)
+          )
 
           # Expect that the labels are now re-ordered.
           testthat::expect_equal(
             familiar::get_class_names(collection),
-            rev(new_class_names))
+            rev(new_class_names)
+          )
           
         } else {
           testthat::expect_equal(class_names, character(0L))
@@ -91,13 +99,15 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
         collection <- familiar::set_data_set_names(
           collection,
           old = "development",
-          new = new_data_set_names)
+          new = new_data_set_names
+        )
 
         # Expect that the labels are the same and have the same order as the
         # original labels.
         testthat::expect_equal(
           familiar::get_data_set_names(collection),
-          new_data_set_names)
+          new_data_set_names
+        )
       }
     )
   }
@@ -109,32 +119,34 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
     testthat::test_that(
       "Feature names are correct",
       {
-        testthat::expect_equal(
-          all(feature_names %in% familiar:::get_feature_columns(data)),
-          TRUE)
+        testthat::expect_true(all(feature_names %in% familiar:::get_feature_columns(data)))
 
         # Replace feature names.
         new_feature_names <- paste0("feature_", seq_along(feature_names))
         collection <- familiar::set_feature_names(
           collection,
           old = rev(feature_names),
-          new = rev(new_feature_names))
+          new = rev(new_feature_names)
+        )
 
         # Expect that the labels are the same and have the same order as the
         # original labels.
         testthat::expect_equal(
           familiar::get_feature_names(collection),
-          new_feature_names)
+          new_feature_names
+        )
 
         # Reorder levels.
         collection <- familiar::set_feature_names(
           collection,
-          order = rev(new_feature_names))
+          order = rev(new_feature_names)
+        )
 
         # Expect that the labels are now re-ordered.
         testthat::expect_equal(
           familiar::get_feature_names(collection),
-          rev(new_feature_names))
+          rev(new_feature_names)
+        )
       }
     )
   }
@@ -153,13 +165,15 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
         collection <- familiar::set_fs_method_names(
           collection,
           old = vimp_names,
-          new = new_vimp_names)
+          new = new_vimp_names
+        )
 
         # Expect that the labels are the same and have the same order as the
         # original labels.
         testthat::expect_equal(
           familiar::get_fs_method_names(collection),
-          new_vimp_names)
+          new_vimp_names
+        )
       }
     )
   }
@@ -178,13 +192,15 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
         collection <- familiar::set_learner_names(
           collection,
           old = learner_names,
-          new = new_learner_names)
+          new = new_learner_names
+        )
 
         # Expect that the labels are the same and have the same order as the
         # original labels.
         testthat::expect_equal(
           familiar::get_learner_names(collection),
-          new_learner_names)
+          new_learner_names
+        )
       }
     )
   }
@@ -199,35 +215,41 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
         if (outcome_type %in% c("survival")) {
           testthat::expect_setequal(
             risk_group_names,
-            c("low", "moderate", "high"))
+            c("low", "moderate", "high")
+          )
 
           # Replace risk-group names.
           new_risk_group_names <- paste0("risk_group", seq_along(risk_group_names))
           collection <- familiar::set_risk_group_names(
             collection,
             old = rev(risk_group_names),
-            new = rev(new_risk_group_names))
+            new = rev(new_risk_group_names)
+          )
 
           # Expect that the labels are the same and have the same order as the
           # original labels.
           testthat::expect_equal(
             familiar::get_risk_group_names(collection),
-            new_risk_group_names)
+            new_risk_group_names
+          )
 
           # Reorder levels.
           collection <- familiar::set_risk_group_names(
             collection,
-            order = rev(new_risk_group_names))
+            order = rev(new_risk_group_names)
+          )
 
           # Expect that the labels are now re-ordered.
           testthat::expect_equal(
             familiar::get_risk_group_names(collection),
-            rev(new_risk_group_names))
+            rev(new_risk_group_names)
+          )
           
         } else {
           testthat::expect_equal(
             risk_group_names,
-            c("low", "moderate", "high"))
+            c("low", "moderate", "high")
+          )
         }
       }
     )
