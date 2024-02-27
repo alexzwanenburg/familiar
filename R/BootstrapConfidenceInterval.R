@@ -10,7 +10,8 @@
     confidence_level = NULL,
     percentiles = NULL,
     bootstrap_ci_method = "percentile",
-    ...) {
+    ...
+) {
   
   # Test confidence level
   if (!is.null(confidence_level)) {
@@ -25,7 +26,8 @@
     percentiles <- c(
       0.5,
       (1.0 - confidence_level) / 2.0,
-      1.0 - (1.0 - confidence_level) / 2.0)
+      1.0 - (1.0 - confidence_level) / 2.0
+    )
   }
   
   if (!is.null(percentiles)) {
@@ -39,7 +41,8 @@
   
   if (is.null(confidence_level) && is.null(percentiles)) {
     ..error_reached_unreachable_code(
-      "..bootstrap_ic: confidence_interval and percentiles arguments cannot both be NULL.")
+      "..bootstrap_ic: confidence_interval and percentiles arguments cannot both be NULL."
+    )
   }
   
   # For values that are not numeric, return mode. Note that the name "median" is
@@ -59,12 +62,13 @@
     # percentiles. Determine the number of decimal digits that should be used to
     # parse the numbers (minimum 2).
     percentile_names_digits <- nchar(sub(".*\\.", "", percentiles))
-    percentile_names_digits <- max(c(percentile_names_digits, 2))
+    percentile_names_digits <- max(c(percentile_names_digits, 2L))
     
     # Set percentile names by passing them through the column name
     # checker.
     percentile_names <- .replace_illegal_column_name(
-      paste0("q_", format(percentiles, nsmall = percentile_names_digits)))
+      paste0("q_", format(percentiles, nsmall = percentile_names_digits))
+    )
   }
   
   # Create an empty list.
@@ -74,10 +78,10 @@
   # Select finite values.
   x <- x[is.finite(x)]
   
-  if (length(x) == 0) return(empty_list)
+  if (length(x) == 0L) return(empty_list)
   
   # If no x_0 is provided, the percentile method should be used.
-  if (length(x_0) == 0) bootstrap_ci_method <- "percentile"
+  if (length(x_0) == 0L) bootstrap_ci_method <- "percentile"
   
   if (bootstrap_ci_method == "percentile") {
     # Follows the percentile method of Efron, B. & Hastie, T. Computer Age
@@ -87,7 +91,8 @@
     percentile_values <- stats::quantile(
       x,
       probs = percentiles,
-      names = FALSE)
+      names = FALSE
+    )
     
     # Generate a summary list
     summary_list <- as.list(percentile_values)
@@ -96,7 +101,7 @@
   } else if (bootstrap_ci_method == "bc") {
     # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
     # Age Statistical Inference. (Cambridge University Press, 2016).
-    if (length(x_0) > 1) {
+    if (length(x_0) > 1L) {
       stop(paste0("The full-data estimate should have length 1. Found: length ", length(x_0), "."))
     } 
     
@@ -114,7 +119,8 @@
         x_0 = x_0,
         confidence_level = confidence_level,
         percentiles = percentiles,
-        bootstrap_ci_method = "percentile")
+        bootstrap_ci_method = "percentile"
+      )
       
       return(summary_list)
     }
@@ -129,7 +135,8 @@
     percentile_values <- stats::quantile(
       x,
       probs = bc_percentiles,
-      names = FALSE)
+      names = FALSE
+    )
     
     # Generate a summary list
     summary_list <- as.list(percentile_values)
@@ -148,7 +155,7 @@
   # Select finite values.
   x <- x[is.finite(x)]
   
-  if (length(x) == 0) return(empty_list)
+  if (length(x) == 0L) return(empty_list)
   
   # Compute the median value over the bootstraps.
   if (is.numeric(x)) {
@@ -158,20 +165,19 @@
     # Determine the mean average risk group. This requires discretisation
     # as rounding toward the nearest group would overinflate center groups.
     x_levels <- levels(x)
-    n <- length(x)
+    n <- nlevels(x)
     
     # Discretise bins floor((mu - 1) / ((n-1) / n)) + 1. See fixed bin size
     # discretisation.
-    x_num <- floor(n * (mean(as.numeric(x), na.rm = TRUE) - 1) / (n - 1)) + 1
+    x_num <- floor(n * (mean(as.numeric(x), na.rm = TRUE) - 1.0) / (n - 1.0)) + 1.0
     
     # Check if the x_num still falls within the range.
     x_num <- ifelse(x_num > n, n, x_num)
     
     # Re-encode and add to list.
-    summary_list <- list("median" = factor(
-      x_levels[x_num],
-      levels = x_levels,
-      ordered = TRUE))
+    summary_list <- list(
+      "median" = factor(x_levels[x_num], levels = x_levels, ordered = TRUE)
+    )
     
   } else {
     summary_list <- list("median" = get_mode(x))
