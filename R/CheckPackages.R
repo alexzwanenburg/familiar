@@ -148,7 +148,9 @@ setMethod(
         as.character(utils::packageVersion(name[ii])),
         ifelse(package_outdated[ii], " < ", " > "),
         as.character(version[ii]),
-        ifelse(package_outdated[ii], " (outdated)", " (newer)")))
+        ifelse(package_outdated[ii], " (outdated)", " (newer)")
+      )
+    )
   }
   
   # Show as warning.

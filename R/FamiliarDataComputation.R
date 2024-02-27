@@ -101,9 +101,11 @@ NULL
   # In case there is no internal bootstrap, we can only determine point
   # estimates for ensemble and model detail levels (but potentially more for
   # hybrid).
-  if (!has_internal_bootstrap &&
-      detail_level %in% c("ensemble", "model") &&
-      default != "point") {
+  if (
+    !has_internal_bootstrap &&
+    detail_level %in% c("ensemble", "model") &&
+    default != "point"
+  ) {
     default <- "point"
   }
   
@@ -247,10 +249,10 @@ setMethod(
     
     # Pass to .extract_data
     return(.extract_data(
-        object = object,
-        data = data,
-        data_element = data_element,
-        ...
+      object = object,
+      data = data,
+      data_element = data_element,
+      ...
     ))
   }
 )
@@ -278,7 +280,8 @@ setMethod(
       .check_parameter_value_is_valid(
         x = data_element,
         var_name = "data_element",
-        values = .get_available_data_elements())
+        values = .get_available_data_elements()
+      )
     }
     
     # Pass to .extract_data

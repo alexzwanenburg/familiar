@@ -443,9 +443,11 @@ setMethod(
     logger_message(
       paste0(
         "Computing ROC and Precision-Recall curves for the \"",
-        data_element@identifiers$positive_class, "\" class."),
+        data_element@identifiers$positive_class, "\" class."
+      ),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   # Set test probabilities
@@ -472,7 +474,8 @@ setMethod(
     MoreArgs = list(
       "data" = data,
       "x" = threshold_probabilities,
-      "is_single_curve" = is_single_curve),
+      "is_single_curve" = is_single_curve
+    ),
     progress_bar = progress_bar,
     chopchop = TRUE
   )
@@ -765,7 +768,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_auc_data")
   }
 )
@@ -783,7 +787,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -795,7 +800,8 @@ setMethod(
       aggregate_results = aggregate_results,
       type = "performance",
       subtype = "auc_curves",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -810,7 +816,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -819,8 +826,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "auc_data",
-          "aggregate_results" = aggregate_results),
-        list(...)))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_auc_data,
@@ -829,7 +839,10 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
