@@ -413,6 +413,17 @@ setMethod(
 
 
 
+# ..extract_roc_curve_data (NULL) ----------------------------------------------
+setMethod(
+  "..extract_roc_curve_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
 .compute_auc_data_categorical <- function(
     data_element,
     data,

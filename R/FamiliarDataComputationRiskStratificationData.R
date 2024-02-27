@@ -187,7 +187,7 @@ setMethod(
 
 
 
-# extract_risk_stratification_data (prediction table) --------------------------
+# extract_risk_stratification_data (risk groups) -------------------------------
 setMethod(
   "extract_risk_stratification_data",
   signature(object = "predictionTableRiskGroups"),
@@ -233,6 +233,17 @@ setMethod(
   function(object, ...) {
     ..warning_no_data_extraction_from_prediction_table("risk stratification")
     
+    return(NULL)
+  }
+)
+
+
+
+# extract_risk_stratification_data (NULL) --------------------------------------
+setMethod(
+  "extract_risk_stratification_data",
+  signature(object = "NULL"),
+  function(object, ...) {
     return(NULL)
   }
 )

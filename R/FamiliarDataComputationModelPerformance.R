@@ -457,6 +457,17 @@ setMethod(
 
 
 
+# ..extract_model_performance_data (NULL) --------------------------------------
+setMethod(
+  "..extract_model_performance_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
 .compute_model_performance <- function(
     data_element,
     data, 

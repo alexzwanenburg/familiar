@@ -328,6 +328,18 @@ setMethod(
 )
 
 
+
+# ..extract_confusion (NULL) ---------------------------------------------------
+setMethod(
+  "..extract_confusion_matrix",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
+
 # export_confusion_matrix_data (generic) ---------------------------------------
 
 #'@title Extract and export confusion matrices.

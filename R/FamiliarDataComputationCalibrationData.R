@@ -517,6 +517,16 @@ setMethod(
 
 
 
+# ..extract_calibration_data (NULL) --------------------------------------------
+setMethod(
+  "..extract_calibration_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
 
 .compute_calibration_data <- function(
     data_element,

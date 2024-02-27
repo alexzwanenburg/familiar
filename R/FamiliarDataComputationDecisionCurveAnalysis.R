@@ -580,6 +580,16 @@ setMethod(
 )
 
 
+# .extract_decision_curve_data (NULL) ------------------------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
+
+
 .compute_dca_data_categorical_model <- function(
     data_element,
     data,
