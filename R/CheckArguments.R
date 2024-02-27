@@ -1,15 +1,16 @@
 .check_dots_is_parameter <- function(dots) {
   
-  if (length(dots) > 0) {
+  if (length(dots) > 0L) {
     # Find unmatched arguments.
     unmatched_args <- setdiff(dots, .get_all_parameter_names())
     
-    if (length(unmatched_args) > 0) {
+    if (length(unmatched_args) > 0L) {
       stop(paste0(
         "Configuration: one or more function arguments could not be matched ",
         "to arguments passed by summon_familiar as configuration parameters: ",
         paste_s(unmatched_args),
-        "\nThese arguments may have been misspelled, or were deprecated or renamed."))
+        "\nThese arguments may have been misspelled, or were deprecated or renamed."
+      ))
     }
   }
   
@@ -27,30 +28,31 @@
     # Find nodes that are specified differently by the user.
     unmatched_node_names <- setdiff(
       config_node_names,
-      .get_all_configuration_parent_node_names())
+      .get_all_configuration_parent_node_names()
+    )
     
-    if (length(unmatched_node_names) > 0) {
+    if (length(unmatched_node_names) > 0L) {
       stop(paste0(
         "Configuration: one or more parent nodes in the configuration file could not be matched ",
         "to node names used by summon_familiar to group configuration parameters: ",
         paste_s(unmatched_node_names),
-        "\nThese node names may have been misspelled, or were deprecated or renamed."))
+        "\nThese node names may have been misspelled, or were deprecated or renamed."
+      ))
     }
     
     # Find names of configuration arguments.
     config_args <- unique(unlist(sapply(config, names)))
     
     # Find unmatched arguments.
-    unmatched_args <- setdiff(
-      config_args,
-      .get_all_parameter_names())
+    unmatched_args <- setdiff(config_args, .get_all_parameter_names())
     
-    if (length(unmatched_args) > 0) {
+    if (length(unmatched_args) > 0L) {
       stop(paste0(
         "Configuration: one or more parameters set in the configuration file could not be matched ",
         "to arguments passed by summon_familiar as configuration parameters: ",
         paste_s(unmatched_args),
-        "\nThese parameters may have been misspelled, or were deprecated or renamed."))
+        "\nThese parameters may have been misspelled, or were deprecated or renamed."
+      ))
     }
   }
   
@@ -63,27 +65,30 @@
     x,
     var_name,
     range,
-    closed = c(TRUE, TRUE)) {
+    closed = c(TRUE, TRUE)
+) {
 
   # Interpret single input range value as range containing only one value.
-  if (length(range) == 1) range <- c(range, range)
+  if (length(range) == 1L) range <- c(range, range)
   
   # Set lower limit to -Inf
-  if (is.na(range[1])) range[1] <- -Inf
+  if (is.na(range[1L])) range[1L] <- -Inf
   
   # Set upper limit to Inf
-  if (is.na(range[2])) range[2] <- Inf
+  if (is.na(range[2L])) range[2L] <- Inf
 
   # Some internal checks that should never be triggered.
-  if (length(x) != 1) {
+  if (length(x) != 1L) {
     ..error_reached_unreachable_code(paste0(
-      ".check_number_in_valid_range: x does not have length 1."))
+      ".check_number_in_valid_range: x does not have length 1."
+    ))
   }
   
   # Another internal checks that should never be triggered.
-  if (range[2] - range[1] < 0.0) {
+  if (range[2L] - range[1L] < 0.0) {
     ..error_reached_unreachable_code(paste0(
-      ".check_number_in_valid_range: the range is inverted"))
+      ".check_number_in_valid_range: the range is inverted"
+    ))
   }
   
   # Check that x is numeric or NA.
@@ -91,11 +96,20 @@
     ..error_type_not_valid(
       x = x,
       var_name = var_name,
-      valid_type = "numeric")
+      valid_type = "numeric"
+    )
   }
   
   if (!is.na(x)) {
-    is_outside_range <- ifelse(closed[1], x < range[1], x <= range[1]) || ifelse(closed[2], x > range[2], x >= range[2])
+    is_outside_range <- ifelse(
+      closed[1L],
+      x < range[1L],
+      x <= range[1L]
+    ) || ifelse(
+      closed[2L],
+      x > range[2L],
+      x >= range[2L]
+    )
     
   } else {
     # NA-values are outside the valid range.
@@ -106,7 +120,8 @@
     ..error_value_outside_allowed_range(
       x = x,
       var_name = var_name,
-      range = range)
+      range = range
+    )
   }
   
   return(invisible(TRUE))
@@ -118,17 +133,19 @@
     x,
     y,
     var_name_x,
-    var_name_y) {
+    var_name_y
+) {
   # If either or both are NULL, return NULL
   if (is.null(x) || is.null(y)) return(NULL)
   
   overlap_values <- intersect(x, y)
-  if (length(overlap_values) > 0) {
+  if (length(overlap_values) > 0L) {
     ..error_value_shared_between_variables(
       x = x,
       y = y,
       var_name_x = var_name_x,
-      var_name_y = var_name_y)
+      var_name_y = var_name_y
+    )
   }
   
   return(invisible(TRUE))
@@ -139,19 +156,22 @@
 .check_argument_length <- function(
     x,
     var_name,
-    min = 0,
-    max = Inf) {
+    min = 0L,
+    max = Inf
+) {
   if (length(x) < min) {
     ..error_variable_has_too_few_values(
       x = x,
       var_name = var_name,
-      req_length = c(min, max))
+      req_length = c(min, max)
+    )
     
   } else if (length(x) > max) {
     ..error_variable_has_too_many_values(
       x = x,
       var_name = var_name,
-      req_length = c(min, max))
+      req_length = c(min, max)
+    )
   }
   
   return(invisible(TRUE))
@@ -162,12 +182,13 @@
 .check_parameter_value_is_valid <- function(
     x,
     var_name,
-    values) {
+    values
+) {
 
   # Check if NULL is an allowed value
   null_allowed <- any(is.null(values))
   
-  if (length(x) == 1) {
+  if (length(x) == 1L) {
   
     # Check if x is NULL
     if (is.null(x) && null_allowed) {
@@ -181,7 +202,8 @@
     ..error_value_not_allowed(
       x = x,
       var_name = var_name,
-      values = values)
+      values = values
+    )
   }
   
   if (!all(x %in% values)) {
@@ -189,7 +211,8 @@
     ..error_value_not_allowed(
       x = x,
       var_name = var_name,
-      values = values)
+      values = values
+    )
   }
   
   return(invisible(TRUE))
@@ -202,7 +225,8 @@
     to_type,
     var_name,
     req_length,
-    allow_more = FALSE) {
+    allow_more = FALSE
+) {
 
   # Specify conversion functions
   if (to_type %in% c("character", "factor")) {
@@ -222,27 +246,30 @@
     
   } else {
     ..error_reached_unreachable_code(paste0(
-      ".perform_type_conversion: the to_type argument was not recognised: ", to_type))
+      ".perform_type_conversion: the to_type argument was not recognised: ", to_type
+    ))
   }
   
   # Attempt conversion
   x <- tryCatch(
     conv_function(x),
     warning = function(war) {
-    ..error_type_conversion_not_possible(
-      x = x,
-      to_type = to_type,
-      var_name = var_name,
-      req_length = req_length,
-      allow_more = allow_more)
+      ..error_type_conversion_not_possible(
+        x = x,
+        to_type = to_type,
+        var_name = var_name,
+        req_length = req_length,
+        allow_more = allow_more
+      )
     },
     error = function(err) {
-    ..error_type_conversion_not_possible(
-      x = x,
-      to_type = to_type,
-      var_name = var_name,
-      req_length = req_length,
-      allow_more = allow_more)
+      ..error_type_conversion_not_possible(
+        x = x,
+        to_type = to_type,
+        var_name = var_name,
+        req_length = req_length,
+        allow_more = allow_more
+      )
     }
   )
   
@@ -252,14 +279,16 @@
       x = x,
       var_name = var_name,
       req_length = req_length,
-      allow_more = allow_more)
+      allow_more = allow_more
+    )
     
   } else if (length(x) > req_length && !allow_more) {
     ..error_variable_has_too_many_values(
       x = x,
       var_name = var_name,
       req_length = req_length,
-      allow_fewer = FALSE)
+      allow_fewer = FALSE
+    )
   }
   
   return(x)
@@ -273,7 +302,8 @@
     var_name,
     type,
     optional = FALSE,
-    default = NULL) {
+    default = NULL
+) {
 
   # There are two options for parsing a value:
   # 1. Using a configuration file (through x_config)
@@ -291,19 +321,21 @@
     x <- x_config
     
     # Trim whitespace and split variables
-    if (type %in% c("character_list", "numeric_list", "integer_list", "logical_list") && length(x) > 0) {
+    if (type %in% c("character_list", "numeric_list", "integer_list", "logical_list") && length(x) > 0L) {
       # Divide by comma
       x <- strsplit_all(
         x = x,
         split = ",",
-        fixed = TRUE)[[1]]
+        fixed = TRUE
+      )[[1L]]
 
       # Remove whitespace
       x <- gsub(
         x = x,
         pattern = " ",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
     
   } else if (optional) {
@@ -315,23 +347,26 @@
     # Required, but no default.
     ..error_input_missing_without_default(
       var_name = var_name,
-      allow_config = TRUE)
+      allow_config = TRUE
+    )
   }
   
   # This point in the code can only be reached if the user provided a value.  
   # Check for presence of values
-  if (length(x) == 0 && optional == FALSE) {
+  if (length(x) == 0L && optional == FALSE) {
     # Throw an error as entry is required
     ..error_input_missing_without_default(
       var_name = var_name,
-      allow_config = TRUE)
+      allow_config = TRUE
+    )
     
   } else if (isTRUE(all.equal("", x)) && optional == FALSE) {
     ..error_input_missing_without_default(
       var_name = var_name,
-      allow_config = TRUE)
+      allow_config = TRUE
+    )
     
-  } else if (length(x) == 0 || isTRUE(all.equal("", x))) {
+  } else if (length(x) == 0L || isTRUE(all.equal("", x))) {
     # Return the default value if no value is provided
     return(default)
   }
@@ -349,8 +384,9 @@
       x = x,
       to_type = type,
       var_name = var_name,
-      req_length = 0,
-      allow_more = TRUE)
+      req_length = 0L,
+      allow_more = TRUE
+    )
     
   } else if (type %in% c("character", "numeric", "integer", "logical")) {
     # Convert to type
@@ -358,8 +394,9 @@
       x = x,
       to_type = type,
       var_name = var_name,
-      req_length = 1,
-      allow_more = FALSE)
+      req_length = 1L,
+      allow_more = FALSE
+    )
     
   } else if (type %in% c("character_list", "numeric_list", "integer_list", "logical_list")) {
     # Find basic type string.
@@ -367,28 +404,32 @@
       x = type,
       pattern = "_list",
       replacement = "",
-      fixed = TRUE)
+      fixed = TRUE
+    )
     
     # Convert to type
     x <- .perform_type_conversion(
       x = x,
       to_type = list_type,
       var_name = var_name,
-      req_length = 1,
-      allow_more = TRUE)
+      req_length = 1L,
+      allow_more = TRUE
+    )
     
     # Check for duplicates
     if (anyDuplicated(x)) {
       ..error_input_not_unique(
         x = x,
         var_name = var_name,
-        allow_config = TRUE)
+        allow_config = TRUE
+      )
     }
     
   } else {
     # By design unreachable
     ..error_reached_unreachable_code(
-      paste0(".parse_arg: the type argument was not recognised: ", type))
+      paste0(".parse_arg: the type argument was not recognised: ", type)
+    )
   }
   
   return(x)
