@@ -586,10 +586,10 @@ setMethod(
         # Update the predicted probabilities with 1.0 for the majority
         # class and 0.0 for minority classes.
         if (class_levels[ii] == majority_class) {
-          prediction_list[[class_levels[ii]]] <- rep.int(1.0, times = get_n_samples(data))
+          prediction_list[[class_levels[ii]]] <- rep.int(1.0, times = get_n_samples(data, "repetition"))
           
         } else {
-          prediction_list[[class_levels[ii]]] <- rep.int(0.0, times = get_n_samples(data))
+          prediction_list[[class_levels[ii]]] <- rep.int(0.0, times = get_n_samples(data, "repetition"))
         }
       }
       
@@ -606,7 +606,7 @@ setMethod(
 
       # Fill the prediction_table.
       prediction_table <- as_prediction_table(
-        x = rep.int(median_value, times = get_n_samples(data)),
+        x = rep.int(median_value, times = get_n_samples(data, "repetition")),
         type = "regression",
         data = data,
         model_object = object
@@ -626,7 +626,7 @@ setMethod(
       
       # Fill the prediction_table.
       prediction_table <- as_prediction_table(
-        x = rep.int(mean_survival_probability, times = get_n_samples(data)),
+        x = rep.int(mean_survival_probability, times = get_n_samples(data, "repetition")),
         type = "survival_probability",
         data = data,
         model_object = object
