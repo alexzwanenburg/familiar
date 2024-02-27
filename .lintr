@@ -1,7 +1,26 @@
 linters: linters_with_defaults(
+    any_duplicated_linter(),
+    any_is_na_linter(),
+    boolean_arithmetic_linter(),
+    class_equals_linter(),
+    cyclocomp_linter = NULL,
+    duplicate_argument_linter(),
+    empty_assignment_linter(),
+    for_loop_index_linter(),
+    function_left_parentheses_linter(),
+    function_return_linter(),
+    implicit_assignment_linter(),
+    implicit_integer_linter(),
+    length_levels_linter(),
+    length_test_linter(),
+    lengths_linter(),
     line_length_linter(120),
+    missing_argument_linter(),
+    numeric_leading_zero_linter(),
     object_length_linter = NULL,
-    trailing_whitespace_linter = NULL,
-    cyclocomp_linter = NULL
+    outer_negation_linter(),
+    paste_linter(),
+    todo_comment_linter(),
+    trailing_whitespace_linter = NULL
   )
 encoding: "UTF-8"
