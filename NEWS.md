@@ -28,7 +28,9 @@
 
 ## Bug fixes
 
-- Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
+- Fixed errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`, which are reserved names in `R`.
+
+- Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.
 
 # Version 1.4.6 (Talented Toad)
 

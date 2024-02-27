@@ -765,17 +765,38 @@ setMethod(
     # Convert a similarity table to a full distance table first.
     distance_table <- get_distance_table(object = object)
     
+    # Check if the element_names appear as instance names. This will cause an
+    # error if not handled correctly.
+    if (length(intersect(
+      c(distance_table[[element_names[1]]], distance_table[[element_names[2]]]),
+      element_names
+    )) > 0L) {
+      # If any sample or feature names match the column name, add a
+      # low-collision randomly generated string as a prefix to the column names.
+      random_prefix <- paste0("A", rstring(64), "_")
+
+      data.table::setnames(
+        distance_table,
+        old = element_names,
+        new = paste0(random_prefix, element_names)
+      )
+      
+      element_names <- paste0(random_prefix, element_names)
+    }
+    
     # Create n x n table
     distance_table  <- data.table::dcast(
       distance_table,
       stats::as.formula(paste(element_names[1], "~", element_names[2])),
-      value.var = "value")
+      value.var = "value"
+    )
     
     # Ensure that the diagonal is formed by the pairwise distance of the same
     # feature, i.e. 0.0.
     data.table::setcolorder(
       distance_table,
-      neworder = c(element_names[1], as.character(distance_table[[element_names[1]]])))
+      neworder = c(element_names[1], as.character(distance_table[[element_names[1]]]))
+    )
     
     # Add rownames into the distance table -- I know. Blasphemy. Otherwise
     # as.dist doesn't function.
