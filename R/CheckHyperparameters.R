@@ -38,17 +38,21 @@ NULL
   # fs_method, learner or detector.
   unknown_function <- setdiff(user_function_names, all_functions)
   if (length(unknown_function) > 0L) {
-    stop(paste0(
-      "Could not match all entries in the parameter list to ", type, ".\n",
-      "Failed to match: ", paste_s(unknown_function)
-    ))
+    ..error(
+      paste0(
+        "Could not match all entries in the parameter list to ", type, ".\n",
+        "Failed to match: ", paste_s(unknown_function)
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Check for duplicates.
   if (anyDuplicated(user_function_names)) {
-    stop(paste0(
-      "Parameters for one or more of the ", type, " are defined more than once."
-    ))
+    ..error(
+      "Parameters for one or more of the ", type, " are defined more than once.",
+      error_class = "input_argument_error"
+    )
   }
   
   # Package data into a data object.
@@ -124,27 +128,37 @@ NULL
   
   # Check if the desired function actually has parameters.
   if (length(preset_list) == 0L) {
-    stop(paste0("The ", user_function_name, " has no associated parameters."))
+    ..error(
+      "The ", user_function_name, " has no associated parameters.",
+      error_class = "input_argument_error"
+    )
   }
   
   # Check if there are any parameters in the user-provided list that do not appear in the preset list
   unknown_parameter <- setdiff(names(in_list), names(preset_list))
   if (length(unknown_parameter) > 0L) {
-    stop(paste0(
-      "Could not match all parameters provided for the ",
-      user_function_name,
-      " to a valid parameter. Failed to match: ",
-      paste_s(unknown_parameter)
-    ))
+    ..error(
+      paste0(
+        "Could not match all parameters provided for the ",
+        user_function_name,
+        " to a valid parameter. Failed to match: ",
+        paste_s(unknown_parameter)
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Check if there are any duplicate parameters
   if (anyDuplicated(names(in_list))) {
-    stop(paste0(
-      "One or more parameters provided for the ",
-      user_function_name,
-      " appear more than once."
-    ))
+    ..error(
+      paste0(
+        "One or more parameters provided for the ",
+        user_function_name,
+        " appear more than once: ",
+        names(in_list)[duplicated(names(in_list))]
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Iterate over the individual parameters and parse/check individual parameters

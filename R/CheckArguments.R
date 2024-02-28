@@ -1,16 +1,20 @@
-.check_dots_is_parameter <- function(dots) {
+.check_dots_is_parameter <- function(dots, call = rlang::caller_env()) {
   
   if (length(dots) > 0L) {
     # Find unmatched arguments.
     unmatched_args <- setdiff(dots, .get_all_parameter_names())
     
     if (length(unmatched_args) > 0L) {
-      stop(paste0(
-        "Configuration: one or more function arguments could not be matched ",
-        "to arguments passed by summon_familiar as configuration parameters: ",
-        paste_s(unmatched_args),
-        "\nThese arguments may have been misspelled, or were deprecated or renamed."
-      ))
+      ..error(
+        paste0(
+          "Configuration: one or more function arguments could not be matched ",
+          "to arguments passed by summon_familiar as configuration parameters: ",
+          paste_s(unmatched_args),
+          "\nThese arguments may have been misspelled, or were deprecated or renamed."
+        ),
+        error_class = "input_argument_error",
+        call = call
+      )
     }
   }
   
@@ -19,7 +23,7 @@
 
 
 
-.check_configuration_tag_is_parameter <- function(config) {
+.check_configuration_tag_is_parameter <- function(config, call = rlang::caller_env()) {
   
   if (!is.null(config)) {
     # Find names of parent nodes.
@@ -32,12 +36,16 @@
     )
     
     if (length(unmatched_node_names) > 0L) {
-      stop(paste0(
-        "Configuration: one or more parent nodes in the configuration file could not be matched ",
-        "to node names used by summon_familiar to group configuration parameters: ",
-        paste_s(unmatched_node_names),
-        "\nThese node names may have been misspelled, or were deprecated or renamed."
-      ))
+      ..error(
+        paste0(
+          "Configuration: one or more parent nodes in the configuration file could not be matched ",
+          "to node names used by summon_familiar to group configuration parameters: ",
+          paste_s(unmatched_node_names),
+          "\nThese node names may have been misspelled, or were deprecated or renamed."
+        ),
+        error_class = "input_argument_error",
+        call = call
+      )
     }
     
     # Find names of configuration arguments.
@@ -47,12 +55,15 @@
     unmatched_args <- setdiff(config_args, .get_all_parameter_names())
     
     if (length(unmatched_args) > 0L) {
-      stop(paste0(
+      ..error(paste0(
         "Configuration: one or more parameters set in the configuration file could not be matched ",
         "to arguments passed by summon_familiar as configuration parameters: ",
         paste_s(unmatched_args),
         "\nThese parameters may have been misspelled, or were deprecated or renamed."
-      ))
+      ),
+      error_class = "input_argument_error",
+      call = call
+      )
     }
   }
   
@@ -65,7 +76,8 @@
     x,
     var_name,
     range,
-    closed = c(TRUE, TRUE)
+    closed = c(TRUE, TRUE),
+    call = rlang::caller_env()
 ) {
 
   # Interpret single input range value as range containing only one value.
@@ -96,7 +108,8 @@
     ..error_type_not_valid(
       x = x,
       var_name = var_name,
-      valid_type = "numeric"
+      valid_type = "numeric",
+      call = call
     )
   }
   
@@ -120,7 +133,8 @@
     ..error_value_outside_allowed_range(
       x = x,
       var_name = var_name,
-      range = range
+      range = range,
+      call = call
     )
   }
   
@@ -133,7 +147,8 @@
     x,
     y,
     var_name_x,
-    var_name_y
+    var_name_y,
+    call = rlang::caller_env()
 ) {
   # If either or both are NULL, return NULL
   if (is.null(x) || is.null(y)) return(NULL)
@@ -144,7 +159,8 @@
       x = x,
       y = y,
       var_name_x = var_name_x,
-      var_name_y = var_name_y
+      var_name_y = var_name_y,
+      call = call
     )
   }
   
@@ -157,20 +173,23 @@
     x,
     var_name,
     min = 0L,
-    max = Inf
+    max = Inf,
+    call = rlang::caller_env()
 ) {
   if (length(x) < min) {
     ..error_variable_has_too_few_values(
       x = x,
       var_name = var_name,
-      req_length = c(min, max)
+      req_length = c(min, max),
+      call = call
     )
     
   } else if (length(x) > max) {
     ..error_variable_has_too_many_values(
       x = x,
       var_name = var_name,
-      req_length = c(min, max)
+      req_length = c(min, max),
+      call = call
     )
   }
   
@@ -182,7 +201,8 @@
 .check_parameter_value_is_valid <- function(
     x,
     var_name,
-    values
+    values,
+    call = rlang::caller_env()
 ) {
 
   # Check if NULL is an allowed value
@@ -193,7 +213,7 @@
     # Check if x is NULL
     if (is.null(x) && null_allowed) {
       # If x is NULL and this is allowed, return to parent function
-      return(NULL)
+      return(invisible(TRUE))
     }
   }
   
@@ -202,7 +222,8 @@
     ..error_value_not_allowed(
       x = x,
       var_name = var_name,
-      values = values
+      values = values,
+      call = call
     )
   }
   
@@ -211,7 +232,8 @@
     ..error_value_not_allowed(
       x = x,
       var_name = var_name,
-      values = values
+      values = values,
+      call = call
     )
   }
   

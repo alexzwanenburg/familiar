@@ -2,7 +2,8 @@ logger_message <- function(
     mess_str,
     file_name = NULL,
     indent = 0L,
-    verbose = TRUE) {
+    verbose = TRUE
+) {
   # Write message to console and file
 
   if (is.null(file_name)) file_name <- .get_log_file()
@@ -60,7 +61,7 @@ logger_warning <- function(
   # Write warning to console
   rlang::warn(
     message =  warn_str,
-    class = warn_class,
+    class = union("familiar_warning", warn_class),
     call = call
   )
   
@@ -71,7 +72,10 @@ logger_warning <- function(
 
 logger_stop <- function(
     err_str,
-    file_name = NULL) {
+    file_name = NULL,
+    error_class = NULL,
+    call = rlang::caller_env()
+) {
   # Write error to console and file
 
   if (is.null(file_name)) file_name <- .get_log_file()
@@ -84,11 +88,19 @@ logger_stop <- function(
 
   # Write error to log file
   if (!is.null(file_name)) {
-    tryCatch(write(x = log_str, file = file_name, append = TRUE))
+    tryCatch(write(
+      x = log_str, 
+      file = file_name, 
+      append = TRUE
+    ))
   }
 
   # Write error to console
-  stop(err_str)
+  rlang::abort(
+    message = err_str,
+    class = union("familiar_error", error_class),
+    call = call
+  )
 }
 
 
