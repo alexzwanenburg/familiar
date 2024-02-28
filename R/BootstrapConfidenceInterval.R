@@ -16,10 +16,16 @@
   # Test confidence level
   if (!is.null(confidence_level)) {
     if (confidence_level >= 1.0) {
-      stop("A 100% confidence interval does not exist.")
+      ..error(
+        "A 100% confidence interval does not exist.",
+        error_class = "input_argument_error"
+      )
       
     } else if (confidence_level <= 0.0) {
-      stop("The confidence interval cannot be smaller than 0.")
+      ..error(
+        "The confidence interval cannot be smaller than 0.",
+        error_class = "input_argument_error"
+      )
     }
     
     # Compute percentiles from confidence level, and add the median.
@@ -32,10 +38,16 @@
   
   if (!is.null(percentiles)) {
     if (any(percentiles > 1.0)) {
-      stop("Percentiles cannot be greater than 1.")
+      ..error(
+        "Percentiles cannot be greater than 1.",
+        error_class = "input_argument_error"
+      )
       
     } else if (any(percentiles < 0.0)) {
-      stop("Percentiles cannot be smaller than 0.")
+      ..error(
+        "Percentiles cannot be smaller than 0.",
+        error_class = "input_argument_error"
+      )
     }
   }
   
@@ -102,7 +114,9 @@
     # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
     # Age Statistical Inference. (Cambridge University Press, 2016).
     if (length(x_0) > 1L) {
-      stop(paste0("The full-data estimate should have length 1. Found: length ", length(x_0), "."))
+      ..error(
+        "The full-data point estimate should have length 1. Found: length ", length(x_0), "."
+      )
     } 
     
     if (!is.finite(x_0)) return(empty_list)

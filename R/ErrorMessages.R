@@ -1,3 +1,18 @@
+..warning <- function(
+    ...,
+    warning_class = NULL,
+    call = rlang::caller_env()
+) {
+  # Generic error function.
+  message_string <- paste0(list(...), collapse = "")
+  rlang::warn(
+    message = message_string,
+    class = union("familiar_warning", error_class),
+    call = call
+  )
+}
+
+
 ..warning_missing_cohorts <- function(x, call = rlang::caller_env()) {
   message_string <- paste0(
     "Creating iterations: ",
@@ -75,7 +90,7 @@
   
   rlang::warn(
     message = paste0(message_string, collapse = ""),
-    class = c("familiar_warning", "package_not_installed"),
+    class = c("familiar_warning", "package_missing"),
     call = rlang::caller_env()
   )
   
@@ -624,7 +639,11 @@
 
 
 
-..error_package_not_installed <- function(x, purpose = NULL) {
+..error_package_not_installed <- function(
+    x, 
+    purpose = NULL,
+    call = rlang::caller_env()
+) {
   
   # Only unique packages.
   x <- unique(x)
@@ -642,7 +661,11 @@
     err_message,
     ..message_install_from_bioconductor(x = x))
   
-  stop(paste0(err_message, collapse = ""))
+  rlang::abort(
+    message = paste0(err_message, collapse = ""),
+    class = c("familiar_error", "package_missing"),
+    call = call
+  )
 }
 
 
