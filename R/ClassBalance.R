@@ -16,7 +16,8 @@ setMethod(
       data = data@data,
       method = method,
       outcome_type = outcome_type,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -42,7 +43,8 @@ setMethod(
     outcome_type,
     method = NULL,
     normalisation = "none",
-    ...) {
+    ...
+  ) {
     
     # Check that an outcome-type is provided.
     if (is.null(outcome_type)) {
@@ -76,7 +78,8 @@ setMethod(
     } else {
       # Unknown method.
       ..error_reached_unreachable_code(paste0(
-        "create_instance_weights: unknown class weighting method. Found: ", method))
+        "create_instance_weights: unknown class weighting method. Found: ", method
+      ))
     }
     
     # Normalisation.
@@ -92,7 +95,8 @@ setMethod(
     } else {
       # Unknown normalisation method.
       ..error_reached_unreachable_code(paste0(
-        "create_instance_weights: unknown normalisation method. Found: ", normalisation))
+        "create_instance_weights: unknown normalisation method. Found: ", normalisation
+      ))
     }
     
     return(weights)
@@ -149,7 +153,8 @@ setMethod(
   # Check that the number is negative.
   if (x >= 0.0) {
     ..error_reached_unreachable_code(paste0(
-      "..compute_effective_number_of_samples_beta: parameter should be negative. Found: ", x))
+      "..compute_effective_number_of_samples_beta: parameter should be negative. Found: ", x
+    ))
   } 
   
   return(1.0 - 10.0^x)
@@ -163,14 +168,16 @@ setMethod(
   default_method <- ifelse(
     outcome_type %in% c("binomial", "multinomial"),
     "inverse_number_of_samples",
-    "none")
+    "none"
+  )
   
   # Set hyperparameter.
   return(.set_hyperparameter(
     default = default_method,
     type = "factor",
     range = c("inverse_number_of_samples", "effective_number_of_samples", "none"),
-    randomise = FALSE))
+    randomise = FALSE
+  ))
 }
 
 
@@ -178,17 +185,20 @@ setMethod(
 .get_default_sample_weighting_beta <- function(method, outcome_type) {
   
   # Default values.
-  if ("effective_number_of_samples" %in% method &&
-      outcome_type %in% c("binomial", "multinomial")) {
-    default_values <- c(-4, -3, -2, -1)
+  if (
+    "effective_number_of_samples" %in% method &&
+    outcome_type %in% c("binomial", "multinomial")
+  ) {
+    default_values <- c(-4L, -3L, -2L, -1L)
     
   } else {
-    default_values <- -2
+    default_values <- -2L
   }
   
   return(.set_hyperparameter(
     default = default_values,
     type = "integer",
-    range = c(-6, -1),
-    randomise = length(default_values) > 1))
+    range = c(-6L, -1L),
+    randomise = length(default_values) > 1L
+  ))
 }
