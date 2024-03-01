@@ -298,10 +298,12 @@ setMethod(
   # Check if any of the features is categorical - for these "mean" clusters can
   # not be realistically created.
   if (
-    any(sapply(
-      feature_info_list[object@cluster_features],
-      function(x) (x@feature_type)
-    ) == "factor")
+    any(
+      sapply(
+        feature_info_list[object@cluster_features],
+        function(x) (x@feature_type)
+      ) == "factor"
+    )
   ) {
     return(.cluster_representation_by_medioid(
       object = object,

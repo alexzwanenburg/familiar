@@ -38,7 +38,15 @@ NULL
 #'@rdname export_all-methods
 setGeneric(
   "export_all",
-  function(object, dir_path = NULL, aggregate_results = waiver(), ...) standardGeneric("export_all"))
+  function(
+    object, 
+    dir_path = NULL, 
+    aggregate_results = waiver(),
+    ...
+  ) {
+    standardGeneric("export_all")
+  }
+)
 
 
 ## export_all (collection) -----------------------------------------------------
@@ -51,7 +59,8 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = waiver(),
-    ...) {
+    ...
+  ) {
     
     if (is.waive(aggregate_results)) aggregate_results <- TRUE
     
@@ -61,121 +70,143 @@ setMethod(
     # Export feature selection variable importance
     fs_vimp <- export_fs_vimp(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export feature selection variable importance using stability.
     fs_vimp_occurrence <- export_fs_vimp(
       object = object,
       dir_path = dir_path,
-      aggregation_method = "stability")
+      aggregation_method = "stability"
+    )
     
     # Export model variable importance
     model_vimp <- export_model_vimp(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export model variable importance using stability.
     model_vimp_occurrence <- export_model_vimp(
       object = object,
       dir_path = dir_path,
-      aggregation_method = "stability")
+      aggregation_method = "stability"
+    )
     
     # Export permutation variable importance.
     permutation_vimp <- export_permutation_vimp(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export model hyperparameters
     hyperparameters <- export_hyperparameters(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export prediction tables
     prediction_data <- export_prediction_data(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export decision curve analysis data
     dca_data <- export_decision_curve_analysis_data(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export calibration information
     calibration_info <- export_calibration_info(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export calibration data
     calibration_data <- export_calibration_data(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export model performance
     model_performance <- export_model_performance(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export confusion matrix
     confusion_matrix <- export_confusion_matrix_data(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export kaplan-meier info
     km_info <- export_risk_stratification_info(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export stratification data
     km_data <- export_risk_stratification_data(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export AUC data
     auc_data <- export_auc_data(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export data from the univariate analysis
     univariate_analysis <- export_univariate_analysis_data(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export data from feature expressions
     feature_expressions <- export_feature_expressions(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export mutual-correlation data
     feature_similarity <- export_feature_similarity(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     
     # Export partial dependence data
     pd_data <- export_partial_dependence_data(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     # Export individual conditional expectation data
     ice_data <- export_ice_data(
       object = object,
       dir_path = dir_path,
-      aggregate_results = aggregate_results)
+      aggregate_results = aggregate_results
+    )
     
     if (is.null(dir_path)) {
       return(list(
         "fs_vimp" = list(
           "default" = fs_vimp,
-          "occurrence" = fs_vimp_occurrence),
+          "occurrence" = fs_vimp_occurrence
+        ),
         "model_vimp" = list(
           "default" = model_vimp,
-          "occurrence" = model_vimp_occurrence),
+          "occurrence" = model_vimp_occurrence
+        ),
         "permutation_vimp" = permutation_vimp,
         "hyperparameters" = hyperparameters,
         "prediction_data" = prediction_data,
@@ -191,7 +222,8 @@ setMethod(
         "feature_expressions" = feature_expressions,
         "feature_similarity" = feature_similarity,
         "pd_data" = pd_data,
-        "ice_data" = ice_data))
+        "ice_data" = ice_data
+      ))
     }
   }
 )
@@ -208,7 +240,8 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = waiver(),
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -216,8 +249,11 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "aggregate_results" = aggregate_results),
-        list(...)))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_all,
@@ -225,8 +261,11 @@ setMethod(
         list(
           "object" = object,
           "dir_path" = dir_path,
-          "aggregate_results" = aggregate_results),
-        list(...))))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -240,25 +279,28 @@ setMethod(
   signature(
     data = "familiarDataElement",
     object = "familiarCollection",
-    dir_path = "character"),
+    dir_path = "character"
+  ),
   function(
     data,
     object,
     dir_path,
     type,
-    subtype = NULL) {
+    subtype = NULL
+  ) {
     
     if (is_empty(data)) return(NULL)
     
     # Check if any identifiers remain, and add to the subtype.
-    if (length(data@identifiers) > 0) subtype <- c(subtype, unlist(data@identifiers))
+    if (length(data@identifiers) > 0L) subtype <- c(subtype, unlist(data@identifiers))
     
     return(.export_to_file(
       data = data@data,
       object = object,
       dir_path = dir_path,
       type = type,
-      subtype = subtype))
+      subtype = subtype
+    ))
   }
 )
 
@@ -269,13 +311,15 @@ setMethod(
   signature(
     data = "list",
     object = "familiarCollection",
-    dir_path = "character"),
+    dir_path = "character"
+  ),
   function(
     data,
     object, 
     dir_path, 
     type, 
-    subtype = NULL) {
+    subtype = NULL
+  ) {
     
     # Check if data exists
     if (is_empty(data)) return(NULL)
@@ -286,7 +330,8 @@ setMethod(
       object = object,
       dir_path = dir_path,
       type = type,
-      subtype = subtype))
+      subtype = subtype
+    ))
   }
 )
 
@@ -298,13 +343,15 @@ setMethod(
   signature(
     data = "data.table",
     object = "familiarCollection",
-    dir_path = "character"),
+    dir_path = "character"
+  ),
   function(
     data,
     object,
     dir_path,
     type, 
-    subtype = NULL) {
+    subtype = NULL
+  ) {
     
     # Check if data exists.
     if (is_empty(data)) return(NULL)
@@ -314,7 +361,7 @@ setMethod(
     if (!dir.exists(file_dir)) dir.create(file_dir, recursive = TRUE)
     
     # Generate file name.
-    if (length(subtype) == 0) {
+    if (length(subtype) == 0L) {
       base_file_name <- type
       
     } else {
@@ -328,7 +375,8 @@ setMethod(
       x = data,
       file = file_name,
       sep = ";",
-      dec = ".")
+      dec = "."
+    )
     
     return(invisible(NULL))
   }
@@ -342,13 +390,15 @@ setMethod(
   signature(
     data = "character",
     object = "familiarCollection",
-    dir_path = "character"),
+    dir_path = "character"
+  ),
   function(
     data, 
     object, 
     dir_path, 
     type, 
-    subtype = NULL) {
+    subtype = NULL
+  ) {
     
     # Check if data exists
     if (is_empty(data)) return(NULL)
@@ -358,7 +408,7 @@ setMethod(
     if (!dir.exists(file_dir)) dir.create(file_dir, recursive = TRUE)
     
     # Generate file name
-    if (length(subtype) == 0) {
+    if (length(subtype) == 0L) {
       base_file_name <- type
       
     } else {
@@ -372,7 +422,8 @@ setMethod(
       x = data,
       file = file_name,
       append = FALSE,
-      sep = ifelse(.Platform$OS.type == "windows", "\r\n", "\n"))
+      sep = ifelse(.Platform$OS.type == "windows", "\r\n", "\n")
+    )
     
     return(NULL)
   }
@@ -387,7 +438,8 @@ setMethod(
   ".apply_labels",
   signature(
     data = "familiarDataElement",
-    object = "familiarCollection"),
+    object = "familiarCollection"
+  ),
   function(data, object) {
     
     # Return NULL for empty input
@@ -425,7 +477,9 @@ setMethod(
         value = factor(
           x = x$data_set,
           levels = get_data_set_name_levels(x = object),
-          labels = get_data_set_names(x = object)))
+          labels = get_data_set_names(x = object)
+        )
+      )
     }
     
     if (has_learner) {
@@ -435,7 +489,9 @@ setMethod(
         value = factor(
           x = x$learner,
           levels = get_learner_name_levels(x = object),
-          labels = get_learner_names(x = object)))
+          labels = get_learner_names(x = object)
+        )
+      )
     }
     
     if (has_fs_method) {
@@ -445,12 +501,13 @@ setMethod(
         value = factor(
           x = x$fs_method,
           levels = get_fs_method_name_levels(x = object),
-          labels = get_fs_method_names(x = object)))
+          labels = get_fs_method_names(x = object)
+        )
+      )
     }
     
     if (has_feature) {
-      for (current_column_name in c(
-        "name", "feature_name_1", "feature_name_2", "feature")) {
+      for (current_column_name in c("name", "feature_name_1", "feature_name_2", "feature")) {
         
         if (!is.null(x[[current_column_name]])) {
           # Check if all feature names are actually in the object. Some features
@@ -463,7 +520,9 @@ setMethod(
               value = factor(
                 x = x[[current_column_name]],
                 levels = get_feature_name_levels(x = object),
-                labels = get_feature_names(x = object)))
+                labels = get_feature_names(x = object)
+              )
+            )
             
           } else {
             data.table::set(
@@ -471,7 +530,9 @@ setMethod(
               j = current_column_name,
               value = factor(
                 x = x[[current_column_name]],
-                levels = unique(x[[current_column_name]])))
+                levels = unique(x[[current_column_name]])
+              )
+            )
           }
         }
       }
@@ -489,14 +550,15 @@ setMethod(
             value = factor(
               x = x[[current_column_name]],
               levels = get_risk_group_name_levels(x = object),
-              labels = get_risk_group_names(x = object)))
+              labels = get_risk_group_names(x = object)
+            )
+          )
         }
       }
     }
     
     if (has_multiclass_outcome) {
-      for (current_column_name in c(
-        "pos_class", "positive_class", "outcome")) {
+      for (current_column_name in c("pos_class", "positive_class", "outcome")) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
@@ -505,15 +567,16 @@ setMethod(
             value = factor(
               x = x[[current_column_name]],
               levels = get_class_name_levels(x = object),
-              labels = get_class_names(x = object)))
+              labels = get_class_names(x = object)
+            )
+          )
         }
       }
     }
     
     if (has_categorical_outcome) {
       # For confusion matrices.
-      for (current_column_name in c(
-        "observed_outcome", "expected_outcome")) {
+      for (current_column_name in c("observed_outcome", "expected_outcome")) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
@@ -522,14 +585,15 @@ setMethod(
             value = factor(
               x = x[[current_column_name]],
               levels = get_class_name_levels(x = object),
-              labels = get_class_names(x = object)))
+              labels = get_class_names(x = object)
+            )
+          )
         }
       }
     }
     
     if (has_evaluation_time) {
-      for (current_column_name in c(
-        "evaluation_time", "eval_time")) {
+      for (current_column_name in c("evaluation_time", "eval_time")) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
@@ -537,7 +601,9 @@ setMethod(
             j = current_column_name,
             value = factor(
               x = x[[current_column_name]],
-              levels = sort(unique(x[[current_column_name]]))))
+              levels = sort(unique(x[[current_column_name]]))
+            )
+          )
         }
       }
     }
@@ -550,21 +616,24 @@ setMethod(
             j = current_column_name,
             value = factor(
               x = x[[current_column_name]],
-              levels = sort(unique(x[[current_column_name]]))))
+              levels = sort(unique(x[[current_column_name]]))
+            )
+          )
         }
       }
     }
     
     if (has_model_name) {
-      for (current_column_name in c(
-        "ensemble_model_name", "model_name")) {
+      for (current_column_name in c("ensemble_model_name", "model_name")) {
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
             x,
             j = current_column_name,
             value = factor(
               x = x[[current_column_name]],
-              levels = sort(unique(x[[current_column_name]]))))
+              levels = sort(unique(x[[current_column_name]]))
+            )
+          )
         }
       }
     }
@@ -578,7 +647,8 @@ setMethod(
       "evaluation_time", "eval_time",
       "name", "feature_name_1", "feature_name_2", "feature",
       "pos_class", "positive_class",
-      "metric")
+      "metric"
+    )
     
     # Find the grouping columns actually present
     grouping_columns <- intersect(grouping_columns, columns)
@@ -593,7 +663,8 @@ setMethod(
     # Order columns.
     data.table::setcolorder(
       x = x,
-      neworder = c(grouping_columns, remaining_columns, value_columns))
+      neworder = c(grouping_columns, remaining_columns, value_columns)
+    )
     
     # Drop unused levels.
     x <- droplevels(x)
@@ -612,13 +683,15 @@ setMethod(
   ".apply_labels",
   signature(
     data = "list",
-    object = "familiarCollection"),
+    object = "familiarCollection"
+  ),
   function(data, object) {
     
     return(lapply(
       data,
       .apply_labels,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -629,7 +702,8 @@ setMethod(
   ".apply_labels",
   signature(
     data = "ANY",
-    object = "familiarCollection"),
+    object = "familiarCollection"
+  ),
   function(data, object) {
     # This is the fall-back option for empty data.
     

@@ -15,7 +15,8 @@
     formula = NULL,
     data,
     settings,
-    check_stringency = "strict") {
+    check_stringency = "strict"
+) {
   # Outcome columns, outcome type, signature, included_features,
   # excluded_features, class_levels.
 
@@ -37,12 +38,18 @@
     # Ignore include_features and exclude_features when using the formula
     # interface
     if (!is.null(settings$data$include_features)) {
-      warning("The include_features parameter is ignored when using the formula interface.")
+      ..warning(
+        "The include_features parameter is ignored when using the formula interface.",
+        warning_class = "input_argument_error"
+      )
       settings$data$include_features <- NULL
     }
     
     if (!is.null(settings$data$exclude_features)) {
-      warning("The exclude_features parameter is ignored when using the formula interface.")
+      ..warning(
+        "The exclude_features parameter is ignored when using the formula interface.",
+        warning_class = "input_argument_error"
+      )
       settings$data$exclude_features <- NULL
     }
     
@@ -59,28 +66,31 @@
   
   # Identifier columns----------------------------------------------------------
   if (!is.null(settings$data$sample_col) && check_stringency != "strict") {
-    
     # Check if the internal default is used instead.
-    if (!any(settings$data$sample_col %in% colnames(data)) &&
-       get_id_columns(single_column = "sample") %in% colnames(data)) {
+    if (
+      !any(settings$data$sample_col %in% colnames(data)) &&
+      get_id_columns(single_column = "sample") %in% colnames(data)
+    ) {
       settings$data$sample_col <- get_id_columns(single_column = "sample")
     }
   }
   
   if (!is.null(settings$data$batch_col) && check_stringency != "strict") {
-    
     # Check if the internal default is used instead.
-    if (!any(settings$data$batch_col %in% colnames(data)) &&
-       get_id_columns(single_column = "batch") %in% colnames(data)) {
+    if (
+      !any(settings$data$batch_col %in% colnames(data)) &&
+      get_id_columns(single_column = "batch") %in% colnames(data)
+    ) {
       settings$data$batch_col <- get_id_columns(single_column = "batch")
     }
   }
   
   if (!is.null(settings$data$series_col) && check_stringency != "strict") {
-    
     # Check if the internal default is used instead.
-    if (!any(settings$data$series_col %in% colnames(data)) &&
-        get_id_columns(single_column = "series") %in% colnames(data)) {
+    if (
+      !any(settings$data$series_col %in% colnames(data)) &&
+      get_id_columns(single_column = "series") %in% colnames(data)
+    ) {
       settings$data$series_col <- get_id_columns(single_column = "series")
     }
   }
@@ -97,12 +107,14 @@
       other_id_column = c(settings$data$batch_col, settings$data$series_col),
       outcome_column = settings$data$outcome_col,
       col_type = "sample",
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
     
     # Remove sample column identifier if it doesn't appear in the dataset, and
     # autopopulate the column. Only possible when checks are not strict.
-    if (!settings$data$sample_col %in% colnames(data) &&
-        check_stringency != "strict") {
+    if (
+      !settings$data$sample_col %in% colnames(data) && check_stringency != "strict"
+    ) {
       settings$data$sample_col <- NULL
     }
     
@@ -122,12 +134,14 @@
       other_id_column = c(settings$data$sample_col, settings$data$series_col), 
       outcome_column = settings$data$outcome_col,
       col_type = "batch",
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
     
     # Remove batch column identifier if it doesn't appear in the dataset, and
     # autopopulate the column. Only possible when checks are not strict.
-    if (!settings$data$batch_col %in% colnames(data) &&
-        check_stringency != "strict") {
+    if (
+      !settings$data$batch_col %in% colnames(data) && check_stringency != "strict"
+    ) {
       settings$data$batch_col <- NULL
     }
     
@@ -148,12 +162,14 @@
       other_id_column = c(settings$data$batch_col, settings$data$sample_col),
       outcome_column = settings$data$outcome_col,
       col_type = "series",
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
     
     # Remove series column identifier if it doesn't appear in the dataset, and
     # autopopulate the column. Only possible when checks are not strict.
-    if (!settings$data$series_col %in% colnames(data) &&
-        check_stringency != "strict") {
+    if (
+      !settings$data$series_col %in% colnames(data) && check_stringency != "strict"
+    ) {
       settings$data$series_col <- NULL
     }
     
@@ -167,8 +183,10 @@
   
   if (outcome_type != "unset" && check_stringency != "strict") {
     # Check if outcome columns are present, or internal defaults are present.
-    if (!any(settings$data$outcome_col %in% colnames(data)) &&
-        all(get_outcome_columns(outcome_type) %in% colnames(data))) {
+    if (
+      !any(settings$data$outcome_col %in% colnames(data)) &&
+      all(get_outcome_columns(outcome_type) %in% colnames(data))
+    ) {
       settings$data$outcome_col <- get_outcome_columns(settings$data$outcome_type)
     }
     
@@ -176,15 +194,17 @@
     # exclude_features.
     if (outcome_type == "unsupervised") {
       if (!is.null(settings$data$outcome_col)) {
-        rlang::warn(paste0(
-          paste_s(settings$data$outcome_col), " was selected as an outcome column, but ",
-          "unsupervised learners and novelty detectors do not require ",
-          "outcome columns."
-        ))
+        ..warning(
+          paste0(
+            paste_s(settings$data$outcome_col), " was selected as an outcome column, but ",
+            "unsupervised learners and novelty detectors do not require ",
+            "outcome columns."
+          ),
+          warning_class = "dataset_error"
+        )
         
         settings$data$exclude_features <- c(
-          settings$data$exclude_features,
-          settings$data$outcome_col
+          settings$data$exclude_features, settings$data$outcome_col
         )
         settings$data$outcome_col <- NULL
       }
@@ -207,13 +227,19 @@
         settings$data$exclude_features,
         settings$data$include_features,
         settings$data$signature,
-        settings$data$novelty_features))
+        settings$data$novelty_features
+      )
+    )
     
-    if (length(outcome_col) == 1) {
+    if (length(outcome_col) == 1L) {
       # Only select outcome column with stringent checks.
-      warning(paste0(
-        paste_s(outcome_col), "was selected as an outcome column. It is recommended ",
-        "to provide the column name manually to avoid selecting the wrong column."))
+      ..warning(
+        paste0(
+          paste_s(outcome_col), "was selected as an outcome column. It is recommended ",
+          "to provide the column name manually to avoid selecting the wrong column."
+        ),
+        warning_class = "dataset_error"
+      )
       
       # Set the outcome column
       settings$data$outcome_col <- outcome_col
@@ -222,9 +248,13 @@
       predictor_vars <- predictor_vars[!predictor_vars %in% outcome_col]
       
     } else {
-      stop(paste0(
-        "No column(s) that determine the outcome were provided and none could be imputed. ",
-        " Please provide outcome columns."))
+      ..error(
+        paste0(
+          "No column(s) that determine the outcome were provided and none could be imputed. ",
+          " Please provide outcome columns."
+        ),
+        error_class = "dataset_error"
+      )
     }
   }
   
@@ -235,10 +265,13 @@
       missing_col <- setdiff(settings$data$outcome_col, colnames(data))
       
       if (check_stringency %in% c("strict", "external_warn")) {
-        stop_or_warn(paste0(
-          "The outcome column ", paste_s(missing_col),
-          " does not appear in the provided data set."),
-          check_stringency == "strict")
+        stop_or_warn(
+          paste0(
+            "The outcome column ", paste_s(missing_col),
+            " does not appear in the provided data set."
+          ),
+          check_stringency == "strict"
+        )
       }
       
       # Set NULL and auto-generate outcome columns later.
@@ -246,8 +279,11 @@
     }
   }
   
-  if (length(settings$data$outcome_col) > 2) {
-    stop("Only one or two (in case of survival endpoints), may be specified")
+  if (length(settings$data$outcome_col) > 2L) {
+    ..error(
+      "Only one or two (in case of survival endpoints), may be specified",
+      error_class = "dataset_error"
+    )
   }
   
   
@@ -261,7 +297,8 @@
       class_levels = settings$data$class_levels,
       censoring_indicator = settings$data$censoring_indicator,
       event_indicator = settings$data$event_indicator,
-      competing_risk_indicator = settings$data$competing_risk_indicator)
+      competing_risk_indicator = settings$data$competing_risk_indicator
+    )
   }
   
   # Check whether the outcome type fits the data.
@@ -272,7 +309,8 @@
     censoring_indicator = settings$data$censoring_indicator,
     event_indicator = settings$data$event_indicator,
     competing_risk_indicator = settings$data$competing_risk_indicator,
-    check_stringency = check_stringency)
+    check_stringency = check_stringency
+  )
   
   # Class levels ---------------------------------------------------------------
   .check_class_level_plausibility(
@@ -280,12 +318,15 @@
     outcome_type = settings$data$outcome_type,
     outcome_column = settings$data$outcome_col,
     class_levels = settings$data$class_levels,
-    check_stringency = check_stringency)
+    check_stringency = check_stringency
+  )
   
   # Set class levels in settings, if appropriate.
-  if (is.null(settings$data$class_levels) &&
-      settings$data$outcome_type %in% c("binomial", "multinomial") &&
-      !is.null(settings$data$outcome_col)) {
+  if (
+    is.null(settings$data$class_levels) &&
+    settings$data$outcome_type %in% c("binomial", "multinomial") &&
+    !is.null(settings$data$outcome_col)
+  ) {
     
     if (is.factor(data[[settings$data$outcome_col]])) {
       settings$data$class_levels <- levels(data[[settings$data$outcome_col]])
@@ -296,13 +337,16 @@
   }
   
   # Survival event indicator ---------------------------------------------------
-  if (settings$data$outcome_type %in% c("survival", "competing_risk") &&
-     !is.null(settings$data$outcome_col)) {
+  if (
+    settings$data$outcome_type %in% c("survival", "competing_risk") &&
+    !is.null(settings$data$outcome_col)
+  ) {
     settings <- .impute_survival_indicators(
       data = data,
       outcome_type = settings$data$outcome_type,
       settings = settings,
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
   }
   
   # Features -------------------------------------------------------------------
@@ -310,46 +354,58 @@
   ## Signature features --------------------------------------------------------
   if (!is.null(settings$data$signature)) {
     # Check for overlap with exclude_features
-    overlap_cols <- intersect(
-      settings$data$signature,
-      settings$data$exclude_features)
+    overlap_cols <- intersect(settings$data$signature, settings$data$exclude_features)
     
-    if (length(overlap_cols) > 0) {
-      stop(paste0(
-        "One or more columns were provided that both appear in the signature and ",
-        "among the features that should be removed. There can be no overlap. Found: ",
-        paste_s(overlap_cols)))
+    if (length(overlap_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more columns were provided that both appear in the signature and ",
+          "among the features that should be removed. There can be no overlap. Found: ",
+          paste_s(overlap_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Check if all features in the signature appear in the data
     missing_cols <- settings$data$signature[!settings$data$signature %in% predictor_vars]
-    if (length(missing_cols) > 0) {
-      stop(paste0(
-        "One or more features assigned to the signature were not found in the data set:",
-        paste_s(missing_cols)))
+    if (length(missing_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more features assigned to the signature were not found in the data set:",
+          paste_s(missing_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
   }
   
   ## Novelty features ----------------------------------------------------------
   if (!is.null(settings$data$novelty_features)) {
     # Check for overlap with exclude_features
-    overlap_cols <- intersect(
-      settings$data$novelty_features,
-      settings$data$exclude_features)
+    overlap_cols <- intersect(settings$data$novelty_features, settings$data$exclude_features)
     
-    if (length(overlap_cols) > 0) {
-      stop(paste0(
-        "One or more columns were provided that both appear in novelty_features and",
-        "among the features that should be removed. There can be no overlap. Found:",
-        paste_s(overlap_cols)))
+    if (length(overlap_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more columns were provided that both appear in novelty_features and",
+          "among the features that should be removed. There can be no overlap. Found:",
+          paste_s(overlap_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Check if all features in novelty_features appear in the data
     missing_cols <- settings$data$novelty_features[!settings$data$novelty_features %in% predictor_vars]
-    if (length(missing_cols) > 0) {
-      stop(paste0(
-        "One or more features assigned to novelty_features were not found in the data set:",
-        paste_s(missing_cols)))
+    if (length(missing_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more features assigned to novelty_features were not found in the data set:",
+          paste_s(missing_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
   }
   
@@ -358,29 +414,39 @@
     
     # Check if all features marked for exclusion appear in the data
     missing_cols <- settings$data$exclude_features[!settings$data$exclude_features %in% predictor_vars]
-    if (length(missing_cols) > 0) {
-      stop(paste0(
-        "One or more features marked for exclusion were not found in the data set:",
-        paste_s(missing_cols)))
+    if (length(missing_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more features marked for exclusion were not found in the data set:",
+          paste_s(missing_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Check if include_features also exists.
-    overlap_cols <- intersect(
-      settings$data$include_features,
-      settings$data$exclude_features)
+    overlap_cols <- intersect(settings$data$include_features, settings$data$exclude_features)
     
-    if (length(overlap_cols) > 0) {
-      stop(paste0(
-        "One or more columns were provided that appear in both the set of features ",
-        "marked for exclusion and for inclusion. There can be no overlap. Found:",
-        paste_s(overlap_cols)))
+    if (length(overlap_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more columns were provided that appear in both the set of features ",
+          "marked for exclusion and for inclusion. There can be no overlap. Found:",
+          paste_s(overlap_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Notify the used that include_features parameter takes precedence.
     if (!is.null(settings$data$include_features)) {
-      warning(paste0(
-        "Features marked for inclusion take precedence over the features marked for inclusion, i.e. ",
-        "the final data set will only contain those features marked for inclusion."))
+      ..warning(
+        paste0(
+          "Features marked for inclusion take precedence over the features marked for inclusion, i.e. ",
+          "the final data set will only contain those features marked for inclusion."
+        ),
+        warning_class = "dataset_error"
+      )
       
       settings$data$exclude_features <- NULL
     }
@@ -391,10 +457,14 @@
     
     missing_cols <- settings$data$include_features[!settings$data$include_features %in% predictor_vars]
     
-    if (length(missing_cols) > 0) {
-      stop(paste0(
-        "One or more features marked for inclusion were not found in the data set:",
-        paste_s(missing_cols)))
+    if (length(missing_cols) > 0L) {
+      ..error(
+        paste0(
+          "One or more features marked for inclusion were not found in the data set:",
+          paste_s(missing_cols)
+        ),
+        error_class = "dataset_error"
+      )
     }
   }
   
@@ -403,14 +473,16 @@
     # Select everything but the features marked for exclusion
     settings$data$include_features <- setdiff(
       predictor_vars,
-      settings$data$exclude_features)
+      settings$data$exclude_features
+    )
     
   } else if (!is.null(settings$data$include_features)) {
     # Select features marked for inclusion and signature, in so far as these do not overlap.
     settings$data$include_features <- unique(c(
       settings$data$include_features,
       settings$data$signature,
-      settings$data$novelty_features))
+      settings$data$novelty_features
+    ))
     
   } else {
     # Select all available predictor variables.
@@ -422,7 +494,7 @@
       settings$data$outcome_type %in% c("survival", "competing_risk")) {
     if (!is.null(settings$data$outcome_col)) {
       # Use the name of the event column, because its usually more indicative.
-      settings$data$outcome_name <- tolower(settings$data$outcome_col[2])
+      settings$data$outcome_name <- tolower(settings$data$outcome_col[2L])
       
     } else {
       settings$data$outcome_name <- "survival"
@@ -460,7 +532,8 @@
 .update_experimental_design_settings <- function(
     section_table,
     data,
-    settings) {
+    settings
+) {
 
   # Find out if any external validation is performed as part of the workflow
   if (is.waive(section_table)) {
@@ -477,39 +550,56 @@
   
   # Determine what happens if batch identifiers are not specified for both
   # development and validation.
-  if (is.null(union(settings$data$train_cohorts, settings$data$valid_cohorts)) &&
-      !perform_external_validation) {
+  if (
+    is.null(union(settings$data$train_cohorts, settings$data$valid_cohorts)) &&
+    !perform_external_validation
+  ) {
     # Use all cohorts for training if nothing is specifically provided, and
     # external validation is not necessary.
     settings$data$train_cohorts <- available_batch_ids
     
-  } else if (is.null(union(settings$data$train_cohorts, settings$data$valid_cohorts)) &&
-             perform_external_validation) {
+  } else if (
+    is.null(union(settings$data$train_cohorts, settings$data$valid_cohorts)) &&
+    perform_external_validation
+  ) {
     # Validation cohort(s) should be provided, or be identifiable
-    stop(paste0("The validation_batch_id variable should be set to perform external validation."))
+    ..error(
+      "The validation_batch_id variable should be set to perform external validation.",
+      error_class = "dataset_error"
+    )
   } 
   
   # Check if some cohorts are available for external validation, if required.
-  if (all(available_batch_ids %in% settings$data$train_cohorts) &&
-      perform_external_validation) {
+  if (
+    all(available_batch_ids %in% settings$data$train_cohorts) &&
+    perform_external_validation
+  ) {
     # All cohorts are found in the set used for development. Prompt the user
     # to assign some cohorts to validation.
-    stop(paste0(
-      "All batches/cohorts in the data set are assigned for model development. ",
-      "External validation is not possible. ",
-      "Please assign one or more batches/cohorts to external validation by ", 
-      "passing their names as an argument to the validation_batch_id variable."))
+    ..error(
+      paste0(
+        "All batches/cohorts in the data set are assigned for model development. ",
+        "External validation is not possible. ",
+        "Please assign one or more batches/cohorts to external validation by ", 
+        "passing their names as an argument to the validation_batch_id variable."
+      ),
+      error_class = "dataset_error"
+    )
   }
   
   # Check if one or more cohorts are available for development.
   if (all(available_batch_ids %in% settings$data$valid_cohorts)) {
     # All cohorts are found in the set used for external validation. Prompt the
     # user to assign some development cohorts.
-    stop(paste0(
-      "All batches/cohorts in the data set are assigned for external validation. ",
-      "Model development is not possible. ",
-      "Please assign one or more batches/cohorts to model development by ",
-      "passing their names as an argument to the development_batch_id variable."))
+    ..error(
+      paste0(
+        "All batches/cohorts in the data set are assigned for external validation. ",
+        "Model development is not possible. ",
+        "Please assign one or more batches/cohorts to model development by ",
+        "passing their names as an argument to the development_batch_id variable."
+      ),
+      error_class = "dataset_error"
+    )
   }
   
   # Check whether there is an overlap between development and validation group
@@ -959,7 +1049,7 @@
     # An event indicator should always be present.
     if (
       !all(tolower(as.character(settings$data$event_indicator)) %in% tolower(as.character(event_values))) &&
-       check_stringency == "strict"
+      check_stringency == "strict"
     ) {
       ..error(
         paste0(

@@ -7,7 +7,7 @@
   message_string <- paste0(list(...), collapse = "")
   rlang::warn(
     message = message_string,
-    class = union("familiar_warning", error_class),
+    class = union("familiar_warning", warning_class),
     call = call
   )
 }
@@ -180,7 +180,8 @@
       message = message_string,
       class = c("familiar_warning", "deprecation_warning"),
       .frequency = "once",
-      .frequency_id = "deprecation_warning_rfsrc_variable_hunting")
+      .frequency_id = "deprecation_warning_rfsrc_variable_hunting"
+    )
   }
 }
 
@@ -209,7 +210,7 @@
 ) {
   message_string <- paste0(
     "Predictions of the ", prediction_type, " type are not possible ",
-    "using the ", object@learner, " model (class: ", class(object)[1],
+    "using the ", object@learner, " model (class: ", class(object)[1L],
     ") for ", object@outcome_type, " outcomes."
   )
   
@@ -269,6 +270,15 @@
   )
 }
 
+
+
+..error_data_set_has_no_outcome <- function(call = rlang::caller_env()) {
+  rlang::abort(
+    message = "The provided dataset lacks outcome data.",
+    class = c("familiar_error", "dataset_error"),
+    call = call
+  )
+}
 
 
 ..error_input_missing_without_default <- function(
@@ -627,7 +637,7 @@
 ) {
   message_string <- paste0(
     "A prediction table object of class ", expected_class,
-    " was expected, but ", class(x)[1], " was found."
+    " was expected, but ", class(x)[1L], " was found."
   )
   
   rlang::abort(
@@ -652,14 +662,10 @@
   err_message <- ..message_missing_package(x = x, purpose = purpose)
   
   # Instructions for CRAN packages.
-  err_message <- c(
-    err_message,
-    ..message_install_from_cran(x = x))
+  err_message <- c(err_message, ..message_install_from_cran(x = x))
   
   # Instructions for Bioconductor packages.
-  err_message <- c(
-    err_message,
-    ..message_install_from_bioconductor(x = x))
+  err_message <- c(err_message, ..message_install_from_bioconductor(x = x))
   
   rlang::abort(
     message = paste0(err_message, collapse = ""),
