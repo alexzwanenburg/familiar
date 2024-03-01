@@ -17,7 +17,8 @@ NULL
     "fs_vimp", "hyperparameters", "model_performance",
     "model_vimp", "permutation_vimp", "prediction_data",
     "risk_stratification_data", "risk_stratification_info",
-    "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data")
+    "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data"
+  )
   
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c(
@@ -80,7 +81,8 @@ NULL
   .check_parameter_value_is_valid(
     x = x,
     var_name = "detail_level",
-    values = c("ensemble", "hybrid", "model"))
+    values = c("ensemble", "hybrid", "model")
+  )
   
   return(x)
 }
@@ -93,7 +95,8 @@ NULL
     default,
     data_element,
     detail_level,
-    has_internal_bootstrap) {
+    has_internal_bootstrap
+) {
   
   # Change to default to point if the detail_level is model.
   if (detail_level == "model") default <- "point"
@@ -123,7 +126,9 @@ NULL
     var_name = "estimation_type",
     values = c(
       "point", "bias_correction", "bc",
-      "bootstrap_confidence_interval", "bci"))
+      "bootstrap_confidence_interval", "bci"
+    )
+  )
   
   return(x)
 }
@@ -154,7 +159,8 @@ NULL
   .check_parameter_value_is_valid(
     x = x,
     var_name = "aggregate_results",
-    values = c("true", "false", "none", "all", "default"))
+    values = c("true", "false", "none", "all", "default")
+  )
   
   if (x == "default") return(default)
   if (x %in% c("true", "all")) return(TRUE)
@@ -184,7 +190,8 @@ NULL
   .check_number_in_valid_range(
     x = x,
     var_name = "sample_limit",
-    range = c(20L, Inf))
+    range = c(20L, Inf)
+  )
   
   return(x)
 }
@@ -214,18 +221,20 @@ setMethod(
     if (is.waive(data_element)) data_element <- .get_available_data_elements()
     
     # Check the data_element argument.
-    if (length(data_element) > 0) {
+    if (length(data_element) > 0L) {
       .check_parameter_value_is_valid(
         x = data_element,
         var_name = "data_element",
-        values = .get_available_data_elements())
+        values = .get_available_data_elements()
+      )
     }
     
     # Check the dynamic_model_loading argument because it is used here.
     .check_parameter_value_is_valid(
       x = dynamic_model_loading,
       var_name = "dynamic_model_loading",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
     
     # Set auto-detach here. Note that, if TRUE, load_models may reset it to
     # FALSE if models cannot be detached.
@@ -236,16 +245,15 @@ setMethod(
       data <- as_data_object(
         data = data,
         object = object,
-        check_stringency = "external_warn")
+        check_stringency = "external_warn"
+      )
       
       # Set pre-processing level.
       data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
     }
     
     # Load models, and drop any models that were not trained.
-    object <- load_models(
-      object = object,
-      drop_untrained = TRUE)
+    object <- load_models(object = object, drop_untrained = TRUE)
     
     # Pass to .extract_data
     return(.extract_data(
@@ -276,7 +284,7 @@ setMethod(
     }
     
     # Check the data_element argument.
-    if (length(data_element) > 0) {
+    if (length(data_element) > 0L) {
       .check_parameter_value_is_valid(
         x = data_element,
         var_name = "data_element",
@@ -804,19 +812,19 @@ setMethod(
     pooling_table <- data.table::data.table(
       "ensemble_data_id" = object@run_table$ensemble_data_id,
       "ensemble_run_id" = object@run_table$ensemble_run_id,
-      "data_perturb_level" = ifelse(is.na(data@perturb_level), 0, data@perturb_level),
+      "data_perturb_level" = ifelse(is.na(data@perturb_level), 0L, data@perturb_level),
       "pool_data_id" = 0L,
-      "pool_run_id" = 0,
-      "pool_perturb_level" = 0
+      "pool_run_id" = 0L,
+      "pool_perturb_level" = 0L
     )
   } else {
     pooling_table <- data.table::data.table(
-      "ensemble_data_id" = 0,
-      "ensemble_run_id" = 0,
-      "data_perturb_level" = 0,
+      "ensemble_data_id" = 0L,
+      "ensemble_run_id" = 0L,
+      "data_perturb_level" = 0L,
       "pool_data_id" = 0L,
-      "pool_run_id" = 0,
-      "pool_perturb_level" = 0
+      "pool_run_id" = 0L,
+      "pool_perturb_level" = 0L
     )
   }
   
@@ -854,7 +862,7 @@ setMethod(
     ice_data = ice_data,
     is_validation = .optional_from_slot(data, "load_validation", alternative = FALSE),
     generating_ensemble = get_object_name(object = object, abbreviated = FALSE),
-    project_id = .optional_from_slot(object, "project_id", alternative = 0)
+    project_id = .optional_from_slot(object, "project_id", alternative = 0L)
   )
   
   # Add package version to the data set 

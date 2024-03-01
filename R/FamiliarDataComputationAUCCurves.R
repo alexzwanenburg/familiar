@@ -389,7 +389,7 @@ setMethod(
     outcome_class_levels <- get_outcome_class_levels(object)
     
     # Select only one outcome type for binomial outcomes.
-    if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
+    if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2L]
     
     # Add positive class as an identifier.
     data_elements <- add_data_element_identifier(
@@ -437,9 +437,9 @@ setMethod(
 ) {
   
   # Check if the data has more than 1 row.
-  if (get_n_samples(data) <= 1) return(NULL)
+  if (get_n_samples(data) <= 1L) return(NULL)
   
-  if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
+  if (length(data_element@identifiers$positive_class) > 0L && progress_bar) {
     logger_message(
       paste0(
         "Computing ROC and Precision-Recall curves for the \"",
@@ -567,7 +567,7 @@ setMethod(
   )
   
   # Compute TPR / recall (sensitivity)
-  if (n_positive > 0) {
+  if (n_positive > 0L) {
     data[, "tpr" := n_true_positive / n_positive]
     
   } else {
@@ -575,7 +575,7 @@ setMethod(
   }
   
   # Compute FPR (1-specificity)
-  if (max(data$n_false_positive) > 0) {
+  if (max(data$n_false_positive) > 0L) {
     data[, "fpr" := n_false_positive / n_negative]
     
   } else {
@@ -583,11 +583,11 @@ setMethod(
   }
   
   # Compute precision / positive predictive value
-  if (max(data$n_true_positive + data$n_false_positive) > 0) {
+  if (max(data$n_true_positive + data$n_false_positive) > 0L) {
     data[, "ppv" := n_true_positive / (n_true_positive + n_false_positive)]
     
     # By convention, the initial value is 1.0.
-    data[n_true_positive + n_false_positive == 0, "ppv" := 1.0]
+    data[n_true_positive + n_false_positive == 0L, "ppv" := 1.0]
   } else {
     data[, "ppv" := 0.0]
   }
