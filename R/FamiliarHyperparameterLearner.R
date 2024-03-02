@@ -29,7 +29,8 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "promote_learner,familiarHyperparameterLearner: encountered ",
-        "unknown hyperparameter learner: ", learner))
+        "unknown hyperparameter learner: ", learner
+      ))
     }
 
     # Add package version.
@@ -47,12 +48,14 @@ setMethod(
   ".train",
   signature(
     object = "familiarHyperparameterLearner",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
     parameter_data = NULL,
-    ...) {
+    ...
+  ) {
     # Train method for training hyperparameter models
 
     # Suppress NOTES due to non-standard evaluation in data.table
@@ -60,7 +63,7 @@ setMethod(
 
     # Check if the class of object is a subclass of
     # familiarHyperparameterLearner.
-    if (!is_subclass(class(object)[1], "familiarHyperparameterLearner")) {
+    if (!is_subclass(class(object)[1L], "familiarHyperparameterLearner")) {
       object <- promote_learner(object)
     }
 
@@ -68,7 +71,8 @@ setMethod(
     if (!"optimisation_score" %in% colnames(data)) {
       data <- .compute_hyperparameter_optimisation_score(
         score_table = data,
-        optimisation_function = object@optimisation_function)
+        optimisation_function = object@optimisation_function
+      )
     }
 
     # Merge data and parameter_data on param_id.
@@ -78,7 +82,8 @@ setMethod(
         y = parameter_data,
         all.x = TRUE,
         all.y = FALSE,
-        by = "param_id")
+        by = "param_id"
+      )
     }
 
     # Replace NA entries with the minimum optimisation score.
@@ -89,16 +94,22 @@ setMethod(
       data = NULL,
       learner = object@target_learner,
       outcome_type = object@target_outcome_type,
-      names_only = TRUE)
+      names_only = TRUE
+    )
 
     # Set hyperparameters in data.
     target_hyperparameters <- intersect(colnames(data), default_hyperparameters)
-    if (length(target_hyperparameters) == 0) {
-      stop(paste0(
-        "The provided hyperparameter data does not contain any of the ",
-        "hyperparameters expected by the learner. The following hyperparameters ",
-        "are used: ", paste_s(default_hyperparameters)))
+    if (length(target_hyperparameters) == 0L) {
+      ..error(
+        paste0(
+          "The provided hyperparameter data does not contain any of the ",
+          "hyperparameters expected by the learner. The following hyperparameters ",
+          "are used: ", paste_s(default_hyperparameters)
+        ),
+        error_class = "input_argument_error"
+      )
     }
+    
     object@target_hyperparameters <- target_hyperparameters
 
     if (has_bad_training_data(object = object, data = data)) {
@@ -112,7 +123,8 @@ setMethod(
     object <- ..train(
       object = object,
       data = data,
-      ...)
+      ...
+    )
 
     # Add familiar version.
     object <- add_package_version(object)
@@ -127,13 +139,15 @@ setMethod(
   ".predict",
   signature(
     object = "familiarHyperparameterLearner",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
     type = "default",
     percentile = NULL,
-    ...) {
+    ...
+  ) {
     # Predict method for hyperparameter models. The type argument can be default
     # (reports the model estimate), sd (reports the model estimate + standard
     # deviation), percentile, in which case the model estimate and the requested
@@ -175,20 +189,22 @@ setMethod(
     if (!model_is_trained(object)) {
       # Describe the learner and the version of familiar.
       cat(paste0(
-        "A ", object@learner, " model (class: ", class(object)[1],
+        "A ", object@learner, " model (class: ", class(object)[1L],
         ") for inferring hyperparameters of the ", object@target_learner, ". ",
         "This hyperparameter model could not successfully be trained (",
-        .familiar_version_string(object), ").\n"))
+        .familiar_version_string(object), ").\n"
+      ))
       
       return(invisible(NULL))
     }
     
     # Describe the learner and the version of familiar.
     message_str <- paste0(
-      "A ", object@learner, " model (class: ", class(object)[1],
+      "A ", object@learner, " model (class: ", class(object)[1L],
       "; ", .familiar_version_string(object), ") ",
       "for inferring hyperparameters of the ", object@target_learner,
-      " learner. ")
+      " learner. "
+    )
     
     # Describe the package(s), if any.
     if (!is.null(object@package)) {
@@ -198,8 +214,10 @@ setMethod(
         paste_s(mapply(
           ..message_package_version,
           x = object@package,
-          version = object@package_version)),
-        ifelse(length(object@package) > 1, " packages", " package"))
+          version = object@package_version
+        )),
+        ifelse(length(object@package) > 1L, " packages", " package")
+      )
     }
     
     # Complete message and write.
@@ -217,15 +235,17 @@ setMethod(
     cat(paste0(
       "\nThe model was trained to infer the optimisation ",
       "score of the following hyperparameter set:\n",
-      paste_s(object@target_hyperparameters), "\n"))
+      paste_s(object@target_hyperparameters), "\n"
+    ))
     
     cat(paste0(
       "\nOptimisation scores were determined using the ",
       object@optimisation_function, " method, ",
       "based on assessment of model performance using the ",
       paste_s(object@optimisation_metric),
-      ifelse(length(object@optimisation_metric) > 1, " metrics", " metric"),
-      ".\n"))
+      ifelse(length(object@optimisation_metric) > 1L, " metrics", " metric"),
+      ".\n"
+    ))
     
     # Check package version.
     check_package_version(object)
@@ -242,7 +262,8 @@ setMethod(
     x,
     purpose = NULL, 
     message_type = "error",
-    ...) {
+    ...
+  ) {
     # Skip if no package is required.
     if (is_empty(x@package)) return(invisible(TRUE))
 
@@ -260,7 +281,8 @@ setMethod(
     return(invisible(.require_package(
       x = x@package,
       purpose = purpose,
-      message_type = message_type)))
+      message_type = message_type
+    )))
   }
 )
 
@@ -277,7 +299,8 @@ setMethod(
     # Obtain package versions.
     object@package_version <- sapply(
       object@package, 
-      function(x) (as.character(utils::packageVersion(x))))
+      function(x) (as.character(utils::packageVersion(x)))
+    )
 
     return(object)
   }
@@ -293,7 +316,8 @@ setMethod(
     .check_package_version(
       name = object@package,
       version = object@package_version,
-      when = "at model creation")
+      when = "at model creation"
+    )
   }
 )
 
@@ -334,7 +358,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarHyperparameterLearner",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(object, data, ...) {
     # This method is basically a capture-all for when model training does not
     # succeed. Normally ..train calls refer to child classes. This method is
@@ -353,7 +378,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarHyperparameterLearner",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(object, data, type = "default", ...) {
     # Like ..train, this method is a capture-all for when predictions fail.
     return(.get_placeholder_hyperparameter_prediction_table(
@@ -370,20 +396,21 @@ setMethod(
   "has_bad_training_data",
   signature(
     object = "familiarHyperparameterLearner",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(object, data, ...) {
     # One cannot train without data or on a single sample.
     if (is_empty(data)) return(TRUE)
 
     # Get identifier columns in the data.
     id_columns <- intersect(c("param_id", "run_id"), colnames(data))
-    if (length(id_columns) > 0) {
+    if (length(id_columns) > 0L) {
       # Check that at least two unique entries are present.
-      if (data.table::uniqueN(data, by = c(id_columns)) < 2) return(TRUE)
+      if (data.table::uniqueN(data, by = c(id_columns)) < 2L) return(TRUE)
       
     } else {
       # Check that at least two rows are present.
-      if (nrow(data) < 2) return(TRUE)
+      if (nrow(data) < 2L) return(TRUE)
     }
 
     # Check if all data are non-singular.
@@ -399,30 +426,34 @@ setMethod(
 
 .check_hyperparameter_learner_available <- function(
     hyperparameter_learner,
-    as_flag = FALSE) {
+    as_flag = FALSE
+) {
   # Create familiarHyperparameterLearner object.
   fam_hyperparameter_model <- methods::new(
     "familiarHyperparameterLearner",
-    learner = hyperparameter_learner)
+    learner = hyperparameter_learner
+  )
 
   # Set up the specific novelty detector
   fam_hyperparameter_model <- promote_learner(fam_hyperparameter_model)
 
   # Check if the familiar model has been successfully promoted.
-  if (!is_subclass(
-    class(fam_hyperparameter_model)[1],
-    "familiarHyperparameterLearner")) {
-    
-    stop(paste0(
-      hyperparameter_learner, " is not a valid hyperparameter learner. ",
-      "Please check the vignette for available hyperparameter learners."))
+  if (!is_subclass(class(fam_hyperparameter_model)[1L], "familiarHyperparameterLearner")) {
+    ..error(
+      paste0(
+        hyperparameter_learner, " is not a valid hyperparameter learner. ",
+        "Please check the vignette for available hyperparameter learners."
+      ),
+      error_class = "input_argument_error"
+    )
   }
 
   # Check that the required package can be loaded.
   require_package(
     x = fam_hyperparameter_model,
     purpose = "train",
-    message_type = "backend_error")
+    message_type = "backend_error"
+  )
 }
 
 
@@ -431,7 +462,7 @@ setMethod(
   # Find the id columns.
   id_columns <- intersect(c("param_id", "run_id"), colnames(data))
   
-  if (length(id_columns) > 0) {
+  if (length(id_columns) > 0L) {
     # Create a placeholder by only keeping the identifier columns.
     prediction_table <- data.table::copy(data[, mget(id_columns)])
     
@@ -442,18 +473,19 @@ setMethod(
   
   # Add placeholder columns.
   if (type == "default") {
-    prediction_table[, "mu" := as.double(NA)]
+    prediction_table[, "mu" := NA_real_]
     
   } else if (type == "sd") {
     prediction_table[, ":="(
-      "mu" = as.double(NA),
-      "sigma" = as.double(NA))]
+      "mu" = NA_real_,
+      "sigma" = NA_real_
+    )]
     
   } else if (type == "percentile") {
-    prediction_table[, "percentile" := as.double(NA)]
+    prediction_table[, "percentile" := NA_real_]
     
   } else if (type == "raw") {
-    prediction_table[, "raw_1" := as.double(NA)]
+    prediction_table[, "raw_1" := NA_real_]
     
   } else {
     ..error_reached_unreachable_code(paste0(

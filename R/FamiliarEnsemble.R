@@ -8,14 +8,16 @@ setMethod(
   signature(object = "familiarEnsemble"),
   function(
     object,
-    dir_path = NULL) {
+    dir_path = NULL
+  ) {
     # Fills out missing data from a familiarEnsemble based on attached models
     # and internal logic.
 
     # Load models
     object <- ..update_model_list(
       object = object,
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
     model_list <- ..get_model(object = object)
 
     # Determine which models were trained.
@@ -25,10 +27,10 @@ setMethod(
     # models that were trained.
     if (any(trained_mask)) model_list <- model_list[trained_mask]
 
-    if (is(model_list[[1]], "familiarModel")) {
+    if (is(model_list[[1L]], "familiarModel")) {
       # Add outcome_type and outcome_info to object. These slots are required in
       # some of the other aggregators.
-      object@outcome_type <- model_list[[1]]@outcome_type
+      object@outcome_type <- model_list[[1L]]@outcome_type
       object@outcome_info <- .aggregate_outcome_info(
         x = lapply(
           model_list,
@@ -45,19 +47,20 @@ setMethod(
       # Aggregate calibration info
       calibration_info <- extract_calibration_info(
         object = object,
-        detail_level = "hybrid")
+        detail_level = "hybrid"
+      )
       calibration_info <- .compute_data_element_estimates(calibration_info)
       
       if (is_empty(calibration_info)) {
         calibration_info <- NULL
       } else {
-        calibration_info <- calibration_info[[1]]@data
+        calibration_info <- calibration_info[[1L]]@data
       }
       
       # Get settings
-      settings <- model_list[[1]]@settings
+      settings <- model_list[[1L]]@settings
       
-    } else if (is(model_list[[1]], "familiarNoveltyDetector")) {
+    } else if (is(model_list[[1L]], "familiarNoveltyDetector")) {
       # Add outcome_type and outcome_info to object.
       object@outcome_type <- "unsupervised"
       object@outcome_info <- NULL
@@ -85,7 +88,7 @@ setMethod(
     )))
 
     # Aggregate feature information
-    if (length(required_features) > 0) {
+    if (length(required_features) > 0L) {
       feature_info_list <- lapply(required_features,
         .collect_and_aggregate_feature_info,
         object = object,
@@ -105,7 +108,7 @@ setMethod(
       model_list = object@model_list,
       outcome_type = object@outcome_type,
       outcome_info = object@outcome_info,
-      data_column_info = model_list[[1]]@data_column_info,
+      data_column_info = model_list[[1L]]@data_column_info,
       learner = object@learner,
       fs_method = object@fs_method,
       required_features = required_features,
@@ -117,7 +120,7 @@ setMethod(
       model_dir_path = object@model_dir_path,
       auto_detach = object@auto_detach,
       settings = settings,
-      project_id = model_list[[1]]@project_id
+      project_id = model_list[[1L]]@project_id
     )
 
     # Add package version to the ensemble
@@ -144,7 +147,7 @@ setMethod(
       cat(paste0(
         "An ensemble of ", length(object@model_list), " ",
         object@learner, " ",
-        ifelse(length(object@model_list) == 1, "model", "models"),
+        ifelse(length(object@model_list) == 1L, "model", "models"),
         " (", .familiar_version_string(object), ").\n"
       ))
       
@@ -152,15 +155,15 @@ setMethod(
       cat(paste0(
         "An ensemble of ", length(object@model_list), " ",
         object@learner, " ",
-        ifelse(length(object@model_list) == 1, "model", "models"),
+        ifelse(length(object@model_list) == 1L, "model", "models"),
         " (", .familiar_version_string(object), ").\n"
       ))
 
       # Determine how many models are trained.
       model_trained <- sapply(object@model_list, model_is_trained)
 
-      if (length(model_trained) == 1) {
-        show(object@model_list[[1]])
+      if (length(model_trained) == 1L) {
+        show(object@model_list[[1L]])
 
         # Update the flag to prevent showing redundant information.
         show_additional_information <- FALSE
@@ -178,7 +181,8 @@ setMethod(
       # Details concerning variable importance.
       cat(paste0(
         "\nVariable importance was determined using the ",
-        object@fs_method, " variable importance method.\n"))
+        object@fs_method, " variable importance method.\n"
+      ))
 
       # Details concerning model features:
       cat("\nThe following features were used in the ensemble:\n")
@@ -187,9 +191,11 @@ setMethod(
         function(x, object) {
           cat(.show_simple_feature_info(
             object@feature_info[[x]],
-            line_end = ".\n"))
+            line_end = ".\n"
+          ))
         },
-        object = object)
+        object = object
+      )
     }
   }
 )
@@ -207,8 +213,10 @@ setMethod(
     return(do.call(
       get_prediction_type,
       args = c(
-        list("object" = object@model_list[[1]]),
-        list(...))))
+        list("object" = object@model_list[[1L]]),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -225,7 +233,9 @@ setMethod(
       get_prediction_type,
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -236,14 +246,16 @@ setMethod(
   "..get_model",
   signature(
     ii = "numeric",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object) {
     
     if (ii > length(object@model_list)) {
       ..error_reached_unreachable_code(paste0(
         "..get_model,familiarEnsemble: the requested index (", ii,
         ") exceeds the total number of models in the ensemble (",
-        length(object@model_list)))
+        length(object@model_list)
+      ))
     }
     
     # If the model is already attached, dispatch to calling function.
@@ -258,9 +270,7 @@ setMethod(
     # First check if the file exists.
     if (!file.exists(object@model_list[[ii]])) {
       # Obtain the file name of the model.
-      model_file_name <- ..get_model_file_path(
-        ii = ii,
-        object = object)
+      model_file_name <- ..get_model_file_path(ii = ii, object = object)
 
       # Load the model if the file exists.
       if (!is.null(model_file_name)) {
@@ -268,9 +278,10 @@ setMethod(
       }
 
       # If no model could be found, throw an error.
-      stop(paste0(
+      ..error(paste0(
         "..get_model,familiarEnsemble: cannot find the indicated familiarModel",
-        object@model_list[[ii]]))
+        object@model_list[[ii]]
+      ))
     }
     
     return(load_familiar_object(object@model_list[[ii]]))
@@ -284,16 +295,18 @@ setMethod(
   "..get_model",
   signature(
     ii = "missing",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object, ...) {
     
-    if (length(object@model_list) > 0) {
+    if (length(object@model_list) > 0L) {
       # Dispatch get_model.
       return(lapply(
         seq_along(object@model_list),
         ..get_model,
         object = object,
-        ...))
+        ...
+      ))
       
     } else {
       return(NULL)
@@ -308,14 +321,16 @@ setMethod(
   "..get_model_file_path",
   signature(
     ii = "numeric",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object, dir_path = NULL) {
     
     if (ii > length(object@model_list)) {
       ..error_reached_unreachable_code(paste0(
         "..get_model_file_path,familiarEnsemble: the requested index (", ii,
         ") exceeds the total number of models in the ensemble (",
-        length(object@model_list)))
+        length(object@model_list)
+      ))
     }
 
     # There are three directories a file can be located, namely:
@@ -381,8 +396,10 @@ setMethod(
           dir_path = dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method),
-        model_file_name)
+          fs_method = object@fs_method
+        ),
+        model_file_name
+      )
 
       if (file.exists(file_path_2)) return(file_path_2)
     }
@@ -400,8 +417,10 @@ setMethod(
           dir_path = mb_dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method),
-        model_file_name)
+          fs_method = object@fs_method
+        ),
+        model_file_name
+      )
 
       if (file.exists(file_path_4)) return(file_path_4)
     }
@@ -420,8 +439,10 @@ setMethod(
           dir_path = model_dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method),
-        model_file_name)
+          fs_method = object@fs_method
+        ),
+        model_file_name
+      )
 
       if (file.exists(file_path_6)) return(file_path_6)
     }
@@ -438,14 +459,16 @@ setMethod(
   "..get_model_file_path",
   signature(
     ii = "missing",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object, ...) {
     # Dispatch to ..get_model_file_path.
     return(lapply(
       seq_along(object@model_list),
       ..get_model_file_path,
       object = object,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -458,7 +481,8 @@ setMethod(
   function(
     object,
     dir_path = NULL,
-    auto_detach = FALSE) {
+    auto_detach = FALSE
+  ) {
     # Determine if models can detach. Models cannot detach if detaching them
     # would lead them to be lost, i.e. there are no files on a known drive
     # location drive.
@@ -487,13 +511,16 @@ setMethod(
       if (
         file.exists(object@model_list[[ii]]) &&
         !dir.exists(object@model_list[[ii]])
-      ) next
+      ) {
+        next
+      }
 
       # Identify the file path, if any.
       model_file_path <- ..get_model_file_path(
         ii = ii,
         object = object,
-        dir_path = dir_path)
+        dir_path = dir_path
+      )
 
       # If there is a file path, add this to the model list, and update
       # the model_dir_path attribute.
@@ -505,7 +532,7 @@ setMethod(
 
     # Check if the models are either attached or are located on a known
     # drive location.
-    if (length(object@model_list) > 0) {
+    if (length(object@model_list) > 0L) {
       model_exists <- sapply(
         object@model_list,
         function(list_entry) {
@@ -517,11 +544,12 @@ setMethod(
             return(TRUE)
           }
           return(FALSE)
-        })
+        }
+      )
       
-      # Throw an error if any model does not exist.
-      if (all(!model_exists)) {
-        rlang::abort(paste0(
+      # Throw an error if not all models exist.
+      if (!any(model_exists)) {
+        ..error(paste0(
           "None of the models could be found: ",
           paste_s(unlist(object@model_list)),
           ". \n\nThis is likely because the models are no longer found in the ",
@@ -531,8 +559,8 @@ setMethod(
         ))
       }
 
-      if (any(!model_exists)) {
-        rlang::abort(paste0(
+      if (!all(model_exists)) {
+        ..error(paste0(
           "The following models in the ensemble could not be found: ",
           paste_s(unlist(object@model_list[!model_exists])), "."
         ))
@@ -541,13 +569,13 @@ setMethod(
 
     # Check the model_dir_path slot if auto_detach is on. In that case
     # model_dir_path is required to find the models.
-    if ((auto_detach || object@auto_detach) && length(object@model_list) > 0) {
+    if ((auto_detach || object@auto_detach) && length(object@model_list) > 0L) {
       # Check if all models are attached, because in that case we may still need
       # to determine the drive location.
       if (is_model_loaded(object)) {
         # Identify the file path, if any.
         model_file_path <- ..get_model_file_path(
-          ii = 1,
+          ii = 1L,
           object = object, 
           dir_path = dir_path
         )
@@ -572,7 +600,8 @@ setMethod(
   "..can_detach_models",
   signature(
     ii = "numeric",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object, dir_path = NULL) {
     # Check whether a model can be detached without losing it. We do this by
     # checking whether a valid file path can be generated. If not,
@@ -580,7 +609,8 @@ setMethod(
     model_file_path <- ..get_model_file_path(
       ii = ii, 
       object = object, 
-      dir_path = dir_path)
+      dir_path = dir_path
+    )
 
     return(!is.null(model_file_path))
   }
@@ -593,16 +623,18 @@ setMethod(
   "..can_detach_models",
   signature(
     ii = "missing",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(ii, object, dir_path = NULL) {
     # Check if there are any models in the ensemble.
-    if (length(object@model_list) > 0) {
+    if (length(object@model_list) > 0L) {
       # Check whether a model can be detached without losing it.
       can_detach <- sapply(
         seq_along(object@model_list),
         ..can_detach_models,
         object = object,
-        dir_path = dir_path)
+        dir_path = dir_path
+      )
 
       # Return TRUE when all models can be detached.
       return(all(can_detach))
@@ -662,9 +694,10 @@ setMethod(
         dir_path <- dirname(dir_path)
         
       } else {
-        stop(paste0(
+        ..error(paste0(
           "The new model directory does not exist, or cannot be accessed. ",
-          "Found: ", dir_path))
+          "Found: ", dir_path
+        ))
       }
     }
 
@@ -689,7 +722,8 @@ setMethod(
     # Update path to model directory
     return(update_model_dir_path(
       object = object,
-      dir_path = dir_path))
+      dir_path = dir_path
+    ))
   }
 )
 
@@ -702,15 +736,14 @@ setMethod(
     object,
     dir_path = NULL,
     suppress_auto_detach = FALSE, 
-    drop_untrained = FALSE) {
+    drop_untrained = FALSE
+  ) {
     # Skip if there no models on the list.
-    if (length(object@model_list) == 0) return(object)
+    if (length(object@model_list) == 0L) return(object)
 
     # Update model list as a precaution. This also checks that models
     # can actually be attached.
-    object <- ..update_model_list(
-      object = object,
-      dir_path = dir_path)
+    object <- ..update_model_list(object = object, dir_path = dir_path)
 
     # Do not attach models if auto_detach is set to TRUE.
     if (!object@auto_detach || suppress_auto_detach) {
@@ -737,11 +770,11 @@ setMethod(
   "is_model_loaded",
   signature(object = "familiarEnsemble"),
   function(object) {
-    if (length(object@model_list) > 0 && !object@auto_detach) {
+    if (length(object@model_list) > 0L && !object@auto_detach) {
       # Check that all models are present.
       return(all(sapply(object@model_list, is, class2 = "familiarModel")))
       
-    } else if (length(object@model_list) > 0 & object@auto_detach) {
+    } else if (length(object@model_list) > 0L & object@auto_detach) {
       # Return TRUE if all models are dynamically loaded.
       return(TRUE)
       
@@ -770,7 +803,8 @@ setMethod(
           # Get the model file name.
           model_file_name <- ..get_model_file_path(
             ii = ii,
-            object = object)
+            object = object
+          )
 
           # Update the entry
           model_list[[ii]] <- model_file_name
@@ -792,13 +826,15 @@ setMethod(
   "add_model_name",
   signature(
     data = "ANY",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(data, object) {
-    
+  
     if (is_empty(data)) return(NULL)
 
     ..error_reached_unreachable_code(
-      "add_model_name,any,familiarEnsemble: no method for non-empty data.")
+      "add_model_name,any,familiarEnsemble: no method for non-empty data."
+    )
   }
 )
 
@@ -808,10 +844,11 @@ setMethod(
   "add_model_name",
   signature(
     data = "familiarDataElement",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(data, object) {
     # Determine the model name
-    if (length(object@name) == 0) {
+    if (length(object@name) == 0L) {
       model_name <- get_object_name(object = object, abbreviated = TRUE)
     } else {
       model_name <- object@name
@@ -844,7 +881,7 @@ setMethod(
   signature(x = "familiarEnsemble"),
   function(x, new = NULL) {
     
-    if (x@project_id == 0 && is.null(new)) {
+    if (x@project_id == 0L && is.null(new)) {
       # Generate a random object name. A project_id of 0 means that the objects
       # was auto-generated (i.e. through object conversion). We randomly
       # generate characters and add a time stamp, so that collision is
@@ -879,7 +916,8 @@ setMethod(
     if (abbreviated) {
       # Create an abbreviated name
       model_name <- paste0(
-        "ensemble", ".", ensemble_data_id, ".", ensemble_run_id)
+        "ensemble", ".", ensemble_data_id, ".", ensemble_run_id
+      )
       
     } else {
       # Create the full name of the model
@@ -909,7 +947,7 @@ setMethod(
       # Check if a model is present
       return(FALSE)
       
-    } else if (length(object@model_list) == 0) {
+    } else if (length(object@model_list) == 0L) {
       # No models were attached
       return(FALSE)
       
@@ -955,43 +993,55 @@ setMethod(
   
   message_str <- paste0(
     "The ensemble contains ", n_models,
-    ifelse(n_models == 1, " model", " models"))
+    ifelse(n_models == 1L, " model", " models")
+  )
   
-  if (n_models == 1) {
+  if (n_models == 1L) {
     # Ensemble contains a single model.
     
-    if (n_models_naive == 0 && n_models_trained == 1) {
+    if (n_models_naive == 0L && n_models_trained == 1L) {
       message_str <- c(
         message_str,
-        paste0(" which was successfully trained."))
+        paste0(" which was successfully trained.")
+      )
       
-    } else if (n_models_naive == 1) {
+    } else if (n_models_naive == 1L) {
       message_str <- c(
         message_str,
-        paste0(" which was successfully trained as a naive model."))
+        paste0(" which was successfully trained as a naive model.")
+      )
       
     } else {
       message_str <- c(
         message_str,
-        paste0(" which failed to successfully train."))
+        paste0(" which failed to successfully train.")
+      )
     }
-  } else if (n_models_trained > 0) {
+  } else if (n_models_trained > 0L) {
     # Ensemble contains multiple trained models.
     
-    message_str <- c(message_str, paste0(
-      ". Of these models, ", n_models_trained,
-      ifelse(n_models_trained == 1, " model was", " models were"),
-      " successfully trained, of which ", n_models_naive,
-      ifelse(n_models_naive == 1, " model was", " models were"),
-      " trained as a naive model."))
+    message_str <- c(
+      message_str,
+      paste0(
+        ". Of these models, ", n_models_trained,
+        ifelse(n_models_trained == 1L, " model was", " models were"),
+        " successfully trained, of which ", n_models_naive,
+        ifelse(n_models_naive == 1L, " model was", " models were"),
+        " trained as a naive model."
+      )
+    )
     
     if (n_models > n_models_trained) {
       n_models_untrained <- n_models - n_models_trained
       
-      message_str <- c(message_str, paste0(
-        " The remaining ", n_models_untrained,
-        ifelse(n_models_untrained == 1, " model", " models"),
-        " failed to successfully train."))
+      message_str <- c(
+        message_str,
+        paste0(
+          " The remaining ", n_models_untrained,
+          ifelse(n_models_untrained == 1L, " model", " models"),
+          " failed to successfully train."
+        )
+      )
     }
     
   } else {

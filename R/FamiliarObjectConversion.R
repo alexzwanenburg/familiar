@@ -50,7 +50,8 @@ setMethod(
     # A separate familiar model is encapsulated in a list, and then transformed.
     return(do.call(
       as_familiar_ensemble,
-      args = list("object" = list(object))))
+      args = list("object" = list(object))
+    ))
   }
 )
 
@@ -85,14 +86,14 @@ setMethod(
     object <- load_familiar_object(object = object)
 
     # Return the object if it contains a single familiarEnsemble.
-    if (length(object) == 1 && all(sapply(object, is, "familiarEnsemble"))) {
-      return(object[[1]])
+    if (length(object) == 1L && all(sapply(object, is, "familiarEnsemble"))) {
+      return(object[[1L]])
       
     } else if (
       !all(sapply(object, is, "familiarModel")) &&
       !all(sapply(object, is, "familiarNoveltyDetector"))
     ) {
-      rlang::abort(paste0(
+      ..error(paste0(
         "familiarEnsemble objects can only be constructed from familiarModel ",
         "or familiarNoveltyDetector objects."
       ))
@@ -108,8 +109,8 @@ setMethod(
     )
 
     vimp_method <- ifelse(
-      methods::.hasSlot(object[[1]], "fs_method"),
-      object[[1]]@fs_method,
+      methods::.hasSlot(object[[1L]], "fs_method"),
+      object[[1L]]@fs_method,
       "none"
     )
     
@@ -117,7 +118,7 @@ setMethod(
     fam_ensemble <- methods::new(
       "familiarEnsemble",
       model_list = object,
-      learner = object[[1]]@learner,
+      learner = object[[1L]]@learner,
       fs_method = vimp_method,
       run_table = list(
         "run_table" = run_table, 
@@ -149,7 +150,8 @@ setMethod(
     # list objects.
     return(do.call(
       as_familiar_ensemble,
-      args = list("object" = as.list(object))))
+      args = list("object" = as.list(object))
+    ))
   }
 )
 
@@ -165,7 +167,8 @@ setMethod(
     # functions.
     ..error_cannot_convert_to_familiar_object(
       object = object,
-      expected_class = "familiarEnsemble")
+      expected_class = "familiarEnsemble"
+    )
   }
 )
 
@@ -222,7 +225,9 @@ setMethod(
       extract_data,
       args = c(
         list("object" = object),
-        list(...)))
+        list(...)
+      )
+    )
     
     # Set a placeholder name or a user-provided name for the familiarData
     # object.
@@ -273,7 +278,9 @@ setMethod(
       as_familiar_data,
       args = c(
         list("object" = list(object)),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -292,8 +299,8 @@ setMethod(
     object <- load_familiar_object(object = object)
 
     # Return the object if it contains a single familiarEnsemble.
-    if (length(object) == 1 && all(sapply(object, is, "familiarData"))) {
-      return(object[[1]])
+    if (length(object) == 1L && all(sapply(object, is, "familiarData"))) {
+      return(object[[1L]])
     }
 
     # Convert familiarModel(s) to familiarEnsemble.
@@ -302,20 +309,23 @@ setMethod(
     }
 
     # Check if a single familiarEnsemble has been supplied or generated.
-    if (!all(sapply(object, is, "familiarEnsemble")) || length(object) > 1) {
-      stop(paste0(
+    if (!all(sapply(object, is, "familiarEnsemble")) || length(object) > 1L) {
+      ..error(paste0(
         "A familiarData object can only be constructed from a ",
-        "single familiarEnsemble object."))
+        "single familiarEnsemble object."
+      ))
       
     } else {
-      object <- object[[1]]
+      object <- object[[1L]]
     }
 
     return(do.call(
       as_familiar_data,
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -333,7 +343,9 @@ setMethod(
       as_familiar_data,
       args = c(
         list("object" = as.list(object)),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -528,8 +540,8 @@ setMethod(
     object <- load_familiar_object(object = object)
 
     # Return the object if it contains a single familiarCollection.
-    if (length(object) == 1 && all(sapply(object, is, class2 = "familiarCollection"))) {
-      return(object[[1]])
+    if (length(object) == 1L && all(sapply(object, is, class2 = "familiarCollection"))) {
+      return(object[[1L]])
       
     } else if (all(sapply(object, is, class2 = "familiarCollection"))) {
       stop("Only a single familiarCollection can be returned.")
@@ -548,7 +560,7 @@ setMethod(
     }
 
     # Convert familiarEnsemble to familiarData
-    if (all(sapply(object, is, class2 = "familiarEnsemble")) && length(object) == 1) {
+    if (all(sapply(object, is, class2 = "familiarEnsemble")) && length(object) == 1L) {
       object <- do.call(
         as_familiar_data,
         args = c(
@@ -585,11 +597,12 @@ setMethod(
     object_names <- sapply(object, function(fam_data_obj) (fam_data_obj@name))
 
     # Check if all the datasets are unique.
-    if (any(duplicated(object_names))) {
-      stop(paste0(
+    if (anyDuplicated(object_names)) {
+      ..error(paste0(
         "familiarCollections cannot contain identical familiarData sets. ",
         "The following duplicates were found: ",
-        paste_s(unique(object_names[duplicated(object_names)]))))
+        paste_s(unique(object_names[duplicated(object_names)]))
+      ))
     }
 
     # Check if names for the data are externally provided, and obtain them from
@@ -616,7 +629,7 @@ setMethod(
       data_sets = sapply(
         object,
         function(fam_data_obj) (fam_data_obj@name)),
-      outcome_type = object[[1]]@outcome_type,
+      outcome_type = object[[1L]]@outcome_type,
       outcome_info = .aggregate_outcome_info(x = lapply(
         object, 
         function(list_elem) (if (methods::.hasSlot(list_elem, "outcome_info")) return(list_elem@outcome_info)))),
@@ -693,7 +706,7 @@ setMethod(
       ice_data = collect(
         x = object,
         data_slot = "ice_data"),
-      project_id = object[[1]]@project_id)
+      project_id = object[[1L]]@project_id)
 
     # Add a package version to the familiarCollection object
     fam_collect <- add_package_version(object = fam_collect)
@@ -793,7 +806,7 @@ setMethod(
     }
 
     # Unlist if the input is singular.
-    if (length(object) == 1) fam_object <- fam_object[[1]]
+    if (length(object) == 1L) fam_object <- fam_object[[1L]]
 
     return(fam_object)
   }

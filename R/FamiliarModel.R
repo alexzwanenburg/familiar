@@ -9,27 +9,30 @@ setMethod(
   ".train",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data,
     get_additional_info = FALSE,
     is_pre_processed = FALSE,
     trim_model = TRUE,
-    timeout = 60000,
+    timeout = 60000.0,
     approximate = FALSE,
-    ...) {
+    ...
+  ) {
     # Train method for model training
 
     # Check if the class of object is a subclass of familiarModel.
-    if (!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
+    if (!is_subclass(class(object)[1L], "familiarModel")) object <- promote_learner(object)
 
     # Process data, if required.
     data <- process_input_data(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
-      stop_at = "clustering")
+      stop_at = "clustering"
+    )
 
     # Work only with data that has known outcomes when training.
     data <- filter_missing_outcome(data = data)
@@ -43,7 +46,8 @@ setMethod(
       can_train <- can_train_naive <- FALSE
       object <- ..update_errors(
         object = object,
-        ..error_message_no_training_data_available())
+        ..error_message_no_training_data_available()
+      )
     }
 
     # Check the number of features in data; if it has no features, a standard
@@ -53,7 +57,8 @@ setMethod(
       can_train <- FALSE
       object <- ..update_errors(
         object = object,
-        ..error_message_no_features_selected_for_training())
+        ..error_message_no_features_selected_for_training()
+      )
     }
 
     # Check if the hyperparameters are plausible.
@@ -61,7 +66,8 @@ setMethod(
       can_train <- can_train_naive <- FALSE
       object <- ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())
+        ..error_message_no_optimised_hyperparameters_available()
+      )
     }
 
     # Check if a naive model should be trained.
@@ -72,7 +78,8 @@ setMethod(
     # Add outcome distribution data.
     object@outcome_info <- .compute_outcome_distribution_data(
       object = object@outcome_info,
-      data = data)
+      data = data
+    )
 
     # Train a new model based on data. If a normal model cannot be trained,
     # attempt to train a naive model.
@@ -81,13 +88,15 @@ setMethod(
         object = object,
         data = data,
         approximate = approximate,
-        ...)
+        ...
+      )
       
     } else if (can_train_naive) {
       object <- ..train_naive(
         object = object,
         data = data,
-        ...)
+        ...
+      )
     }
 
     # Extract information required for assessing model performance, calibration
@@ -102,7 +111,8 @@ setMethod(
       if (can_train) {
         object <- ..set_recalibration_model(
           object = object,
-          data = data)
+          data = data
+        )
       }
 
       # Extract data required for assessing calibration. Not all outcome types
@@ -112,7 +122,8 @@ setMethod(
       if (can_train || can_train_naive) {
         object <- ..set_calibration_info(
           object = object,
-          data = data)
+          data = data
+        )
       }
 
       # Set stratification thresholds. This is currently only done for
@@ -120,13 +131,15 @@ setMethod(
       if (can_train) {
         object <- ..set_risk_stratification_thresholds(
           object = object,
-          data = data)
+          data = data
+        )
       }
 
       # Add column data
       object <- add_data_column_info(
         object = object,
-        data = data)
+        data = data
+      )
     }
 
     if (trim_model) object <- trim_model(object = object, timeout = timeout)
@@ -147,11 +160,13 @@ setMethod(
 setMethod(
   ".train", signature(
     object = "familiarModel",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # The model cannot be trained, and is returned directly.
     return(object)
   }
@@ -163,7 +178,8 @@ setMethod(
   ".train_novelty_detector",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data,
@@ -176,7 +192,7 @@ setMethod(
     # Train method for novelty detectors.
 
     # Check if the class of object is a subclass of familiarModel.
-    if (!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
+    if (!is_subclass(class(object)[1L], "familiarModel")) object <- promote_learner(object)
 
     # Create detector object.
     fam_detector <- methods::new("familiarNoveltyDetector",
@@ -197,7 +213,8 @@ setMethod(
       data = data,
       is_pre_processed = is_pre_processed,
       stop_at = "clustering",
-      force_check = TRUE)
+      force_check = TRUE
+    )
 
     # Optimise hyperparameters if they were not previously set.
     if (!has_optimised_hyperparameters(object = fam_detector)) {
@@ -233,28 +250,31 @@ setMethod(
 
     if (!model_is_trained(object)) {
       cat(paste0(
-        "A ", object@learner, " model (class: ", class(object)[1],
+        "A ", object@learner, " model (class: ", class(object)[1L],
         ") that was not successfully trained (", 
-        .familiar_version_string(object), ").\n"))
+        .familiar_version_string(object), ").\n"
+      ))
 
-      if (length(object@messages$warning) > 0) {
+      if (length(object@messages$warning) > 0L) {
         condition_messages <- condition_summary(object@messages$warning)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+          ifelse(length(condition_messages) == 1L, "warning was", "warnings were"),
           " generated while trying to train the model:\n",
           paste0(condition_messages, collapse = "\n"),
-          "\n"))
+          "\n"
+        ))
       }
 
-      if (length(object@messages$error) > 0) {
+      if (length(object@messages$error) > 0L) {
         condition_messages <- condition_summary(object@messages$error)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "error was", "errors were"),
+          ifelse(length(condition_messages) == 1L, "error was", "errors were"),
           " encountered while trying to train the model:\n",
           paste0(condition_messages, collapse = "\n"),
-          "\n"))
+          "\n"
+        ))
       }
       
       return(invisible(NULL))
@@ -262,8 +282,9 @@ setMethod(
     
     # Describe the learner and the version of familiar.
     message_str <- paste0(
-      "A ", object@learner, " model (class: ", class(object)[1],
-      "; ", .familiar_version_string(object), ")")
+      "A ", object@learner, " model (class: ", class(object)[1L],
+      "; ", .familiar_version_string(object), ")"
+    )
     
     # Describe the package(s), if any
     if (!is.null(object@package)) {
@@ -273,8 +294,11 @@ setMethod(
         paste_s(mapply(
           ..message_package_version,
           x = object@package,
-          version = object@package_version)),
-        ifelse(length(object@package) > 1, " packages", " package"))
+          version = object@package_version
+        )),
+        ifelse(length(object@package) > 1L, " packages", " package"
+        )
+      )
     }
     
     # Complete message and write.
@@ -303,19 +327,22 @@ setMethod(
       function(x, object) {
         cat(paste0("  ", x, ": ", object@hyperparameters[[x]], "\n"))
       },
-      object = object))
+      object = object
+    ))
     
     # Details concerning variable importance.
     cat(paste0(
       "\nVariable importance was determined using the ",
-      object@fs_method, " variable importance method.\n"))
+      object@fs_method, " variable importance method.\n"
+    ))
     
     # Details concerning model features:
     cat("\nThe following features were used in the model:\n")
     lapply(
       object@model_features,
       function(x, object) show(object@feature_info[[x]]),
-      object = object)
+      object = object
+    )
     
     # Details concerning novelty features:
     if (!model_is_trained(object@novelty_detector)) {
@@ -334,28 +361,31 @@ setMethod(
       lapply(
         novelty_features, 
         function(x, object) show(object@feature_info[[x]]), 
-        object = object)
+        object = object
+      )
     }
     
-    if (length(object@messages$warning) > 0 || length(object@messages$error) > 0) {
+    if (length(object@messages$warning) > 0L || length(object@messages$error) > 0L) {
       cat(paste0("\n------------ Warnings and errors ------------\n"))
       
-      if (length(object@messages$warning) > 0) {
+      if (length(object@messages$warning) > 0L) {
         condition_messages <- condition_summary(object@messages$warning)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+          ifelse(length(condition_messages) == 1L, "warning was", "warnings were"),
           " generated while training the model:\n",
-          paste0(condition_messages, collapse = "\n")))
+          paste0(condition_messages, collapse = "\n")
+        ))
       }
       
-      if (length(object@messages$error) > 0) {
+      if (length(object@messages$error) > 0L) {
         condition_messages <- condition_summary(object@messages$error)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "error was", "errors were"),
+          ifelse(length(condition_messages) == 1L, "error was", "errors were"),
           " encountered while training the model:\n",
-          paste0(condition_messages, collapse = "\n")))
+          paste0(condition_messages, collapse = "\n")
+        ))
       }
     }
     
@@ -410,7 +440,8 @@ setMethod(
     # Attempt to capture the summary directly.
     h <- tryCatch(
       summary(object@model, ...),
-      error = identity)
+      error = identity
+    )
 
     # If an error is generated, create a message and return an invisible NULL.
     if (inherits(h, "error")) {
@@ -471,7 +502,8 @@ setMethod(
     # Attempt to capture the coefficients directly.
     feature_coefficients <- tryCatch(
       coef(object@model, ...),
-      error = identity)
+      error = identity
+    )
 
     # If an error is generated by coef, return a NULL.
     if (inherits(feature_coefficients, "error")) return(NULL)
@@ -521,7 +553,8 @@ setMethod(
     # Attempt to capture the variance-covariance matrix directly.
     variance_covariance_matrix <- tryCatch(
       vcov(object@model, ...),
-      error = identity)
+      error = identity
+    )
 
     # If an error is generated by vcov, return a NULL.
     if (inherits(variance_covariance_matrix, "error")) return(NULL)
@@ -548,14 +581,16 @@ setMethod(
           "vimp" = "to determine variable importance",
           "predict" = "to create model predictions",
           "show" = "to capture output",
-          "distribution" = "to set the model distribution")
+          "distribution" = "to set the model distribution"
+        )
       }
     }
 
     return(invisible(.require_package(
       x = x@package,
       purpose = purpose,
-      message_type = message_type)))
+      message_type = message_type
+    )))
   }
 )
 
@@ -572,7 +607,8 @@ setMethod(
     # Obtain package versions.
     object@package_version <- sapply(
       object@package,
-      function(x) (as.character(utils::packageVersion(x))))
+      function(x) (as.character(utils::packageVersion(x)))
+    )
 
     return(object)
   }
@@ -588,7 +624,8 @@ setMethod(
     .check_package_version(
       name = object@package,
       version = object@package_version,
-      when = "at model creation")
+      when = "at model creation"
+    )
   }
 )
 
@@ -599,7 +636,8 @@ setMethod(
   "save",
   signature(
     list = "familiarModel",
-    file = "character"),
+    file = "character"
+  ),
   function(list, file) {
     .save(object = list, dir_path = file)
   }
@@ -612,12 +650,14 @@ setMethod(
   "add_model_name",
   signature(
     data = "ANY",
-    object = "familiarModel"),
+    object = "familiarModel"
+  ),
   function(data, object) {
     if (is_empty(data)) return(NULL)
 
     ..error_reached_unreachable_code(
-      "add_model_name,any,familiarModel: no method for non-empty data.")
+      "add_model_name,any,familiarModel: no method for non-empty data."
+    )
   }
 )
 
@@ -628,10 +668,11 @@ setMethod(
   "add_model_name",
   signature(
     data = "familiarDataElement",
-    object = "familiarModel"),
+    object = "familiarModel"
+  ),
   function(data, object) {
     # Determine the model name
-    if (length(object@name) == 0) {
+    if (length(object@name) == 0L) {
       model_name <- get_object_name(object = object, abbreviated = TRUE)
     } else {
       model_name <- object@name
@@ -654,7 +695,8 @@ setMethod(
   "add_model_name",
   signature(
     data = "familiarDataElement",
-    object = "character"),
+    object = "character"
+  ),
   function(data, object) {
     # Load object.
     object <- load_familiar_object(object)
@@ -687,14 +729,15 @@ setMethod(
   signature(x = "familiarModel"),
   function(x, new = NULL) {
     
-    if (x@project_id == 0 && is.null(new)) {
+    if (x@project_id == 0L && is.null(new)) {
       # Generate a random object name. A project_id of 0 means that the objects
       # was auto-generated (i.e. through object conversion). We randomly
       # generate characters and add a time stamp, so that collision is
       # practically impossible.
       slot(object = x, name = "name") <- paste0(
         as.character(as.numeric(format(Sys.time(), "%H%M%S"))),
-        "_", rstring(n = 20L))
+        "_", rstring(n = 20L)
+      )
       
     } else if (is.null(new)) {
       # Generate a sensible object name.
@@ -716,8 +759,8 @@ setMethod(
   signature(object = "familiarModel"),
   function(object, abbreviated = FALSE) {
     # Extract data and run id
-    model_data_id <- tail(object@run_table, n = 1)$data_id
-    model_run_id <- tail(object@run_table, n = 1)$run_id
+    model_data_id <- tail(object@run_table, n = 1L)$data_id
+    model_run_id <- tail(object@run_table, n = 1L)$run_id
 
     if (abbreviated) {
       # Create an abbreviated name
@@ -732,7 +775,8 @@ setMethod(
         data_id = model_data_id,
         run_id = model_run_id,
         object_type = "familiarModel",
-        with_extension = FALSE)
+        with_extension = FALSE
+      )
     }
 
     return(model_name)
@@ -771,7 +815,8 @@ setMethod(
 
     return(do.call(
       model_is_trained,
-      args = c(list("object" = object))))
+      args = c(list("object" = object))
+    ))
   }
 )
 
@@ -809,7 +854,8 @@ setMethod(
     data = NULL, 
     sample_id_column = NULL, 
     batch_id_column = NULL, 
-    series_id_column = NULL) {
+    series_id_column = NULL
+  ) {
     # Don't determine new column information if this information is already
     # present.
     if (!is.null(object@data_column_info)) return(object)
@@ -844,7 +890,8 @@ setMethod(
     data_info_table <- data.table::data.table(
       "type" = c("batch_id_column", "sample_id_column", "series_id_column", "repetition_id_column"),
       "internal" = get_id_columns(),
-      "external" = c(batch_id_column, sample_id_column, series_id_column, repetition_id_column))
+      "external" = c(batch_id_column, sample_id_column, series_id_column, repetition_id_column)
+    )
 
     if (object@outcome_type %in% c("survival", "competing_risk")) {
       # Find internal and external outcome column names.
@@ -855,7 +902,8 @@ setMethod(
       outcome_info_table <- data.table::data.table(
         "type" = c("outcome_column", "outcome_column"),
         "internal" = internal_outcome_columns,
-        "external" = external_outcome_columns)
+        "external" = external_outcome_columns
+      )
       
     } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       # Find internal and external outcome column names.
@@ -866,7 +914,8 @@ setMethod(
       outcome_info_table <- data.table::data.table(
         "type" = "outcome_column",
         "internal" = internal_outcome_columns,
-        "external" = external_outcome_columns)
+        "external" = external_outcome_columns
+      )
       
     } else {
       ..error_no_known_outcome_type(outcome_type = object@outcome_type)
@@ -908,7 +957,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Set a NULL model
     object@model <- NULL
@@ -924,7 +974,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarModel",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(object, data, ...) {
     # Set a NULL model
     object@model <- NULL
@@ -940,7 +991,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Set a NULL model
     object@model <- NULL
@@ -956,7 +1008,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarModel",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(object, data, ...) {
     # Set a NULL model.
     object@model <- NULL
@@ -972,7 +1025,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", time = NULL, ...) {
     # Fallback method for missing or failing predictions.
     
@@ -999,7 +1053,8 @@ setMethod(
   "..predict",
   signature(
     object = "character",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Load object.
     object <- load_familiar_object(object)
@@ -1008,7 +1063,9 @@ setMethod(
       ..predict,
       args = c(list(
         "object" = object,
-        "data" = data))))
+        "data" = data
+      ))
+    ))
   }
 )
 
@@ -1070,7 +1127,8 @@ setMethod(
   "..set_recalibration_model",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data) {
     # This is a fall-back option.
     object@calibration_model <- NULL
@@ -1086,15 +1144,19 @@ setMethod(
   "..set_risk_stratification_thresholds",
   signature(
     object = "familiarModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data) {
     
-    if (object@outcome_type %in% c("survival", "competing_risk") &&
-        model_is_trained(object)) {
+    if (
+      object@outcome_type %in% c("survival", "competing_risk") &&
+      model_is_trained(object)
+    ) {
       
       object@km_info <- .find_survival_grouping_thresholds(
         object = object,
-        data = data)
+        data = data
+      )
       
     } else {
       object@km_info <- NULL
@@ -1126,7 +1188,8 @@ setMethod(
     # This is a fall-back option.
     return(get_placeholder_vimp_table(
       vimp_method = object@learner,
-      run_table = object@run_table))
+      run_table = object@run_table
+    ))
   }
 )
 
@@ -1136,7 +1199,7 @@ setMethod(
 setMethod(
   "trim_model",
   signature(object = "familiarModel"),
-  function(object, timeout = 60000, ...) {
+  function(object, timeout = 60000.0, ...) {
     # Do not trim the model if there is nothing to trim.
     if (!model_is_trained(object)) return(object)
 
@@ -1150,7 +1213,8 @@ setMethod(
     trimmed_object <- .replace_broken_functions(
       object = object,
       trimmed_object = trimmed_object,
-      timeout = timeout)
+      timeout = timeout
+    )
 
     return(trimmed_object)
   }
@@ -1187,7 +1251,7 @@ setMethod(
     if (object@fs_method %in% .get_available_no_features_vimp_methods()) return(TRUE)
 
     # Check if the signature size is 0.
-    return(all(object@hyperparameters$sign_size == 0))
+    return(all(object@hyperparameters$sign_size == 0L))
   }
 )
 
@@ -1201,7 +1265,8 @@ setMethod(
     # Update warnings attached to the object.
     object@messages$warning <- c(
       object@messages$warning,
-      messages)
+      messages
+    )
 
     return(object)
   }
@@ -1243,13 +1308,15 @@ setMethod(
     rank_table = NULL, 
     signature_features = NULL, 
     minimise_footprint = FALSE, 
-    ...) {
+    ...
+  ) {
     if (is.null(signature_features)) {
       # Get signature features using the table with ranked features. Those
       # features may be clustered.
       signature_features <- get_signature(
         object = object,
-        rank_table = rank_table)
+        rank_table = rank_table
+      )
     }
 
     # Find important features, i.e. those that constitute the signature either
@@ -1257,12 +1324,14 @@ setMethod(
     model_features <- get_model_features(
       x = signature_features,
       is_clustered = TRUE,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
 
     # Find novelty features.
     novelty_features <- find_novelty_features(
       model_features = model_features,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
 
     if (minimise_footprint) {
       # Find only features that are required for running the model.
@@ -1273,7 +1342,8 @@ setMethod(
       required_features <- get_required_features(
         x = union(model_features, novelty_features),
         is_clustered = FALSE,
-        feature_info_list = object@feature_info)
+        feature_info_list = object@feature_info
+      )
     }
 
     # Select only necessary feature info objects.
@@ -1298,12 +1368,14 @@ setMethod(
   function(
     object,
     rank_table = NULL, 
-    ...) {
+    ...
+  ) {
     # Attempt to get signature directly from the object.
     if (!is_empty(object@model_features)) {
       return(features_after_clustering(
         features = object@model_features,
-        feature_info_list = object@feature_info))
+        feature_info_list = object@feature_info
+      ))
     }
 
     # Get signature based on the stored feature information.
@@ -1313,7 +1385,9 @@ setMethod(
         "object" = object@feature_info,
         "vimp_method" = object@fs_method,
         "parameter_list" = object@hyperparameters,
-        "rank_table" = rank_table)))
+        "rank_table" = rank_table
+      )
+    ))
   }
 )
 
@@ -1328,13 +1402,14 @@ setMethod(
     vimp_method,
     parameter_list,
     rank_table, 
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     name <- rank <- NULL
 
     # Get signature size
     if (is_empty(parameter_list$sign_size)) {
-      signature_size <- 0
+      signature_size <- 0L
     } else {
       signature_size <- parameter_list$sign_size
     }
@@ -1344,7 +1419,12 @@ setMethod(
 
     if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
       # Only select signature.
-      if (length(signature_features) == 0) stop("No signature was provided.")
+      if (length(signature_features) == 0L) {
+        ..error(
+          "No signature was provided.",
+          error_class = "input_argument_error"
+        )
+      }
 
       selected_features <- signature_features
       
@@ -1352,19 +1432,22 @@ setMethod(
       # Select all features.
       selected_features <- features_after_clustering(
         features = get_available_features(feature_info_list = object),
-        feature_info_list = object)
+        feature_info_list = object
+      )
 
       # Order randomly so that there is no accidental dependency on order.
       selected_features <- fam_sample(
         x = selected_features,
         size = length(selected_features),
-        replace = FALSE)
+        replace = FALSE
+      )
       
     } else if (vimp_method %in% .get_available_random_vimp_methods()) {
       # Select all features.
       selected_features <- features_after_clustering(
         features = get_available_features(feature_info_list = object),
-        feature_info_list = object)
+        feature_info_list = object
+      )
 
       # Shrink signature sizes that are too large.
       if (signature_size > length(selected_features)) {
@@ -1375,7 +1458,8 @@ setMethod(
       selected_features <- fam_sample(
         x = selected_features,
         size = signature_size,
-        replace = FALSE)
+        replace = FALSE
+      )
       
     } else if (vimp_method %in% .get_available_no_features_vimp_methods()) {
       # No features are selected.
@@ -1389,11 +1473,12 @@ setMethod(
       n_allowed_features <- signature_size - length(signature_features)
 
       # Check that features may be added, and the rank table is not empty.
-      if (n_allowed_features > 0 && !is_empty(rank_table)) {
+      if (n_allowed_features > 0L && !is_empty(rank_table)) {
         # Get available features.
         features <- features_after_clustering(
           features = get_available_features(feature_info_list = object),
-          feature_info_list = object)
+          feature_info_list = object
+        )
 
         # Remove signature features, if any, to prevent duplicates.
         features <- setdiff(features, signature_features)
@@ -1405,7 +1490,8 @@ setMethod(
         # Add good features (low rank) to the selection
         selected_features <- c(
           signature_features,
-          head(x = rank_table, n = n_allowed_features)$name)
+          head(x = rank_table, n = n_allowed_features)$name
+        )
       }
     }
 
