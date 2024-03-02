@@ -66,7 +66,8 @@ setMethod(
     logger_message(
       paste0("Computing ensemble predictions for the dataset."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Load evaluation_times from the object settings attribute, if it is not
     # provided.
@@ -81,7 +82,8 @@ setMethod(
         .check_number_in_valid_range, 
         var_name = "evaluation_times",
         range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
+        closed = c(FALSE, TRUE)
+      )
     }
     
     # Load confidence alpha from object settings attribute if not provided
@@ -95,7 +97,8 @@ setMethod(
       x = confidence_level,
       var_name = "confidence_level",
       range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
+      closed = c(FALSE, FALSE)
+    )
     
     # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) {
@@ -106,14 +109,16 @@ setMethod(
     .check_parameter_value_is_valid(
       x = ensemble_method, 
       var_name = "ensemble_method",
-      values = .get_available_ensemble_prediction_methods())
+      values = .get_available_ensemble_prediction_methods()
+    )
     
     # Check the level detail.
     detail_level <- .parse_detail_level(
       x = detail_level,
       object = object,
       default = "ensemble",
-      data_element = "prediction_data")
+      data_element = "prediction_data"
+    )
     
     # Check the estimation type.
     estimation_type <- .parse_estimation_type(
@@ -122,14 +127,16 @@ setMethod(
       default = "point",
       data_element = "prediction_data",
       detail_level = detail_level,
-      has_internal_bootstrap = FALSE)
+      has_internal_bootstrap = FALSE
+    )
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "prediction_data")
+      data_element = "prediction_data"
+    )
     
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
@@ -142,7 +149,8 @@ setMethod(
       "familiarDataElementPredictionTable",
       detail_level = detail_level,
       confidence_level = confidence_level,
-      estimation_type = estimation_type)
+      estimation_type = estimation_type
+    )
     
     # Generate elements to send to dispatch.
     performance_data <- extract_dispatcher(
@@ -157,7 +165,8 @@ setMethod(
       ensemble_method = ensemble_method,
       evaluation_times = evaluation_times,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(performance_data)
   }
@@ -182,21 +191,24 @@ setMethod(
     proto_data_element,
     evaluation_times = NULL,
     cl,
-    ...) {
-  
+    ...
+) {
+    
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
   # Add model name.
   proto_data_element <- add_model_name(
     proto_data_element,
-    object = object)
+    object = object
+  )
   
   # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+  if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element,
-      evaluation_time = evaluation_times)
+      evaluation_time = evaluation_times
+    )
     
   } else {
     data_elements <- list(proto_data_element)
@@ -208,7 +220,8 @@ setMethod(
     ..extract_predictions,
     object = object,
     cl = cl,
-    ...)
+    ...
+  )
   
   return(prediction_data)
 }
@@ -291,8 +304,8 @@ setMethod(
     # Check percentiles and confidence level.
     if (
       any(estimation_type %in% c("bci", "bootstrap_confidence_interval")) &&
-      is.null(x[[1]]@percentiles) &&
-      is.null(x[[1]]@confidence_level)
+      is.null(x[[1L]]@percentiles) &&
+      is.null(x[[1L]]@confidence_level)
     ) {
       ..error_reached_unreachable_code(paste0(
         "..compute_data_element_estimates: percentiles and confidence_level ",
@@ -302,10 +315,10 @@ setMethod(
 
     # Determine the bootstrap_ci_method and the aggregation function
     if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
-      ensemble_method <- ifelse(x[[1]]@ensemble_method == "median", "percentile", "bc")
+      ensemble_method <- ifelse(x[[1L]]@ensemble_method == "median", "percentile", "bc")
       
     } else {
-      ensemble_method <- x[[1]]@ensemble_method
+      ensemble_method <- x[[1L]]@ensemble_method
     }
     
     # Collate the data.
@@ -321,31 +334,33 @@ setMethod(
       }
       
       # Select point estimate.
-      point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
+      point_values <- data.table::as.data.table(x[estimation_type == "point"][[1L]]@data)
       point_values[, "estimation_type" := "point"]
       
       # Select bootstrap values.
       bootstrap_values <- data.table::as.data.table(
-        x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
+        x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1L]]@data
+      )
       bootstrap_values[, "estimation_type" := "bootstrap_confidence_interval"]
       
       # Combine to single table.
       data <- data.table::rbindlist(
         list(point_values, bootstrap_values),
         use.names = TRUE,
-        fill = TRUE)
+        fill = TRUE
+      )
       
       # Copy the familiarDataElement.
-      y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1L]]
       y@data <- NULL
       
     } else {
       # Select values.
-      data <- data.table::as.data.table(x[[1]]@data)
+      data <- data.table::as.data.table(x[[1L]]@data)
       data[, "estimation_type" := "ensemble"]
       
       # Copy the familiarDataElement.
-      y <- x[[1]]
+      y <- x[[1L]]
       y@data <- NULL
     }
     
@@ -357,9 +372,7 @@ setMethod(
     )
     
     # Update value column
-    y@value_column <- setdiff(
-      names(y@data),
-      y@grouping_column)
+    y@value_column <- setdiff(names(y@data), y@grouping_column)
     
     return(y)
   }
@@ -411,7 +424,8 @@ setGeneric(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_prediction_data")
   }
 )
@@ -428,7 +442,8 @@ setMethod(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -436,8 +451,11 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "prediction_data"),
-        list(...)))
+          "data_element" = "prediction_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_prediction_data,
@@ -445,7 +463,10 @@ setMethod(
         list(
           "object" = object,
           "dir_path" = dir_path,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )

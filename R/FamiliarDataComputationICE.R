@@ -138,7 +138,7 @@ setMethod(
     .check_number_in_valid_range(
       x = n_sample_points,
       var_name = "n_sample_points",
-      range = c(1, Inf)
+      range = c(1L, Inf)
     )
     
     # Obtain ensemble method from stored settings, if required.
@@ -313,7 +313,7 @@ setMethod(
   data <- aggregate_data(data)
   
   # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+  if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element, 
       evaluation_time = evaluation_times
@@ -327,7 +327,7 @@ setMethod(
     
     # Check that the features exist in the data set.
     if (!all(features %in% c(object@model_features))) {
-      rlang::warn(paste0(
+      ..warning(paste0(
         "Data for individual conditional expectation or partial dependence plots ",
         "could not be computed for ",
         paste_s(setdiff(features, object@model_features)),
@@ -336,16 +336,16 @@ setMethod(
     }
     
     # Add features as identifier.
-    if (length(features) == 1) {
+    if (length(features) == 1L) {
       data_elements <- add_data_element_identifier(
         x = data_elements,
         feature_x = features
       )
       
-    } else if (length(features) == 2) {
+    } else if (length(features) == 2L) {
       
-      if (length(unique(features)) != 2) {
-        rlang::abort(paste0(
+      if (length(unique(features)) != 2L) {
+        ..error(paste0(
           "Data for individual conditional expectation or partial dependence plots ",
           "could not be computed as the provided features are not unique: ",
           paste_s(features), "."
@@ -354,15 +354,15 @@ setMethod(
       
       data_elements <- add_data_element_identifier(
         x = data_elements,
-        feature_x = features[1]
+        feature_x = features[1L]
       )
       data_elements <- add_data_element_identifier(
         x = data_elements,
-        feature_y = features[2]
+        feature_y = features[2L]
       )
       
     } else {
-      rlang::abort(paste0(
+      ..error(paste0(
         "Data for individual conditional expectation or partial dependence plots cannot ",
         "be computed for more than 2 features simultaneously. Found: ",
         paste_s(features), "."
@@ -387,7 +387,7 @@ setMethod(
       list(
         "data" = data,
         "object" = object,
-        "verbose" = verbose && !progress_bar && n_models == 1,
+        "verbose" = verbose && !progress_bar && n_models == 1L,
         "message_indent" = message_indent
       ),
       list(...)
@@ -469,7 +469,7 @@ setMethod(
   }
   
   # Add evaluation time.
-  if (length(data_element@identifiers$evaluation_time) > 0) {
+  if (length(data_element@identifiers$evaluation_time) > 0L) {
     message_str <- c(
       message_str,
       paste0(" at time ", data_element@identifiers$evaluation_time, ".")
@@ -563,7 +563,7 @@ setMethod(
     class_levels <- get_outcome_class_levels(object)
     
     if (object@outcome_type == "binomial") {
-      used_class_levels <- class_levels[2]
+      used_class_levels <- class_levels[2L]
       prediction_data@value_column <- c(
         setdiff(prediction_data@value_column, class_levels),
         used_class_levels
@@ -607,7 +607,7 @@ setMethod(
   
   # Check that the feature info is present.
   if (is.null(feature_info)) {
-    rlang::abort(
+    ..error(
       paste0("Feature information could not be found for the ", feature, " feature.")
     )
   }
@@ -622,7 +622,7 @@ setMethod(
       feature_range <- factor(feature_levels, levels = feature_levels)
       
     } else if (!all(feature_range %in% feature_levels)) {
-      rlang::abort(paste0(
+      ..error(paste0(
         "One or more levels defined in the feature range for creating ",
         "individual conditional expectation and partial dependence plots do not ",
         "match levels found in training data: ",
@@ -637,15 +637,15 @@ setMethod(
     if (!is.null(feature_range)) {
       # Check that values are numeric.
       if (!is.numeric(feature_range)) {
-        rlang::abort(paste0(
+        ..error(paste0(
           "Numeric values are required to define the feature range for creating ",
           "individual conditional expectation and partial dependence plots."
         ))
       } 
       
       # Check that all values are finite.
-      if (any(!is.finite(feature_range))) {
-        rlang::abort(paste0(
+      if (!all(is.finite(feature_range))) {
+        ..error(paste0(
           "Numeric values for creating individual conditional expectation and partial dependence ",
           " plots should be finite. NA and infinite values are not allowed."
         ))
@@ -656,7 +656,7 @@ setMethod(
       
       # If two values are defined, interpret as range, and sample from it.
       # If not, use feature_range directly.
-      if (length(feature_range) == 2) {
+      if (length(feature_range) == 2L) {
         feature_range <- stats::approx(
           x = c(0.00, 1.00),
           y = feature_range,
@@ -667,8 +667,8 @@ setMethod(
       
     } else {
       # Create the range of values from the feature distribution.
-      if (n == 1) {
-        feature_range <- as.numeric(feature_info@distribution$fivenum)[3]
+      if (n == 1L) {
+        feature_range <- as.numeric(feature_info@distribution$fivenum)[3L]
         
       } else {
         # Sample the five-number summary.
@@ -746,11 +746,11 @@ setMethod(
     ice_data_element@grouping_column, get_id_columns()
   )
   
-  if (length(grouping_columns) == 0) grouping_columns <- NULL
+  if (length(grouping_columns) == 0L) grouping_columns <- NULL
   pd_data_element@grouping_column <- grouping_columns
   
   # Average data.
-  if (length(grouping_columns) > 0) {
+  if (length(grouping_columns) > 0L) {
     pd_data_element@data <- pd_data_element@data[
       ,
       lapply(.SD, mean, na.rm = TRUE),
@@ -795,8 +795,8 @@ setMethod(
   )
   
   if (!is.null(x_anchor)) {
-    if (length(x_anchor) > 1) {
-      rlang::abort(paste0(
+    if (length(x_anchor) > 1L) {
+      ..error(paste0(
         "Only a single value can be provided as an anchor value for the ",
         ice_data@identifiers$feature_x, " feature."
       ))
@@ -812,8 +812,8 @@ setMethod(
   )
   
   if (!is.null(y_anchor)) {
-    if (length(y_anchor) > 1) {
-      rlang::abort(paste0(
+    if (length(y_anchor) > 1L) {
+      ..error(paste0(
         "Only a single value can be provided as an anchor value for the ",
         ice_data@identifiers$feature_y, " feature."
       ))
@@ -885,12 +885,14 @@ setMethod(
       split(ice_data@data, by = "data_set", drop = TRUE),
       ..restrict_ice_samples,
       n_samples = n_samples,
-      seed = seed)
+      seed = seed
+    )
     
     # Replace data attribute with the limited sample list.
     ice_data@data <- data.table::rbindlist(
       cropped_ice_data,
-      use.names = TRUE)
+      use.names = TRUE
+    )
   }
   
   return(list(
@@ -907,7 +909,8 @@ setMethod(
     y_anchor = NULL, 
     value_column, 
     outcome_type, 
-    anchor_values = NULL) {
+    anchor_values = NULL
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x_value <- feature_x_value <- feature_y_value <- value <- NULL
@@ -916,12 +919,10 @@ setMethod(
   if (!is.null(x_anchor) && !is.null(y_anchor)) {
   
     # Set grouping columns.
-    grouping_columns <- setdiff(
-      x@grouping_column,
-      c("feature_x_value", "feature_y_value"))
+    grouping_columns <- setdiff(x@grouping_column, c("feature_x_value", "feature_y_value"))
     
     # Subtract anchor value for 2D plots with x and y anchors.
-    if (length(grouping_columns) > 0) {
+    if (length(grouping_columns) > 0L) {
       x@data[
         ,
         (value_column) := lapply(
@@ -962,7 +963,7 @@ setMethod(
     grouping_columns <- setdiff(x@grouping_column, c("feature_x_value"))
     
     # Subtract anchor value for x anchor.
-    if (length(grouping_columns) > 0) {
+    if (length(grouping_columns) > 0L) {
       x@data[
         ,
         (value_column) := lapply(
@@ -997,7 +998,7 @@ setMethod(
     grouping_columns <- setdiff(x@grouping_column, c("feature_y_value"))
     
     # Subtract anchor value for y anchor.
-    if (length(grouping_columns) > 0) {
+    if (length(grouping_columns) > 0L) {
       x@data[
         ,
         (value_column) := lapply(
@@ -1074,13 +1075,15 @@ setMethod(
     x, 
     x_anchor, 
     value_offset, 
-    name) {
+    name
+) {
   
   # Check anchor value.
   x_anchor <- .check_anchor_value(
     x = x,
     x_anchor = x_anchor,
-    name = name)
+    name = name
+  )
   
   if (is.numeric(x)) {
     # Set anchor value
@@ -1092,7 +1095,8 @@ setMethod(
       anchor_value <- stats::spline(
         x = x,
         y = value_offset,
-        xout = x_anchor)$y
+        xout = x_anchor
+      )$y
     }
   } else {
     # Set anchor value by selecting the value corresponding to x_anchor.
@@ -1113,7 +1117,8 @@ setMethod(
     y_anchor, 
     value_offset, 
     x_name, 
-    y_name) {
+    y_name
+) {
   # This is a bit more tricky since we need to do a surface interpolation which
   # R does not support out of the box. The akima package has a weird licence.
   
@@ -1121,11 +1126,13 @@ setMethod(
   x_anchor <- .check_anchor_value(
     x = x,
     x_anchor = x_anchor, 
-    name = x_name)
+    name = x_name
+  )
   y_anchor <- .check_anchor_value(
     x = y, 
     x_anchor = y_anchor, 
-    name = y_name)
+    name = y_name
+  )
   
   if (x_anchor %in% x && y_anchor %in% y) {
     # Simple - no interpolation needed.
@@ -1136,19 +1143,22 @@ setMethod(
     anchor_value <- stats::spline(
       x = y[x == x_anchor],
       y = value_offset[x == x_anchor],
-      xout = y_anchor)$y
+      xout = y_anchor
+    )$y
     
   } else if (y_anchor %in% y) {
     # Interpolation in x.
     anchor_value <- stats::spline(
       x = x[y == y_anchor],
       y = value_offset[y == y_anchor],
-      xout = x_anchor)$y
+      xout = x_anchor
+    )$y
     
   } else {
     require_package(
       x = "ranger",
-      purpose = "to anchor ICE/PD plot curves")
+      purpose = "to anchor ICE/PD plot curves"
+    )
     
     # Interpolation using random forest.
     model <- ranger::ranger(
@@ -1156,17 +1166,21 @@ setMethod(
       data = data.table::data.table(
         "x" = x,
         "y" = y,
-        "value" = value_offset),
-      num.trees = 100,
+        "value" = value_offset
+      ),
+      num.trees = 100L,
       num.threads = 1L,
-      seed = 1L)
+      seed = 1L
+    )
     
     anchor_value <- predict(
       model,
       data.table::data.table(
         "x" = x_anchor,
-        "y" = y_anchor),
-      num.threads = 1L)$predictions
+        "y" = y_anchor
+      ),
+      num.threads = 1L
+    )$predictions
   }
   
   # Subtract the anchor value.
@@ -1180,7 +1194,7 @@ setMethod(
   
   if (is.numeric(x)) {
     if (!is.numeric(x_anchor)) {
-      stop(paste0("Anchor value of the ", name, " feature should be numeric."))
+      ..error(paste0("Anchor value of the ", name, " feature should be numeric."))
     }
     
     # Check for out-of-range anchor values.
@@ -1190,27 +1204,30 @@ setMethod(
       if (x_anchor < min(x)) x_anchor <- min(x)
       if (x_anchor > max(x)) x_anchor <- max(x)
       
-      warning(paste0(
+      ..warning(paste0(
         "Anchor value (", x_anchor_old, ") of the ", name,
         " feature lies outside computed range. ",
-        "The nearest value (", x_anchor, ") is used instead."))
+        "The nearest value (", x_anchor, ") is used instead."
+      ))
     }
     
   } else if (is.factor(x)) {
     
     # Check that the anchor value appears in the levels of x.
     if (!x_anchor %in% levels(x)) {
-      stop(paste0(
+      ..error(paste0(
         "Anchor value (", x_anchor, ") of the ", name,
         " feature was not found among the computed levels (",
-        paste_s(levels(x)), ")."))
+        paste_s(levels(x)), ")."
+      ))
     }
     
   } else {
     if (!x_anchor %in% x) {
-      stop(paste0(
+      ..error(paste0(
         "Anchor value (", x_anchor, ") of the ", name,
-        " feature was not found among the available values."))
+        " feature was not found among the available values."
+      ))
     }
   }
   
@@ -1253,7 +1270,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_ice_data")
   }
 )
@@ -1271,7 +1289,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -1285,7 +1304,8 @@ setMethod(
       type = "explanation",
       subtype = "ice",
       object_class = "familiarDataElementIndividualConditionalExpectation",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -1302,7 +1322,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -1311,8 +1332,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "ice_data",
-          "aggregate_results" = aggregate_results),
-        list(...)))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_ice_data,
@@ -1321,8 +1345,11 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -1336,7 +1363,8 @@ setMethod(
     x,
     x_list, 
     aggregate_results = FALSE,
-    ...) {
+    ...
+  ) {
 
     if (aggregate_results) {
       x_list <- .compute_data_element_estimates(x_list)
@@ -1345,16 +1373,15 @@ setMethod(
     # Determine identifiers that should be merged. Since the feature values of
     # the x and y features may be different (e.g. numeric and factor), merging
     # them would cause features values to merged incorrectly.
-    merging_identifiers <- setdiff(
-      names(x@identifiers),
-      c("feature_x", "feature_y"))
+    merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
     
     # Merge data elements.
     x <- merge_data_elements(
       x = x_list,
       as_data = merging_identifiers,
       as_grouping_column = TRUE,
-      force_data_table = TRUE)
+      force_data_table = TRUE
+    )
     
     return(x)
   }
@@ -1396,7 +1423,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_partial_dependence_data")
   }
 )
@@ -1414,7 +1442,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -1428,7 +1457,8 @@ setMethod(
       type = "explanation",
       subtype = "pd",
       object_class = "familiarDataElementPartialDependence",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -1445,7 +1475,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -1454,8 +1485,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "ice_data",
-          "aggregate_results" = aggregate_results),
-        list(...)))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_partial_dependence_data,
@@ -1464,8 +1498,11 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -1478,7 +1515,8 @@ setMethod(
     x,
     x_list,
     aggregate_results = FALSE,
-    ...) {
+    ...
+  ) {
     
     if (aggregate_results) {
       x_list <- .compute_data_element_estimates(x_list)
@@ -1487,16 +1525,15 @@ setMethod(
     # Determine identifiers that should be merged. Since the feature values of
     # the x and y features may be different (e.g. numeric and factor), merging
     # them would cause features values to merged incorrectly.
-    merging_identifiers <- setdiff(
-      names(x@identifiers),
-      c("feature_x", "feature_y"))
+    merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
     
     # Merge data elements.
     x <- merge_data_elements(
       x = x_list,
       as_data = merging_identifiers,
       as_grouping_column = TRUE,
-      force_data_table = TRUE)
+      force_data_table = TRUE
+    )
     
     return(x)
   }

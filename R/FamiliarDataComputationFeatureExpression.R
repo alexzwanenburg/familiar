@@ -8,12 +8,15 @@ setClass(
   contains = "familiarDataElement",
   slots = list(
     "feature_info" = "ANY",
-    "evaluation_time" = "ANY"),
+    "evaluation_time" = "ANY"
+  ),
   prototype = methods::prototype(
     detail_level = "ensemble",
     estimation_type = "point",
     feature_info = NULL,
-    evaluation_time = NULL))
+    evaluation_time = NULL
+  )
+)
 
 
 # extract_feature_expression (generic) -----------------------------------------
@@ -80,11 +83,14 @@ setMethod(
     logger_message(
       paste0("Compute feature expression."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Obtain evaluation times from the data.
-    if (is.waive(evaluation_times) &&
-        object@outcome_type %in% c("survival", "competing_risk")) {
+    if (
+      is.waive(evaluation_times) &&
+      object@outcome_type %in% c("survival", "competing_risk")
+    ) {
       evaluation_times <- object@settings$eval_times
       
     } else if (is.waive(evaluation_times)) {
@@ -98,7 +104,8 @@ setMethod(
         .check_number_in_valid_range,
         var_name = "evaluation_times",
         range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
+        closed = c(FALSE, TRUE)
+      )
     }
     
     # Aggregate data
@@ -110,7 +117,8 @@ setMethod(
     data <- process_input_data(
       object = object,
       data = data,
-      stop_at = "batch_normalisation")
+      stop_at = "batch_normalisation"
+    )
     
     if (is_empty(data)) return(NULL)
     
@@ -120,21 +128,21 @@ setMethod(
     # Maintain only important features. The current set is based on the
     # important features of the model, i.e. those that end up in the
     # model (potentially as a cluster).
-    expression_data <- filter_features(
-      data = data,
-      available_features = model_features)
+    expression_data <- filter_features(data = data, available_features = model_features)
     
     # Perform inverse normalisation
     expression_data <- normalise_features(
       data = expression_data,
       feature_info_list = object@feature_info,
-      invert = TRUE)
+      invert = TRUE
+    )
     
     # Perform inverse transformation
     expression_data <- transform_features(
       data = expression_data,
       feature_info_list = object@feature_info,
-      invert = TRUE)
+      invert = TRUE
+    )
     
     # Add sample_name to expression_data
     row_names <- get_unique_row_names(expression_data)
@@ -143,7 +151,8 @@ setMethod(
       "batch_id" = NULL,
       "sample_id" = NULL,
       "series_id" = NULL,
-      "repetition_id" = NULL)]
+      "repetition_id" = NULL
+    )]
     
     # Set expression data.
     expression_data <- methods::new(
@@ -151,7 +160,8 @@ setMethod(
       data = expression_data@data,
       feature_info = object@feature_info[model_features],
       evaluation_time = evaluation_times,
-      value_column = model_features)
+      value_column = model_features
+    )
     
     # Add model name.
     expression_data <- add_model_name(expression_data, object)
@@ -218,7 +228,8 @@ setGeneric(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_feature_expressions")
   }
 )
@@ -236,7 +247,8 @@ setMethod(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -254,7 +266,8 @@ setMethod(
         evaluation_time,
         .check_number_in_valid_range,
         var_name = "evaluation_time",
-        range = c(0, Inf))
+        range = c(0.0, Inf)
+      )
       
       # Set clustering method.
       x <- lapply(
@@ -263,7 +276,8 @@ setMethod(
           x@evaluation_time <- evaluation_time
           return(x)
         },
-        evaluation_time = evaluation_time)
+        evaluation_time = evaluation_time
+      )
     }
     
     return(.export(
@@ -273,7 +287,8 @@ setMethod(
       aggregate_results = FALSE,
       type = "feature_expression",
       subtype = NULL,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -290,7 +305,8 @@ setMethod(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -299,8 +315,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "feature_expressions",
-          "evaluation_times" = evaluation_time),
-        list(...)))
+          "evaluation_times" = evaluation_time
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_feature_expressions,
@@ -309,8 +328,11 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "evaluation_time" = evaluation_time,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -324,14 +346,16 @@ setMethod(
     x,
     x_list,
     aggregate_results = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Add grouping columns to data. Note that we do not merge the data elements.
     x <- lapply(
       x_list,
       .identifier_as_data_attribute,
       identifier = "all",
-      as_grouping_column = TRUE)
+      as_grouping_column = TRUE
+    )
     
     return(x)
   }

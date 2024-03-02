@@ -39,7 +39,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_confusion_matrix")
   } 
 )
@@ -376,7 +377,8 @@ setGeneric(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_confusion_matrix_data")
   }
 )
@@ -393,7 +395,8 @@ setMethod(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -422,7 +425,8 @@ setMethod(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -430,7 +434,8 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "confusion_matrix"),
+          "data_element" = "confusion_matrix"
+        ),
         list(...)
       )
     )
@@ -441,7 +446,8 @@ setMethod(
         list(
           "object" = object,
           "dir_path" = dir_path,
-          "export_collection" = export_collection),
+          "export_collection" = export_collection
+        ),
         list(...)
       )
     ))

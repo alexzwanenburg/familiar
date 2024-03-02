@@ -94,7 +94,8 @@ setMethod(
     logger_message(
       paste0("Computing permutation variable importance for models in the dataset."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Load evaluation_times from the object settings attribute, if it is not
     # provided.
@@ -109,7 +110,8 @@ setMethod(
         .check_number_in_valid_range, 
         var_name = "evaluation_times",
         range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
+        closed = c(FALSE, TRUE)
+      )
     }
     
     # Obtain ensemble method from stored settings, if required.
@@ -128,13 +130,15 @@ setMethod(
       x = confidence_level,
       var_name = "confidence_level",
       range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
+      closed = c(FALSE, FALSE)
+    )
     
     # Check ensemble_method argument
     .check_parameter_value_is_valid(
       x = ensemble_method,
       var_name = "ensemble_method",
-      values = .get_available_ensemble_prediction_methods())
+      values = .get_available_ensemble_prediction_methods()
+    )
     
     # Load the bootstrap method
     if (is.waive(bootstrap_ci_method)) {
@@ -144,14 +148,16 @@ setMethod(
     .check_parameter_value_is_valid(
       x = bootstrap_ci_method,
       var_name = "bootstrap_ci_method",
-      values = .get_available_bootstrap_confidence_interval_methods())
+      values = .get_available_bootstrap_confidence_interval_methods()
+    )
     
     # Check the level detail.
     detail_level <- .parse_detail_level(
       x = detail_level,
       object = object,
       default = "hybrid",
-      data_element = "permutation_vimp")
+      data_element = "permutation_vimp"
+    )
     
     # Check the estimation type.
     estimation_type <- .parse_estimation_type(
@@ -160,14 +166,16 @@ setMethod(
       default = "bootstrap_confidence_interval",
       data_element = "permutation_vimp",
       detail_level = detail_level,
-      has_internal_bootstrap = TRUE)
+      has_internal_bootstrap = TRUE
+    )
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "permutation_vimp")
+      data_element = "permutation_vimp"
+    )
     
     # Load metric(s) from the object settings attribute if not provided
     # externally.
@@ -177,11 +185,12 @@ setMethod(
     sapply(
       metric,
       .check_metric_outcome_type,
-      object = object)
+      object = object
+    )
     
     # Aggregate feature similarity data elements.
     feature_similarity <- .compute_data_element_estimates(feature_similarity)
-    feature_similarity <- feature_similarity[[1]]
+    feature_similarity <- feature_similarity[[1L]]
     
     # Obtain cluster method from stored settings, if required.
     if (is.waive(feature_cluster_method)) {
@@ -311,7 +320,7 @@ setMethod(
   proto_data_element <- add_model_name(proto_data_element, object = object)
   
   # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+  if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element,
       evaluation_time = evaluation_times
@@ -377,7 +386,7 @@ setMethod(
   # Check that any prediction data remain.
   if (is_empty(prediction_data)) return(NULL)
   
-  if (get_n_samples(prediction_data) < 5) return(NULL)
+  if (get_n_samples(prediction_data) < 5L) return(NULL)
   
   # Explicitly load input data. We stop at the signature step because we want to
   # work with the unclustered input features, but may need to apply
@@ -395,11 +404,11 @@ setMethod(
   # Perform some checks to see if there is sufficient data to perform a half-way
   # meaningful analysis.
   if (is_empty(data)) return(NULL)
-  if (get_n_samples(data) < 5) return(NULL)
+  if (get_n_samples(data) < 5L) return(NULL)
   
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
-  if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
+  if (length(data_element@identifiers$evaluation_time) > 0L && progress_bar) {
     logger_message(
       paste0(
         "Computing permutation variable importance at time ",
@@ -615,7 +624,8 @@ setMethod(
           data.table::set(
             x = data@data,
             j = ii,
-            value = data@data[[ii]][shuffle_id])
+            value = data@data[[ii]][shuffle_id]
+          )
         }
       }
     }
@@ -739,7 +749,8 @@ setMethod(
         # Generate the clustering table.
         cluster_table <- create_clusters(
           object = cluster_method_object,
-          as_cluster_object = FALSE)
+          as_cluster_object = FALSE
+        )
         
         # Add in the similarity threshold and cluster size.
         cluster_table[, "similarity_threshold" := cluster_similarity_threshold]
@@ -847,9 +858,9 @@ setMethod(
   
   # Identify the similarity threshold for which the current feature sets form
   # a cluster.
-  n <- feature_cluster$n_thresholds_same_cluster[1]
+  n <- feature_cluster$n_thresholds_same_cluster[1L]
   used_similarity_threshold <- head(
-    similarity_threshold[similarity_threshold <= feature_cluster$similarity_threshold[1]],
+    similarity_threshold[similarity_threshold <= feature_cluster$similarity_threshold[1L]],
     n = n
   )
   
@@ -862,7 +873,7 @@ setMethod(
   
   # Add number of shuffles. We don't introduce additional shuffles except for
   # point estimates.
-  n_shuffles <- ifelse(data_element@estimation_type == "point", 20, 1)
+  n_shuffles <- ifelse(data_element@estimation_type == "point", 20L, 1L)
   
   # Add shuffles.
   bootstrap_data$n_shuffles <- rep(n_shuffles, times = length(bootstrap_data$data_element))

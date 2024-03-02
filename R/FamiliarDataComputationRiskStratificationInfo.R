@@ -107,7 +107,6 @@ setMethod(
     proto_data_element,
     ...
 ) {
-  
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
@@ -135,8 +134,6 @@ setMethod(
     
     # Combine to single list
     data <- data.table::rbindlist(data, use.names = TRUE)
-    
-    # Check that any data is available..
     if (is_empty(data)) return(NULL)
     
   } else {
@@ -148,11 +145,10 @@ setMethod(
     )
     
     risk_stratification_data <- .compute_data_element_estimates(risk_stratification_data)
-    
     if (is_empty(risk_stratification_data)) return(NULL)
     
     # Extract data.
-    data <- risk_stratification_data[[1]]@data
+    data <- risk_stratification_data[[1L]]@data
   }
   
   # Attach data to the corresponding attribute.
@@ -282,7 +278,8 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "risk_stratification_info"),
+          "data_element" = "risk_stratification_info"
+        ),
         list(...)
       )
     )
@@ -294,7 +291,8 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_resuls" = aggregate_results,
-          "export_collection" = export_collection),
+          "export_collection" = export_collection
+        ),
         list(...)
       )
     ))

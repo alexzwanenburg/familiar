@@ -10,7 +10,9 @@ setClass(
   contains = "familiarDataElement",
   prototype = methods::prototype(
     detail_level = "hybrid",
-    estimation_type = "point"))
+    estimation_type = "point"
+  )
+)
 
 
 
@@ -31,7 +33,8 @@ setGeneric(
     object,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_hyperparameters")
   }
 )
@@ -53,7 +56,8 @@ setMethod(
     logger_message(
       paste0("Extracting hyperparameters from the models in the ensemble."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
@@ -72,7 +76,8 @@ setMethod(
       proto_data_element = proto_data_element,
       aggregate_results = FALSE,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(hyperparameter_data)
   }
@@ -96,7 +101,8 @@ setMethod(
 .extract_hyperparameters <- function(
     object,
     proto_data_element,
-    ...) {
+    ...
+) {
   
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
@@ -133,16 +139,18 @@ setMethod(
     export_vec <- sapply(
       seq_len(nrow(data)),
       function(ii, data) (paste0(data$instance[ii], " (", data$n[ii], ")")),
-      data = data)
+      data = data
+    )
     
     export_vec <- paste(export_vec, collapse = "; ")
     
   } else if (is.numeric(x)) {
     export_vec <- paste0(
-      stats::quantile(x = x, probs = 0.5, na.rm = TRUE, type = 1, names = FALSE),
+      stats::quantile(x = x, probs = 0.5, na.rm = TRUE, type = 1L, names = FALSE),
       " [",
       min(x, na.rm = TRUE), ", ",
-      max(x, na.rm = TRUE), "]")
+      max(x, na.rm = TRUE), "]"
+    )
   }
   
   return(export_vec)
@@ -157,11 +165,13 @@ setMethod(
   function(
     x,
     identifier,
-    as_grouping_column = TRUE) {
+    as_grouping_column = TRUE
+  ) {
     
-    if (length(identifier) == 0) {
+    if (length(identifier) == 0L) {
       ..error_reached_unreachable_code(
-        ".identifier_as_data_attribute: Cannot pass an empty identifier.")
+        ".identifier_as_data_attribute: Cannot pass an empty identifier."
+      )
     }
     
     # Different learners have different hyperparameters. We therefore
@@ -173,12 +183,13 @@ setMethod(
       # Remove learner, if present.
       identifier <- setdiff(identifier, "learner")
       
-      if (length(identifier) == 0) return(x)
+      if (length(identifier) == 0L) return(x)
       
       return(callNextMethod(
         x = x,
         identifier = identifier,
-        as_grouping_column = as_grouping_column))
+        as_grouping_column = as_grouping_column
+      ))
       
     } else {
       return(callNextMethod())
@@ -194,7 +205,8 @@ setMethod(
   function(
     x,
     x_list = NULL,
-    ...) {
+    ...
+  ) {
     
     # It might be that x was only used to direct to this method.
     if (!is.null(x_list)) x <- x_list
@@ -208,38 +220,43 @@ setMethod(
     data <- data.table::rbindlist(
       lapply(x, function(x) (x@data)),
       use.names = TRUE,
-      fill = TRUE)
+      fill = TRUE
+    )
     
     # Split by fs_method
     data <- split(data, by = "fs_method")
     
-    learner <- x[[1]]@identifiers$learner
-    if (is.null(learner)) learner <- x[[1]]@data$learner[1]
+    learner <- x[[1L]]@identifiers$learner
+    if (is.null(learner)) learner <- x[[1L]]@data$learner[1L]
     
     # Set learner.
     parameter_string <- paste0("learner\t", learner)
     
     for (current_data in data) {
       # Determine the vimp_method
-      vimp_method <- current_data$fs_method[1]
+      vimp_method <- current_data$fs_method[1L]
       
       # Set vimp method.
       parameter_string <- c(
         parameter_string,
         paste0("fs_method\t", vimp_method),
-        "---------------------")
+        "---------------------"
+      )
       
       # Parse data.
       parameter_string <- c(
         parameter_string,
         sapply(
-          x[[1]]@value_column,
+          x[[1L]]@value_column,
           function(hyperparameter, data) {
             return(paste0(
               hyperparameter, "\t",
-              ..hyperparameter_to_string(data[[hyperparameter]])))
+              ..hyperparameter_to_string(data[[hyperparameter]])
+            ))
           },
-          data = current_data))
+          data = current_data
+        )
+      )
       
       parameter_string <- c(parameter_string, " ")
       
@@ -249,7 +266,7 @@ setMethod(
     parameter_string <- paste0(parameter_string, collapse = "\n")
     
     # Copy data element.
-    y <- x[[1]]
+    y <- x[[1L]]
     y@data <- parameter_string
     
     # Update value column
@@ -269,7 +286,8 @@ setMethod(
     x,
     x_list, 
     aggregate_results = FALSE, 
-    ...) {
+    ...
+  ) {
     # This is like .export,familiarDataElement, but the elements are
     # merged prior to computing estimates.
     
@@ -278,7 +296,8 @@ setMethod(
       x = x_list,
       as_data = "all",
       as_grouping_column = TRUE,
-      force_data_table = TRUE)
+      force_data_table = TRUE
+    )
     
     if (aggregate_results) {
       x <- .compute_data_element_estimates(x)
@@ -330,7 +349,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_hyperparameters")
   }
 )
@@ -348,7 +368,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -367,7 +388,8 @@ setMethod(
       aggregate_results = aggregate_results,
       type = "hyperparameter",
       subtype = subtype,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -384,7 +406,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -392,8 +415,11 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "hyperparameters"),
-        list(...)))
+          "data_element" = "hyperparameters"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_hyperparameters,
@@ -402,7 +428,10 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )

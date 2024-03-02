@@ -12,7 +12,8 @@ setClass(
     "linkage_method" = "character",
     "cluster_cut_method" = "character",
     "similarity_threshold" = "ANY",
-    "dendrogram" = "ANY"),
+    "dendrogram" = "ANY"
+  ),
   prototype = methods::prototype(
     detail_level = "ensemble",
     similarity_metric = NA_character_,
@@ -61,7 +62,8 @@ setGeneric(
     feature_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_feature_similarity")
   }
 )
@@ -87,13 +89,15 @@ setMethod(
     feature_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     
     # Message extraction start
     logger_message(
       paste0("Computing pairwise similarity between features."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Obtain cluster method from stored settings, if required.
     if (is.waive(feature_cluster_method)) {
@@ -131,7 +135,8 @@ setMethod(
       cluster_cut_method = feature_cluster_cut_method,
       cluster_similarity_threshold = feature_similarity_threshold,
       cluster_similarity_metric = feature_similarity_metric,
-      data_type = "feature")
+      data_type = "feature"
+    )
     
     # Obtain confidence level from the settings file stored with the
     # familiarEnsemble object.
@@ -144,7 +149,8 @@ setMethod(
       x = confidence_level,
       var_name = "confidence_level",
       range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
+      closed = c(FALSE, FALSE)
+    )
     
     # Load the bootstrap method
     if (is.waive(bootstrap_ci_method)) {
@@ -154,7 +160,8 @@ setMethod(
     .check_parameter_value_is_valid(
       x = bootstrap_ci_method,
       var_name = "bootstrap_ci_methpd",
-      values = .get_available_bootstrap_confidence_interval_methods())
+      values = .get_available_bootstrap_confidence_interval_methods()
+    )
     
     # Check the estimation type.
     estimation_type <- .parse_estimation_type(
@@ -163,14 +170,16 @@ setMethod(
       default = "point",
       data_element = "feature_similarity",
       detail_level = "ensemble",
-      has_internal_bootstrap = TRUE)
+      has_internal_bootstrap = TRUE
+    )
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "feature_similarity")
+      data_element = "feature_similarity"
+    )
     
     # Generate a prototype data element.
     proto_data_element <- new(
@@ -182,7 +191,8 @@ setMethod(
       cluster_method = feature_cluster_method,
       linkage_method = feature_linkage_method,
       cluster_cut_method = feature_cluster_cut_method,
-      similarity_threshold = feature_similarity_threshold)
+      similarity_threshold = feature_similarity_threshold
+    )
     
     # Generate elements to send to dispatch.
     similarity_data <- extract_dispatcher(
@@ -195,7 +205,8 @@ setMethod(
       is_pre_processed = is_pre_processed,
       aggregate_results = aggregate_results,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(similarity_data)
   }
@@ -226,7 +237,8 @@ setMethod(
     n_bootstraps,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+) {
   
   # Add the name of the ensemble model
   data_element <- add_model_name(data = proto_data_element, object = object)
@@ -236,40 +248,39 @@ setMethod(
     object = object,
     data = data,
     stop_at = "imputation",
-    is_pre_processed = is_pre_processed)
+    is_pre_processed = is_pre_processed
+  )
   
   # Check if the input data is not empty
   if (is_empty(data)) return(NULL)
   
   # Check if the number of samples is sufficient (>5), and return an empty table
   # if not.
-  if (data.table::uniqueN(
-    data@data,
-    by = get_id_columns(id_depth = "series")) <= 5) {
-    return(data_element)
-  }
+  if (get_n_samples(data, "series") <= 5L) return(NULL)
   
   # Maintain only important features. The current set is based on the required
   # features.
   data <- filter_features(
     data = data,
-    available_features = object@model_features)
+    available_features = object@model_features
+  )
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
   
   # Break if there are not at least 2 features present between which correlation
   # can be compared.
-  if (length(feature_columns) < 2) return(data_element)
+  if (length(feature_columns) < 2L) return(data_element)
   
   # Add bootstrap data.
   bootstrap_data <- add_data_element_bootstrap(
     x = data_element,
     n_bootstraps = n_bootstraps,
-    ...)
+    ...
+  )
   
   # Iterate over elements.
-  if (n_bootstraps > 1) {
+  if (n_bootstraps > 1L) {
     data_elements <- fam_mapply(
       cl = cl,
       assign = NULL,
@@ -279,9 +290,11 @@ setMethod(
       bootstrap_seed = bootstrap_data$seed,
       MoreArgs = list(
         "data" = data,
-        "feature_info_list" = object@feature_info),
+        "feature_info_list" = object@feature_info
+      ),
       progress_bar = progress_bar,
-      chopchop = TRUE)
+      chopchop = TRUE
+    )
     
   } else {
     data_elements <- fam_mapply(
@@ -296,8 +309,10 @@ setMethod(
         "feature_info_list" = object@feature_info,
         "cl" = cl,
         "verbose" = verbose,
-        "message_indent" = message_indent),
-      progress_bar = FALSE)
+        "message_indent" = message_indent
+      ),
+      progress_bar = FALSE
+    )
     
   }
   
@@ -319,22 +334,20 @@ setMethod(
     bootstrap,
     bootstrap_seed,
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Bootstrap the data.
   if (bootstrap) {
     data <- get_bootstrap_sample(
       data = data,
-      seed = bootstrap_seed)
+      seed = bootstrap_seed
+    )
   }
   
   # Check if the number of samples is sufficient (>5), and return an
   # empty table if not.
-  if (data.table::uniqueN(
-    data@data, 
-    by = get_id_columns(id_depth = "series")) <= 5) {
-    return(NULL)
-  }
+  if (get_n_samples(data, "series") <= 5L) return(NULL)
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
@@ -347,7 +360,8 @@ setMethod(
     data_type = "feature",
     cl = cl,
     message_indent = message_indent + 1L,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   return(data_element)
 }            
@@ -394,7 +408,8 @@ setMethod(
   data.table::setnames(
     x = cluster_table,
     old = "name",
-    new = "feature")
+    new = "feature"
+  )
   
   # Set cluster info as data.
   x@data <- cluster_table
@@ -430,7 +445,8 @@ setMethod(
     by.x = "feature_name_1",
     by.y = "name",
     all.x = TRUE,
-    all.y = FALSE)
+    all.y = FALSE
+  )
   
   mutual_correlation_table <- merge(
     x = mutual_correlation_table,
@@ -438,13 +454,15 @@ setMethod(
     by.x = "feature_name_2",
     by.y = "name",
     all.x = TRUE,
-    all.y = FALSE)
+    all.y = FALSE
+  )
   
   # Rename columns
   data.table::setnames(
     x = mutual_correlation_table,
     old = c("label_order.x", "label_order.y"),
-    new = c("label_order_1", "label_order_2"))
+    new = c("label_order_1", "label_order_2")
+  )
   
   # Add to data element.
   x@data <- mutual_correlation_table
@@ -469,7 +487,8 @@ setMethod(
   # Compute the cluster table.
   cluster_table <- create_clusters(
     object = cluster_method_object,
-    as_cluster_object = FALSE)
+    as_cluster_object = FALSE
+  )
   
   return(cluster_table)
 }
@@ -480,7 +499,7 @@ setMethod(
   
   if (is_empty(x)) return(NULL)
   
-  if (length(x@similarity_threshold) > 1) {
+  if (length(x@similarity_threshold) > 1L) {
     # Remove 1.0 because that does not yield clustering info.
     available_thresholds <- setdiff(x@similarity_threshold, 1.0)
     
@@ -496,14 +515,16 @@ setMethod(
     cluster_cut_method = x@cluster_cut_method,
     cluster_similarity_threshold = x@similarity_threshold,
     cluster_similarity_metric = x@similarity_metric,
-    cluster_representation_method = "none")
+    cluster_representation_method = "none"
+  )
   
   # Attach the similarity table to the cluster_method_object.
   cluster_method_object@similarity_table <- methods::new(
     "similarityTable",
     data = x@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
     similarity_metric = x@similarity_metric,
-    data_type = cluster_method_object@data_type)
+    data_type = cluster_method_object@data_type
+  )
   
   return(cluster_method_object)
 }
@@ -557,7 +578,8 @@ setGeneric(
     export_ordered_data = FALSE,
     export_clustering = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_feature_similarity")
   } 
 )
@@ -580,7 +602,8 @@ setMethod(
     export_ordered_data = FALSE,
     export_clustering = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -589,7 +612,7 @@ setMethod(
     x <- object@feature_similarity
     
     if (export_ordered_data && export_clustering) {
-      stop("Cannot simultaneously export cluster information and ordering of features.")
+      ..error("Cannot simultaneously export cluster information and ordering of features.")
     }
     
     # Check that the data are not empty.
@@ -604,7 +627,8 @@ setMethod(
           x@cluster_method <- feature_cluster_method
           return(x)
         },
-        feature_cluster_method = feature_cluster_method)
+        feature_cluster_method = feature_cluster_method
+      )
     }
     
     if (!is.waive(feature_linkage_method)) {
@@ -616,7 +640,8 @@ setMethod(
           x@linkage_method <- feature_linkage_method
           return(x)
         },
-        feature_linkage_method = feature_linkage_method)
+        feature_linkage_method = feature_linkage_method
+      )
     }
     
     if (!is.waive(feature_cluster_cut_method)) {
@@ -628,7 +653,8 @@ setMethod(
           x@cluster_cut_method <- feature_cluster_cut_method
           return(x)
         },
-        feature_cluster_cut_method = feature_cluster_cut_method)
+        feature_cluster_cut_method = feature_cluster_cut_method
+      )
     }
     
     if (!is.waive(feature_similarity_threshold)) {
@@ -640,23 +666,27 @@ setMethod(
           x@similarity_threshold <- feature_similarity_threshold
           return(x)
         },
-        feature_similarity_threshold = feature_similarity_threshold)
+        feature_similarity_threshold = feature_similarity_threshold
+      )
     }
     
     # Check whether the input parameters are valid and create a cluster object.
     .check_cluster_parameters(
-      cluster_method = x[[1]]@cluster_method,
+      cluster_method = x[[1L]]@cluster_method,
       data_type = "feature",
-      cluster_linkage = x[[1]]@linkage_method,
-      cluster_cut_method = x[[1]]@cluster_cut_method,
-      cluster_similarity_threshold = x[[1]]@similarity_threshold,
-      cluster_similarity_metric = x[[1]]@similarity_metric,
-      cluster_representation_method = "none")
+      cluster_linkage = x[[1L]]@linkage_method,
+      cluster_cut_method = x[[1L]]@cluster_cut_method,
+      cluster_similarity_threshold = x[[1L]]@similarity_threshold,
+      cluster_similarity_metric = x[[1L]]@similarity_metric,
+      cluster_representation_method = "none"
+    )
     
-    if (aggregate_results ||
-        export_dendrogram ||
-        export_ordered_data ||
-        export_clustering) {
+    if (
+      aggregate_results ||
+      export_dendrogram ||
+      export_ordered_data ||
+      export_clustering
+    ) {
       x <- .compute_data_element_estimates(x)
       
       if (export_dendrogram || export_ordered_data || export_clustering) {
@@ -680,10 +710,11 @@ setMethod(
       dir_path = dir_path,
       aggregate_results = aggregate_results,
       type = "feature_similarity",
-      subtype = x[[1]]@similarity_metric,
+      subtype = x[[1L]]@similarity_metric,
       export_dendrogram = export_dendrogram,
       export_ordered_data = export_ordered_data,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -704,7 +735,8 @@ setMethod(
     feature_cluster_cut_method = waiver(),
     feature_similarity_threshold = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -717,8 +749,11 @@ setMethod(
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
-          "feature_similarity_threshold" = feature_similarity_threshold),
-        list(...)))
+          "feature_similarity_threshold" = feature_similarity_threshold
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_feature_similarity,
@@ -731,8 +766,11 @@ setMethod(
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
           "feature_similarity_threshold" = feature_similarity_threshold,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -748,7 +786,8 @@ setMethod(
     aggregate_results = FALSE,
     export_dendrogram,
     export_ordered_data, 
-    ...) {
+    ...
+  ) {
     # This is like .export,familiarDataElement, but the elements are merged
     # prior to computing estimates.
     
@@ -759,7 +798,8 @@ setMethod(
         x = x_list,
         as_data = "all",
         as_grouping_column = TRUE,
-        force_data_table = TRUE)
+        force_data_table = TRUE
+      )
       
     } else {
       x <- x_list

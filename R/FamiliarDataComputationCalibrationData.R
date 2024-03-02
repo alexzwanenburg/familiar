@@ -7,22 +7,26 @@ NULL
 # familiarDataElementCalibrationData object ------------------------------------
 setClass(
   "familiarDataElementCalibrationData",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 # familiarDataElementCalibrationLinearFit object -------------------------------
 setClass(
   "familiarDataElementCalibrationLinearFit",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 # familiarDataElementCalibrationGoodnessOfFit object ---------------------------
 setClass(
   "familiarDataElementCalibrationGoodnessOfFit",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 # familiarDataElementCalibrationDensity object ---------------------------------
 setClass(
   "familiarDataElementCalibrationDensity",
-  contains = "familiarDataElement")
+  contains = "familiarDataElement"
+)
 
 
 
@@ -330,7 +334,7 @@ setMethod(
   proto_data_element <- add_model_name(proto_data_element, object = object)
   
   # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+  if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element,
       evaluation_time = evaluation_times
@@ -438,13 +442,15 @@ setMethod(
     
     # Message the user concerning the time at which metrics are computed. This
     # is only relevant for survival analysis.
-    if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
+    if (length(data_element@identifiers$evaluation_time) > 0L && progress_bar) {
       logger_message(
         paste0(
           "Assessing model calibration at time ",
-          data_element@identifiers$evaluation_time, "."),
+          data_element@identifiers$evaluation_time, "."
+        ),
         indent = message_indent,
-        verbose = verbose)
+        verbose = verbose
+      )
     }
     
     
@@ -461,7 +467,7 @@ setMethod(
     if (object@outcome_type %in% c("binomial")) {
       data_element <- add_data_element_identifier(
         x = data_element,
-        positive_class = get_outcome_class_levels(object)[2]
+        positive_class = get_outcome_class_levels(object)[2L]
       )
       
     } else if (object@outcome_type %in% c("multinomial")) {
@@ -557,9 +563,11 @@ setMethod(
   if (!is_empty(calibration_data) && data_element@estimation_type != "point") {
     # Interpolate data to regular expected values, unless point data is used.
     calibration_data <- calibration_data[
-      , ..compute_calibration_data_interpolated(.SD),
+      ,
+      ..compute_calibration_data_interpolated(.SD),
       by = c("rep_id"),
-      .SDcols = c("expected", "observed")]
+      .SDcols = c("expected", "observed")
+    ]
     
     # Keep only finite predictions,
     calibration_data <- calibration_data[is.finite(observed)]
@@ -654,7 +662,7 @@ setMethod(
           x = x,
           y = y,
           sample_identifiers = sample_identifiers,
-          n_min_y_in_group = 4
+          n_min_y_in_group = 4L
         ))
       },
       x = data$exp_prob,
@@ -851,10 +859,10 @@ setMethod(
     
     # Determine the outcome range
     outcome_range <- object@observed_value_range
-    if (any(is.na(outcome_range))) outcome_range <- range(data$outcome, na.rm = TRUE, finite = TRUE)
+    if (anyNA(outcome_range)) outcome_range <- range(data$outcome, na.rm = TRUE, finite = TRUE)
     
     # Get the shift and scale parameters.
-    norm_shift <- outcome_range[1]
+    norm_shift <- outcome_range[1L]
     norm_scale <- diff(outcome_range)
     
     # Set scale parameters equal to 0.0 to 1.0 to avoid division by 0.
@@ -958,12 +966,12 @@ setMethod(
       # Find data for the current group
       group_data <- data[unique(groups[[jj]]), on = .NATURAL]
       
-      if (nrow(group_data) >= 2) {
+      if (nrow(group_data) >= 2L) {
         
         # Fit a Kaplan-Meier curve for the current group
         km_fit <- survival::survfit(Surv(time, event) ~ 1, data = group_data)
         
-        if (length(km_fit$time) >= 2) {
+        if (length(km_fit$time) >= 2L) {
           
           # Get observed probability
           obs_prob[jj] <- stats::approx(
@@ -971,7 +979,7 @@ setMethod(
             y = km_fit$surv,
             xout = time,
             method = "linear",
-            rule = 2
+            rule = 2L
           )$y
           
           # Get expected probability
@@ -986,8 +994,8 @@ setMethod(
             y = km_fit$std.err,
             xout = time,
             method = "linear",
-            rule = 2
-          )$y^2
+            rule = 2L
+          )$y^2.0
           
         } else {
           # Set NA values.
@@ -1159,7 +1167,7 @@ setMethod(
     outcome_range <- range(object@observed_value_range)
     
     # Get the shift and scale parameters.
-    norm_shift <- outcome_range[1]
+    norm_shift <- outcome_range[1L]
     norm_scale <- diff(outcome_range)
     
     # Set scale parameters equal to 0.0 to 1.0 to avoid division by 0.
@@ -1187,11 +1195,11 @@ setMethod(
   n <- length(expected_interpolated)
   
   # Discretise bins.
-  group_bin <- floor((n - 1) * expected) + 1
+  group_bin <- as.integer(floor((n - 1L) * expected)) + 1L
   
   # Check if the group_bin still falls within the valid range.
   group_bin <- ifelse(group_bin > n, n, group_bin)
-  group_bin <- ifelse(group_bin < 1, 1, group_bin)
+  group_bin <- ifelse(group_bin < 1L, 1L, group_bin)
   
   # Compute the frequency of each entry.
   data <- data.table::data.table("expected" = expected_interpolated[group_bin])
@@ -1223,7 +1231,7 @@ setMethod(
   calibration_data <- calibration_data[is.finite(expected) & is.finite(observed)]
   
   # Check if the input is empty or only contains one entry
-  if (nrow(calibration_data) < 2) return(NULL)
+  if (nrow(calibration_data) < 2L) return(NULL)
   
   # Fit per repeated measurement.
   fit_data <- lapply(
@@ -1275,7 +1283,7 @@ setMethod(
   if (no_slope) {
     fit_summary <- rbind(
       fit_summary,
-      matrix(data = c(0.0, Inf, 0.0, 1.0), ncol = 4)
+      matrix(data = c(0.0, Inf, 0.0, 1.0), ncol = 4L)
     )
     rownames(fit_summary) <- c("(Intercept)", "expected")
   }
@@ -1288,36 +1296,36 @@ setMethod(
     n_groups <- data.table::uniqueN(calibration_data, by = "rep_id")
     
     # Recompute the standard deviation
-    fit_summary[, 2] <- fit_summary[, 2] * sqrt(n_groups)
+    fit_summary[, 2L] <- fit_summary[, 2L] * sqrt(n_groups)
     
     # Recompute the t-score
-    fit_summary[, 3] <- fit_summary[, 1] / fit_summary[, 2]
-    fit_summary[, 3][fit_summary[, 2] == 0.0] <- Inf
+    fit_summary[, 3L] <- fit_summary[, 1L] / fit_summary[, 2L]
+    fit_summary[, 3L][fit_summary[, 2L] == 0.0] <- Inf
     
     # Recompute the p-value
-    fit_summary[, 4] <- 2.0 * stats::pt(abs(fit_summary[, 3]), fit$df.residual, lower.tail = FALSE)
+    fit_summary[, 4L] <- 2.0 * stats::pt(abs(fit_summary[, 3L]), fit$df.residual, lower.tail = FALSE)
     
     # Adapt the confidence intervals
-    fit_conf_int[, 1] <- fit_summary[, 1] + fit_summary[, 2] * stats::qnorm(0.025)
-    fit_conf_int[, 2] <- fit_summary[, 1] + fit_summary[, 2] * stats::qnorm(0.975)
+    fit_conf_int[, 1L] <- fit_summary[, 1L] + fit_summary[, 2L] * stats::qnorm(0.025)
+    fit_conf_int[, 2L] <- fit_summary[, 1L] + fit_summary[, 2L] * stats::qnorm(0.975)
   }
   
   # Construct data table
   calibration_at_large <- data.table::data.table(
     "type" = c("offset", "slope"),
     "value" = fit_coef,
-    "ci_low" = fit_conf_int[, 1],
-    "ci_up" = fit_conf_int[, 2],
-    "p_value" = fit_summary[, 4]
+    "ci_low" = fit_conf_int[, 1L],
+    "ci_up" = fit_conf_int[, 2L],
+    "p_value" = fit_summary[, 4L]
   )
   
   # Update the slope so that the expected slope (slope+1) is shown instead
   calibration_at_large[
     type == "slope",
     ":="(
-      "value" = value + 1,
-      "ci_low" = ci_low + 1,
-      "ci_up" = ci_up + 1
+      "value" = value + 1.0,
+      "ci_low" = ci_low + 1.0,
+      "ci_up" = ci_up + 1.0
     )
   ]
   
@@ -1360,7 +1368,7 @@ setMethod(
   ]
   
   # Remove all entries with n_groups < 3
-  gof_table <- gof_table[n_groups >= 3]
+  gof_table <- gof_table[n_groups >= 3L]
   
   if (is_empty(gof_table)) return(NULL)
   
@@ -1369,7 +1377,7 @@ setMethod(
     ,
     list("p_value" = stats::pchisq(
       q = statistic,
-      df = n_groups - 2,
+      df = n_groups - 2L,
       lower.tail = FALSE
     )),
     by = "rep_id"
@@ -1396,7 +1404,8 @@ setMethod(
   
   if (!method %in% c("exact", "approximate")) {
     ..error_reached_unreachable_code(
-      "..compute_hm_test_statistic: method should be exact or approximate")
+      "..compute_hm_test_statistic: method should be exact or approximate"
+    )
   }
   
   # Check for infinite or NA values.
@@ -1405,20 +1414,20 @@ setMethod(
   if (method == "exact") {
     # Use exact computation for comparison. Note that this has asymptotic
     # behaviour for expected -> 0 and expected -> 1.
-    value <- (observed - expected)^2 * n_g / (expected * (1 - expected))
+    value <- (observed - expected)^2.0 * n_g / (expected * (1.0 - expected))
     
     return(value)
     
   } else if (method == "approximate") {
     # Use exact computation for comparison.
-    exact_value <- (observed - expected)^2 * n_g / (expected * (1 - expected))
+    exact_value <- (observed - expected)^2.0 * n_g / (expected * (1.0 - expected))
     if (!is.finite(exact_value)) exact_value <- Inf
     
     if (expected <= 0.05) {
       
       # Use Taylor series for 1/(x * (1-x)) to second order at 0.05.
-      value <- n_g * (expected - observed)^2 * 400 *
-        (1 / 19 - 360 / 361 * (expected - 1 / 20))
+      value <- n_g * (expected - observed)^2.0 * 400.0 *
+        (1.0 / 19.0 - 360.0 / 361.0 * (expected - 1.0 / 20.0))
       
       if (exact_value < value) value <- exact_value
       if (value < 0.0) value <- 0.0
@@ -1426,8 +1435,8 @@ setMethod(
     } else if (expected >= 0.95) {
       
       # Use Taylor series for 1/(x * (1-x)) to second order at 0.95.
-      value <- n_g * (expected - observed)^2 * 400 *
-        (1 / 19 + 360 / 361 * (expected - 19 / 20))
+      value <- n_g * (expected - observed)^2.0 * 400.0 *
+        (1.0 / 19.0 + 360.0 / 361.0 * (expected - 19.0 / 20.0))
       
       if (exact_value < value) value <- exact_value
       if (value < 0.0) value <- 0.0
@@ -1466,7 +1475,7 @@ setMethod(
     ,
     ":="(
       "nd_group" = ..compute_calibration_test_statistic(observed, expected, n_g),
-      "gnd_group" = (observed - expected)^2 / km_var
+      "gnd_group" = (observed - expected)^2.0 / km_var
     ),
     by = seq_len(nrow(calibration_data))
   ]
@@ -1488,16 +1497,16 @@ setMethod(
   
   # Compute test score for both test tests.
   gof_table <- gof_table[
-    n_groups > 1,
+    n_groups > 1L,
     list(
       "nam_dagostino" = stats::pchisq(
         q = nam_dagostino,
-        df = n_groups - 1,
+        df = n_groups - 1L,
         lower.tail = FALSE
       ),
       "greenwood_nam_dagostino" = stats::pchisq(
         q = greenwood_nam_dagostino,
-        df = n_groups - 1,
+        df = n_groups - 1L,
         lower.tail = FALSE
       )
     ),
@@ -1532,7 +1541,8 @@ setMethod(
 
 ..compute_calibration_data_interpolated <- function(
     data,
-    method = "loess") {
+    method = "loess"
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   observed <- expected <- NULL
@@ -1556,13 +1566,13 @@ setMethod(
   
   # Switch interpolation method for small number of predictions.
   if (method == "loess") {
-    if (n_instances >= 4) {
-      degree <- 2
+    if (n_instances >= 4L) {
+      degree <- 2L
       
-    } else if (n_instances == 3) {
-      degree <- 1
+    } else if (n_instances == 3L) {
+      degree <- 1L
       
-    } else if (n_instances == 2) {
+    } else if (n_instances == 2L) {
       method <- "linear"
       
     } else {
@@ -1574,7 +1584,7 @@ setMethod(
     
   } else if (method == "linear") {
     
-    if (n_instances < 2) {
+    if (n_instances < 2L) {
       return(list(
         "expected" = NA_real_,
         "observed" = NA_real_
@@ -1596,7 +1606,7 @@ setMethod(
       y = data$observed,
       xout = expected_interpolated,
       method = "linear",
-      rule = 1
+      rule = 1L
     )$y)
     
   } else if (method == "loess") {
@@ -1681,14 +1691,14 @@ setMethod(
     if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
       
       # Obtain data from bootstrapped data.
-      data <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data
+      data <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1L]]@data
       
     } else {
-      data <- x[[1]]@data
+      data <- x[[1L]]@data
     }
     
     # Get the grouping column.
-    grouping_column <- x[[1]]@grouping_column
+    grouping_column <- x[[1L]]@grouping_column
     
     # Compute p-value by grouping column.
     p_value <- data[
@@ -1735,10 +1745,10 @@ setMethod(
     if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
       
       # Obtain data from bootstrapped data.
-      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1L]]
       
     } else {
-      x <- x[[1]]
+      x <- x[[1L]]
     }
     
     # Get the grouping column.
@@ -1781,10 +1791,10 @@ setMethod(
     if (any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))) {
       
       # Obtain data from bootstrapped data.
-      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+      x <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1L]]
       
     } else {
-      x <- x[[1]]
+      x <- x[[1L]]
     }
     
     # Get the grouping column.
@@ -1800,7 +1810,7 @@ setMethod(
     # Normalise frequency by all grouping columns minus expected.
     grouping_column <- setdiff(grouping_column, "expected")
     
-    if (length(grouping_column) > 0) {
+    if (length(grouping_column) > 0L) {
       x@data <- x@data[
         ,
         "frequency" := frequency / sum(frequency),
@@ -1969,7 +1979,8 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "calibration_data",
-          "aggregate_results" = aggregate_results),
+          "aggregate_results" = aggregate_results
+        ),
         list(...)
       )
     )
@@ -1981,7 +1992,8 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
+          "export_collection" = export_collection
+        ),
         list(...)
       )
     ))

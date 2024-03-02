@@ -330,7 +330,8 @@ setMethod(
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
-      ".compute_risk_stratification_curves: expecting aggregated data.")
+      ".compute_risk_stratification_curves: expecting aggregated data."
+    )
   }
 
   # Make local copy.
@@ -358,10 +359,13 @@ setMethod(
   
   # Collect strata
   data <- .merge_slots_into_data(data)
-  strata <- data@data[, ..compute_risk_stratification_curves(
-    .SD, 
-    confidence_level = data_element@confidence_level,
-    time_range = time_range),
+  strata <- data@data[
+    ,
+    ..compute_risk_stratification_curves(
+      .SD, 
+      confidence_level = data_element@confidence_level,
+      time_range = time_range
+    ),
     by = c(data_element@grouping_column),
     .SDcols = c("outcome_time", "outcome_event")
   ]
@@ -410,63 +414,65 @@ setMethod(
   )
   
   # Add in data at time = 0 if necessary.
-  if (min(km_data$time) > 0) {
-    km_data <- rbind(data.table::data.table(
-      "time" = 0.0,
-      "group_size" = km_fit$n,
-      "n_event" = 0,
-      "n_censor" = 0,
-      "survival" = 1.00,
-      "ci_low" = km_fit$lower[1],
-      "ci_up" = 1.0),
+  if (min(km_data$time) > 0.0) {
+    km_data <- rbind(
+      data.table::data.table(
+        "time" = 0.0,
+        "group_size" = km_fit$n,
+        "n_event" = 0L,
+        "n_censor" = 0L,
+        "survival" = 1.00,
+        "ci_low" = km_fit$lower[1L],
+        "ci_up" = 1.0
+      ),
       km_data
     )
   }
   
   # Update absent censoring (notably when survival is 0).
-  km_data[survival == 0 & is.na(ci_low), "ci_low" := 0.0]
-  km_data[survival == 0 & is.na(ci_up), "ci_up" := 0.0]
+  km_data[survival == 0.0 & is.na(ci_low), "ci_low" := 0.0]
+  km_data[survival == 0.0 & is.na(ci_up), "ci_up" := 0.0]
   
   # In rare circumstances (i.e. single-sample risk groups), ci_low may be
   # missing at the initial time point.
-  km_data[time == 0 & is.na(ci_low), "ci_low" := 0.0]
+  km_data[time == 0.0 & is.na(ci_low), "ci_low" := 0.0]
   
   if (!is.null(time_range)) {
     # Add an entry at the proximal and distal range edges. This prevents the
     # curve from being cut off prematurely, or starting too late.
     if (
-      is_empty(km_data[time == time_range[1]]) &&
-      time_range[1] > min(km_data$time) &&
-      time_range[1] < max(km_data$time)
+      is_empty(km_data[time == time_range[1L]]) &&
+      time_range[1L] > min(km_data$time) &&
+      time_range[1L] < max(km_data$time)
     ) {
       # Select the closest entry prior to the proximal edge, make changes and
       # introduce it back into the data.
-      proximal_data <- tail(km_data[time < time_range[1]][order(time)], n = 1L)
+      proximal_data <- tail(km_data[time < time_range[1L]][order(time)], n = 1L)
       proximal_data[, ":="(
-        "time" = time_range[1],
-        "n_event" = 0,
-        "n_censor" = 0
+        "time" = time_range[1L],
+        "n_event" = 0L,
+        "n_censor" = 0L
       )]
       km_data <- rbind(km_data, proximal_data)[order(time)]
     }
     
     if (
-      is_empty(km_data[time == time_range[2]]) &&
-      time_range[2] > min(km_data$time) &&
-      time_range[2] < max(km_data$time)
+      is_empty(km_data[time == time_range[2L]]) &&
+      time_range[2L] > min(km_data$time) &&
+      time_range[2L] < max(km_data$time)
     ) {
       # Do the same for the distal edge.
-      distal_data <- tail(km_data[time < time_range[2]][order(time)], n = 1)
+      distal_data <- tail(km_data[time < time_range[2L]][order(time)], n = 1L)
       distal_data[, ":="(
-        "time" = time_range[2],
-        "n_event" = 0,
-        "n_censor" = 0
+        "time" = time_range[2L],
+        "n_event" = 0L,
+        "n_censor" = 0L
       )]
       km_data <- rbind(km_data, distal_data)[order(time)]
     }
     
     # Limit strata to the time range.
-    km_data <- km_data[time >= time_range[1] & time <= time_range[2]]
+    km_data <- km_data[time >= time_range[1L] & time <= time_range[2L]]
   }
   
   return(as.list(km_data))
@@ -483,7 +489,8 @@ setMethod(
   
   if (!x@is_aggregated) {
     ..error_reached_unreachable_code(
-      ".compute_risk_stratification_test: expecting aggregated data.")
+      ".compute_risk_stratification_test: expecting aggregated data."
+    )
   }
   
   # Make local copy.
@@ -499,11 +506,11 @@ setMethod(
   # Right-censor the data to the desired time window.
   if (!is.null(time_range)) {
     # Right censor data past the time range.
-    x@data[outcome_time > time_range[2], "outcome_event" := 0]
+    x@data[outcome_time > time_range[2L], "outcome_event" := 0L]
   } 
 
   # Check that 2 (or more risk groups) are present.
-  if (length(x@groups) < 2) return(NULL)
+  if (length(x@groups) < 2L) return(NULL)
   
   # Get data from logrank tests.
   logrank_data <- .compute_risk_stratification_logrank_test(
@@ -559,10 +566,13 @@ setMethod(
   )
   
   # Compute logrank test results over all risk groups.
-  pairwise_results <- data[, dmapply(
-    ..compute_risk_stratification_logrank_test,
-    selected_groups = pairs,
-    MoreArgs = list("x" = .SD)),
+  pairwise_results <- data[
+    ,
+    dmapply(
+      ..compute_risk_stratification_logrank_test,
+      selected_groups = pairs,
+      MoreArgs = list("x" = .SD)
+    ),
     by = c(data_element@grouping_column),
     .SDcols = c("outcome_time", "outcome_event", "group")
   ]
@@ -596,7 +606,7 @@ setMethod(
   n_groups <- data.table::uniqueN(x$group)
   
   # Check that 2 (or more risk groups) are present.
-  if (n_groups < 2) return(NULL)
+  if (n_groups < 2L) return(NULL)
   
   # Determine chi-square of log-rank test
   chi_sq <- tryCatch(
@@ -616,7 +626,7 @@ setMethod(
   # Derive  p-value
   p_value  <- stats::pchisq(
     q = chi_sq,
-    df = n_groups - 1,
+    df = n_groups - 1L,
     lower.tail = FALSE
   )
   
@@ -625,8 +635,8 @@ setMethod(
     group_1 <- group_2 <- "all"
     
   } else {
-    group_1 <- selected_groups[1]
-    group_2 <- selected_groups[2]
+    group_1 <- selected_groups[1L]
+    group_2 <- selected_groups[2L]
   }
   
   # Set data.
@@ -661,7 +671,7 @@ setMethod(
   data$group <- droplevels(data$group)
   
   # Use the first group as reference for ordinal variables.
-  reference_groups <- levels(data$group)[1]
+  reference_groups <- levels(data$group)[1L]
   
   # Compute hazard test results over all risk groups.
   hr_results <- data[
@@ -703,7 +713,7 @@ setMethod(
   n_groups <- data.table::uniqueN(x$group)
   
   # Check that 2 (or more risk groups) are present.
-  if (n_groups < 2) return(NULL)
+  if (n_groups < 2L) return(NULL)
   
   # Check if the reference group is present.
   if (!any(x$group == reference_group)) return(NULL)
@@ -746,11 +756,11 @@ setMethod(
   # Fill test data.
   test_data <- data.table::data.table(
     "reference_group" = reference_group,
-    "group" = levels(x$group)[-1],
-    "hazard_ratio" = summary_info$conf.int[, 1],
-    "ci_low" = summary_info$conf.int[, 3],
-    "ci_up" = summary_info$conf.int[, 4],
-    "p_value" = summary_info$coefficients[, 5]
+    "group" = levels(x$group)[-1L],
+    "hazard_ratio" = summary_info$conf.int[, 1L],
+    "ci_low" = summary_info$conf.int[, 3L],
+    "ci_up" = summary_info$conf.int[, 4L],
+    "p_value" = summary_info$coefficients[, 5L]
   )
   
   # Return test results
@@ -841,15 +851,15 @@ setMethod(
       .check_argument_length(
         time_range, 
         var_name = "time_range",
-        min = 2,
-        max = 2
+        min = 2L,
+        max = 2L
       )
       
       sapply(
         time_range,
         .check_number_in_valid_range,
         var_name = "time_range",
-        range = c(0, Inf)
+        range = c(0.0, Inf)
       )
     }
     

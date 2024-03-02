@@ -47,7 +47,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_decision_curve_data")
   }
 )
@@ -152,7 +153,8 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Decision curve analysis is only available for categorical and survival
     # outcomes.
@@ -222,7 +224,7 @@ setMethod(
       proto_data_element <- add_data_element_identifier(
         x = proto_data_element,
         evaluation_time = object@time
-      )[[1]]
+      )[[1L]]
     }
     
     # Generate elements to send to dispatch.
@@ -349,7 +351,7 @@ setMethod(
     # Add model name.
     proto_data_element <- add_model_name(proto_data_element, object = object)
     
-    if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+    if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
       # Add evaluation time as a identifier to the data element.
       data_elements <- add_data_element_identifier(
         x = proto_data_element,
@@ -436,13 +438,13 @@ setMethod(
     if (is_empty(object)) return(NULL)
     
     data <- .as_data_table(object)
-    if (nrow(data) <= 1) return(NULL)
+    if (nrow(data) <= 1L) return(NULL)
     
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
     
     # Select only one outcome class for binomial outcomes.
-    if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
+    if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2L]
     
     # Add positive class as an identifier.
     data_elements <- add_data_element_identifier(
@@ -453,12 +455,13 @@ setMethod(
     # Add bootstrap data.
     bootstrap_data <- add_data_element_bootstrap(x = data_elements, ...)
     
-    if (length(bootstrap_data) > 1 && progress_bar) {
+    if (length(bootstrap_data) > 1L && progress_bar) {
       logger_message(
         paste0(
           "Computing decision curves for the ",
           paste_s(outcome_class_levels),
-          ifelse(length(outcome_class_levels) == 1, " class.", " classes.")),
+          ifelse(length(outcome_class_levels) == 1L, " class.", " classes.")
+        ),
         indent = message_indent,
         verbose = verbose
       )
@@ -521,7 +524,7 @@ setMethod(
     if (is_empty(object)) return(NULL)
     
     data <- .as_data_table(object)
-    if (nrow(data) <= 1) return(NULL)
+    if (nrow(data) <= 1L) return(NULL)
     
     # Add bootstrap data.
     bootstrap_data <- add_data_element_bootstrap(x = proto_data_element, ...)
@@ -529,7 +532,7 @@ setMethod(
     # Message the user concerning the time at which the decision curves are
     # computed. This is only relevant for survival analysis, where survival
     # probability is time depend.
-    if (length(bootstrap_data) > 0 && progress_bar) {
+    if (length(bootstrap_data) > 0L && progress_bar) {
       message_str <- "Computing decision curves"
       if (!is.null(proto_data_element@identifiers$evaluation_time)) {
         message_str <- c(
@@ -565,7 +568,8 @@ setMethod(
       bootstrap_seed = bootstrap_data$seed,
       MoreArgs = list(
         "data" = data,
-        "threshold_probabilities" = threshold_probabilities),
+        "threshold_probabilities" = threshold_probabilities
+      ),
       progress_bar = progress_bar,
       chopchop = TRUE
     )
@@ -777,14 +781,14 @@ setMethod(
   data <- data[is.finite(net_benefit)]
   
   # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
+  if (nrow(data) <= 1L) return(NULL)
   
   # If the predicted probability occurs more than once, select the lowest net
   # benefit.
   data <- data[, list("net_benefit" = min(net_benefit)), by = "probability"]
 
   # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
+  if (nrow(data) <= 1L) return(NULL)
   
   # Compute net benefit at the test probabilities.
   net_benefit <- suppressWarnings(stats::approx(
@@ -829,7 +833,7 @@ setMethod(
   # We want to avoid running too many computations. Therefore, we will only
   # compute the number of true positives and false positives when the group size
   # changes.
-  previous_group_size <- n_group_size + 1
+  previous_group_size <- n_group_size + 1L
   for (ii in seq_along(p_threshold)) {
     # Select the group of patients
     surv_group <- data.table::copy(data[predicted_outcome >= x[ii]])
@@ -845,10 +849,10 @@ setMethod(
       n_true_positive <- n_true_positive
       n_false_positive <- n_false_positive
       
-    } else if (n_surv_group == 0) {
+    } else if (n_surv_group == 0L) {
       # There are no true and false positives, because there are no positives
       # with survival probability greater than the threshold.
-      n_true_positive <- n_false_positive <- 0
+      n_true_positive <- n_false_positive <- 0L
       
     } else {
       # Create the basic part of the Kaplan-Meier data by summing the number of
@@ -859,16 +863,16 @@ setMethod(
       surv_group <- surv_group[
         outcome_time <= evaluation_time,
         list(
-          "death" = sum(outcome_event == 1),
-          "censored" = sum(outcome_event == 0)
+          "death" = sum(outcome_event == 1L),
+          "censored" = sum(outcome_event == 0L)
         ),
         by = "outcome_time"
       ][order(outcome_time)]
       
-      if (nrow(surv_group) > 0) {
+      if (nrow(surv_group) > 0L) {
         # Add group sizes at the start of each interval.
         surv_group[
-          , "n" := n_surv_group - data.table::shift(cumsum(death + censored), n = 1, fill = 0, type = "lag")
+          , "n" := n_surv_group - data.table::shift(cumsum(death + censored), n = 1L, fill = 0L, type = "lag")
         ]
         
         # Compute the probability of survival in the interval
@@ -999,7 +1003,8 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "decision_curve_analyis",
-          "aggregate_results" = aggregate_results),
+          "aggregate_results" = aggregate_results
+        ),
         list(...)
       )
     )
@@ -1010,7 +1015,8 @@ setMethod(
         list(
           "object" = object,
           "dir_path" = dir_path,
-          "aggregate_results" = aggregate_results),
+          "aggregate_results" = aggregate_results
+        ),
         list(...)
       )
     ))

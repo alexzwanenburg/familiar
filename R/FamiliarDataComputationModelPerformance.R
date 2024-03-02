@@ -44,7 +44,8 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_performance")
   }
 )
@@ -158,7 +159,7 @@ setMethod(
     
     # Load evaluation_times and ensemble method from the prediction table.
     if (is.waive(evaluation_times) && methods::.hasSlot(object, "time")) {
-        evaluation_times <- object@time
+      evaluation_times <- object@time
     }
     if (is.waive(ensemble_method)) {
       ensemble_method <- "median"
@@ -317,7 +318,7 @@ setMethod(
   proto_data_element <- add_model_name(proto_data_element, object = object)
   
   # Add evaluation time as a identifier to the data element.
-  if (length(evaluation_times) > 0 && object@outcome_type == "survival") {
+  if (length(evaluation_times) > 0L && object@outcome_type == "survival") {
     data_elements <- add_data_element_identifier(
       x = proto_data_element,
       evaluation_time = evaluation_times
@@ -368,13 +369,15 @@ setMethod(
     
     # Message the user concerning the time at which metrics are computed. This is
     # only relevant for survival analysis.
-    if (length(data_element@identifiers$evaluation_time) > 0 && progress_bar) {
+    if (length(data_element@identifiers$evaluation_time) > 0L && progress_bar) {
       logger_message(
         paste0(
           "Computing metric value at time ",
-          data_element@identifiers$evaluation_time, "."),
+          data_element@identifiers$evaluation_time, "."
+        ),
         indent = message_indent,
-        verbose = verbose)
+        verbose = verbose
+      )
     }
     
     # Predict class probabilities.
@@ -598,7 +601,8 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "model_performance",
-          "aggregate_results" = aggregate_results),
+          "aggregate_results" = aggregate_results
+        ),
         list(...)
       )
     )
@@ -610,7 +614,8 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
+          "export_collection" = export_collection
+        ),
         list(...)
       )
     ))
