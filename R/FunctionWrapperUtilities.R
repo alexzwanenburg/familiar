@@ -2,20 +2,23 @@ do.call_strict <- function(
     what,
     args,
     quote = FALSE,
-    envir = parent.frame()) {
+    envir = parent.frame()
+) {
   # Only pass fully matching arguments. Side effect is that ... is always empty.
   # Use with care in case arguments need to be passed to another function.
 
   # Get arguments that can be passed.
   passable_argument_names <- intersect(
     names(formals(what)),
-    names(args))
+    names(args)
+  )
 
   return(do.call(
     what, 
     args = args[passable_argument_names],
     quote = quote, 
-    envir = envir))
+    envir = envir
+  ))
 }
 
 
@@ -27,7 +30,8 @@ do.call_with_timeout <- function(
     quote = FALSE, 
     envir = parent.frame(),
     muffle = TRUE, 
-    additional_packages = NULL) {
+    additional_packages = NULL
+) {
   
   # Set up the muffler that captures all output.
   muffle_fun <- identity
@@ -36,29 +40,38 @@ do.call_with_timeout <- function(
   if (!require_package(
     "callr",
     purpose = "to allow for executing functions with timeout",
-    message_type = "warning")) {
+    message_type = "warning"
+  )) {
     # If callr cannot be loaded, execute the function as is.
-    muffle_fun(value <- do.call(
-      what = what,
-      args = args, 
-      envir = envir))
+    muffle_fun(
+      value <- do.call(
+        what = what,
+        args = args, 
+        envir = envir
+      )
+    )
 
     # Return data.
     return(list(
       "value" = value,
-      "timeout" = FALSE))
+      "timeout" = FALSE
+    ))
     
   } else if (!is.finite(timeout)) {
     # If there is no finite timeout, execute the function as is.
-    muffle_fun(value <- do.call(
-      what = what, 
-      args = args, 
-      envir = envir))
+    muffle_fun(
+      value <- do.call(
+        what = what, 
+        args = args, 
+        envir = envir
+      )
+    )
 
     # Return data.
     return(list(
       "value" = value,
-      "timeout" = FALSE))
+      "timeout" = FALSE
+    ))
     
   } else {
     bg_function_wrapper <- function(what, args, additional_packages) {
@@ -77,8 +90,10 @@ do.call_with_timeout <- function(
       args = list(
         "what" = what,
         "args" = args,
-        "additional_packages" = additional_packages),
-      package = TRUE)
+        "additional_packages" = additional_packages
+      ),
+      package = TRUE
+    )
 
     # Wait until the timeout, or until the background process completes,
     # whichever happens first.
@@ -105,7 +120,8 @@ do.call_with_handlers_timeout <- function(
     quote = FALSE, 
     envir = parent.frame(), 
     muffle = TRUE, 
-    additional_packages = NULL) {
+    additional_packages = NULL
+) {
   # Pass to do.call_with_timeout, which then calls do.call_with_handlers on
   # "what" with specified arguments "args".
   results <- do.call_with_timeout(
@@ -115,10 +131,12 @@ do.call_with_handlers_timeout <- function(
       "args" = args,
       "quote" = quote,
       "envir" = envir,
-      "muffle" = muffle),
+      "muffle" = muffle
+    ),
     timeout = timeout,
     muffle = muffle,
-    additional_packages = additional_packages)
+    additional_packages = additional_packages
+  )
 
   # Flatten results.
   if (!is.null(results$value)) {
@@ -137,7 +155,8 @@ do.call_with_handlers <- function(
     args, 
     quote = FALSE, 
     envir = parent.frame(),
-    muffle = TRUE) {
+    muffle = TRUE
+) {
   # Set up the muffler that captures all output.
   muffle_fun <- identity
   if (muffle) muffle_fun <- quiet
@@ -146,23 +165,30 @@ do.call_with_handlers <- function(
   # written after the tryCatch.
   warn_logs <- error_logs <- NULL
 
-  muffle_fun(value <- tryCatch(
-    withCallingHandlers(
-      do.call(what = what, args = args, envir = envir),
-      warning = function(w) {
-        # Since warn_logs is found in the enclosing frame, we either have to use
-        # <<- to access and update this variable. However, this causes CRAN
-        # notes, because <<- can be a global assignment, i.e. in the user space.
-        # Hence we explicitly use get and assign to update the variable.
-        warn_logs <- assign(
-          "warn_logs",
-          append(get("warn_logs"), condition_parser(w)),
-          inherits = TRUE)
-        
-        # This prevents any warnings from being generated outside the function.
-        invokeRestart("muffleWarning")
-      }),
-    error = identity))
+  muffle_fun(
+    value <- tryCatch(
+      withCallingHandlers(
+        do.call(what = what, args = args, envir = envir),
+        warning = function(w) {
+          # Since warn_logs is found in the enclosing frame, we either have to
+          # use <<- to access and update this variable. However, this causes
+          # CRAN notes, because <<- can be a global assignment, i.e. in the user
+          # space. Hence we explicitly use get and assign to update the
+          # variable.
+          warn_logs <- assign(
+            "warn_logs",
+            append(get("warn_logs"), condition_parser(w)),
+            inherits = TRUE
+          )
+          
+          # This prevents any warnings from being generated outside the
+          # function.
+          invokeRestart("muffleWarning")
+        }
+      ),
+      error = identity
+    )
+  )
   
   if (inherits(value, "error")) {
     error_logs <- condition_parser(value)
@@ -172,7 +198,8 @@ do.call_with_handlers <- function(
   return(list(
     "value" = value,
     "warning" = warn_logs,
-    "error" = error_logs))
+    "error" = error_logs
+  ))
 }
 
 
@@ -188,7 +215,7 @@ condition_parser <- function(x, ...) {
   if (!is.null(condition_call)) {
     # Get the condition call. Also, just in case, select only the first section
     # that contains the function itself.
-    deparsed_condition_call <- deparse1(condition_call)[1]
+    deparsed_condition_call <- deparse1(condition_call)[1L]
 
     # We remove the function arguments from the call to prevent leaking data, if
     # any. Identify the first parenthesis that opens the argument section.
@@ -196,14 +223,16 @@ condition_parser <- function(x, ...) {
       text = deparsed_condition_call,
       pattern = "(",
       fixed = TRUE
-    )[1]
+    )[1L]
 
     # Check if a parenthesis appears in the initial section of the call.
-    if (parenthesis_position > -1) {
+    if (parenthesis_position > -1L) {
       # Select the function name which appears prior to the parenthesis.
-      deparsed_condition_call <- substr(deparsed_condition_call,
+      deparsed_condition_call <- substr(
+        deparsed_condition_call,
         start = 1L,
-        stop = parenthesis_position - 1L)
+        stop = parenthesis_position - 1L
+      )
       
     } else {
       # If no parenthesis appears, the function call was likely cut off prior to
@@ -211,11 +240,12 @@ condition_parser <- function(x, ...) {
       deparsed_condition_call <- paste0(deparsed_condition_call, "[...]")
     }
 
-    if (nchar(deparsed_condition_call) > 0) {
+    if (nchar(deparsed_condition_call) > 0L) {
       # Add in the deparsed condition call, and combine.
       parsed_condition <- paste0(
         deparsed_condition_call, ": ",
-        condition_message)
+        condition_message
+      )
       
     } else {
       parsed_condition <- condition_message
@@ -247,7 +277,7 @@ condition_summary <- function(x) {
       
       # Show the number of times the condition has appeared, but ignore if it
       # only appeared once.
-      if (x$n > 1) {
+      if (x$n > 1L) {
         message_string <- c(message_string, paste0("(", x$n, "x) "))
       }
       
@@ -256,7 +286,8 @@ condition_summary <- function(x) {
       
       return(paste0(message_string, collapse = ""))
     },
-    USE.NAMES = FALSE)
+    USE.NAMES = FALSE
+  )
   
   return(unname(summary_vector))
 }

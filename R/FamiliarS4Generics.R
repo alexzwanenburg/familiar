@@ -196,7 +196,12 @@ setGeneric("get_prediction_type", function(object, ...) standardGeneric("get_pre
 
 setGeneric("..set_calibration_info", function(object, data, ...) standardGeneric("..set_calibration_info"))
 
-setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) standardGeneric("..set_risk_stratification_thresholds"))
+setGeneric(
+  "..set_risk_stratification_thresholds",
+  function(object, data, ...) {
+    standardGeneric("..set_risk_stratification_thresholds")
+  }
+)
 
 setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))
 
@@ -318,7 +323,12 @@ setGeneric(".extract_slots_from_data", function(x, ...) standardGeneric(".extrac
 
 setGeneric(".as_data_table", function(x, ...) standardGeneric(".as_data_table"))
 
-setGeneric(".convert_value_to_grouping_column", function(x, ...) standardGeneric(".convert_value_to_grouping_column"))
+setGeneric(
+  ".convert_value_to_grouping_column",
+  function(x, ...) {
+    standardGeneric(".convert_value_to_grouping_column")
+  }
+)
 
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
@@ -336,7 +346,12 @@ setGeneric("preprocess_vimp_table", function(x, ...) standardGeneric("preprocess
 
 setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove_signature_features"))
 
-setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
+setGeneric(
+  "update_vimp_table_to_reference",
+  function(x, ...) {
+    standardGeneric("update_vimp_table_to_reference")
+  }
+)
 
 setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))
 
@@ -355,4 +370,9 @@ setGeneric("feature_info_complete", function(object, ...) standardGeneric("featu
 
 setGeneric("add_feature_info_parameters", function(object, data, ...) standardGeneric("add_feature_info_parameters"))
 
-setGeneric("apply_feature_info_parameters", function(object, data, ...) standardGeneric("apply_feature_info_parameters"))
+setGeneric(
+  "apply_feature_info_parameters",
+  function(object, data, ...) {
+    standardGeneric("apply_feature_info_parameters")
+  }
+)

@@ -362,7 +362,8 @@ setMethod(
     # functions.
     ..error_cannot_convert_to_familiar_object(
       object = object,
-      expected_class = "familiarData")
+      expected_class = "familiarData"
+    )
   }
 )
 
@@ -399,7 +400,8 @@ setGeneric(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    ...) {
+    ...
+  ) {
     standardGeneric("as_familiar_collection")
   }
 )
@@ -429,7 +431,8 @@ setMethod(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    ...) {
+    ...
+  ) {
     # Pass to as_familiar_collection for lists to load and process objects
     # there.
     return(do.call(
@@ -438,8 +441,11 @@ setMethod(
         list(
           "object" = list(object),
           "familiar_data_names" = familiar_data_names,
-          "collection_name" = collection_name),
-        list(...))))
+          "collection_name" = collection_name
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -455,7 +461,8 @@ setMethod(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    ...) {
+    ...
+  ) {
     # Pass to as_familiar_collection for lists to load and process objects
     # there.
     return(do.call(
@@ -464,8 +471,11 @@ setMethod(
         list(
           "object" = list(object),
           "familiar_data_names" = familiar_data_names,
-          "collection_name" = collection_name),
-        list(...))))
+          "collection_name" = collection_name
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -481,7 +491,8 @@ setMethod(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    ...) {
+    ...
+  ) {
     # Pass to as_familiar_collection for lists to load and process objects
     # there.
     return(do.call(
@@ -490,8 +501,11 @@ setMethod(
         list(
           "object" = list(object),
           "familiar_data_names" = familiar_data_names,
-          "collection_name" = collection_name),
-        list(...))))
+          "collection_name" = collection_name
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -506,7 +520,8 @@ setMethod(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    ...) {
+    ...
+  ) {
     # Pass to as_familiar_collection for lists to load and process objects
     # there.
     return(do.call(
@@ -515,10 +530,11 @@ setMethod(
         list(
           "object" = list(object),
           "familiar_data_names" = familiar_data_names,
-          "collection_name" = collection_name),
-        list(...))
+          "collection_name" = collection_name
+        ),
+        list(...)
       )
-    )
+    ))
   }
 )
 
@@ -533,7 +549,9 @@ setMethod(
   function(
     object,
     familiar_data_names = NULL,
-    collection_name = NULL, ...) {
+    collection_name = NULL,
+    ...
+  ) {
     # Load familiar objects. This does nothing if the list already contains only
     # familiar S4 objects, but will load any files from the path and will check
     # uniqueness of classes.
@@ -544,7 +562,7 @@ setMethod(
       return(object[[1L]])
       
     } else if (all(sapply(object, is, class2 = "familiarCollection"))) {
-      stop("Only a single familiarCollection can be returned.")
+      ..error("Only a single familiarCollection can be returned.")
     }
 
     # Convert to familiarModel(s) to familiarData
@@ -553,7 +571,9 @@ setMethod(
         as_familiar_data,
         args = c(
           list("object" = object),
-          list(...)))
+          list(...)
+        )
+      )
       
       # Store in list, if required
       if (!is(object, "list")) object <- list(object)
@@ -565,13 +585,15 @@ setMethod(
         as_familiar_data,
         args = c(
           list("object" = object),
-          list(...)))
-
+          list(...)
+        )
+      )
+      
       # Store in list, if required.
       if (!is(object, "list")) object <- list(object)
       
     } else if (all(sapply(object, is, class2 = "familiarEnsemble"))) {
-      stop("A familiarData object can only be constructed from a single familiarEnsemble object.")
+      ..error("A familiarData object can only be constructed from a single familiarEnsemble object.")
     }
 
     # Convert prediction table objects to familiarData.
@@ -628,85 +650,110 @@ setMethod(
       name = collection_name,
       data_sets = sapply(
         object,
-        function(fam_data_obj) (fam_data_obj@name)),
+        function(fam_data_obj) (fam_data_obj@name)
+      ),
       outcome_type = object[[1L]]@outcome_type,
       outcome_info = .aggregate_outcome_info(x = lapply(
         object, 
-        function(list_elem) (if (methods::.hasSlot(list_elem, "outcome_info")) return(list_elem@outcome_info)))),
+        function(list_elem) (if (methods::.hasSlot(list_elem, "outcome_info")) return(list_elem@outcome_info))
+      )),
       fs_vimp = collect(
         x = object,
         data_slot = "fs_vimp",
-        identifiers = c("fs_method")),
+        identifiers = c("fs_method")
+      ),
       model_vimp = collect(
         x = object, 
         data_slot = "model_vimp",
-        identifiers = c("fs_method", "learner")),
+        identifiers = c("fs_method", "learner")
+      ),
       permutation_vimp = collect(
         x = object,
-        data_slot = "permutation_vimp"),
+        data_slot = "permutation_vimp"
+      ),
       hyperparameters = collect(
         x = object,
         data_slot = "hyperparameters",
-        identifiers = c("fs_method", "learner")),
+        identifiers = c("fs_method", "learner")
+      ),
       hyperparameter_data = NULL,
       required_features = unique(unlist(lapply(
         object,
-        function(fam_data_obj) (fam_data_obj@required_features)))),
+        function(fam_data_obj) (fam_data_obj@required_features)
+      ))),
       model_features = unique(unlist(extract_from_slot(
         object_list = object,
         slot_name = "model_features",
-        na.rm = TRUE))),
+        na.rm = TRUE
+      ))),
       learner = unique(sapply(
         object, 
-        function(fam_data_obj) (fam_data_obj@learner))),
+        function(fam_data_obj) (fam_data_obj@learner)
+      )),
       fs_method = unique(sapply(
         object,
-        function(fam_data_obj) (fam_data_obj@fs_method))),
+        function(fam_data_obj) (fam_data_obj@fs_method)
+      )),
       prediction_data = collect(
         x = object,
-        data_slot = "prediction_data"),
+        data_slot = "prediction_data"
+      ),
       confusion_matrix = collect(
         x = object, 
-        data_slot = "confusion_matrix"),
+        data_slot = "confusion_matrix"
+      ),
       decision_curve_data = collect(
         x = object,
-        data_slot = "decision_curve_data"),
+        data_slot = "decision_curve_data"
+      ),
       calibration_info = collect(
         x = object,
         data_slot = "calibration_info",
-        identifiers = c("fs_method", "learner")),
+        identifiers = c("fs_method", "learner")
+      ),
       calibration_data = collect(
         x = object,
-        data_slot = "calibration_data"),
+        data_slot = "calibration_data"
+      ),
       model_performance = collect(
         x = object,
-        data_slot = "model_performance"),
+        data_slot = "model_performance"
+      ),
       km_info = collect(
         x = object, 
         data_slot = "km_info",
-        identifiers = c("fs_method", "learner")),
+        identifiers = c("fs_method", "learner")
+      ),
       km_data = collect(
         x = object,
-        data_slot = "km_data"),
+        data_slot = "km_data"
+      ),
       auc_data = collect(
         x = object, 
-        data_slot = "auc_data"),
+        data_slot = "auc_data"
+      ),
       univariate_analysis = collect(
         x = object,
-        data_slot = "univariate_analysis"),
+        data_slot = "univariate_analysis"
+      ),
       feature_expressions = collect(
         x = object,
-        data_slot = "feature_expressions"),
+        data_slot = "feature_expressions"
+      ),
       feature_similarity = collect(
         x = object, 
-        data_slot = "feature_similarity"),
+        data_slot = "feature_similarity"
+      ),
       sample_similarity = collect(
         x = object,
-        data_slot = "sample_similarity"),
+        data_slot = "sample_similarity"
+      ),
       ice_data = collect(
         x = object,
-        data_slot = "ice_data"),
-      project_id = object[[1L]]@project_id)
+        data_slot = "ice_data"
+      ),
+      project_id = object[[1L]]@project_id
+    )
 
     # Add a package version to the familiarCollection object
     fam_collect <- add_package_version(object = fam_collect)
@@ -715,7 +762,8 @@ setMethod(
     fam_collect <- set_data_set_names(
       x = fam_collect,
       new = as.character(familiar_data_names),
-      order = levels(familiar_data_names))
+      order = levels(familiar_data_names)
+    )
 
     return(fam_collect)
   }
@@ -731,7 +779,9 @@ setMethod(
   function(
     object,
     familiar_data_names = NULL,
-    collection_name = NULL, ...) {
+    collection_name = NULL,
+    ...
+  ) {
     # Pass to as_familiar_collection for lists to load and process objects
     # there.
     return(do.call(
@@ -740,8 +790,11 @@ setMethod(
         list(
           "object" = as.list(object),
           "familiar_data_names" = familiar_data_names,
-          "collection_name" = collection_name),
-        list(...))))
+          "collection_name" = collection_name
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -757,7 +810,8 @@ setMethod(
     # previous methods.
     ..error_cannot_convert_to_familiar_object(
       object = object, 
-      expected_class = "familiarCollection")
+      expected_class = "familiarCollection"
+    )
   }
 )
 
@@ -770,9 +824,10 @@ setMethod(
     # Determine if file(s) exist
     existing_files <- sapply(object, file.exists)
     if (!all(existing_files)) {
-      rlang::abort(paste0(
+      ..error(paste0(
         "Not all files could be found: ",
-        paste_s(object[!existing_files])))
+        paste_s(object[!existing_files])
+      ))
     }
 
     # Load object
@@ -786,7 +841,7 @@ setMethod(
       all(sapply(fam_object, is, class2 = "familiarData")) ||
       all(sapply(fam_object, is, class2 = "familiarCollection"))
     )) {
-      rlang::abort(paste0(
+      ..error(paste0(
         "Could not load familiar objects because they are not uniquely ",
         "familiarModel, familiarNoveltyDetector, familiarEnsemble, familiarData or ",
         "familiarCollection objects."
@@ -830,7 +885,7 @@ setMethod(
       all(sapply(fam_object, is, class2 = "familiarData")) ||
       all(sapply(fam_object, is, class2 = "familiarCollection"))
     )) {
-      rlang::abort(paste0(
+      ..error(paste0(
         "Could not load familiar objects because they are not uniquely ",
         "familiarModel, familiarNoveltyDetector, familiarEnsemble, familiarData ",
         "or familiarCollection objects."
@@ -864,9 +919,10 @@ setMethod(
       return(object)
       
     } else {
-      stop(paste0(
+      ..error(paste0(
         "The loaded object is not a familiar S4 object. Found: ",
-        paste_s(class(object))))
+        paste_s(class(object))
+      ))
     }
   }
 )

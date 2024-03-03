@@ -27,15 +27,18 @@ setMethod(
     # Set standard purposes for common uses.
     if (!is.null(purpose)) {
       if (purpose %in% c("vimp")) {
-        purpose <- switch(purpose,
-          "vimp" = "to determine variable importance")
+        purpose <- switch(
+          purpose,
+          "vimp" = "to determine variable importance"
+        )
       }
     }
 
     return(invisible(.require_package(
       x = x@package,
       purpose = purpose, 
-      message_type = message_type)))
+      message_type = message_type
+    )))
   }
 )
 
@@ -61,7 +64,8 @@ setMethod(
     # This is a fall-back method.
     return(get_placeholder_vimp_table(
       vimp_method = object@vimp_method,
-      run_table = object@run_table))
+      run_table = object@run_table
+    ))
   }
 )
 
@@ -71,12 +75,17 @@ setMethod(
 setMethod(
   ".vimp",
   signature(object = "familiarVimpMethod"),
-  function(object, data, is_pre_processed = FALSE, ...) {
+  function(
+    object, 
+    data, 
+    is_pre_processed = FALSE,
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     cluster_name <- NULL
 
     # Check if the class of object is a subclass of familiarVimpMethod
-    if (!is_subclass(class(object)[1], "familiarVimpMethod")) {
+    if (!is_subclass(class(object)[1L], "familiarVimpMethod")) {
       object <- promote_vimp_method(object)
     }
 
@@ -84,7 +93,8 @@ setMethod(
     if (is_empty(data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@vimp_method,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Prepare input data
@@ -92,7 +102,8 @@ setMethod(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
-      stop_at = "clustering")
+      stop_at = "clustering"
+    )
 
     # Work only with data that has known outcomes when determining variable
     # importance.
@@ -103,7 +114,8 @@ setMethod(
     if (is_empty(data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@vimp_method,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Identify invariant features and remove them.
@@ -111,28 +123,29 @@ setMethod(
     is_invariant <- sapply(
       available_features,
       function(feature, data) is_singular_data(data[, get(feature)]),
-      data = data@data)
+      data = data@data
+    )
     
     invariant_features <- available_features[is_invariant]
     
     # Remove invariant features.
-    if (length(invariant_features) > 0) {
+    if (length(invariant_features) > 0L) {
       data <- filter_features(
         data = data,
-        remove_features = invariant_features)
+        remove_features = invariant_features
+      )
     }
 
     # Check that the data is suitable for predictions.
     if (has_bad_training_data(object = object, data = data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@vimp_method,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Determine variable importance.
-    vimp_object <- ..vimp(
-      object = object,
-      data = data)
+    vimp_object <- ..vimp(object = object, data = data)
 
     # Find signature features.
     signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
@@ -140,18 +153,19 @@ setMethod(
     # Remove signature features.
     vimp_object <- remove_signature_features(
       vimp_object,
-      features = signature_features)
+      features = signature_features
+    )
 
     # Set up a table with clustering information.
     cluster_table <- .create_clustering_table(object@feature_info)
 
     # Remove invariant features from the cluster_table
-    if (length(invariant_features) > 0) {
+    if (length(invariant_features) > 0L) {
       cluster_table <- cluster_table[!cluster_name %in% invariant_features]
     }
 
     # Remove features in the signature.
-    if (length(signature_features) > 0) {
+    if (length(signature_features) > 0L) {
       cluster_table <- cluster_table[!cluster_name %in% signature_features]
     }
 
@@ -174,12 +188,17 @@ setMethod(
 setMethod(
   ".vimp",
   signature(object = "familiarModel"),
-  function(object, data, is_pre_processed = FALSE, ...) {
+  function(
+    object, 
+    data, 
+    is_pre_processed = FALSE, 
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     cluster_name <- NULL
 
     # Check if the class of object is a subclass of familiarModel.
-    if (!is_subclass(class(object)[1], "familiarModel")) {
+    if (!is_subclass(class(object)[1L], "familiarModel")) {
       object <- promote_learner(object)
     }
     
@@ -187,7 +206,8 @@ setMethod(
     if (is_empty(data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@learner,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Prepare input data
@@ -195,7 +215,8 @@ setMethod(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
-      stop_at = "clustering")
+      stop_at = "clustering"
+    )
 
     # Work only with data that has known outcomes when determining variable
     # importance.
@@ -206,7 +227,8 @@ setMethod(
     if (is_empty(data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@learner,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Identify invariant features and remove them.
@@ -214,28 +236,32 @@ setMethod(
     is_invariant <- sapply(
       available_features,
       function(feature, data) is_singular_data(data[, get(feature)]),
-      data = data@data)
+      data = data@data
+    )
     
     invariant_features <- available_features[is_invariant]
 
     # Remove invariant features.
-    if (length(invariant_features) > 0) {
+    if (length(invariant_features) > 0L) {
       data <- filter_features(
         data = data,
-        remove_features = invariant_features)
+        remove_features = invariant_features
+      )
     }
 
     # Check that the data is suitable for predictions.
     if (has_bad_training_data(object = object, data = data)) {
       return(get_placeholder_vimp_table(
         vimp_method = object@learner,
-        run_table = object@run_table))
+        run_table = object@run_table
+      ))
     }
 
     # Determine variable importance.
     vimp_object <- ..vimp(
       object = object,
-      data = data)
+      data = data
+    )
 
     # Find signature features.
     signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
@@ -243,18 +269,19 @@ setMethod(
     # Remove signature features.
     vimp_object <- remove_signature_features(
       vimp_object,
-      features = signature_features)
+      features = signature_features
+    )
 
     # Set up a table with clustering information.
     cluster_table <- .create_clustering_table(object@feature_info)
 
     # Remove invariant features from the cluster_table
-    if (length(invariant_features) > 0) {
+    if (length(invariant_features) > 0L) {
       cluster_table <- cluster_table[!cluster_name %in% invariant_features]
     }
 
     # Remove features in the signature.
-    if (length(signature_features) > 0) {
+    if (length(signature_features) > 0L) {
       cluster_table <- cluster_table[!cluster_name %in% signature_features]
     }
 
