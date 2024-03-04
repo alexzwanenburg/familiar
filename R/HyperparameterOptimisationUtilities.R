@@ -1,9 +1,10 @@
 ..create_initial_hyperparameter_set <- function(
     parameter_list,
     grid_initialisation_method,
-    n_random_sets = 200L) {
+    n_random_sets = 200L
+) {
   
-  if (length(parameter_list) == 0) return(NULL)
+  if (length(parameter_list) == 0L) return(NULL)
 
   if (!.any_randomised_hyperparameters(parameter_list = parameter_list)) {
     # All variables have been fixed. No optimisation is required.
@@ -11,7 +12,8 @@
     # Get values for each parameter.
     value_list <- lapply(
       parameter_list, 
-      function(list_entry) (list_entry$init_config))
+      function(list_entry) (list_entry$init_config)
+    )
 
     # Convert to a data table.
     parameter_table <- data.table::as.data.table(value_list)
@@ -27,9 +29,11 @@
         function(ii, parameter_list) {
           return(..randomise_hyperparameter_set(
             parameter_list = parameter_list,
-            local = FALSE))
+            local = FALSE
+          ))
         },
-        parameter_list = parameter_list)
+        parameter_list = parameter_list
+      )
 
       # Combine list into a single data table.
       parameter_table <- data.table::rbindlist(random_list, use.names = TRUE)
@@ -45,13 +49,15 @@
       # Get initial values for each parameter.
       value_list <- lapply(
         parameter_list,
-        function(list_entry) (list_entry$init_config))
+        function(list_entry) (list_entry$init_config)
+      )
 
       # Generate a table with all permutations of the grid points.
       parameter_table <- expand.grid(
         value_list,
         stringsAsFactors = FALSE,
-        KEEP.OUT.ATTRS = FALSE)
+        KEEP.OUT.ATTRS = FALSE
+      )
       parameter_table <- data.table::as.data.table(parameter_table)
 
       # Allow only unique parameter sets.
@@ -66,7 +72,8 @@
       selected_row_id <- sample(
         x = seq_len(nrow(parameter_table)),
         size = min(c(nrow(parameter_table), n_random_sets)),
-        replace = FALSE)
+        replace = FALSE
+      )
 
       parameter_table <- parameter_table[selected_row_id, ]
     }
@@ -83,11 +90,13 @@
 ..randomise_hyperparameter_set <- function(
     parameter_table = NULL,
     parameter_list,
-    local = TRUE) {
+    local = TRUE
+) {
   
   if (local && is_empty(parameter_table)) {
     ..error_reached_unreachable_code(
-      "..randomise_hyperparameter_set: no values for local search.")
+      "..randomise_hyperparameter_set: no values for local search."
+    )
   }
 
   if (local) {
@@ -104,10 +113,12 @@
     # randomly update.
     random_parameters <- sapply(
       parameter_list, 
-      function(list_entry) (list_entry$randomise))
+      function(list_entry) (list_entry$randomise)
+    )
     selected_parameter <- fam_sample(
       names(parameter_list)[random_parameters],
-      size = 1)
+      size = 1L
+    )
 
     # Get current value of the selected hyperparameter from the table.
     current_parameter_value <- parameter_table[[selected_parameter]]
@@ -117,7 +128,7 @@
     parameter_range <- parameter_list[[selected_parameter]]$range
 
     if (parameter_type %in% c("integer", "numeric")) {
-      if (length(parameter_range) == 2) {
+      if (length(parameter_range) == 2L) {
         # Check that the range is not 0.
         if (max(parameter_range) != min(parameter_range)) {
           # Convert to float in [0,1] range
@@ -129,12 +140,12 @@
           while (!rand_valid) {
             # Draw 20 random numbers from a normal distribution with
             # mean = hp_val_float and sd = 0.2
-            hp_rand <- stats::rnorm(20, mean = hp_val_float, sd = 0.1)
+            hp_rand <- stats::rnorm(20L, mean = hp_val_float, sd = 0.1)
             rand_valid <- any(hp_rand >= 0.0 & hp_rand <= 1.0)
           }
 
           # Select new value in [0,1] and convert to original range
-          new_hp_val_float <- hp_rand[hp_rand >= 0 & hp_rand <= 1.0][1]
+          new_hp_val_float <- hp_rand[hp_rand >= 0.0 & hp_rand <= 1.0][1L]
           new_hp_val_float <- new_hp_val_float * 
             (max(parameter_range) - min(parameter_range)) + min(parameter_range)
           
@@ -145,7 +156,7 @@
         
       } else {
         # Treat a range such as c(0,1,3) as if only these values can be selected.
-        new_hp_val_float <- fam_sample(parameter_range, size = 1)
+        new_hp_val_float <- fam_sample(parameter_range, size = 1L)
       }
 
       # Set new value as integer or numeric float
@@ -162,15 +173,16 @@
 
       # Randomly select one option
       updated_list[[selected_parameter]] <- factor(
-        fam_sample(available_parameter_values, size = 1),
-        levels = parameter_range)
+        fam_sample(available_parameter_values, size = 1L),
+        levels = parameter_range
+      )
       
     } else if (parameter_type %in% c("logical")) {
       # Find range of available options
       available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
 
       # Randomly select one option
-      updated_list[[selected_parameter]] <- fam_sample(available_parameter_values, size = 1)
+      updated_list[[selected_parameter]] <- fam_sample(available_parameter_values, size = 1L)
       
     } else {
       ..error_reached_unreachable_code("randomise_hyperparameter_set_unknown_type")
@@ -182,12 +194,14 @@
     # Generate an updated list from parameter_list for randomisation
     updated_list <- lapply(
       parameter_list,
-      function(list_entry) (list_entry$init_config[1]))
+      function(list_entry) (list_entry$init_config[1L])
+    )
 
     # Select hyperparameters to be randomised
     random_parameters <- sapply(
       parameter_list,
-      function(list_entry) (list_entry$randomise))
+      function(list_entry) (list_entry$randomise)
+    )
     random_parameters <- names(parameter_list)[random_parameters]
 
     # Iterate over hyperparameters
@@ -198,17 +212,17 @@
       parameter_distribution <- parameter_list[[selected_parameter]]$rand_distr
 
       if (parameter_type %in% c("integer", "numeric")) {
-        if (length(parameter_range) == 2) {
+        if (length(parameter_range) == 2L) {
           if (is.null(parameter_distribution)) {
             # Select new value in [0,1] and convert to original range
-            hp_rand <- stats::runif(1)
+            hp_rand <- stats::runif(1L)
             new_hp_val_float <- hp_rand * 
               (max(parameter_range) - min(parameter_range)) + min(parameter_range)
             
           } else if (parameter_distribution == "log") {
             # Select new value in [0,1] and convert to log transform of original
             # range
-            hp_log_rand <- stats::runif(1) *
+            hp_log_rand <- stats::runif(1L) *
               (log(max(parameter_range)) - log(min(parameter_range))) + log(min(parameter_range))
 
             # Transform back from log transformation: note this emphasises
@@ -218,7 +232,7 @@
         } else {
           # Treat a range such as c(0,1,3) as if only these values can be
           # selected.
-          new_hp_val_float <- fam_sample(parameter_range, size = 1)
+          new_hp_val_float <- fam_sample(parameter_range, size = 1L)
         }
 
         # Set new value as integer or numeric float
@@ -231,11 +245,12 @@
       } else if (parameter_type %in% c("factor")) {
         # Randomly select one option
         updated_list[[selected_parameter]] <- factor(
-          fam_sample(parameter_range, size = 1),
-          levels = parameter_range)
+          fam_sample(parameter_range, size = 1L),
+          levels = parameter_range
+        )
         
       } else if (parameter_type %in% c("logical")) {
-        updated_list[[selected_parameter]] <- fam_sample(parameter_range, size = 1)
+        updated_list[[selected_parameter]] <- fam_sample(parameter_range, size = 1L)
       }
     }
   }
@@ -253,7 +268,8 @@
     score_table = NULL,
     parameter_table = NULL,
     optimisation_model = NULL,
-    n_max_bootstraps = NULL) {
+    n_max_bootstraps = NULL
+) {
   # Creates a run table from the run identifiers and parameter identifiers.
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -266,14 +282,16 @@
     # Compute optimisation score based on the presented scores.
     optimisation_score_table <- .compute_hyperparameter_optimisation_score(
       score_table = score_table,
-      optimisation_function = optimisation_model@optimisation_function)
+      optimisation_function = optimisation_model@optimisation_function
+    )
 
     # Find data related to the most promising set of hyperparameters.
     incumbent_set <- get_best_hyperparameter_set(
       score_table = optimisation_score_table,
       parameter_table = parameter_table,
       optimisation_model = optimisation_model,
-      n_max_bootstraps = n_max_bootstraps)
+      n_max_bootstraps = n_max_bootstraps
+    )
 
     # Select fitting hyperparameters.
     parameter_ids <- optimisation_score_table[time_taken <= incumbent_set$max_time]$param_id
@@ -281,7 +299,8 @@
 
   if (is.null(parameter_ids)) {
     ..error_reached_unreachable_code(
-      "..create_hyperparameter_run_table: parameter_ids cannot be NULL.")
+      "..create_hyperparameter_run_table: parameter_ids cannot be NULL."
+    )
   }
 
   # Create a run table consisting of parameter and run identifiers.
@@ -289,7 +308,8 @@
     param_id = parameter_ids,
     run_id = run_ids,
     KEEP.OUT.ATTRS = FALSE,
-    stringsAsFactors = FALSE))
+    stringsAsFactors = FALSE
+  ))
 
   return(run_table)
 }
@@ -300,7 +320,8 @@
     process_clock,
     time_limit = NULL,
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Check that there is time-limit to obey.
   if (is.null(time_limit)) return(TRUE)
@@ -316,9 +337,11 @@
       "Hyperparameter optimisation: Optimisation stopped because the ",
       "optimisation process exceeded the allotted time: ",
       "time spent: ", optimisation_time, " mins; ",
-      "time allotted: ", time_limit, " mins."),
+      "time allotted: ", time_limit, " mins."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
 
   return(FALSE)
 }
@@ -333,12 +356,15 @@
     bootstraps,
     verbose,
     message_indent,
-    ...) {
+    ...
+) {
   
-  if (object@fs_method %in% .get_available_random_vimp_methods() ||
-      object@fs_method %in% .get_available_none_vimp_methods() ||
-      object@fs_method %in% .get_available_signature_only_vimp_methods() ||
-      object@fs_method %in% .get_available_no_features_vimp_methods()) {
+  if (
+    object@fs_method %in% .get_available_random_vimp_methods() ||
+    object@fs_method %in% .get_available_none_vimp_methods() ||
+    object@fs_method %in% .get_available_signature_only_vimp_methods() ||
+    object@fs_method %in% .get_available_no_features_vimp_methods()
+  ) {
     return(NULL)
   }
 
@@ -357,21 +383,24 @@
       outcome_info = object@outcome_info,
       feature_info = object@feature_info,
       required_features = object@required_features,
-      run_table = object@run_table))
+      run_table = object@run_table
+    ))
 
     if (is_main_process) {
       # Load hyperparameters.
       vimp_object <- run_hyperparameter_optimisation(
         vimp_method = object@fs_method,
-        data_id = tail(object@run_table, n = 1)$data_id,
-        verbose = FALSE)
+        data_id = tail(object@run_table, n = 1L)$data_id,
+        verbose = FALSE
+      )
 
       # Select a suitable sets of hyperparameters.
       vimp_object <- .find_hyperparameters_for_run(
         run = list("run_table" = object@run_table),
         hpo_list = vimp_object,
         allow_random_selection = TRUE,
-        as_list = FALSE)
+        as_list = FALSE
+      )
       
     } else {
       # Optimise hyperparameters.
@@ -382,15 +411,18 @@
         determine_vimp = determine_vimp,
         verbose = verbose,
         message_indent = message_indent + 1L,
-        ...)
+        ...
+      )
     }
 
     logger_message(
       paste0(
         "Computing variable importance for ",
-        length(bootstraps), " bootstraps."),
+        length(bootstraps), " bootstraps."
+      ),
       indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
 
     # Iterate over data.
     vimp_list <- fam_lapply(
@@ -401,7 +433,8 @@
       object = vimp_object,
       data = data,
       progress_bar = verbose,
-      chopchop = TRUE)
+      chopchop = TRUE
+    )
   }
 
   return(vimp_list)
@@ -412,12 +445,14 @@
 ..compute_hyperparameter_variable_importance <- function(
     train_samples, 
     object, 
-    data) {
+    data
+) {
   
   # Select bootstrap data.
   data <- select_data_from_samples(
     data = data,
-    samples = train_samples)
+    samples = train_samples
+  )
 
   # Select a familiarVimpMethod object if multiple are present.
   if (rlang::is_bare_list(object)) {
@@ -427,7 +462,8 @@
   # Compute variable importance.
   vimp_table <- .vimp(
     object = object,
-    data = data)
+    data = data
+  )
 
   # Form clusters.
   vimp_table <- recluster_vimp_table(vimp_table)
@@ -452,7 +488,8 @@
     iteration_id,
     time_optimisation_model = NULL,
     overhead_time = NULL,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
@@ -465,24 +502,28 @@
   training_list <- lapply(
     run_table$run_id,
     function(ii, training_list) (training_list[[ii]]),
-    training_list = bootstraps$train_list)
+    training_list = bootstraps$train_list
+  )
 
   validation_list <- lapply(
     run_table$run_id,
     function(ii, validation_list) (validation_list[[ii]]),
-    validation_list = bootstraps$valid_list)
+    validation_list = bootstraps$valid_list
+  )
 
   # Generate parameter sets.
   parameter_list <- lapply(
     run_table$param_id,
     function(ii, parameter_table) (parameter_table[param_id == ii, ]),
-    parameter_table = parameter_table)
+    parameter_table = parameter_table
+  )
 
   # Generate variable importance sets (if any)
   rank_table_list <- lapply(
     run_table$run_id,
     function(ii, rank_table_list) (rank_table_list[[ii]]),
-    rank_table_list = rank_table_list)
+    rank_table_list = rank_table_list
+  )
 
   if (is.null(time_optimisation_model)) {
     # Create a scoring table, with accompanying information.
@@ -500,13 +541,16 @@
       MoreArgs = list(
         "object" = object,
         "data" = data,
-        "metric_objects" = metric_objects))
+        "metric_objects" = metric_objects
+      )
+    )
     
   } else {
     # Predict expected process time for each parameter set.
     process_time <- sapply(parameter_list,
       .compute_expected_train_time,
-      time_model = time_optimisation_model)
+      time_model = time_optimisation_model
+    )
 
     # Create a scoring table, with accompanying information.
     score_results <- fam_mapply(
@@ -526,17 +570,21 @@
       MoreArgs = list(
         "object" = object,
         "data" = data,
-        "metric_objects" = metric_objects))
+        "metric_objects" = metric_objects
+      )
+    )
   }
 
   # Aggregate the results, and the score table
   aggregated_results <- list("results" = data.table::rbindlist(
     lapply(score_results$results, function(x) (x$score_table)),
-    use.names = TRUE))
+    use.names = TRUE
+  ))
 
   # Add in process times to the results.
   aggregated_results$results[, "time_taken" := rep(
-    score_results$process_time, each = 2 * length(metric_objects))]
+    score_results$process_time, each = 2L * length(metric_objects)
+  )]
 
   # Add in iteration id.
   aggregated_results$results[, "iteration_id" := iteration_id]
@@ -544,7 +592,8 @@
   # Aggregate errors.
   aggregated_results$error <- unlist(lapply(
     score_results$results, 
-    function(x) (x$error)))
+    function(x) (x$error)
+  ))
 
   # Return aggregated results.
   return(aggregated_results)
@@ -561,26 +610,30 @@
     parameter_table,
     rank_table,
     metric_objects,
-    signature_features = NULL) {
+    signature_features = NULL
+) {
   
   if (!is(object, "familiarModel")) {
     ..error_reached_unreachable_code(paste0(
       "..compute_hyperparameter_model_performance: object is ",
-      "not a familiarModel object."))
+      "not a familiarModel object."
+    ))
   }
 
   # Find parameter id and run id for the current run
   parameter_list <- as.list(parameter_table[, -c("param_id")])
-  param_id <- parameter_table$param_id[1]
+  param_id <- parameter_table$param_id[1L]
 
   # Select training (in-bag) and validation (out-of-bag) data for current run,
   data_training <- select_data_from_samples(
     data = data,
-    samples = training_samples)
+    samples = training_samples
+  )
 
   data_validation <- select_data_from_samples(
     data = data,
-    samples = validation_samples)
+    samples = validation_samples
+  )
 
   # Update the familiar model (for variable importance)
   object@hyperparameters <- parameter_list
@@ -589,7 +642,8 @@
   object <- set_signature(
     object = object,
     rank_table = rank_table,
-    minimise_footprint = TRUE)
+    minimise_footprint = TRUE
+  )
 
   # Train model with the set of hyperparameters.
   object <- .train(
@@ -597,11 +651,18 @@
     data = data_training,
     get_additional_info = FALSE,
     trim_model = FALSE,
-    approximate = TRUE)
+    approximate = TRUE
+  )
 
   # Generate scores.
   score_table <- mapply(
-    function(data, data_set, object, metric_objects, settings) {
+    function(
+      data, 
+      data_set, 
+      object, 
+      metric_objects, 
+      settings
+    ) {
       # Get metric names.
       metric_names <- sapply(metric_objects, function(metric_object) metric_object@metric)
 
@@ -617,33 +678,38 @@
       prediction_table <- .predict(
         object = object,
         data = data,
-        time = time_max)
+        time = time_max
+      )
 
       # Compute metric scores.
       metrics_values <- sapply(
         metric_objects,
         compute_metric_score,
-        data = prediction_table)
+        data = prediction_table
+      )
 
       # Compute objective scores.
       metrics_objective_score <- mapply(
         compute_objective_score,
         metric = metric_objects,
         value = metrics_values,
-        SIMPLIFY = TRUE)
+        SIMPLIFY = TRUE
+      )
 
       # Return as data.table.
       return(data.table::data.table(
         "metric" = metric_names,
         "data_set" = data_set,
         "value" = metrics_values,
-        "objective_score" = metrics_objective_score))
+        "objective_score" = metrics_objective_score
+      ))
     },
     data = list(data_training, data_validation),
     data_set = c("training", "validation"),
     MoreArgs = list(
       "object" = object,
-      "metric_objects" = metric_objects),
+      "metric_objects" = metric_objects
+    ),
     SIMPLIFY = FALSE
   )
 
@@ -653,23 +719,27 @@
   # Add parameter id and run id.
   score_table[, ":="(
     "param_id" = param_id,
-    "run_id" = run_id)]
+    "run_id" = run_id
+  )]
   
   # Set the column order.
   data.table::setcolorder(
     x = score_table,
-    neworder = c("param_id", "run_id"))
+    neworder = c("param_id", "run_id")
+  )
 
   return(list(
     "score_table" = score_table,
-    "error" = object@messages$error))
+    "error" = object@messages$error
+  ))
 }
 
 
 
 .compute_hyperparameter_optimisation_score <- function(
     score_table,
-    optimisation_function) {
+    optimisation_function
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
 
@@ -678,12 +748,14 @@
   # Compute optimisation score.
   optimisation_score_table <- .compute_metric_optimisation_score(
     score_table = score_table,
-    optimisation_function = optimisation_function)
+    optimisation_function = optimisation_function
+  )
 
   # Reinsert time_taken.
   optimisation_score_table <- optimisation_score_table[
     unique(score_table[, c("param_id", "run_id", "time_taken")]),
-    on = .NATURAL]
+    on = .NATURAL
+  ]
 
   return(optimisation_score_table)
 }
@@ -693,7 +765,8 @@
 .compute_hyperparameter_summary_score <- function(
     score_table,
     parameter_table,
-    optimisation_model) {
+    optimisation_model
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- time_taken <- .NATURAL <- mu <- sigma <- NULL
   summary_score <- score_estimate <- NULL
@@ -711,7 +784,8 @@
   if (!"optimisation_score" %in% colnames(score_table)) {
     score_table <- .compute_hyperparameter_optimisation_score(
       score_table = score_table,
-      optimisation_function = optimisation_function)
+      optimisation_function = optimisation_function
+    )
   }
 
   # Make sure to return both the summary score, as well as the mean optimisation
@@ -720,7 +794,8 @@
   # predictions of the optimisation score -- not the summary score. In addition,
   # compute time_taken.
   if (optimisation_function %in% c(
-    "validation", "max_validation", "balanced", "stronger_balance")) {
+    "validation", "max_validation", "balanced", "stronger_balance"
+  )) {
     # Here we just use the mean score.
     data <- score_table[, list(
       "summary_score" = mean(optimisation_score, na.rm = TRUE),
@@ -747,7 +822,8 @@
     
   } else if (optimisation_function %in% c(
     "model_estimate", "model_estimate_minus_sd",
-    "model_balanced_estimate", "model_balanced_estimate_minus_sd")) {
+    "model_balanced_estimate", "model_balanced_estimate_minus_sd"
+  )) {
     # Model based summary scores. The main difference with other optimisation
     # functions is that a hyperparameter model is used to both infer the summary
     # scores and the score estimate.
@@ -757,13 +833,15 @@
       optimisation_model <- .train(
         object = optimisation_model,
         data = score_table,
-        parameter_data = parameter_table)
+        parameter_data = parameter_table
+      )
     }
 
     # Get parameter data that is used in the score table.
     parameter_data <- parameter_table[
       unique(score_table[, mget("param_id")]),
-      on = .NATURAL]
+      on = .NATURAL
+    ]
 
     # Model was successfully trained.
     prediction_table <- .predict(
@@ -771,14 +849,17 @@
       data = parameter_data,
       type = ifelse(
         optimisation_function %in% c("model_estimate", "model_balanced_estimate"),
-        "default", "sd"))
+        "default", "sd"
+      )
+    )
 
     # Check the prediction table has returned sensible information.
     if (any(is.finite(prediction_table$mu))) {
       # Prepare the score estimate and time taken.
-      data <- score_table[, list(
-        "time_taken" = stats::median(time_taken)),
-        by = "param_id"]
+      data <- score_table[
+        , list("time_taken" = stats::median(time_taken)),
+        by = "param_id"
+      ]
 
       # Fold the prediction table into data.
       data <- merge(
@@ -786,7 +867,8 @@
         y = prediction_table,
         all.x = TRUE,
         all.y = FALSE,
-        by = "param_id")
+        by = "param_id"
+      )
 
       if (optimisation_function %in% c("model_estimate", "model_balanced_estimate")) {
         # Copy mu as score estimate.
@@ -796,10 +878,12 @@
         data.table::setnames(
           x = data,
           old = "mu",
-          new = "summary_score")
+          new = "summary_score"
+        )
         
       } else if (optimisation_function %in% c(
-        "model_estimate_minus_sd", "model_balanced_estimate_minus_sd")) {
+        "model_estimate_minus_sd", "model_balanced_estimate_minus_sd"
+      )) {
         # Compute summary score.
         data[, "summary_score" := mu - sigma]
 
@@ -807,23 +891,27 @@
         data.table::setnames(
           x = data,
           old = "mu",
-          new = "score_estimate")
+          new = "score_estimate"
+        )
         
       } else {
         ..error_reached_unreachable_code(paste0(
           ".compute_hyperparameter_summary_score: encountered ",
-          "unknown optimisation function: ", optimisation_function))
+          "unknown optimisation function: ", optimisation_function
+        ))
       }
 
       # Check that any predictions make sense at all.
-      if (all(!is.finite(score_table$optimisation_score))) {
+      if (!any(is.finite(score_table$optimisation_score))) {
         data[, ":="(
           summary_score = NA_real_,
-          score_estimate = NA_real_)]
+          score_estimate = NA_real_
+        )]
       }
       
     } else if (optimisation_function %in% c(
-      "model_estimate", "model_balanced_estimate")) {
+      "model_estimate", "model_balanced_estimate"
+    )) {
       # In absence of suitable data, use the model-less equivalent of
       # model_estimate or model_balanced_estimate, namely "validation".
       data <- score_table[, list(
@@ -833,7 +921,8 @@
       ), by = "param_id"]
       
     } else if (optimisation_function %in% c(
-      "model_estimate_minus_sd", "model_balanced_estimate_minus_sd")) {
+      "model_estimate_minus_sd", "model_balanced_estimate_minus_sd"
+    )) {
       # In absence of suitable data, use the model-less equivalent of
       # model_estimate_minus_sd or model_balanced_estimate_minus_sd,
       # namely "validation_minus_sd".
@@ -846,13 +935,15 @@
     } else {
       ..error_reached_unreachable_code(paste0(
         ".compute_hyperparameter_summary_score: encountered unknown ",
-        "optimisation function: ", optimisation_function))
+        "optimisation function: ", optimisation_function
+      ))
     }
     
   } else {
     ..error_reached_unreachable_code(paste0(
       ".compute_hyperparameter_summary_score: encountered an unknown ",
-      "optimisation function"))
+      "optimisation function"
+    ))
   }
 
   # Format data by selecting only relevant columns. This also orders the data.
@@ -872,7 +963,7 @@
 
   # The default behaviour is when multiple subsamples exist, and the standard
   # deviation can be computed.
-  if (length(x) > 1) {
+  if (length(x) > 1L) {
     return(mean(x, na.rm = TRUE) - stats::sd(x, na.rm = TRUE))
   }
 
@@ -889,7 +980,8 @@ get_best_hyperparameter_set <- function(
     optimisation_model,
     n_max_bootstraps,
     n = 1L,
-    parameter_id_set = NULL) {
+    parameter_id_set = NULL
+) {
   # The best set has several interesting values that can be computed and used
   # for acquisition functions, information for the user etc.
 
@@ -900,7 +992,8 @@ get_best_hyperparameter_set <- function(
   data <- .compute_hyperparameter_summary_score(
     score_table = score_table,
     parameter_table = parameter_table,
-    optimisation_model = optimisation_model)
+    optimisation_model = optimisation_model
+  )
 
   # Select only the parameter sets of interest. This happens during the run-off
   # between the incumbent and challenger hyperparameter sets.
@@ -917,7 +1010,7 @@ get_best_hyperparameter_set <- function(
   t <- max(unique(score_table[, mget(c("param_id", "run_id"))])[, list("n" = .N), by = "param_id"]$n)
 
   # Compute the maximum allowed time.
-  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * data$time_taken[1]
+  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * data$time_taken[1L]
 
   # Check that the maximum time is not trivially small (i.e. less than 10
   # seconds).
@@ -942,14 +1035,16 @@ get_best_hyperparameter_set <- function(
     # Compute mean validation score as a summary score, as well as mean validation
     # scores of the raw metric values.
     additional_scores <- .compute_hyperparameter_additional_scores(
-      score_table = score_table[param_id %in% data$param_id])
+      score_table = score_table[param_id %in% data$param_id]
+    )
 
     # Merge additional scores with summary data and sort again to prevent any
     # merge issues.
     data <- merge(
       x = data,
       y = additional_scores,
-      by = "param_id")
+      by = "param_id"
+    )
     data <- data[order(-summary_score)]
 
     # Find metric columns
@@ -966,7 +1061,8 @@ get_best_hyperparameter_set <- function(
       "score_estimate" = score_estimate,
       "validation_score" = data$validation_score,
       "metric_score" = data[, mget(c(metric_columns))],
-      "n" = n_max_bootstraps))
+      "n" = n_max_bootstraps
+    ))
     
   } else {
     return(list(
@@ -976,7 +1072,8 @@ get_best_hyperparameter_set <- function(
       "max_time" = max_time,
       "summary_score" = summary_score,
       "score_estimate" = score_estimate,
-      "n" = n_max_bootstraps))
+      "n" = n_max_bootstraps
+    ))
   }
 }
 
@@ -990,11 +1087,14 @@ get_best_hyperparameter_set <- function(
   # hyperparameter optimisation.
   mean_validation_scores <- .compute_hyperparameter_optimisation_score(
     score_table = score_table,
-    optimisation_function = "validation")
+    optimisation_function = "validation"
+  )
   
-  mean_validation_scores <- mean_validation_scores[, list(
-    "validation_score" = mean(optimisation_score, na.rm = TRUE)
-    ), by = c("param_id")]
+  mean_validation_scores <- mean_validation_scores[
+    ,
+    list("validation_score" = mean(optimisation_score, na.rm = TRUE)),
+    by = c("param_id")
+  ]
 
   # Compute mean metric values.
   mean_metric_scores <- score_table[
@@ -1005,12 +1105,14 @@ get_best_hyperparameter_set <- function(
   mean_metric_scores <- data.table::dcast(
     mean_metric_scores,
     param_id ~ metric,
-    value.var = "average_metric_value")
+    value.var = "average_metric_value"
+  )
 
   return(merge(
     x = mean_validation_scores,
     y = mean_metric_scores,
-    by = "param_id"))
+    by = "param_id"
+  ))
 }
 
 
@@ -1018,7 +1120,8 @@ get_best_hyperparameter_set <- function(
 ..parse_optimisation_summary_to_string <- function(
     parameter_set,
     parameter_table,
-    parameter_list) {
+    parameter_list
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
 
@@ -1030,14 +1133,17 @@ get_best_hyperparameter_set <- function(
     message_str,
     paste0(
       "summary score: ",
-      sprintf("%.4f", parameter_set$summary_score[1])))
+      sprintf("%.4f", parameter_set$summary_score[1L])
+    )
+  )
 
   # Add validation optimisation score.
   message_str <- c(
     message_str,
     paste0(
       "validation optimisation score: ",
-      sprintf("%.4f", parameter_set$validation_score[1]))
+      sprintf("%.4f", parameter_set$validation_score[1L])
+    )
   )
 
 
@@ -1047,7 +1153,8 @@ get_best_hyperparameter_set <- function(
       message_str,
       paste0(
         metric, ": ",
-        sprintf("%.4f", parameter_set$metric_score[[metric]][1]))
+        sprintf("%.4f", parameter_set$metric_score[[metric]][1L])
+      )
     )
   }
 
@@ -1058,7 +1165,7 @@ get_best_hyperparameter_set <- function(
     if (parameter_list[[current_parameter]]$randomise == TRUE) {
       # Determine the value of the parameter for the set identified by the id
       # variable.
-      optimal_value <- parameter_table[param_id == parameter_set$param_id, ][[current_parameter]][1]
+      optimal_value <- parameter_table[param_id == parameter_set$param_id, ][[current_parameter]][1L]
 
       # Append to string.
       message_str <- c(
@@ -1076,19 +1183,22 @@ get_best_hyperparameter_set <- function(
 ..update_hyperparameter_optimisation_stopping_criteria <- function(
     set_data,
     stop_data = NULL,
-    tolerance = 1E-2) {
+    tolerance = 1E-2
+) {
   
   # Store the validation score of the incumbent set. Note that the latest score
   # is always appended.
   validation_scores <- c(
     stop_data$score,
-    set_data$validation_score)
+    set_data$validation_score
+  )
 
   # Store the parameter id of the incumbent set. Note that the most recent
   # hyperparameter set identifier is always appended.
   incumbent_parameter_id <- c(
     stop_data$parameter_id,
-    set_data$param_id)
+    set_data$param_id
+  )
 
   # Read the convergence counters. Can be NULL initially.
   convergence_counter_score <- stop_data$convergence_counter_score
@@ -1100,7 +1210,7 @@ get_best_hyperparameter_set <- function(
 
   # Update convergence counter for parameter identifiers if there is no change
   # in the incumbent parameter set. Skip on the first run-through.
-  if (length(incumbent_parameter_id) >= 2) {
+  if (length(incumbent_parameter_id) >= 2L) {
     if (all(tail(incumbent_parameter_id, n = 3L) == set_data$param_id)) {
       # Update the convergence counter.
       convergence_counter_parameter_id <- convergence_counter_parameter_id + 1L
@@ -1112,10 +1222,11 @@ get_best_hyperparameter_set <- function(
 
   # Assess convergence of the summary scores. This is skipped on the first
   # run-through.
-  if (length(validation_scores) >= 2) {
+  if (length(validation_scores) >= 2L) {
     # Compute absolute deviation from the mean.
     max_abs_deviation <- max(abs(
-      tail(validation_scores, n = 3L) - mean(tail(validation_scores, n = 3L))))
+      tail(validation_scores, n = 3L) - mean(tail(validation_scores, n = 3L))
+    ))
 
     if (is.na(max_abs_deviation)) {
       convergence_counter_score <- 0L
@@ -1131,7 +1242,7 @@ get_best_hyperparameter_set <- function(
   no_naive_improvement_counter <- stop_data$no_naive_improvement_counter
   if (is.null(no_naive_improvement_counter)) no_naive_improvement_counter <- 0L
 
-  if (set_data$validation_score <= 0) {
+  if (set_data$validation_score <= 0.0) {
     # The best known model does not predict better than a naive_model.
     no_naive_improvement_counter <- no_naive_improvement_counter + 1L
   } else {
@@ -1145,7 +1256,8 @@ get_best_hyperparameter_set <- function(
     "parameter_id" = incumbent_parameter_id,
     "convergence_counter_score" = convergence_counter_score,
     "convergence_counter_parameter_id" = convergence_counter_parameter_id,
-    "no_naive_improvement_counter" = no_naive_improvement_counter))
+    "no_naive_improvement_counter" = no_naive_improvement_counter
+  ))
 }
 
 
@@ -1156,7 +1268,8 @@ get_best_hyperparameter_set <- function(
     score_table,
     n_max_bootstraps,
     n_intensify_step_bootstraps,
-    exploration_method) {
+    exploration_method
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- sampled <- run_id <- to_sample <- n <- NULL
@@ -1167,7 +1280,8 @@ get_best_hyperparameter_set <- function(
   # Make a copy of the score table and keep only relevant parameter and run
   # identifiers.
   score_table <- unique(data.table::copy(
-    score_table[param_id %in% parameter_ids, c("param_id", "run_id")]))
+    score_table[param_id %in% parameter_ids, c("param_id", "run_id")]
+  ))
 
   # Add a sampled column that marks those elements that have been previously
   # sampled.
@@ -1178,7 +1292,8 @@ get_best_hyperparameter_set <- function(
     param_id = parameter_ids,
     run_id = seq_len(n_max_bootstraps),
     KEEP.OUT.ATTRS = FALSE,
-    stringsAsFactors = FALSE))
+    stringsAsFactors = FALSE
+  ))
 
   # Mark those runs that have not been sampled yet. These have an NA-value for
   # the sampled column.
@@ -1186,7 +1301,8 @@ get_best_hyperparameter_set <- function(
     x = run_table,
     y = score_table,
     by = c("param_id", "run_id"),
-    all.x = TRUE)
+    all.x = TRUE
+  )
   run_table[is.na(sampled), "sampled" := FALSE]
 
   # Add a to_sample column to mark new samples to be made.
@@ -1197,8 +1313,8 @@ get_best_hyperparameter_set <- function(
 
   # Identify run identifiers.
   fully_sampled_runs <- sampled_runs[n == length(parameter_ids)]$run_id
-  partially_sampled_runs <- sampled_runs[n > 0 & n < length(parameter_ids)]$run_id
-  unsampled_runs <- setdiff(seq_len(n_max_bootstraps), sampled_runs[n > 0]$run_id)
+  partially_sampled_runs <- sampled_runs[n > 0L & n < length(parameter_ids)]$run_id
+  unsampled_runs <- setdiff(seq_len(n_max_bootstraps), sampled_runs[n > 0L]$run_id)
 
   # Check that there are any runs to be sampled.
   if (length(fully_sampled_runs) == n_max_bootstraps) return(NULL)
@@ -1212,12 +1328,12 @@ get_best_hyperparameter_set <- function(
   } else if (exploration_method == "single_shot") {
     n_new_runs <- 1L
   } else {
-    n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 3)))
+    n_new_runs <- max(c(1L, as.integer(floor(n_intensify_step_bootstraps / 3.0))))
   }
 
   # An exception should be made if there are no partially sampled runs. Then up
   # to n_intensify_step_bootstraps should be sampled.
-  if (length(partially_sampled_runs) == 0) n_new_runs <- n_intensify_step_bootstraps
+  if (length(partially_sampled_runs) == 0L) n_new_runs <- n_intensify_step_bootstraps
 
   # Iterate over the parameter identifiers and identify what runs should be
   # sampled.
@@ -1226,30 +1342,36 @@ get_best_hyperparameter_set <- function(
     # hyperparameter set.
     current_partially_sampled_runs <- setdiff(
       partially_sampled_runs,
-      run_table[sampled == TRUE & param_id == parameter_id, ]$run_id)
+      run_table[sampled == TRUE & param_id == parameter_id, ]$run_id
+    )
 
     # Select runs to be sampled from among those that have been sampled by other
     # hyperparameter sets.
-    if (length(current_partially_sampled_runs) > 0) {
+    if (length(current_partially_sampled_runs) > 0L) {
       run_table[
         run_id %in% head(current_partially_sampled_runs, n = n_intensify_step_bootstraps) &
           param_id == parameter_id,
-        "to_sample" := TRUE]
+        "to_sample" := TRUE
+      ]
     }
 
     # Add completely new runs if there is room.
-    if (length(current_partially_sampled_runs) < n_intensify_step_bootstraps &&
-        length(unsampled_runs) > 0) {
+    if (
+      length(current_partially_sampled_runs) < n_intensify_step_bootstraps &&
+      length(unsampled_runs) > 0L
+    ) {
       # Determine the number of new runs that should be added.
       n_current_new_runs <- min(c(
         n_new_runs,
-        n_intensify_step_bootstraps - length(current_partially_sampled_runs)))
+        n_intensify_step_bootstraps - length(current_partially_sampled_runs)
+      ))
 
       # Select up to current_new_runs to sample.
       run_table[
         run_id %in% head(unsampled_runs, n = n_current_new_runs) &
           param_id == parameter_id,
-        "to_sample" := TRUE]
+        "to_sample" := TRUE
+      ]
     }
   }
 
@@ -1269,7 +1391,8 @@ get_best_hyperparameter_set <- function(
     parameter_id_incumbent,
     parameter_id_challenger,
     exploration_method = "successive_halving",
-    intensify_stop_p_value) {
+    intensify_stop_p_value
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- p_value <- summary_score <- NULL
@@ -1279,7 +1402,8 @@ get_best_hyperparameter_set <- function(
     data <- .compute_hyperparameter_summary_score(
       score_table = score_table,
       parameter_table = parameter_table,
-      optimisation_model = optimisation_model)
+      optimisation_model = optimisation_model
+    )
 
     # Select only data concerning the incumbent and challenger sets
     data <- data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
@@ -1289,7 +1413,7 @@ get_best_hyperparameter_set <- function(
 
     # Remove the worst half of performers. For simplicity we increase the number
     # of selectable hyperparameters by one to account for the challenger.
-    n_selectable <- floor((length(parameter_id_challenger)) / 2)
+    n_selectable <- as.integer(floor((length(parameter_id_challenger)) / 2.0))
 
     # Select the new incumbent, which may be identical to the old incumbent.
     param_id_incumbent_new <- head(data, n = 1L)$param_id
@@ -1304,7 +1428,8 @@ get_best_hyperparameter_set <- function(
     if (!"optimisation_score" %in% colnames(score_table)) {
       data <- .compute_hyperparameter_optimisation_score(
         score_table = score_table[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)],
-        optimisation_function = optimisation_model@optimisation_function)
+        optimisation_function = optimisation_model@optimisation_function
+      )
       
     } else {
       data <- data.table::copy(score_table)
@@ -1314,7 +1439,8 @@ get_best_hyperparameter_set <- function(
     summary_data <- .compute_hyperparameter_summary_score(
       score_table = data,
       parameter_table = parameter_table,
-      optimisation_model = optimisation_model)
+      optimisation_model = optimisation_model
+    )
 
     # Select only data concerning the incumbent and challenger sets
     summary_data <- summary_data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
@@ -1328,15 +1454,18 @@ get_best_hyperparameter_set <- function(
     # Select the preliminary set of challengers.
     param_id_challenger_new <- setdiff(
       union(parameter_id_incumbent, parameter_id_challenger),
-      param_id_incumbent_new)
+      param_id_incumbent_new
+    )
 
     # Compare optimisation scores and compute p-values.
     p_value_table <- data[
       param_id %in% param_id_challenger_new,
       ..compare_hyperparameter_optimisation_scores(
         challenger_score_table = .SD,
-        incumbent_score_table = data[param_id == param_id_incumbent_new]),
-      by = c("param_id")]
+        incumbent_score_table = data[param_id == param_id_incumbent_new]
+      ),
+      by = c("param_id")
+    ]
 
     # Select parameter identifiers with p-values above the thresholds.
     param_id_challenger_new <- p_value_table[p_value > intensify_stop_p_value, ]$param_id
@@ -1351,32 +1480,34 @@ get_best_hyperparameter_set <- function(
   } else {
     ..error_reached_unreachable_code(paste0(
       ".compare_hyperparameter_sets: encountered unknown exploration method: ",
-      exploration_method))
+      exploration_method
+    ))
   }
 
   # Update param_id_challenger_new by removing the incumbent set.
   param_id_challenger_new <- setdiff(
     union(param_id_incumbent_new, param_id_challenger_new),
-    param_id_incumbent_new)
+    param_id_incumbent_new
+  )
 
   return(list(
     "parameter_id_incumbent" = param_id_incumbent_new,
-    "parameter_id_challenger" = param_id_challenger_new))
+    "parameter_id_challenger" = param_id_challenger_new
+  ))
 }
 
 
 
 ..compare_hyperparameter_optimisation_scores <- function(
     challenger_score_table,
-    incumbent_score_table) {
+    incumbent_score_table
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- optimisation_score <- NULL
 
   # Find matching bootstrap ids
-  run_id_match <- intersect(
-    challenger_score_table$run_id,
-    incumbent_score_table$run_id)
+  run_id_match <- intersect(challenger_score_table$run_id, incumbent_score_table$run_id)
 
   # Select rows that match. Note that optimisation score is updated locally to
   # avoid update by reference on protected slices of the score table in
@@ -1404,7 +1535,8 @@ get_best_hyperparameter_set <- function(
   # Iterate over hyperparameters.
   parameter_list <- lapply(
     parameter_list,
-    ..encode_categorical_hyperparameters)
+    ..encode_categorical_hyperparameters
+  )
 
   return(parameter_list)
 }
@@ -1421,7 +1553,7 @@ get_best_hyperparameter_set <- function(
   if (x$randomise) {
     # Assign default range + initial value as levels, in case the hyperparameter
     # is randomised.
-    x$init_config <- factor(x$init_config, levels = c(union(x$range, x$init_config)))
+    x$init_config <- factor(x$init_config, levels = union(x$range, x$init_config))
   } else {
     # Assign only the selected level as factor.
     x$init_config <- factor(x$init_config, levels = x$init_config)
@@ -1435,9 +1567,10 @@ get_best_hyperparameter_set <- function(
 .set_signature_size <- function(
     object,
     rank_table_list,
-    suggested_range = NULL) {
+    suggested_range = NULL
+) {
   
-  if (is.null(suggested_range)) suggested_range <- c(1, Inf)
+  if (is.null(suggested_range)) suggested_range <- c(1L, Inf)
 
   # Update minimum signature size in object.
   object@hyperparameters$sign_size <- min(suggested_range)
@@ -1452,12 +1585,14 @@ get_best_hyperparameter_set <- function(
     function(rank_table, object) {
       get_signature(
         object = object,
-        rank_table = rank_table)
+        rank_table = rank_table
+      )
     },
-    object = object)
+    object = object
+  )
 
   # Find the minimum number of
-  min_signature_size <- min(sapply(signature_list, length))
+  min_signature_size <- min(lengths(signature_list))
 
   # Update maximum signature size in the list.
   object@hyperparameters$sign_size <- max(suggested_range)
@@ -1468,12 +1603,14 @@ get_best_hyperparameter_set <- function(
     function(rank_table, object) {
       get_signature(
         object = object,
-        rank_table = rank_table)
+        rank_table = rank_table
+      )
     },
-    object = object)
+    object = object
+  )
 
   # Update maximum signature size in the list.
-  max_signature_size <- max(sapply(signature_list, length))
+  max_signature_size <- max(lengths(signature_list))
 
   # Add minimum and maximum signature size, if necessary.
   if (any(suggested_range < min_signature_size)) {
@@ -1486,8 +1623,8 @@ get_best_hyperparameter_set <- function(
 
   # Limit range to unique values within the range.
   suggested_range <- suggested_range[
-    suggested_range >= min_signature_size &
-      suggested_range <= max_signature_size]
+    suggested_range >= min_signature_size & suggested_range <= max_signature_size
+  ]
   
   suggested_range <- unique(suggested_range)
 
