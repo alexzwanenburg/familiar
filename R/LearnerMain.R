@@ -94,14 +94,16 @@ setMethod(
     data, 
     learner, 
     outcome_type, 
-    names_only = FALSE) {
+    names_only = FALSE
+) {
   # Get the outcome type from the data object, if available
   if (!is.null(data)) outcome_type <- data@outcome_type
 
   # Create familiarModel
   fam_model <- methods::new("familiarModel",
     learner = learner,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # Set up the specific model
   fam_model <- promote_learner(fam_model)
@@ -121,11 +123,13 @@ setMethod(
 .check_learner_outcome_type <- function(
     learner, 
     outcome_type, 
-    as_flag = FALSE) {
+    as_flag = FALSE
+) {
   # Create familiarModel
   fam_model <- methods::new("familiarModel",
     learner = learner,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # Set up the specific model
   fam_model <- promote_learner(fam_model)
@@ -136,22 +140,30 @@ setMethod(
   if (as_flag) return(learner_available)
 
   # Check if the familiar model has been successfully promoted.
-  if (!is_subclass(class(fam_model)[1], "familiarModel")) {
-    stop(paste0(
-      learner, " is not a valid learner. ",
-      "Please check the vignette for available learners."))
+  if (!is_subclass(class(fam_model)[1L], "familiarModel")) {
+    ..error(
+      paste0(
+        learner, " is not a valid learner. ",
+        "Please check the vignette for available learners."
+      ),
+      error_class = "input_argument_error"
+    )
   }
 
   # Check if the learner is available.
   if (!learner_available) {
-    stop(paste0(learner, " is not available for \"", outcome_type, "\" outcomes."))
+    ..error(
+      paste0(learner, " is not available for \"", outcome_type, "\" outcomes."),
+      error_class = "input_argument_error"
+    )
   }
 
   # Check that the required package can be loaded.
   require_package(
     x = fam_model,
     purpose = paste0("to train models using the ", learner, " learner"),
-    message_type = "backend_error")
+    message_type = "backend_error"
+  )
 }
 
 
@@ -170,7 +182,8 @@ setMethod(
 #' @keywords internal
 .get_default_sign_size <- function(
     data,
-    restrict_samples = FALSE) {
+    restrict_samples = FALSE
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome_event <- NULL
 
@@ -180,16 +193,17 @@ setMethod(
   # Determine the number of samples and features
   n_samples <- data.table::uniqueN(
     data@data,
-    by = get_id_columns(id_depth = "series"))
+    by = get_id_columns(id_depth = "series")
+  )
   n_features <- get_n_features(data)
 
   # Determine the actual range of features dynamically.
-  if (restrict_samples && n_samples > 1) {
-    sign_size_range <- c(1, min(n_samples - 1, n_features))
-  } else if (restrict_samples && n_samples <= 1) {
-    sign_size_range <- c(1, 1)
+  if (restrict_samples && n_samples > 1L) {
+    sign_size_range <- c(1L, min(n_samples - 1L, n_features))
+  } else if (restrict_samples && n_samples <= 1L) {
+    sign_size_range <- c(1L, 1L)
   } else {
-    sign_size_range <- c(1, n_features)
+    sign_size_range <- c(1L, n_features)
   }
 
   if (outcome_type %in% c("binomial", "multinomial")) {
@@ -197,18 +211,18 @@ setMethod(
     n_classes <- nlevels(data@data$outcome)
 
     # Determine the range
-    sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_samples / (n_classes * 7.5))))))
+    sign_size_default <- unique(c(1L, 2L, 5L, 10L, max(c(1.0, floor(n_samples / (n_classes * 7.5))))))
     
   } else if (outcome_type %in% c("survival")) {
     # Get the number of events
-    n_events <- nrow(data@data[outcome_event == 1, ])
+    n_events <- nrow(data@data[outcome_event == 1L, ])
 
     # Determine the range
-    sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_events / 15)))))
+    sign_size_default <- unique(c(1L, 2L, 5L, 10L, as.integer(max(c(1.0, floor(n_events / 15.0))))))
     
   } else if (outcome_type %in% c("continuous")) {
     # Determine the range
-    sign_size_default <- unique(c(1, 2, 5, 10, max(c(1.0, floor(n_samples / 15)))))
+    sign_size_default <- unique(c(1L, 2L, 5L, 10L, as.integer(max(c(1.0, floor(n_samples / 15.0))))))
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
@@ -216,14 +230,16 @@ setMethod(
 
   # Limit default to those values that fall within the range.
   sign_size_default <- sign_size_default[
-    sign_size_default >= sign_size_range[1] &
-      sign_size_default <= sign_size_range[2]]
+    sign_size_default >= sign_size_range[1L] &
+      sign_size_default <= sign_size_range[2L]
+  ]
   
   return(.set_hyperparameter(
     default = sign_size_default,
     type = "integer",
     range = sign_size_range,
-    valid_range = c(0, Inf),
+    valid_range = c(0L, Inf),
     randomise = TRUE,
-    distribution = "log"))
+    distribution = "log"
+  ))
 }

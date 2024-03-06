@@ -5,10 +5,13 @@ setClass("familiarHyperparameterLearnerBART",
   contains = "familiarHyperparameterLearner",
   slots = list(
     "encoding_reference_table" = "ANY",
-    "hyperparameter_order" = "character"),
+    "hyperparameter_order" = "character"
+  ),
   prototype = list(
     "encoding_reference_table" = NULL,
-    "hyperparameter_order" = character()))
+    "hyperparameter_order" = character()
+  )
+)
 
 
 
@@ -55,7 +58,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarHyperparameterLearnerBART",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(object, data, ...) {
     # Check if the training data is ok.
     if (has_bad_training_data(object = object, data = data)) {
@@ -70,7 +74,8 @@ setMethod(
       data = data[, mget(object@target_hyperparameters)],
       object = NULL,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Get the hyperparameter names from the encoded data.table.
     hyperparameter_names <- colnames(encoded_data$encoded_data)
@@ -81,7 +86,7 @@ setMethod(
     hyperparameter_names <- hyperparameter_names[!invariant_columns]
 
     # Check that are any non-invariant hyperparameters.
-    if (length(hyperparameter_names) == 0) {
+    if (length(hyperparameter_names) == 0L) {
       return(callNextMethod())
     }
 
@@ -93,8 +98,9 @@ setMethod(
     quiet(model <- BART::wbart(
       x.train = data.frame(encoded_data$encoded_data[, mget(hyperparameter_names)]),
       y.train = y,
-      ntree = 100,
-      ndpost = 50))
+      ntree = 100L,
+      ndpost = 50L
+    ))
 
     # Add model
     object@model <- model
@@ -119,31 +125,30 @@ setMethod(
   "..predict",
   signature(
     object = "familiarHyperparameterLearnerBART",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data, 
     type = "default",
     percentile = NULL,
-    ...) {
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
     # Check if the model was trained.
-    if (!model_is_trained(object)) {
-      return(callNextMethod())
-    }
+    if (!model_is_trained(object)) return(callNextMethod())
 
     # Check if the data is empty.
-    if (is_empty(data)) {
-      return(callNextMethod())
-    }
+    if (is_empty(data)) return(callNextMethod())
 
     # Get an empty prediction table.
     prediction_table <- .get_placeholder_hyperparameter_prediction_table(
       object = object,
       data = data,
-      type = type)
+      type = type
+    )
 
     # Encode categorical variables.
     x_encoded <- encode_categorical_variables(
@@ -157,28 +162,32 @@ setMethod(
     # any columns that were invariant during training.
     quiet(predicted_scores <- predict(
       object = object@model,
-      data.frame(x_encoded[, mget(object@hyperparameter_order)])))
+      data.frame(x_encoded[, mget(object@hyperparameter_order)])
+    ))
 
     # Compute mean and standard deviation.
-    score_mean <- apply(predicted_scores, MARGIN = 2, mean)
-    score_sd <- apply(predicted_scores, MARGIN = 2, stats::sd)
+    score_mean <- apply(predicted_scores, MARGIN = 2L, mean)
+    score_sd <- apply(predicted_scores, MARGIN = 2L, stats::sd)
 
     # Separate by type
     if (type == "default") {
       prediction_table[, "mu" := score_mean]
       
     } else if (type == "sd") {
-      prediction_table[, ":="("mu" = score_mean,
-        "sigma" = score_sd)]
+      prediction_table[, ":="(
+        "mu" = score_mean,
+        "sigma" = score_sd
+      )]
       
     } else if (type == "percentile") {
       # Compute the requested percentile.
       score_percentile <- apply(
         predicted_scores,
-        MARGIN = 2,
+        MARGIN = 2L,
         stats::quantile,
         probs = percentile,
-        names = FALSE)
+        names = FALSE
+      )
 
       prediction_table[, "percentile" := score_percentile]
       
@@ -194,7 +203,8 @@ setMethod(
       # Set colnames.
       data.table::setnames(
         x = raw_data,
-        new = paste0("raw_", seq_len(ncol(raw_data))))
+        new = paste0("raw_", seq_len(ncol(raw_data)))
+      )
 
       # Combine with the placeholder prediction table.
       prediction_table <- cbind(prediction_table, raw_data)
@@ -202,7 +212,8 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "..predict,familiarHyperparameterLearnerBART,data.table: ",
-        "Encountered an unknown prediction type: ", type))
+        "Encountered an unknown prediction type: ", type
+      ))
     }
 
     return(prediction_table)

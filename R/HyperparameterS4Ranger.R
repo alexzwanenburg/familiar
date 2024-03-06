@@ -49,7 +49,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarHyperparameterLearnerRanger",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(object, data, ...) {
     # Check if the training data is ok.
     if (has_bad_training_data(object = object, data = data)) {
@@ -62,12 +63,13 @@ setMethod(
     # Parse formula.
     formula <- stats::reformulate(
       termlabels = object@target_hyperparameters,
-      response = "optimisation_score")
+      response = "optimisation_score"
+    )
 
     # Set hyperparameters of the random forest.
-    n_tree <- 400
+    n_tree <- 400L
     n_train <- nrow(data)
-    sample_fraction <- max(c(0.3, min(c(1, 1 / (0.025 * n_train)))))
+    sample_fraction <- max(c(0.3, min(c(1.0, 1.0 / (0.025 * n_train)))))
 
     # Train a conventional random forest
     model <- ranger::ranger(formula,
@@ -75,7 +77,8 @@ setMethod(
       num.trees = n_tree,
       sample.fraction = sample_fraction,
       num.threads = 1L,
-      verbose = FALSE)
+      verbose = FALSE
+    )
 
     # Add model
     object@model <- model
@@ -93,26 +96,24 @@ setMethod(
 setMethod(
   "..predict", signature(
     object = "familiarHyperparameterLearnerRanger",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(object, data, type = "default", percentile = NULL, ...) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
     # Check if the model was trained.
-    if (!model_is_trained(object)) {
-      return(callNextMethod())
-    }
+    if (!model_is_trained(object)) return(callNextMethod())
 
     # Check if the data is empty.
-    if (is_empty(data)) {
-      return(callNextMethod())
-    }
+    if (is_empty(data)) return(callNextMethod())
 
     # Get an empty prediction table.
     prediction_table <- .get_placeholder_hyperparameter_prediction_table(
       object = object,
       data = data,
-      type = type)
+      type = type
+    )
 
     # Make predictions.
     predicted_scores <- predict(
@@ -124,8 +125,8 @@ setMethod(
     )$predictions
 
     # Compute mean and standard deviation.
-    score_mean <- apply(predicted_scores, MARGIN = 1, mean)
-    score_sd <- apply(predicted_scores, MARGIN = 1, stats::sd)
+    score_mean <- apply(predicted_scores, MARGIN = 1L, mean)
+    score_sd <- apply(predicted_scores, MARGIN = 1L, stats::sd)
 
     # Separate by type
     if (type == "default") {
@@ -134,15 +135,18 @@ setMethod(
     } else if (type == "sd") {
       prediction_table[, ":="(
         "mu" = score_mean,
-        "sigma" = score_sd)]
+        "sigma" = score_sd
+      )]
       
     } else if (type == "percentile") {
       # Compute the requested percentile.
       score_percentile <- apply(
         predicted_scores, 
-        MARGIN = 1, stats::quantile,
+        MARGIN = 1L,
+        stats::quantile,
         probs = percentile,
-        names = FALSE)
+        names = FALSE
+      )
 
       prediction_table[, "percentile" := score_percentile]
       
@@ -156,7 +160,8 @@ setMethod(
       # Set colnames.
       data.table::setnames(
         x = raw_data,
-        new = paste0("raw_", seq_len(ncol(raw_data))))
+        new = paste0("raw_", seq_len(ncol(raw_data)))
+      )
 
       # Combine with the placeholder prediction table.
       prediction_table <- cbind(prediction_table, raw_data)
@@ -164,7 +169,8 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "..predict,familiarHyperparameterLearnerRanger,data.table: ",
-        "Encountered an unknown prediction type: ", type))
+        "Encountered an unknown prediction type: ", type
+      ))
     }
 
     return(prediction_table)
