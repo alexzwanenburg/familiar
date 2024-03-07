@@ -75,7 +75,8 @@ setMethod(
       
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarCoxPH: unknown type")
+        "get_prediction_type,familiarCoxPH: unknown type"
+      )
     }
   }
 )
@@ -87,20 +88,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -113,7 +117,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -121,10 +126,11 @@ setMethod(
     # Parse formula
     formula <- stats::reformulate(
       termlabels = feature_columns,
-      response = quote(survival::Surv(outcome_time, outcome_event)))
+      response = quote(survival::Surv(outcome_time, outcome_event))
+    )
 
     # Generate model.
-    model_control <- survival::coxph.control(iter.max = 100)
+    model_control <- survival::coxph.control(iter.max = 100L)
 
     # Train the model
     model <- do.call_with_handlers(
@@ -133,7 +139,9 @@ setMethod(
         formula,
         "data" = encoded_data$encoded_data@data,
         "control" = model_control,
-        "y" = FALSE))
+        "y" = FALSE
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -146,10 +154,11 @@ setMethod(
     }
 
     # Check if the model fitter converged in time.
-    if (model$iter >= 100) {
+    if (model$iter >= 100L) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        "Model fitter ran out of iterations and did not converge.")))
+        "Model fitter ran out of iterations and did not converge."
+      )))
     }
 
     # Check if all coefficients could not be estimated. Sometimes models could
@@ -158,10 +167,11 @@ setMethod(
     # selected during hyperparameter optimisation, especially in situations
     # where there is not a lot of signal. Checking for non-finite coefficients
     # is an easy way to figure out if the model is not properly trained.
-    if (any(!sapply(stats::coef(model), is.finite))) {
+    if (!all(sapply(stats::coef(model), is.finite))) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_failed_model_coefficient_estimation())))
+        ..error_message_failed_model_coefficient_estimation()
+      )))
     }
 
     # Add model
@@ -184,7 +194,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Turn into a Naive model.
     object <- methods::new("familiarNaiveCoxModel", object)
@@ -192,7 +203,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -203,7 +215,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data, 
@@ -305,7 +318,8 @@ setMethod(
     # Define p-values
     coefficient_z_values <- tryCatch(
       .compute_z_statistic(object),
-      error = identity)
+      error = identity
+    )
 
     if (inherits(coefficient_z_values, "error")) {
       return(callNextMethod())
@@ -314,7 +328,7 @@ setMethod(
     # Remove any coefficients for the intercept.
     coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
 
-    if (length(coefficient_z_values) == 0) {
+    if (length(coefficient_z_values) == 0L) {
       return(callNextMethod())
     }
 
@@ -322,10 +336,12 @@ setMethod(
     vimp_object <- methods::new("vimpTable",
       vimp_table = data.table::data.table(
         "score" = abs(coefficient_z_values),
-        "name" = names(coefficient_z_values)),
+        "name" = names(coefficient_z_values)
+      ),
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }

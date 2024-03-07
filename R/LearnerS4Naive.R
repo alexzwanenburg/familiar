@@ -5,19 +5,23 @@ NULL
 # familiarNaiveModel objects ---------------------------------------------------
 setClass(
   "familiarNaiveModel",
-  contains = "familiarModel")
+  contains = "familiarModel"
+)
 
 setClass(
   "familiarNaiveCoxModel",
-  contains = "familiarNaiveModel")
+  contains = "familiarNaiveModel"
+)
 
 setClass(
   "familiarNaiveSurvivalTimeModel",
-  contains = "familiarNaiveModel")
+  contains = "familiarNaiveModel"
+)
 
 setClass(
   "familiarNaiveCumulativeIncidenceModel",
-  contains = "familiarNaiveModel")
+  contains = "familiarNaiveModel"
+)
 
 
 
@@ -26,24 +30,28 @@ setMethod(
   "..train",
   signature(
     object = "familiarNaiveModel",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(
       object = object,
       data = data, 
-      allow_no_features = TRUE)) {
+      allow_no_features = TRUE
+    )) {
       
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
     
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object, 
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
     
     if (object@outcome_type %in% c("continuous")) {
@@ -84,7 +92,7 @@ setMethod(
   ) {
 
     n_samples <- get_n_samples(data)
-    if (n_samples == 0) return(callNextMethod())
+    if (n_samples == 0L) return(callNextMethod())
     
     if (type == "default") {
       # default ----------------------------------------------------------------
@@ -177,7 +185,7 @@ setMethod(
   ) {
     
     n_samples <- get_n_samples(data)
-    if (n_samples == 0) return(callNextMethod())
+    if (n_samples == 0L) return(callNextMethod())
 
     if (object@outcome_type == "survival" && type == "default") {
       # For survival outcomes based on survival times, predict the average
@@ -192,8 +200,9 @@ setMethod(
             y = object@model$survival_probability$time,
             xout = 0.5,
             method = "linear",
-            rule = 2
-          )$y)
+            rule = 2L
+          )$y
+        )
         
       } else {
         # Use the last known time point.
@@ -255,11 +264,12 @@ setMethod(
     object, 
     data, 
     type = "default",
-    time = NULL, ...
+    time = NULL,
+    ...
   ) {
     
     n_samples <- get_n_samples(data)
-    if (n_samples == 0) return(callNextMethod())
+    if (n_samples == 0L) return(callNextMethod())
 
     if (object@outcome_type %in% c("survival") &&  type == "default") {
       # For survival outcomes based on survival times, predict the average
@@ -275,8 +285,9 @@ setMethod(
           y = object@model$cumulative_incidence$cumulative_incidence,
           xout = time,
           method = "linear",
-          rule = 2
-        )$y)
+          rule = 2L
+        )$y
+      )
       
       # Compute the cumulative hazard at the indicated time point.
       # Set the survival time.
@@ -335,7 +346,8 @@ setMethod(
       return("survival_probability")
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarNaiveCoxModel: unknown type")
+        "get_prediction_type,familiarNaiveCoxModel: unknown type"
+      )
     }
   }
 )
@@ -355,7 +367,8 @@ setMethod(
       return("survival_probability")
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarNaiveSurvivalTimeModel: unknown type")
+        "get_prediction_type,familiarNaiveSurvivalTimeModel: unknown type"
+      )
     }
   }
 )
@@ -374,7 +387,8 @@ setMethod(
       return("survival_probability")
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarNaiveCumulativeIncidenceModel: unknown type")
+        "get_prediction_type,familiarNaiveCumulativeIncidenceModel: unknown type"
+      )
     }
   }
 )
@@ -393,6 +407,7 @@ setMethod(
     if (object@outcome_type == "survival") {
       # Determine baseline survival.
       object@calibration_info <- get_baseline_survival(data = data)
+      
     } else {
       return(callNextMethod())
     }
@@ -413,35 +428,39 @@ setMethod(
 
     if (!model_is_trained(object)) {
       cat(paste0(
-        "A ", object@learner, " model (class: ", class(object)[1],
+        "A ", object@learner, " model (class: ", class(object)[1L],
         ") that was not successfully trained (", .familiar_version_string(object),
-        ").\n"))
+        ").\n"
+      ))
 
-      if (length(object@messages$warning) > 0) {
+      if (length(object@messages$warning) > 0L) {
         condition_messages <- condition_summary(object@messages$warning)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+          ifelse(length(condition_messages) == 1L, "warning was", "warnings were"),
           " generated while trying to train the model:\n",
           paste0(condition_messages, collapse = "\n"),
-          "\n"))
+          "\n"
+        ))
       }
 
-      if (length(object@messages$error) > 0) {
+      if (length(object@messages$error) > 0L) {
         condition_messages <- condition_summary(object@messages$error)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "error was", "errors were"),
+          ifelse(length(condition_messages) == 1L, "error was", "errors were"),
           " encountered while trying to train the model:\n",
           paste0(condition_messages, collapse = "\n"),
-          "\n"))
+          "\n"
+        ))
       }
     }
     
     # Describe the learner and the version of familiar.
     message_str <- paste0(
-      "A naive ", object@learner, " model (class: ", class(object)[1],
-      "; ", .familiar_version_string(object), ")")
+      "A naive ", object@learner, " model (class: ", class(object)[1L],
+      "; ", .familiar_version_string(object), ")"
+    )
     
     # Describe the package(s), if any
     if (!is.null(object@package)) {
@@ -451,8 +470,10 @@ setMethod(
         paste_s(mapply(
           ..message_package_version,
           x = object@package, 
-          version = object@package_version)),
-        ifelse(length(object@package) > 1, " packages", " package"))
+          version = object@package_version
+        )),
+        ifelse(length(object@package) > 1L, " packages", " package")
+      )
     }
     
     # Complete message and write.
@@ -481,32 +502,35 @@ setMethod(
       function(x, object) {
         cat(paste0("  ", x, ": ", object@hyperparameters[[x]], "\n"))
       },
-      object = object))
+      object = object
+    ))
     
     # Add note that naive models don't directly use hyperparameters.
     if (model_is_trained(object)) {
       cat("Note that the above hyperparameters are not directly used by the naive model.\n")
     }
     
-    if (length(object@messages$warning) > 0 || length(object@messages$error) > 0) {
+    if (length(object@messages$warning) > 0L || length(object@messages$error) > 0L) {
       cat(paste0("\n------------ Warnings and errors ------------\n"))
       
-      if (length(object@messages$warning) > 0) {
+      if (length(object@messages$warning) > 0L) {
         condition_messages <- condition_summary(object@messages$warning)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+          ifelse(length(condition_messages) == 1L, "warning was", "warnings were"),
           " generated while training the model:\n",
-          paste0(condition_messages, collapse = "\n")))
+          paste0(condition_messages, collapse = "\n")
+        ))
       }
       
-      if (length(object@messages$error) > 0) {
+      if (length(object@messages$error) > 0L) {
         condition_messages <- condition_summary(object@messages$error)
         cat(paste0(
           "\nThe following ",
-          ifelse(length(condition_messages) == 1, "error was", "errors were"),
+          ifelse(length(condition_messages) == 1L, "error was", "errors were"),
           " encountered while training the model:\n",
-          paste0(condition_messages, collapse = "\n")))
+          paste0(condition_messages, collapse = "\n")
+        ))
       }
     }
     

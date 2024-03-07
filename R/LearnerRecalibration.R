@@ -44,7 +44,7 @@
 
       # If the prediction data table returns no or just one (valid) entry,
       # calibration is not possible.
-      if (nrow(model_predictions) <= 1) return(NULL)
+      if (nrow(model_predictions) <= 1L) return(NULL)
 
       # Generate the calibration model.
       calibration_model <- tryCatch(
@@ -75,10 +75,10 @@
 
     # If the prediction data table returns no or just one (valid) entry,
     # calibration is not possible.
-    if (nrow(model_predictions) <= 1) return(NULL)
+    if (nrow(model_predictions) <= 1L) return(NULL)
 
     # Generate model
-    model_control <- survival::coxph.control(iter.max = 100)
+    model_control <- survival::coxph.control(iter.max = 100L)
     calibration_model <- tryCatch(
       survival::coxph(
         formula,
@@ -93,10 +93,10 @@
     if (inherits(calibration_model, "error")) return(NULL)
 
     # Check if the model fitter converged in time.
-    if (calibration_model$iter >= 100) return(NULL)
+    if (calibration_model$iter >= 100L) return(NULL)
 
     # Store calibration model.
-    calibration_model_list[[1]] <- calibration_model
+    calibration_model_list[[1L]] <- calibration_model
   }
 
   # Return list of calibration models
@@ -160,7 +160,7 @@
   } else if (object@outcome_type == "survival") {
     # Predict cox PH relative risk
     predicted_outcome_value <- predict(
-      object = object@calibration_model[[1]],
+      object = object@calibration_model[[1L]],
       newdata = predictions,
       type = "risk"
     )

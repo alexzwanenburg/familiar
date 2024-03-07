@@ -7,7 +7,8 @@ NULL
 # familiarNaiveBayes -----------------------------------------------------------
 setClass(
   "familiarNaiveBayes",
-  contains = "familiarModel")
+  contains = "familiarModel"
+)
 
 
 
@@ -56,22 +57,22 @@ setMethod(
 
     # If data is explicitly set to NULL, return the list with
     # hyperparameter names only.
-    if (is.null(data)) {
-      return(param)
-    }
-
+    if (is.null(data)) return(param)
+    
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(
       data = data, 
-      restrict_samples = TRUE)
+      restrict_samples = TRUE
+    )
 
     # laplace smoothing parameter ----------------------------------------------
     param$laplace <- .set_hyperparameter(
-      default = c(0, 1, 2, 5),
+      default = c(0.0, 1.0, 2.0, 5.0),
       type = "numeric",
-      range = c(0, 10),
-      valid_range = c(0, Inf),
-      randomise = TRUE)
+      range = c(0.0, 10.0),
+      valid_range = c(0.0, Inf),
+      randomise = TRUE
+    )
 
     return(param)
   }
@@ -84,20 +85,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarNaiveBayes",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -109,7 +113,8 @@ setMethod(
     # Parse formula
     formula <- stats::reformulate(
       termlabels = feature_columns,
-      response = quote(outcome))
+      response = quote(outcome)
+    )
 
     # Train the model.
     model <- do.call_with_handlers(
@@ -117,7 +122,9 @@ setMethod(
       args = list(
         formula,
         "data" = data@data,
-        "laplace" = object@hyperparameters$laplace))
+        "laplace" = object@hyperparameters$laplace
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -146,7 +153,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarNaiveBayes",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       # Turn into a Naive model.
@@ -156,7 +164,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -167,7 +176,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarNaiveBayes",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")

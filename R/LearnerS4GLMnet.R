@@ -10,10 +10,12 @@ setClass(
   contains = "familiarModel",
   slots = list(
     "encoding_reference_table" = "ANY",
-    "feature_order" = "character"),
+    "feature_order" = "character"
+  ),
   prototype = list(
     "encoding_reference_table" = NULL,
-    "feature_order" = character())
+    "feature_order" = character()
+  )
 )
 
 ## familiarGLMnetRidge ---------------------------------------------------------
@@ -91,7 +93,9 @@ setMethod(
       outcome_type == "survival" &&
       learner %in% c(
         "elastic_net", "elastic_net_cox", "lasso", "lasso_cox",
-        "ridge", "ridge_cox")) {
+        "ridge", "ridge_cox"
+      )
+    ) {
       return(TRUE)
       
     } else if (
@@ -99,7 +103,9 @@ setMethod(
       learner %in% c(
         "elastic_net", "elastic_net_gaussian", "elastic_net_poisson",
         "lasso", "lasso_gaussian", "lasso_poisson",
-        "ridge", "ridge_gaussian", "ridge_poisson")) {
+        "ridge", "ridge_gaussian", "ridge_poisson"
+      )
+    ) {
       return(TRUE)
       
     } else if (
@@ -107,7 +113,9 @@ setMethod(
       learner %in% c(
         "elastic_net", "elastic_net_multinomial",
         "lasso", "lasso_multinomial",
-        "ridge", "ridge_multinomial")) {
+        "ridge", "ridge_multinomial"
+      )
+    ) {
       return(TRUE)
       
     } else if (
@@ -115,14 +123,18 @@ setMethod(
       learner %in% c(
         "elastic_net", "elastic_net_binomial",
         "lasso", "lasso_binomial",
-        "ridge", "ridge_binomial")) {
+        "ridge", "ridge_binomial"
+      )
+    ) {
       return(TRUE)
       
     } else if (
       outcome_type == "count" && learner %in% c(
         "elastic_net", "elastic_net_poisson",
         "lasso", "lasso_poisson",
-        "ridge", "ridge_poisson")) {
+        "ridge", "ridge_poisson"
+      )
+    ) {
       ..deprecation_count()
       return(FALSE)
     }
@@ -161,14 +173,16 @@ setMethod(
       x = object@learner,
       pattern = c("elastic_net", "lasso", "ridge"), 
       replacement = "",
-      fixed = TRUE)
+      fixed = TRUE
+    )
     
     if (fam != "") {
       fam <- sub(
         x = fam, 
         pattern = "_",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     # Check for lasso_test
@@ -179,7 +193,8 @@ setMethod(
     # Determine number of subjects
     n_samples <- data.table::uniqueN(
       data@data,
-      by = get_id_columns(id_depth = "series"))
+      by = get_id_columns(id_depth = "series")
+    )
 
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(data = data)
@@ -205,28 +220,31 @@ setMethod(
       default = family_default,
       type = "factor",
       range = family_default,
-      randomise = ifelse(length(family_default) > 1, TRUE, FALSE))
+      randomise = length(family_default) > 1L
+    )
 
     # lambda indicating the optimal model complexity ---------------------------
     param$lambda_min <- .set_hyperparameter(
       default = "lambda.min",
       type = "factor",
       range = c("lambda.1se", "lambda.min"),
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     # number of cross-validation folds -----------------------------------------
 
     # glmnet requires at least 3 folds. The default number of cross-validation
     # folds may grow up to 20, for data sets > 200 samples.
-    n_folds_default <- min(c(20, max(c(3, floor(n_samples / 10)))))
+    n_folds_default <- min(c(20L, max(c(3L, as.integer(floor(n_samples / 10.0))))))
 
     # Set the number of cross-validation folds.
     param$n_folds <- .set_hyperparameter(
       default = n_folds_default,
       type = "integer",
-      range = c(3, n_samples),
-      valid_range = c(3, Inf),
-      randomise = FALSE)
+      range = c(3L, n_samples),
+      valid_range = c(3L, Inf),
+      randomise = FALSE
+    )
 
     # feature normalisation ----------------------------------------------------
 
@@ -237,7 +255,8 @@ setMethod(
       default = FALSE,
       type = "logical",
       range = c(FALSE, TRUE),
-      randomise = FALSE)
+      randomise = FALSE
+    )
     
     # sample weighting method -------------------------------------------------
     
@@ -252,8 +271,10 @@ setMethod(
     param$sample_weighting_beta <- .get_default_sample_weighting_beta(
       method = c(
         param$sample_weighting$init_config,
-        user_list$sample_weighting),
-      outcome_type = outcome_type)
+        user_list$sample_weighting
+      ),
+      outcome_type = outcome_type
+    )
 
     if (is(object, "familiarGLMnetElasticNet")) {
       # elastic net mixing parameter -------------------------------------------
@@ -261,11 +282,12 @@ setMethod(
       # Set alpha parameter. Alpha = 1 is lasso, alpha = 0 is ridge. glmnet
       # requires alpha to be in the closed interval [0, 1].
       param$alpha <- .set_hyperparameter(
-        default = c(0, 1 / 3, 2 / 3, 1),
+        default = c(0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0),
         type = "numeric",
-        range = c(0, 1),
-        valid_range = c(0, 1),
-        randomise = TRUE)
+        range = c(0.0, 1.0),
+        valid_range = c(0.0, 1.0),
+        randomise = TRUE
+      )
     }
     
     # Return hyperparameters
@@ -282,9 +304,8 @@ setMethod(
   function(object, type = "default") {
     if (
       object@outcome_type != "survival" &&
-      object@learner %in% c(
-        "elastic_net", "elastic_net_cox", "lasso", "lasso_cox", "ridge",
-        "ridge_cox")) {
+      object@learner %in% c("elastic_net", "elastic_net_cox", "lasso", "lasso_cox", "ridge", "ridge_cox")
+    ) {
       return(callNextMethod())
     }
 
@@ -306,12 +327,14 @@ setMethod(
   "..train",
   signature(
     object = "familiarGLMnet",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data,
     force_signature = FALSE, 
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     original_name <- NULL
 
@@ -319,25 +342,28 @@ setMethod(
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object, 
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # For data with one feature, switch to familiarGLM.
-    if (get_n_features(data) == 1) {
+    if (get_n_features(data) == 1L) {
       # Create a familiarGLM object.
       object <- methods::new("familiarGLM", object)
 
       return(..train(
         object = object,
         data = data,
-        ...))
+        ...
+      ))
     }
 
     # Check that required packages are loaded and installed.
@@ -350,7 +376,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -359,7 +386,8 @@ setMethod(
     if (object@outcome_type == "survival") {
       outcome_data <- survival::Surv(
         data@data$outcome_time,
-        data@data$outcome_event)
+        data@data$outcome_event
+      )
       
     } else {
       outcome_data <- data@data$outcome
@@ -375,39 +403,42 @@ setMethod(
       outcome_type = object@outcome_type,
       data = encoded_data$encoded_data@data,
       stratify = FALSE,
-      return_fold_id = TRUE)
+      return_fold_id = TRUE
+    )
 
     # Order according to samples in encoded_data$encoded_data@data so that
     # fold_id corresponds to the correct rows.
     fold_table <- merge(
       x = fold_table,
       y = encoded_data$encoded_data@data[, mget(id_columns)],
-      by = id_columns)
+      by = id_columns
+    )
 
     if (force_signature) {
       # Find signature features.
       signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
 
-      if (length(signature_feature) > 0) {
+      if (length(signature_feature) > 0.0) {
         # Initially mark all features for shrinkage.
-        penalty_factor <- rep(1, length(feature_columns))
+        penalty_factor <- rep(1.0, length(feature_columns))
 
         # Update all signature features that were not encoded.
-        penalty_factor[feature_columns %in% signature_feature] <- 0
+        penalty_factor[feature_columns %in% signature_feature] <- 0.0
 
         # Update all signatures features that were encoded.
         encoded_signature <- encoded_data$reference_table[
-          original_name %in% signature_feature]$reference_name
-        penalty_factor[feature_columns %in% encoded_signature] <- 0
+          original_name %in% signature_feature
+        ]$reference_name
+        penalty_factor[feature_columns %in% encoded_signature] <- 0.0
         
       } else {
         # Allow shrinking of each feature.
-        penalty_factor <- rep(1, length(feature_columns))
+        penalty_factor <- rep(1.0, length(feature_columns))
       }
       
     } else {
       # Allow shrinking of each feature.
-      penalty_factor <- rep(1, length(feature_columns))
+      penalty_factor <- rep(1.0, length(feature_columns))
     }
 
     # Set weights
@@ -415,8 +446,10 @@ setMethod(
       data = encoded_data$encoded_data,
       method = object@hyperparameters$sample_weighting,
       beta = ..compute_effective_number_of_samples_beta(
-        object@hyperparameters$sample_weighting_beta),
-      normalisation = "average_one")
+        object@hyperparameters$sample_weighting_beta
+      ),
+      normalisation = "average_one"
+    )
 
     # Get the arguments which are shared between all different objects.
     learner_arguments <- list(
@@ -428,7 +461,8 @@ setMethod(
       "nfolds" = NULL,
       "foldid" = fold_table$fold_id,
       "parallel" = FALSE,
-      "penalty.factor" = penalty_factor)
+      "penalty.factor" = penalty_factor
+    )
 
     # Set learner-specific arguments.
     if (is(object, "familiarGLMnetRidge")) {
@@ -440,13 +474,15 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "..train,familiarGLMnet: encountered unknown learner of unknown class: ",
-        paste_s(class(object))))
+        paste_s(class(object))
+      ))
     }
 
     # Train the model.
     model <- do.call_with_handlers(
       glmnet::cv.glmnet,
-      args = learner_arguments)
+      args = learner_arguments
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -481,7 +517,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarGLMnet",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
@@ -495,7 +532,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -506,7 +544,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarGLMnet",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data, 
@@ -532,7 +571,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
     
     if (type == "default") {
       # default ----------------------------------------------------------------
@@ -547,7 +587,8 @@ setMethod(
         model_predictions <- predict(
           object = object@model,
           newx = as.matrix(
-            encoded_data$encoded_data@data[, mget(object@feature_order)]),
+            encoded_data$encoded_data@data[, mget(object@feature_order)]
+          ),
           s = as.character(object@hyperparameters$lambda_min),
           type = "response"
         )
@@ -575,10 +616,11 @@ setMethod(
         model_predictions <- predict(
           object = object@model,
           newx = as.matrix(
-            encoded_data$encoded_data@data[, mget(object@feature_order)]),
+            encoded_data$encoded_data@data[, mget(object@feature_order)]
+          ),
           s = as.character(object@hyperparameters$lambda_min),
           type = "response"
-        )[, , 1]
+        )[, , 1L]
 
         prediction_list <- list()
         for (ii in seq_along(class_levels)) {
@@ -660,7 +702,8 @@ setMethod(
       return(predict(
         object = object@model,
         newx = as.matrix(
-          encoded_data$encoded_data@data[, mget(object@feature_order)]),
+          encoded_data$encoded_data@data[, mget(object@feature_order)]
+        ),
         s = as.character(object@hyperparameters$lambda_min),
         type = type,
         ...
@@ -688,7 +731,8 @@ setMethod(
         data = data,
         get_additional_info = FALSE,
         trim_model = FALSE,
-        force_signature = TRUE)
+        force_signature = TRUE
+      )
     }
 
     # Check if the model has been trained upon retry.
@@ -709,36 +753,39 @@ setMethod(
       # Read coefficient lists
       coefficient_list <- coef(
         object@model,
-        s = as.character(object@hyperparameters$lambda_min))
+        s = as.character(object@hyperparameters$lambda_min)
+      )
 
       # Parse into matrix and retrieve row names
       coefficient_matrix <- sapply(coefficient_list, as.matrix)
-      rownames(coefficient_matrix) <- dimnames(coefficient_list[[1]])[[1]]
+      rownames(coefficient_matrix) <- dimnames(coefficient_list[[1L]])[[1L]]
 
       # Compute variable importance score
-      vimp_score <- apply(abs(coefficient_matrix), 1, max)
+      vimp_score <- apply(abs(coefficient_matrix), 1L, max)
       
     } else {
       # Read coefficient matrix
       coefficient_matrix <- as.matrix(coef(
         object@model,
-        s = as.character(object@hyperparameters$lambda_min)))
+        s = as.character(object@hyperparameters$lambda_min)
+      ))
 
       # Compute variable importance score
-      vimp_score <- abs(coefficient_matrix)[, 1]
+      vimp_score <- abs(coefficient_matrix)[, 1L]
     }
 
     # Remove intercept from the variable importances.
     vimp_score <- vimp_score[names(vimp_score) != "(Intercept)"]
     
-    if (length(vimp_score) == 0) {
+    if (length(vimp_score) == 0L) {
       return(callNextMethod())
     }
 
     # Assign to variable importance table.
     vimp_table <- data.table::data.table(
       "score" = vimp_score,
-      "name" = names(vimp_score))
+      "name" = names(vimp_score)
+    )
 
     # Throw out elements with 0.0 coefficients
     vimp_table <- vimp_table[score != 0.0]
@@ -753,7 +800,8 @@ setMethod(
       vimp_table = vimp_table,
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }
@@ -826,7 +874,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarGLMnetLassoTestAllFail",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     # Check if the model was trained.
     if (!model_is_trained(object)) {
@@ -865,7 +914,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarGLMnetLassoTestSomeFail",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     # Check if the model was trained.
     if (!model_is_trained(object)) {
@@ -904,7 +954,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarGLMnetLassoTestAllExtreme",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
     predicted_outcome <- NULL

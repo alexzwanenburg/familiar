@@ -10,7 +10,8 @@
   if (!object@outcome_type %in% c("survival")) {
     ..error_reached_unreachable_code(paste0(
       ".find_survival_grouping_thresholds: only available for ",
-      "survival outcome. Found: ", object@outcome_type))
+      "survival outcome. Found: ", object@outcome_type
+    ))
   }
   
   # Load settings to find survival thresholds
@@ -158,7 +159,7 @@ setMethod(
   function(x, quantiles, ...) {
     # For time-like predictions, we should use the complements of the provided
     # quantiles.
-    quantiles <- abs(1 - quantiles)
+    quantiles <- abs(1.0 - quantiles)
     
     # Pass to main method with updated quantiles.
     return(callNextMethod(x = x, quantiles = quantiles))
@@ -182,8 +183,8 @@ setMethod(
     x <- .as_data_table(x)
     
     # Check for invariant features.
-    if (stats::var(x$predicted_outcome) == 0) {
-      return(x$predicted_outcome[1])
+    if (stats::var(x$predicted_outcome) == 0.0) {
+      return(x$predicted_outcome[1L])
     }
     
     # Perform maxstat test
@@ -193,8 +194,10 @@ setMethod(
         data = x,
         smethod = "LogRank",
         minprop = 0.10,
-        maxprop = 0.90),
-      error = identity)
+        maxprop = 0.90
+      ),
+      error = identity
+    )
     
     # Check that maxstat.test did not produce an error.
     if (inherits(h, "error")) {
@@ -202,14 +205,15 @@ setMethod(
     }
     
     # Check if at least 4 unique values are present for the smoothing spline
-    if (length(h$cuts) < 4) {
+    if (length(h$cuts) < 4L) {
       return(unname(h$estimate))
     }
     
     # Smoothed scores
     spline_fit <- tryCatch(
       stats::smooth.spline(x = h$cuts, y = h$stats)$fit,
-      error = identity)
+      error = identity
+    )
     
     # Capture error.
     if (inherits(spline_fit, "error")) {
@@ -220,7 +224,7 @@ setMethod(
     x_sample_cuts <- seq(
       from = min(h$cuts),
       to = max(h$cuts),
-      length.out = 100
+      length.out = 100L
     )
     
     test_scores <- stats::predict(
@@ -245,7 +249,7 @@ setMethod(
     x <- .as_data_table(x)$predicted_outcome
     
     # Initialise risk group
-    risk_group <- rep.int(1, times = length(x))
+    risk_group <- rep.int(1L, times = length(x))
     
     # Iterate over cutoffs and define risk groups
     for (current_cutoff in cutoff) {
@@ -309,30 +313,33 @@ setMethod(
 
 .assign_risk_group_names <- function(risk_group, cutoff) {
   # Determine the number of risk groups
-  n_groups <- length(cutoff) + 1
+  n_groups <- length(cutoff) + 1L
 
-  if (n_groups == 2) {
+  if (n_groups == 2L) {
     # Stratification into low and high-risk groups
     y <- factor(
       x = risk_group, 
       levels = seq_len(n_groups), 
       labels = c("low", "high"), 
-      ordered = TRUE)
+      ordered = TRUE
+    )
     
-  } else if (n_groups == 3) {
+  } else if (n_groups == 3L) {
     # Stratification into low, moderate and high-risk groups
     y <- factor(
       x = risk_group,
       levels = seq_len(n_groups),
       labels = c("low", "moderate", "high"),
-      ordered = TRUE)
+      ordered = TRUE
+    )
     
   } else {
     # Assign numbers
     y <- factor(
       x = risk_group, 
       levels = seq_len(n_groups),
-      ordered = TRUE)
+      ordered = TRUE
+    )
   }
 
   return(y)
@@ -348,7 +355,7 @@ get_mean_risk_group <- function(risk_group) {
 
   # Discretise bins floor((mu - 1) / ((n-1) / n)) + 1. See fixed bin size
   # discretisation.
-  risk_group_num <- floor(n * (mean(as.numeric(risk_group), na.rm = TRUE) - 1) / (n - 1)) + 1
+  risk_group_num <- as.integer(floor(n * (mean(as.numeric(risk_group), na.rm = TRUE) - 1.0) / (n - 1.0))) + 1L
 
   # Check if the risk_group_num still falls within the range
   risk_group_num <- ifelse(risk_group_num > n, n, risk_group_num)
@@ -356,5 +363,6 @@ get_mean_risk_group <- function(risk_group) {
   return(factor(
     x = group_names[risk_group_num],
     levels = group_names, 
-    ordered = TRUE))
+    ordered = TRUE
+  ))
 }

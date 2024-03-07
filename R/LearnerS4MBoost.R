@@ -2,27 +2,33 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-setClass("familiarMBoost", contains="familiarModel")
+setClass("familiarMBoost", contains = "familiarModel")
 
 setClass(
   "familiarMBoostLM",
-  contains="familiarMBoost",
-  slots=list(
+  contains = "familiarMBoost",
+  slots = list(
     "encoding_reference_table" = "ANY",
-    "feature_order"="character"),
-  prototype=list(
+    "feature_order" = "character"
+  ),
+  prototype = list(
     "encoding_reference_table" = NULL,
-    "feature_order"=character()))
+    "feature_order" = character()
+  )
+)
 
 setClass(
   "familiarMBoostTree",
-  contains="familiarMBoost",
-  slots=list(
+  contains = "familiarMBoost",
+  slots = list(
     "encoding_reference_table" = "ANY",
-    "feature_order"="character"),
-  prototype=list(
+    "feature_order" = "character"
+  ),
+  prototype = list(
     "encoding_reference_table" = NULL,
-    "feature_order"=character()))
+    "feature_order" = character()
+  )
+)
 
 
 
@@ -34,7 +40,8 @@ setClass(
     "boosted_glm_probit", "boosted_glm_loglog", "boosted_glm_cauchy", "boosted_glm_log",
     "boosted_glm_auc", "boosted_glm_gaussian", "boosted_glm_huber", "boosted_glm_laplace",
     "boosted_glm_poisson", "boosted_glm_cox", "boosted_glm_surv",
-    "boosted_glm_weibull", "boosted_glm_lognormal", "boosted_glm_gehan", "boosted_glm_cindex")
+    "boosted_glm_weibull", "boosted_glm_lognormal", "boosted_glm_gehan", "boosted_glm_cindex"
+  )
   
   if (!show_general) {
     learners <- setdiff(learners, c("boosted_glm", "boosted_glm_surv"))
@@ -52,7 +59,8 @@ setClass(
     "boosted_tree_loglog", "boosted_tree_cauchy", "boosted_tree_log",
     "boosted_tree_auc", "boosted_tree_gaussian", "boosted_tree_huber",
     "boosted_tree_laplace", "boosted_tree_poisson", "boosted_tree_cox", "boosted_tree_surv",
-    "boosted_tree_weibull", "boosted_tree_lognormal", "boosted_tree_gehan", "boosted_tree_cindex")
+    "boosted_tree_weibull", "boosted_tree_lognormal", "boosted_tree_gehan", "boosted_tree_cindex"
+  )
   
   if (!show_general) {
     learners <- setdiff(learners, c("boosted_tree", "boosted_tree_surv"))
@@ -66,28 +74,40 @@ setClass(
 setMethod(
   "is_available",
   signature(object = "familiarMBoostLM"),
-  function(object, ...)
-  {
+  function(object, ...) {
     
     # Extract learner and outcome_type from the familiarModel object.
     learner <- object@learner
     outcome_type <- object@outcome_type
     
-    if (outcome_type == "survival" && learner %in% c(
-      "boosted_glm", "boosted_glm_cox", "boosted_glm_surv", "boosted_glm_loglog",
-      "boosted_glm_weibull", "boosted_glm_lognormal", "boosted_glm_gehan", "boosted_glm_cindex")) {
+    if (
+      outcome_type == "survival" &&
+      learner %in% c(
+        "boosted_glm", "boosted_glm_cox", "boosted_glm_surv",
+        "boosted_glm_loglog", "boosted_glm_weibull", "boosted_glm_lognormal",
+        "boosted_glm_gehan", "boosted_glm_cindex"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
-    } else if (outcome_type == "continuous" && learner %in% c(
-      "boosted_glm", "boosted_glm_gaussian", "boosted_glm_huber",
-      "boosted_glm_laplace", "boosted_glm_poisson")) {
+    } else if (
+      outcome_type == "continuous" &&
+      learner %in% c(
+        "boosted_glm", "boosted_glm_gaussian", "boosted_glm_huber",
+        "boosted_glm_laplace", "boosted_glm_poisson"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
-    } else if (outcome_type == "binomial" && learner %in% c(
-      "boosted_glm", "boosted_glm_logistic", "boosted_glm_probit", "boosted_glm_loglog",
-      "boosted_glm_cauchy", "boosted_glm_log", "boosted_glm_auc")) {
+    } else if (
+      outcome_type == "binomial" &&
+      learner %in% c(
+        "boosted_glm", "boosted_glm_logistic", "boosted_glm_probit", "boosted_glm_loglog",
+        "boosted_glm_cauchy", "boosted_glm_log", "boosted_glm_auc"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
@@ -114,21 +134,35 @@ setMethod(
     learner <- object@learner
     outcome_type <- object@outcome_type
     
-    if (outcome_type == "survival" && learner %in% c(
-      "boosted_tree", "boosted_tree_cox", "boosted_tree_surv","boosted_tree_loglog",
-      "boosted_tree_weibull", "boosted_tree_lognormal", "boosted_tree_gehan", "boosted_tree_cindex")) {
+    if (
+      outcome_type == "survival" && 
+      learner %in% c(
+        "boosted_tree", "boosted_tree_cox", "boosted_tree_surv",
+        "boosted_tree_loglog", "boosted_tree_weibull", "boosted_tree_lognormal",
+        "boosted_tree_gehan", "boosted_tree_cindex"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
-    } else if (outcome_type == "continuous" && learner %in% c(
-      "boosted_tree", "boosted_tree_gaussian", "boosted_tree_huber",
-      "boosted_tree_laplace", "boosted_tree_poisson")) {
+    } else if (
+      outcome_type == "continuous" &&
+      learner %in% c(
+        "boosted_tree", "boosted_tree_gaussian", "boosted_tree_huber",
+        "boosted_tree_laplace", "boosted_tree_poisson"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
-    } else if (outcome_type == "binomial" && learner %in% c(
-      "boosted_tree", "boosted_tree_logistic", "boosted_tree_probit",
-      "boosted_tree_loglog", "boosted_tree_cauchy", "boosted_tree_log", "boosted_tree_auc")) {
+    } else if (
+      outcome_type == "binomial" &&
+      learner %in% c(
+        "boosted_tree", "boosted_tree_logistic", "boosted_tree_probit",
+        "boosted_tree_loglog", "boosted_tree_cauchy", "boosted_tree_log",
+        "boosted_tree_auc"
+      )
+    ) {
       ..deprecation_mboost()
       return(FALSE)
       
@@ -149,7 +183,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarMBoost",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     ..deprecation_mboost()
     return(callNextMethod())
