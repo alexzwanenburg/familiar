@@ -48,7 +48,7 @@ setMethod(
     n_classes <- length(outcome_classes)
 
     # Skip calculation if an AUC cannot be computed.
-    if (n_classes <= 1) return(callNextMethod())
+    if (n_classes <= 1L) return(callNextMethod())
 
     # Remove any entries that lack valid predictions.
     data <- remove_invalid_predictions(data)
@@ -58,10 +58,10 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
     
     data <- .as_data_table(data)
-    if (nrow(data) <= 1) return(callNextMethod())
+    if (nrow(data) <= 1L) return(callNextMethod())
 
     # Define class combinations (>1 in case of multinomial outcomes)
-    class_combinations <- utils::combn(outcome_classes, 2)
+    class_combinations <- utils::combn(outcome_classes, 2L)
     n_class_combinations <- ncol(class_combinations)
 
     # Generate empty auc vector AUC of the ROC is calculated according to Hand,
@@ -73,8 +73,8 @@ setMethod(
     # Iterate over combinations
     for (ii in seq_len(n_class_combinations)) {
       # Find the current positive and negative classes
-      positive_class <- class_combinations[1, ii]
-      negative_class <- class_combinations[2, ii]
+      positive_class <- class_combinations[1L, ii]
+      negative_class <- class_combinations[2L, ii]
 
       # Get the probabilities that correspond to the positive and
       # negative class in outcome (g and f in Hand et al.).
@@ -87,7 +87,7 @@ setMethod(
       n_negative <- length(class_probability_negative)
 
       # Calculate AUC only when positive and negative classes are present.
-      if (n_positive > 0 & n_negative > 0) {
+      if (n_positive > 0L & n_negative > 0L) {
         # Determine probability ranks
         sample_rank <- data.table::frank(
           x = c(class_probability_positive, class_probability_negative),
@@ -95,7 +95,7 @@ setMethod(
         )
 
         # Calculate AUC
-        auc_score[ii] <- (sum(sample_rank[seq_len(n_positive)]) - n_positive * (n_positive + 1) / 2) /
+        auc_score[ii] <- (sum(sample_rank[seq_len(n_positive)]) - n_positive * (n_positive + 1L) / 2.0) /
           (n_positive * n_negative)
         
       } else {

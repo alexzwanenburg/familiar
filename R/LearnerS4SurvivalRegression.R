@@ -7,7 +7,8 @@ setClass(
   "familiarSurvRegr",
   contains = "familiarModel",
   slots = list("encoding_reference_table" = "ANY"),
-  prototype = list("encoding_reference_table" = NULL))
+  prototype = list("encoding_reference_table" = NULL)
+)
 
 # initialize -------------------------------------------------------------------
 setMethod(
@@ -54,21 +55,24 @@ setMethod(
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(
       data = data,
-      restrict_samples = TRUE)
+      restrict_samples = TRUE
+    )
 
     # outcome distribution -----------------------------------------------------
 
     # Randomisation of distribution depends on selected learner.
     if (object@learner == "survival_regr") {
       distribution_default <- c(
-        "weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal")
+        "weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal"
+      )
       
     } else {
       distribution_default <- sub(
         x = object@learner,
         pattern = "survival_regr_",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     # Set the distribution parameter
@@ -76,7 +80,8 @@ setMethod(
       default = distribution_default,
       type = "factor",
       range = distribution_default,
-      randomise = ifelse(length(distribution_default) > 1, TRUE, FALSE))
+      randomise = length(distribution_default) > 1L
+    )
 
     # Return hyper-parameters
     return(param)
@@ -97,7 +102,8 @@ setMethod(
       return("survival_probability")
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarSurvRegr: unknown type")
+        "get_prediction_type,familiarSurvRegr: unknown type"
+      )
     }
   }
 )
@@ -109,20 +115,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -135,7 +144,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -148,7 +158,7 @@ setMethod(
 
     # Set limits to the number of iterations that can be performed by
     # survival regression.
-    model_control <- survival::survreg.control(iter.max = 100)
+    model_control <- survival::survreg.control(iter.max = 100L)
 
     # Train the model.
     model <- do.call_with_handlers(
@@ -157,7 +167,9 @@ setMethod(
         "data" = encoded_data$encoded_data@data,
         "control" = model_control,
         "y" = FALSE,
-        "dist" = as.character(object@hyperparameters$distribution)))
+        "dist" = as.character(object@hyperparameters$distribution)
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -168,10 +180,11 @@ setMethod(
     if (!is.null(object@messages$error)) return(callNextMethod(object = object))
 
     # Check if the model fitter converged in time.
-    if (model$iter >= 100) {
+    if (model$iter >= 100L) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        "Model fitter ran out of iterations and did not converge.")))
+        "Model fitter ran out of iterations and did not converge."
+      )))
     }
 
     # Check if all coefficients could not be estimated. Sometimes models could
@@ -180,10 +193,11 @@ setMethod(
     # selected during hyperparameter optimisation, especially in situations
     # where there is not a lot of signal. Checking for non-finite coefficients
     # is an easy way to figure out if the model is not properly trained.
-    if (any(!sapply(stats::coef(model), is.finite))) {
+    if (!all(sapply(stats::coef(model), is.finite))) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_failed_model_coefficient_estimation())))
+        ..error_message_failed_model_coefficient_estimation()
+      )))
     }
 
     # Add model
@@ -206,7 +220,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Turn into a Naive model.
     object <- methods::new("familiarNaiveSurvivalTimeModel", object)
@@ -214,7 +229,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -225,8 +241,15 @@ setMethod(
   "..predict",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
-  function(object, data, type = "default", time = NULL, ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    time = NULL, 
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
@@ -289,7 +312,8 @@ setMethod(
           if (!is.matrix(failure_matrix)) {
             failure_matrix <- matrix(
               data = failure_matrix,
-              ncol = length(failure_matrix))
+              ncol = length(failure_matrix)
+            )
           }
 
           # Combine with identifiers and cast to table.
@@ -335,11 +359,11 @@ setMethod(
                 x = sample_table$survival_time,
                 y = sample_table$survival_quantile,
                 xout = time,
-                rule = 2
+                rule = 2L
               )$y
               
               # Create an output table
-              output_table <- data.table::copy(sample_table[1, mget(id_columns)])
+              output_table <- data.table::copy(sample_table[1L, mget(id_columns)])
               output_table[, "survival_probability" := value]
               
               return(output_table)
@@ -428,20 +452,23 @@ setMethod(
     # Define p-values
     coefficient_z_values <- tryCatch(
       .compute_z_statistic(object),
-      error = identity)
+      error = identity
+    )
 
     if (inherits(coefficient_z_values, "error")) return(callNextMethod())
 
     # Remove any intercept from the data.
     coefficient_z_values <- coefficient_z_values[
-      names(coefficient_z_values) != "(Intercept)"]
+      names(coefficient_z_values) != "(Intercept)"
+    ]
 
-    if (length(coefficient_z_values) == 0) return(callNextMethod())
+    if (length(coefficient_z_values) == 0L) return(callNextMethod())
 
     # Assign to variable importance table.
     vimp_table <- data.table::data.table(
       "score" = coefficient_z_values,
-      "name" = names(coefficient_z_values))
+      "name" = names(coefficient_z_values)
+    )
 
     # Remove NA values
     vimp_table <- vimp_table[is.finite(score)]
@@ -452,7 +479,8 @@ setMethod(
       vimp_table = vimp_table,
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }

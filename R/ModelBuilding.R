@@ -4,18 +4,21 @@ run_model_development <- function(
     settings,
     file_paths,
     message_indent = 0L,
-    verbose = TRUE) {
+    verbose = TRUE
+) {
   # Model building
   
   # Check which data object is required for performing model building
   mb_data_id <- .get_process_step_data_identifier(
     project_info = project_list,
-    process_step = "mb")
+    process_step = "mb"
+  )
   
   # Get runs
   run_list <- .get_run_list(
     iteration_list = project_list$iter_list,
-    data_id = mb_data_id)
+    data_id = mb_data_id
+  )
   
   # Identify combinations of feature selection methods and learners
   run_methods <- get_fs_learner_combinations(settings = settings)
@@ -37,17 +40,19 @@ run_model_development <- function(
       project_list = project_list,
       settings = settings,
       file_paths = file_paths,
-      filter_existing = TRUE)
+      filter_existing = TRUE
+    )
     
     # Skip if all learners were assessed
-    if (length(iter_run_list) == 0) next
+    if (length(iter_run_list) == 0L) next
     
     # Message
     logger_message(
       paste0(
         "\nModel building: starting model building using \"",
         iter_methods$learner, "\" learner, based on \"",
-        iter_methods$fs_method, "\" variable importance."),
+        iter_methods$fs_method, "\" variable importance."
+      ),
       indent = message_indent,
       verbose = verbose
     )
@@ -62,7 +67,8 @@ run_model_development <- function(
       vimp_method = iter_methods$fs_method,
       learner = iter_methods$learner,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Build models
     fam_lapply_lb(
@@ -71,13 +77,15 @@ run_model_development <- function(
       X = iter_run_list,
       FUN = build_model,
       progress_bar = verbose,
-      hpo_list = hpo_list)
+      hpo_list = hpo_list
+    )
     
     logger_message(
       paste0(
         "Model building: model building using \"",
         iter_methods$learner, "\" learner, based on \"",
-        iter_methods$fs_method, "\" variable importance, has been completed."),
+        iter_methods$fs_method, "\" variable importance, has been completed."
+      ),
       indent = message_indent,
       verbose = verbose
     )
@@ -100,7 +108,7 @@ build_model <- function(run, hpo_list) {
     preprocessing_level = "none",
     outcome_type = settings$data$outcome_type,
     delay_loading = TRUE,
-    perturb_level = tail(run$run_table, n = 1)$perturb_level,
+    perturb_level = tail(run$run_table, n = 1L)$perturb_level,
     load_validation = FALSE,
     aggregate_on_load = FALSE,
     outcome_info = create_outcome_info(settings = settings)
@@ -112,7 +120,8 @@ build_model <- function(run, hpo_list) {
   # Get hyper-parameters
   hyperparameter_object <- .find_hyperparameters_for_run(
     run = run,
-    hpo_list = hpo_list)
+    hpo_list = hpo_list
+  )
   
   # Read variable importance file and retrieve the variable importance table
   # objects.
@@ -125,14 +134,17 @@ build_model <- function(run, hpo_list) {
   # Collect all relevant variable importance
   vimp_table_list <- collect_vimp_table(
     x = vimp_table_list,
-    run_table = run$run_table)
+    run_table = run$run_table
+  )
   
   # Update using reference cluster table to ensure that the data are correct
   # locally.
   vimp_table_list <- update_vimp_table_to_reference(
     x = vimp_table_list,
     reference_cluster_table = .create_clustering_table(
-      feature_info_list = feature_info_list))
+      feature_info_list = feature_info_list
+    )
+  )
   
   # Recluster the data according to the clustering table corresponding to the
   # model.
@@ -142,7 +154,8 @@ build_model <- function(run, hpo_list) {
   vimp_table <- aggregate_vimp_table(
     vimp_table_list,
     aggregation_method = settings$fs$aggregation,
-    rank_threshold = settings$fs$aggr_rank_threshold)
+    rank_threshold = settings$fs$aggr_rank_threshold
+  )
   
   # Extract rank table.
   rank_table <- get_vimp_table(vimp_table)
@@ -166,7 +179,8 @@ build_model <- function(run, hpo_list) {
   fam_model <- set_signature(
     object = fam_model,
     rank_table = rank_table,
-    minimise_footprint = FALSE)
+    minimise_footprint = FALSE
+  )
   
   # Add package version
   fam_model <- add_package_version(object = fam_model)
@@ -175,7 +189,8 @@ build_model <- function(run, hpo_list) {
   fam_model <- .train(
     object = fam_model,
     data = data,
-    get_additional_info = TRUE)
+    get_additional_info = TRUE
+  )
   
   # Add novelty detector
   fam_model <- .train_novelty_detector(
@@ -192,7 +207,8 @@ build_model <- function(run, hpo_list) {
   # Save model
   save(
     list = fam_model,
-    file = file_paths$mb_dir)
+    file = file_paths$mb_dir
+  )
 }
 
 
@@ -203,7 +219,8 @@ add_model_data_to_run_list <- function(
     project_list, 
     settings, 
     file_paths,
-    filter_existing) {
+    filter_existing
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   data_id <- run_id <- NULL
   
@@ -214,7 +231,8 @@ add_model_data_to_run_list <- function(
   # Get table with data and run ids from run_list
   run_data <- data.table::rbindlist(lapply(
     run_list,
-    function(run) (tail(run$run_table, n = 1))))
+    function(run) (tail(run$run_table, n = 1L))
+  ))
   
   # Construct file names
   run_data[, "mb_file" := get_object_file_name(
@@ -234,13 +252,16 @@ add_model_data_to_run_list <- function(
         list(
           "mb_file" = file_path,
           "fs_method" = fs_method,
-          "learner" = learner)))
+          "learner" = learner
+        )
+      ))
     },
     run_list,
     run_data$mb_file,
     MoreArgs = list(
       "fs_method" = fs_method,
-      "learner" = learner),
+      "learner" = learner
+    ),
     SIMPLIFY = FALSE
   )
   
@@ -251,13 +272,15 @@ add_model_data_to_run_list <- function(
       dir_path = file_paths$mb_dir, 
       object_type = "familiarModel",
       learner = learner, 
-      fs_method = fs_method)
+      fs_method = fs_method
+    )
     
     # Determine which files already exist in the model building directory
     file_list <- list.files(
       path = mb_dir,
       pattern = paste0(project_list$project_id, "_", learner),
-      full.names = FALSE)
+      full.names = FALSE
+    )
     
     # Select only those runs which have not been completed
     run_list <- run_list[!run_data$mb_file %in% file_list]
@@ -274,7 +297,8 @@ get_fs_learner_combinations <- function(settings) {
     fs_method = settings$fs$fs_methods,
     learner = settings$mb$learners,
     KEEP.OUT.ATTRS = FALSE,
-    stringsAsFactors = FALSE))
+    stringsAsFactors = FALSE
+  ))
   
   # Parse methods to a list of lists
   run_methods <- lapply(
@@ -282,9 +306,11 @@ get_fs_learner_combinations <- function(settings) {
     function(ii, data) {
       list(
         "fs_method" = data$fs_method[ii],
-        "learner" = data$learner[ii])
+        "learner" = data$learner[ii]
+      )
     }, 
-    data = combination_data)
+    data = combination_data
+  )
   
   return(run_methods)
 }

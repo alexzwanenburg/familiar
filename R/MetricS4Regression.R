@@ -27,7 +27,8 @@ setMethod(
         x = metric,
         pattern = "_trim",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
     } else if (endsWith(x = metric, suffix = "_winsor")) {
       .Object@robust <- "winsor"
@@ -35,7 +36,8 @@ setMethod(
         x = metric,
         pattern = "_winsor",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
     } else {
       # Default setting.
@@ -101,7 +103,9 @@ setClass(
   prototype = methods::prototype(
     name = "Relative Absolute Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -123,12 +127,14 @@ setMethod(
     denom <- sum(abs(y_mean - data$outcome))
 
     # Check if denominator is not 0.
-    if (!denom == 0) {
+    if (!denom == 0.0) {
       # Denominator not 0
       score <- nom / denom
+      
     } else if (nom == denom) {
       # Denominator and nominator are both 0.
       score <- 0.0
+      
     } else {
       # Denominator = 0. Would be inf otherwise.
       return(callNextMethod())
@@ -202,7 +208,7 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the mean squared error.
-    score <- sum((data$outcome - data$predicted_outcome)^2) / nrow(data)
+    score <- sum((data$outcome - data$predicted_outcome)^2.0) / nrow(data)
 
     return(score)
   }
@@ -237,16 +243,18 @@ setMethod(
 
     # Compute the mean squared error.
     y_mean <- mean(data$outcome)
-    nom <- sum((data$outcome - data$predicted_outcome)^2)
-    denom <- sum((y_mean - data$outcome)^2)
+    nom <- sum((data$outcome - data$predicted_outcome)^2.0)
+    denom <- sum((y_mean - data$outcome)^2.0)
 
     # Check if denominator is not 0.
-    if (!denom == 0) {
+    if (!denom == 0.0) {
       # Denominator not 0
       score <- nom / denom
+      
     } else if (nom == denom) {
       # Denominator and nominator are both 0.
       score <- 0.0
+      
     } else {
       # Denominator = 0. Would be inf otherwise.
       return(callNextMethod())
@@ -285,7 +293,7 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the mean squared log error.
-    score <- suppressWarnings(sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2, na.rm = TRUE)) / nrow(data)
+    score <- suppressWarnings(sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2.0, na.rm = TRUE)) / nrow(data)
 
     if (!is.finite(score)) return(callNextMethod())
 
@@ -357,7 +365,7 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the root mean square error.
-    score <- sqrt(sum((data$outcome - data$predicted_outcome)^2) / nrow(data))
+    score <- sqrt(sum((data$outcome - data$predicted_outcome)^2.0) / nrow(data))
 
     return(score)
   }
@@ -372,7 +380,9 @@ setClass(
   prototype = methods::prototype(
     name = "Root Relative Squared Error",
     value_range = c(0.0, Inf),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -391,16 +401,18 @@ setMethod(
 
     # Compute the mean squared error.
     y_mean <- mean(data$outcome)
-    nom <- sum((data$outcome - data$predicted_outcome)^2)
-    denom <- sum((y_mean - data$outcome)^2)
+    nom <- sum((data$outcome - data$predicted_outcome)^2.0)
+    denom <- sum((y_mean - data$outcome)^2.0)
 
     # Check if denominator is not 0.
-    if (!denom == 0) {
+    if (!denom == 0.0) {
       # Denominator not 0
       score <- sqrt(nom / denom)
+      
     } else if (nom == denom) {
       # Denominator and nominator are both 0.
       score <- 0.0
+      
     } else {
       # Denominator = 0. Would be inf otherwise.
       return(callNextMethod())
@@ -439,7 +451,7 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
 
     # Compute the root mean square log error.
-    score <- sqrt(sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2) / nrow(data))
+    score <- sqrt(sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2.0) / nrow(data))
 
     if (!is.finite(score)) return(callNextMethod())
 
@@ -455,7 +467,7 @@ setClass(
   contains = "familiarMetricRegression",
   prototype = methods::prototype(
     name = "R squared",
-    value_range = c(-Inf, 1),
+    value_range = c(-Inf, 1.0),
     higher_better = TRUE
   )
 )
@@ -476,16 +488,18 @@ setMethod(
     if (is_empty(data)) return(callNextMethod())
 
     y_mean <- mean(data$outcome)
-    nom <- sum((data$outcome - data$predicted_outcome)^2)
-    denom <- sum((data$outcome - y_mean)^2)
+    nom <- sum((data$outcome - data$predicted_outcome)^2.0)
+    denom <- sum((data$outcome - y_mean)^2.0)
 
     # Check if denominator is not 0.
-    if (!denom == 0) {
+    if (!denom == 0.0) {
       # Denominator not 0
       score <- 1.0 - nom / denom
+      
     } else if (nom == denom) {
       # Denominator and nominator are both 0.
       score <- 1.0
+      
     } else {
       # Denominator = 0. Would be -inf otherwise.
       return(callNextMethod())
@@ -503,8 +517,10 @@ setClass(
   contains = "familiarMetricRegression",
   prototype = methods::prototype(
     name = "Explained Variance",
-    value_range = c(-Inf, 1),
-    higher_better = TRUE))
+    value_range = c(-Inf, 1.0),
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -524,16 +540,18 @@ setMethod(
     # Explained variance
     y_err_mean <- mean(data$outcome - data$predicted_outcome)
     y_mean <- mean(data$outcome)
-    nom <- sum((data$outcome - data$predicted_outcome - y_err_mean)^2)
-    denom <- sum((data$outcome - y_mean)^2)
+    nom <- sum((data$outcome - data$predicted_outcome - y_err_mean)^2.0)
+    denom <- sum((data$outcome - y_mean)^2.0)
 
     # Check if denominator is not 0.
-    if (!denom == 0) {
+    if (!denom == 0.0) {
       # Denominator not 0
       score <- 1.0 - nom / denom
+      
     } else if (nom == denom) {
       # Denominator and nominator are both 0.
       score <- 1.0
+      
     } else {
       # Denominator = 0. Would be -inf otherwise.
       return(callNextMethod())
@@ -574,12 +592,12 @@ setMethod(
     # Determine threshold for truncating the data.
     threshold <- stats::quantile(
       x = abs_error,
-      probs = 1 - fraction,
+      probs = 1.0 - fraction,
       na.rm = TRUE
     )
 
     # Set mask to identify instances that should be kept.
-    mask <- abs_error <= threshold[1]
+    mask <- abs_error <= threshold[1L]
 
     # Filter data to only include instances within the mask.
     data <- data[mask, ]
@@ -591,12 +609,12 @@ setMethod(
     # Determine threshold for truncating the data.
     threshold <- stats::quantile(
       x = abs_error,
-      probs = 1 - fraction,
+      probs = 1.0 - fraction,
       na.rm = TRUE
     )
 
     # Set mask to identify instances that should be updated.
-    mask <- !(abs_error <= threshold[1])
+    mask <- !(abs_error <= threshold[1L])
 
     # Update data by winsorising outlier data.
     data[mask & outcome > predicted_outcome, "predicted_outcome" := outcome - threshold]
@@ -623,7 +641,8 @@ setMethod(
     .get_available_explained_variance_metrics(),
     .get_available_rse_metrics(),
     .get_available_rrse_metrics(),
-    .get_available_rae_metrics()))
+    .get_available_rae_metrics()
+  ))
 }
 
 .get_available_mae_metrics <- function() {

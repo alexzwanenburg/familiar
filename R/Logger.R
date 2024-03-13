@@ -9,7 +9,7 @@ logger_message <- function(
   if (is.null(file_name)) file_name <- .get_log_file()
 
   # Derive an indent string using two spaces for each indentation.
-  indent_str <- paste0(rep("  ", indent), collapse = "")
+  indent_str <- strrep("  ", indent)
 
   # Date and time string
   date_str <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
@@ -22,7 +22,8 @@ logger_message <- function(
     tryCatch(write(
       x = log_str,
       file = file_name,
-      append = TRUE))
+      append = TRUE
+    ))
   }
 
   # Write message to console

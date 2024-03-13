@@ -47,7 +47,7 @@ setMethod(
     n_classes <- length(outcome_classes)
 
     # Skip calculation if there are no other classes.
-    if (n_classes <= 1) return(callNextMethod())
+    if (n_classes <= 1L) return(callNextMethod())
 
     # Remove any entries that lack valid predictions.
     data <- remove_invalid_predictions(data)
@@ -72,11 +72,11 @@ setMethod(
       brier_data <- data.table::copy(data[, mget(c(outcome_column, positive_class))])
 
       # Mark positive class as 1, and the rest as 0.
-      brier_data[, "positive_outcome" := 0]
-      brier_data[get(outcome_column) == positive_class, "positive_outcome" := 1]
+      brier_data[, "positive_outcome" := 0L]
+      brier_data[get(outcome_column) == positive_class, "positive_outcome" := 1L]
 
       # Calculate uncorrected brier score for the current positive class.
-      brier_score[ii] <- sum((brier_data[[positive_class]] - brier_data$positive_outcome)^2)
+      brier_score[ii] <- sum((brier_data[[positive_class]] - brier_data$positive_outcome)^2.0)
     }
 
     # Calculate overall brier score

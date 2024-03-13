@@ -90,11 +90,12 @@ setMethod(
     # T. M., Perez, P. S., & Baranauskas, J. A. (2012, July). How many trees in
     # a random forest?. In MLDM (pp. 154-168).
     param$n_tree <- .set_hyperparameter(
-      default = c(4, 8, 10),
+      default = c(4L, 8L, 10L),
       type = "integer",
-      range = c(4, 10),
-      valid_range = c(0, Inf),
-      randomise = TRUE)
+      range = c(4L, 10L),
+      valid_range = c(0L, Inf),
+      randomise = TRUE
+    )
 
     # sample size --------------------------------------------------------------
 
@@ -103,9 +104,10 @@ setMethod(
     param$sample_size <- .set_hyperparameter(
       default = c(0.30, 0.50, 0.70, 0.90),
       type = "numeric",
-      range = c(2.0 / n_samples, 1.00),
-      valid_range = c(0, 1.0),
-      randomise = TRUE)
+      range = c(2.0 / n_samples, 1.0),
+      valid_range = c(0.0, 1.0),
+      randomise = TRUE
+    )
 
     # number of candidate features selected at node ----------------------------
 
@@ -116,51 +118,56 @@ setMethod(
       default = c(0.1, 0.3, 0.5, 1.0),
       type = "numeric",
       range = c(0.0, 1.0),
-      randomise = TRUE)
-
+      randomise = TRUE
+    )
+    
     # terminal node size -------------------------------------------------------
 
     # Number of instances in the terminal node. Larger terminal node sizes limit
     # tree depth and overfitting.
 
     # Define the default range.
-    node_size_range <- c(5, floor(n_samples / 3))
+    node_size_range <- c(5L, as.integer(max(c(5L, floor(n_samples / 3L)))))
 
     # Define the default values.
-    node_size_default <- c(5, 10, 20, 50)
+    node_size_default <- c(5L, 10L, 20L, 50L)
     node_size_default <- node_size_default[
-      node_size_default >= node_size_range[1] &
-      node_size_default <= node_size_range[2]]
+      node_size_default >= node_size_range[1L] &
+        node_size_default <= node_size_range[2L]
+    ]
 
     # Set the node_size parameter.
     param$node_size <- .set_hyperparameter(
       default = node_size_default,
       type = "integer",
       range = node_size_range,
-      valid_range = c(1, Inf),
-      randomise = TRUE)
+      valid_range = c(1L, Inf),
+      randomise = TRUE
+    )
 
     # maximum tree depth -------------------------------------------------------
 
     # Determines the depth trees are allowed to grow to. Larger depths increase
     # the risk of overfitting.
     param$tree_depth <- .set_hyperparameter(
-      default = c(1, 2, 3, 7),
+      default = c(1L, 2L, 3L, 7L),
       type = "integer",
-      range = c(1, 10),
-      valid_range = c(1, Inf),
-      randomise = TRUE)
+      range = c(1L, 10L),
+      valid_range = c(1L, Inf),
+      randomise = TRUE
+    )
 
     # number of split points ---------------------------------------------------
 
     # The number of split points for each candidate variable is not randomised
     # by default, and deterministic splitting is used.
     param$n_split <- .set_hyperparameter(
-      default = 0,
+      default = 0L,
       type = "integer",
-      range = c(0, 10),
-      valid_range = c(0, Inf),
-      randomise = FALSE)
+      range = c(0L, 10L),
+      valid_range = c(0L, Inf),
+      randomise = FALSE
+    )
 
     # splitting rule -----------------------------------------------------------
 
@@ -186,14 +193,16 @@ setMethod(
       default = split_rule_default,
       type = "factor",
       range = split_rule_range,
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     # sample weighting method --------------------------------------------------
     
     # Class imbalances may lead to learning majority classes. This can be
     # partially mitigated by increasing weight of minority classes.
     param$sample_weighting <- .get_default_sample_weighting_method(
-      outcome_type = object@outcome_type)
+      outcome_type = object@outcome_type
+    )
 
 
     # effective number of samples beta -----------------------------------------
@@ -203,15 +212,18 @@ setMethod(
     param$sample_weighting_beta <- .get_default_sample_weighting_beta(
       method = c(
         param$sample_weighting$init_config,
-        user_list$sample_weighting),
-      outcome_type = object@outcome_type)
+        user_list$sample_weighting
+      ),
+      outcome_type = object@outcome_type
+    )
 
     # variable importance method -----------------------------------------------
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
       range = c("permutation", "minimum_depth", "holdout"),
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     return(param)
   }
@@ -223,7 +235,12 @@ setMethod(
 setMethod(
   "get_default_hyperparameters",
   signature(object = "familiarRFSRCDefault"),
-  function(object, data = NULL, user_list = NULL, ...) {
+  function(
+    object, 
+    data = NULL, 
+    user_list = NULL, 
+    ...
+  ) {
     # Initialise list and declare hyperparameter entries
     param <- list()
     param$sign_size <- list()
@@ -237,9 +254,6 @@ setMethod(
     # If data is not provided, return the list with hyperparameter names only.
     if (is.null(data)) return(param)
 
-    # Get the number of samples
-    n_samples <- get_n_samples(data, id_depth = "series")
-
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(data = data)
 
@@ -248,7 +262,8 @@ setMethod(
     # Class imbalances may lead to learning majority classes. This can be
     # partially mitigated by increasing weight of minority classes.
     param$sample_weighting <- .get_default_sample_weighting_method(
-      outcome_type = object@outcome_type)
+      outcome_type = object@outcome_type
+    )
 
     # effective number of samples beta -----------------------------------------
     
@@ -257,15 +272,18 @@ setMethod(
     param$sample_weighting_beta <- .get_default_sample_weighting_beta(
       method = c(
         param$sample_weighting$init_config,
-        user_list$sample_weighting),
-      outcome_type = object@outcome_type)
+        user_list$sample_weighting
+      ),
+      outcome_type = object@outcome_type
+    )
 
     # variable importance method -----------------------------------------------
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
       range = c("permutation", "minimum_depth", "holdout"),
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     return(param)
   }
@@ -287,7 +305,7 @@ setMethod(
       } else if (type %in% c("response", "cumulative_hazard")) {
         return("cumulative_hazard")
       } else {
-        stop(paste0("Prediction type is not implemented: ", type))
+        ..error(paste0("Prediction type is not implemented: ", type))
       }
       
     } else {
@@ -303,8 +321,14 @@ setMethod(
   "..train", 
   signature(
     object = "familiarRFSRC",
-    data = "dataObject"),
-  function(object, data, anonymous = TRUE, ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    anonymous = TRUE, 
+    ...
+  ) {
     # Aggregate repeated measurement data - randomForestSRC does not facilitate
     # repeated measurements.
     data <- aggregate_data(data = data)
@@ -313,14 +337,16 @@ setMethod(
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object, 
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -334,12 +360,14 @@ setMethod(
       Surv <- survival::Surv
       formula <- stats::reformulate(
         termlabels = feature_columns,
-        response = quote(Surv(outcome_time, outcome_event)))
+        response = quote(Surv(outcome_time, outcome_event))
+      )
       
     } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
       formula <- stats::reformulate(
         termlabels = feature_columns,
-        response = quote(outcome))
+        response = quote(outcome)
+      )
       
     } else {
       ..error_outcome_type_not_implemented(object@outcome_type)
@@ -357,14 +385,17 @@ setMethod(
       data = data,
       method = object@hyperparameters$sample_weighting,
       beta = ..compute_effective_number_of_samples_beta(
-        object@hyperparameters$sample_weighting_beta),
-      normalisation = "average_one")
+        object@hyperparameters$sample_weighting_beta
+      ),
+      normalisation = "average_one"
+    )
 
     # Set forest seed. If object comes with a defined seed use the seed.
     forest_seed <- ifelse(
       is.null(object@seed),
-      as.integer(stats::runif(1, -100000, -1)),
-      object@seed)
+      as.integer(stats::runif(1L, -100000L, -1L)),
+      object@seed
+    )
 
     # Use anonymised version for the forest, if available.
     if (utils::packageVersion("randomForestSRC") >= "2.11.0" && anonymous) {
@@ -377,27 +408,31 @@ setMethod(
     learner_arguments <- list(formula,
       "data" = data@data,
       "case.wt" = weights,
-      "seed" = forest_seed)
+      "seed" = forest_seed
+    )
 
     # Add additional hyperparameters for models that use them.
     if (!is(object, "familiarRFSRCDefault")) {
       learner_arguments <- c(
         learner_arguments,
         list(
-          "ntree" = 2^param$n_tree,
+          "ntree" = 2L^param$n_tree,
           "samptype" = sample_type,
           "sampsize" = sample_size,
-          "mtry" = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+          "mtry" = max(c(1L, ceiling(param$m_try * length(feature_columns)))),
           "nodesize" = param$node_size,
           "nodedepth" = param$tree_depth,
           "nsplit" = param$n_split,
-          "splitrule" = as.character(param$split_rule)))
+          "splitrule" = as.character(param$split_rule)
+        )
+      )
     }
     
     # Train the model.
     model <- do.call_with_handlers(
       forest_function,
-      args = learner_arguments)
+      args = learner_arguments
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -428,7 +463,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarRFSRC",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
@@ -442,7 +478,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -453,7 +490,8 @@ setMethod(
   "..predict",
   signature(
     object = "familiarRFSRC",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data, 
@@ -605,7 +643,8 @@ setMethod(
         data = data,
         get_additional_info = FALSE,
         trim_model = FALSE,
-        anonymous = FALSE)
+        anonymous = FALSE
+      )
     }
 
     # Check if the model has been trained upon retry.
@@ -619,7 +658,8 @@ setMethod(
     if (is.null(vimp_method)) {
       ..error_reached_unreachable_code(paste0(
         "..vimp,familiarRFSRC: vimp method was not specified as a ",
-        "hyperparameter (fs_vimp_method)"))
+        "hyperparameter (fs_vimp_method)"
+      ))
     }
     
     vimp_method <- as.character(vimp_method)
@@ -634,7 +674,8 @@ setMethod(
           data = data,
           get_additional_info = FALSE,
           trim_model = FALSE,
-          anonymous = FALSE)
+          anonymous = FALSE
+        )
 
         # Check that the non-anonymous model is trained.
         if (!model_is_trained(object)) return(callNextMethod())
@@ -653,7 +694,8 @@ setMethod(
       # outcomes is per class
       if (is.matrix(vimp_score)) {
         vimp_score_names <- rownames(vimp_score)
-        vimp_score <- vimp_score[, 1]
+        vimp_score <- vimp_score[, 1L]
+        
       } else {
         vimp_score_names <- names(vimp_score)
       }
@@ -663,9 +705,11 @@ setMethod(
         "vimpTable",
         vimp_table = data.table::data.table(
           "score" = vimp_score, 
-          "name" = vimp_score_names),
+          "name" = vimp_score_names
+        ),
         score_aggregation = "max",
-        invert = TRUE)
+        invert = TRUE
+      )
 
       return(vimp_object)
       
@@ -678,7 +722,8 @@ setMethod(
           data = data,
           get_additional_info = FALSE,
           trim_model = FALSE,
-          anonymous = FALSE)
+          anonymous = FALSE
+        )
 
         # Check that the non-anonymous model is trained.
         if (!model_is_trained(object)) return(callNextMethod())
@@ -697,7 +742,8 @@ setMethod(
       # Select the "min depth" column, which is the first column
       if (is.matrix(vimp_score)) {
         vimp_score_names <- rownames(vimp_score)
-        vimp_score <- vimp_score[, 1]
+        vimp_score <- vimp_score[, 1L]
+        
       } else {
         vimp_score_names <- names(vimp_score)
       }
@@ -707,9 +753,11 @@ setMethod(
         "vimpTable",
         vimp_table = data.table::data.table(
           "score" = vimp_score, 
-          "name" = vimp_score_names),
+          "name" = vimp_score_names
+        ),
         score_aggregation = "max",
-        invert = FALSE)
+        invert = FALSE
+      )
 
       return(vimp_object)
       
@@ -722,23 +770,27 @@ setMethod(
       if (is_empty(data)) {
         warning(paste0(
           "Data is required to assess variable importance using ",
-          "randomForestRFSRC::holdout.vimp"))
+          "randomForestRFSRC::holdout.vimp"
+        ))
         return(callNextMethod())
       }
 
-      if (get_n_features(data) <= 1) {
+      if (get_n_features(data) <= 1L) {
         warning(paste0(
           "Variable importance using randomForestRFSRC::holdout.vimp ",
-          "requires more than 1 feature."))
+          "requires more than 1 feature."
+        ))
 
         # Create variable importance object.
         vimp_object <- methods::new(
           "vimpTable",
           vimp_table = data.table::data.table(
             "score" = 0.0, 
-            "name" = get_feature_columns(x = data)),
+            "name" = get_feature_columns(x = data)
+          ),
           score_aggregation = "max",
-          invert = TRUE)
+          invert = TRUE
+        )
 
         return(vimp_object)
       }
@@ -753,12 +805,14 @@ setMethod(
         Surv <- survival::Surv
         formula <- stats::reformulate(
           termlabels = feature_columns,
-          response = quote(Surv(outcome_time, outcome_event)))
+          response = quote(Surv(outcome_time, outcome_event))
+        )
         
       } else if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
         formula <- stats::reformulate(
           termlabels = feature_columns,
-          response = quote(outcome))
+          response = quote(outcome)
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
@@ -768,7 +822,8 @@ setMethod(
       learner_arguments <- list(
         formula,
         "data" = data@data,
-        "verbose" = FALSE)
+        "verbose" = FALSE
+      )
 
       # Get additional variables for the optimised learner.
       if (!is(object, "familiarRFSRCDefault")) {
@@ -779,13 +834,15 @@ setMethod(
         learner_arguments <- c(
           learner_arguments,
           list(
-            "mtry" = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
+            "mtry" = max(c(1L, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
             "samptype" = sample_type,
             "sampsize" = sample_size,
             "nodesize" = object@hyperparameters$node_size,
             "nodedepth" = object@hyperparameters$tree_depth,
             "nsplit" = object@hyperparameters$n_split,
-            "splitrule" = as.character(object@hyperparameters$split_rule)))
+            "splitrule" = as.character(object@hyperparameters$split_rule)
+          )
+        )
       }
 
       # Perform holdout variable importance.
@@ -800,7 +857,8 @@ setMethod(
       # Select the "all" column, which is the first column
       if (is.matrix(vimp_score)) {
         vimp_score_names <- rownames(vimp_score)
-        vimp_score <- vimp_score[, 1]
+        vimp_score <- vimp_score[, 1L]
+        
       } else {
         vimp_score_names <- names(vimp_score)
       }
@@ -810,15 +868,18 @@ setMethod(
         "vimpTable",
         vimp_table = data.table::data.table(
           "score" = vimp_score,
-          "name" = vimp_score_names),
+          "name" = vimp_score_names
+        ),
         score_aggregation = "max",
-        invert = TRUE)
+        invert = TRUE
+      )
 
       return(vimp_object)
       
     } else {
       ..error_reached_unreachable_code(paste0(
-        "..vimp,familiarRFSRC: unknown vimp method was specified: ", vimp_method))
+        "..vimp,familiarRFSRC: unknown vimp method was specified: ", vimp_method
+      ))
     }
 
     return(NULL)
@@ -838,6 +899,7 @@ setMethod(
     if (object@outcome_type == "survival") {
       # Determine baseline survival.
       object@calibration_info <- get_baseline_survival(data = data)
+      
     } else {
       return(callNextMethod())
     }
@@ -852,40 +914,53 @@ setMethod(
 setMethod(
   "..set_vimp_parameters",
   signature(object = "familiarRFSRC"),
-  function(object, method, ...) {
+  function(
+    object,
+    method,
+    ...
+  ) {
     # Determine variable importance method
     if (startswith_any(
       method,
       prefix = c(
         "random_forest_permutation",
-        "random_forest_rfsrc_permutation"))) {
+        "random_forest_rfsrc_permutation"
+      )
+    )) {
       vimp_method <- "permutation"
       
     } else if (startswith_any(
       method,
       prefix = c(
         "random_forest_minimum_depth",
-        "random_forest_rfsrc_minimum_depth"))) {
+        "random_forest_rfsrc_minimum_depth"
+      )
+    )) {
       vimp_method <- "minimum_depth"
       
     } else if (startswith_any(
       method,
       prefix = c(
         "random_forest_variable_hunting",
-        "random_forest_rfsrc_variable_hunting"))) {
+        "random_forest_rfsrc_variable_hunting"
+      )
+    )) {
       ..deprecation_rfsrc_variable_hunting(as_error = TRUE)
       
     } else if (startswith_any(
       method,
       prefix = c(
         "random_forest_holdout",
-        "random_forest_rfsrc_holdout"))) {
+        "random_forest_rfsrc_holdout"
+      )
+    )) {
       vimp_method <- "holdout"
       
     } else {
       ..error_reached_unreachable_code(paste0(
         "..set_vimp_parameters,familiarRFSRC: unknown feature selection ",
-        "method was specified."))
+        "method was specified."
+      ))
     }
 
     # Check if a list of hyperparameters is already present.
@@ -950,7 +1025,8 @@ setMethod(
   return(c(
     "random_forest_permutation", "random_forest_minimum_depth", 
     "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth",
-    "random_forest_holdout", "random_forest_rfsrc_holdout"))
+    "random_forest_holdout", "random_forest_rfsrc_holdout"
+  ))
 }
 
 
