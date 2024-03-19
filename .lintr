@@ -18,6 +18,7 @@ linters: linters_with_defaults(
     missing_argument_linter(),
     numeric_leading_zero_linter(),
     object_length_linter = NULL,
+    object_name_linter = NULL,
     outer_negation_linter(),
     paste_linter(),
     todo_comment_linter(),

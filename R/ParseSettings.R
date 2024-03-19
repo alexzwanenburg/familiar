@@ -56,7 +56,8 @@
     experiment_dir = waiver(),
     data_file = waiver(),
     verbose = TRUE,
-    ...) {
+    ...
+) {
   # Initialise list of file paths
   file_paths <- list()
 
@@ -68,7 +69,8 @@
     var_name = "project_dir",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Read experiment directory path and create the directory if required
   experiment_dir <- .parse_arg(
@@ -77,7 +79,8 @@
     var_name = "experiment_dir",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Set temporary directory flag to FALSE by default.
   file_paths$is_temporary <- FALSE
@@ -100,8 +103,8 @@
     } else {
       # Case 3. project_dir exists and experiment_dir is a subdirectory.
       experiment_dir <- normalizePath(
-        file.path(project_dir, experiment_dir), mustWork = FALSE)
-      
+        file.path(project_dir, experiment_dir), mustWork = FALSE
+      )
     }
     
   } else {
@@ -138,48 +141,66 @@
 
   # Log file - set as global variable as well
   if (!file_paths$is_temporary) {
-    file_paths$log_file <- normalizePath(file.path(experiment_dir, "log.txt"), mustWork = FALSE)
+    file_paths$log_file <- normalizePath(
+      file.path(experiment_dir, "log.txt"),
+      mustWork = FALSE
+    )
   }
 
   # Assign to global environment.
   assign(
     "log_file", 
     file_paths$log_file, 
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
 
   # Directory for iterations
   file_paths$iterations_dir <- normalizePath(
-    experiment_dir, mustWork = FALSE)
+    experiment_dir,
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$iterations_dir)) dir.create(file_paths$iterations_dir)
 
   # Directory for pre-processing
   file_paths$process_data_dir <- normalizePath(
-    experiment_dir, mustWork = FALSE)
+    experiment_dir,
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$process_data_dir)) dir.create(file_paths$process_data_dir)
 
   # Directory for feature selection
   file_paths$fs_dir <- normalizePath(
-    file.path(experiment_dir, "variable_importance"), mustWork = FALSE)
+    file.path(experiment_dir, "variable_importance"),
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$fs_dir)) dir.create(file_paths$fs_dir)
 
   # Directory and files for model building
   file_paths$mb_dir <- normalizePath(
-    file.path(experiment_dir, "trained_models"), mustWork = FALSE)
+    file.path(experiment_dir, "trained_models"),
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$mb_dir)) dir.create(file_paths$mb_dir)
 
   # Directory for familiarData objects
   file_paths$fam_data_dir <- normalizePath(
-    file.path(experiment_dir, "familiar_data"), mustWork = FALSE)
+    file.path(experiment_dir, "familiar_data"),
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$fam_data_dir)) dir.create(file_paths$fam_data_dir)
 
   # Directory for familiarDataCollection objects
   file_paths$fam_coll_dir <- normalizePath(
-    file.path(experiment_dir, "familiar_collections"), mustWork = FALSE)
+    file.path(experiment_dir, "familiar_collections"),
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$fam_coll_dir)) dir.create(file_paths$fam_coll_dir)
 
   # Create results directory
   file_paths$results_dir <- normalizePath(
-    file.path(experiment_dir, "results"), mustWork = FALSE)
+    file.path(experiment_dir, "results"),
+    mustWork = FALSE
+  )
   if (!dir.exists(file_paths$results_dir)) dir.create(file_paths$results_dir)
 
   # Data file location
@@ -189,7 +210,8 @@
     var_name = "data_file",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(data_file)) {
     # Iterate over data file(s) to determine the full path
@@ -204,20 +226,24 @@
           return(file.path(project_dir, curr_data_file))
           
         } else {
-          stop(paste(
+          ..error(paste(
             "Data could not be found. A file was expected at:",
-            curr_data_file, "or at", file.path(project_dir, curr_data_file)))
+            curr_data_file, "or at", file.path(project_dir, curr_data_file)
+          ))
         }
       },
-      project_dir = project_dir)
+      project_dir = project_dir
+    )
   }
   
   if (file_paths$is_temporary) {
     logger_message(
       paste0(
         "Configuration: A temporary R directory is created for the analysis: ",
-        temporary_directory),
-      verbose = verbose)
+        temporary_directory
+      ),
+      verbose = verbose
+    )
   }
 
   return(file_paths)
@@ -257,7 +283,9 @@
     .parse_experiment_settings,
     args = c(
       list("config" = config$data),
-      list(...)))
+      list(...)
+    )
+  )
 
   return(settings)
 }
@@ -390,7 +418,9 @@
     .parse_setup_settings,
     args = c(
       list("config" = config$run),
-      list(...)))
+      list(...)
+    )
+  )
 
   # Remove outcome_type, development_batch_id and parallel from ... This
   # prevents an error caused by multiple matching arguments.
@@ -406,8 +436,11 @@
         "config" = config$preprocessing,
         "data" = data,
         "parallel" = settings$run$parallel,
-        "outcome_type" = settings$data$outcome_type),
-      dots))
+        "outcome_type" = settings$data$outcome_type
+      ),
+      dots
+    )
+  )
 
   # Feature selection settings
   settings$fs <- do.call_strict(
@@ -417,8 +450,11 @@
         "config" = config$feature_selection,
         "data" = data,
         "parallel" = settings$run$parallel,
-        "outcome_type" = settings$data$outcome_type),
-      dots))
+        "outcome_type" = settings$data$outcome_type
+      ),
+      dots
+    )
+  )
 
   # Model development settings
   settings$mb <- do.call_strict(
@@ -428,8 +464,11 @@
         "config" = config$model_development,
         "data" = data,
         "parallel" = settings$run$parallel,
-        "outcome_type" = settings$data$outcome_type),
-      dots))
+        "outcome_type" = settings$data$outcome_type
+      ),
+      dots
+    )
+  )
 
   # Hyperparameter optimisation settings
   settings$hpo <- do.call_strict(
@@ -438,8 +477,11 @@
       list(
         "config" = config$hyperparameter_optimisation,
         "parallel" = settings$run$parallel,
-        "outcome_type" = settings$data$outcome_type),
-      dots))
+        "outcome_type" = settings$data$outcome_type
+      ),
+      dots
+    )
+  )
 
   # Remove development_batch_id, hpo_metric, vimp_aggregation_method and
   # vimp_aggregation_rank_threshold from ... This prevents an error caused by
@@ -466,8 +508,11 @@
         "prep_cluster_linkage_method" = settings$prep$cluster_linkage,
         "prep_cluster_cut_method" = settings$prep$cluster_cut_method,
         "prep_cluster_similarity_threshold" = settings$prep$cluster_similarity_threshold,
-        "prep_cluster_similarity_metric" = settings$prep$cluster_similarity_metric),
-      dots))
+        "prep_cluster_similarity_metric" = settings$prep$cluster_similarity_metric
+      ),
+      dots
+    )
+  )
 
   # Set the general parallel switch to FALSE if all workflow steps disabled
   # parallel processing.
@@ -728,7 +773,8 @@
     experimental_design = waiver(),
     imbalance_correction_method = waiver(),
     imbalance_n_partitions = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
 
   # experimental_design --------------------------------------------------------
@@ -738,7 +784,8 @@
     x_var = experimental_design,
     var_name = "experimental_design",
     optional = FALSE,
-    type = "character")
+    type = "character"
+  )
 
   # imbalance_method -----------------------------------------------------------
   # Class imbalance correction method
@@ -748,12 +795,14 @@
     var_name = "imbalance_correction_method",
     type = "character",
     optional = TRUE,
-    default = "full_undersampling")
+    default = "full_undersampling"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$imbalance_method,
     var_name = "imbalance_correction_method",
-    values = c("full_undersampling", "random_undersampling"))
+    values = c("full_undersampling", "random_undersampling")
+  )
 
   # imbalance_n_partitions -----------------------------------------------------
   # Number of imbalance partitions for random undersampling
@@ -763,12 +812,14 @@
     var_name = "imbalance_n_partitions",
     type = "integer",
     optional = TRUE,
-    default = 10)
+    default = 10L
+  )
 
   .check_number_in_valid_range(
     x = settings$imbalance_n_partitions,
     var_name = "imbalance_n_partitions",
-    range = c(1, Inf))
+    range = c(1L, Inf)
+  )
 
   # sample_id_column -----------------------------------------------------------
   # Sample identifier column
@@ -778,7 +829,8 @@
     var_name = "sample_id_colum",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Update column name
   if (!is.null(settings$sample_col)) {
@@ -793,7 +845,8 @@
     var_name = "batch_id_column",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Update column name
   if (!is.null(settings$batch_col)) {
@@ -808,7 +861,8 @@
     var_name = "series_id_column",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$series_col)) {
     settings$series_col <- .replace_illegal_column_name(settings$series_col)
@@ -822,7 +876,8 @@
     var_name = "development_batch_id",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # validation_batch_id --------------------------------------------------------
   # Validation cohort identifier
@@ -832,7 +887,8 @@
     var_name = "validation_batch_id",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # outcome_column -------------------------------------------------------------
   # Outcome column(s)
@@ -842,7 +898,8 @@
     var_name = "outcome_column",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$outcome_col)) {
     settings$outcome_col <- .replace_illegal_column_name(settings$outcome_col)
@@ -856,7 +913,8 @@
     var_name = "outcome_type",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # outcome_name ---------------------------------------------------------------
   # Outcome name
@@ -866,7 +924,8 @@
     var_name = "outcome_name",
     type = "character",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # class_levels ---------------------------------------------------------------
   # Class levels
@@ -876,7 +935,8 @@
     var_name = "class_levels",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # event_indicator ------------------------------------------------------------
   # Event indicator
@@ -897,7 +957,8 @@
     var_name = "censoring_indicator",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # competing_risk_indicator ---------------------------------------------------
   # Competing risk indicator
@@ -907,7 +968,8 @@
     var_name = "competing_risk_indicator",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # signature ------------------------------------------------------------------
   # Signature features
@@ -917,7 +979,8 @@
     var_name = "signature",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$signature)) {
     settings$signature <- .replace_illegal_column_name(settings$signature)
@@ -931,7 +994,8 @@
     var_name = "novelty_features",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$novelty_features)) {
     settings$novelty_features <- .replace_illegal_column_name(settings$novelty_features)
@@ -945,7 +1009,8 @@
     var_name = "include_features",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$include_features)) {
     settings$include_features <- .replace_illegal_column_name(settings$include_features)
@@ -959,7 +1024,8 @@
     var_name = "exclude_features",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$exclude_features)) {
     settings$exclude_features <- .replace_illegal_column_name(settings$exclude_features)
@@ -974,12 +1040,14 @@
     var_name = "reference_method",
     type = "character",
     optional = TRUE,
-    default = "auto")
+    default = "auto"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$reference_method,
     var_name = "reference_method",
-    values = c("auto", "always", "never"))
+    values = c("auto", "always", "never")
+  )
 
   return(settings)
 }
@@ -1034,7 +1102,8 @@
     cluster_type = waiver(),
     backend_type = waiver(),
     server_port = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
 
   # parallel -------------------------------------------------------------------
@@ -1045,7 +1114,8 @@
     var_name = "parallel",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # parallel_nr_cores ----------------------------------------------------------
   # Maximum number of cores that a R may use
@@ -1055,13 +1125,15 @@
     var_name = "parallel_nr_cores",
     type = "integer",
     optional = TRUE,
-    default = 2L)
+    default = 2L
+  )
 
   if (!is.null(settings$parallel_nr_cores)) {
     .check_number_in_valid_range(
       x = settings$parallel_nr_cores,
       var_name = "parallel_nr_cores",
-      range = c(1, parallel::detectCores()))
+      range = c(1L, parallel::detectCores())
+    )
   }
 
   # Set cores to 1 in case parallel processing is disabled.
@@ -1075,7 +1147,8 @@
     var_name = "restart_cluster",
     type = "logical",
     optional = TRUE,
-    default = FALSE)
+    default = FALSE
+  )
 
   if (!settings$parallel) settings$restart_cluster <- FALSE
 
@@ -1087,12 +1160,14 @@
     var_name = "cluster_type",
     type = "character",
     optional = TRUE,
-    default = "psock")
+    default = "psock"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$cluster_type,
     var_name = "cluster_type",
-    values = c("psock", "fork", "mpi", "nws", "sock", "none"))
+    values = c("psock", "fork", "mpi", "nws", "sock", "none")
+  )
 
   if (!settings$parallel) settings$cluster_type <- "none"
 
@@ -1102,7 +1177,8 @@
     require_package(
       x = "microbenchmark",
       purpose = "to make use of optimised parallel processing",
-      message_type = "backend_warning")
+      message_type = "backend_warning"
+    )
   }
 
   # backend_type ---------------------------------------------------------------
@@ -1113,17 +1189,20 @@
     var_name = "backend_type",
     type = "character",
     optional = TRUE,
-    default = "none")
+    default = "none"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$backend_type,
     var_name = "backend_type",
-    values = .get_available_backend_types())
+    values = .get_available_backend_types()
+  )
 
   require_package(
     x = .required_packages_backend(settings$backend_type),
     purpose = "to use the requested backend (", settings$backend_type, ")",
-    message_type = "backend_error")
+    message_type = "backend_error"
+  )
 
   # server_port ----------------------------------------------------------------
   # RServe communications port
@@ -1133,12 +1212,14 @@
     var_name = "server_port",
     type = "integer",
     optional = TRUE,
-    default = 6311L)
+    default = 6311L
+  )
 
   .check_number_in_valid_range(
     x = settings$server_port,
     var_name = "server_port",
-    range = c(1025, 49151))
+    range = c(1025L, 49151L)
+  )
 
   return(settings)
 }
@@ -1661,7 +1742,8 @@
     cluster_similarity_threshold = waiver(),
     cluster_representation_method = waiver(),
     parallel_preprocessing = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
 
   # feature_max_fraction_missing -----------------------------------------------
@@ -1672,12 +1754,14 @@
     var_name = "feature_max_fraction_missing",
     type = "numeric",
     optional = TRUE,
-    default = 0.30)
+    default = 0.30
+  )
 
   .check_number_in_valid_range(
     x = settings$feature_max_fraction_missing,
     var_name = "feature_max_fraction_missing",
-    range = c(0.0, 0.95))
+    range = c(0.0, 0.95)
+  )
 
   # sample_max_fraction_missing ------------------------------------------------
   # Maximum fraction of features missing for inclusion of a subject
@@ -1687,12 +1771,14 @@
     var_name = "sample_max_fraction_missing",
     type = "numeric",
     optional = TRUE,
-    default = 0.30)
+    default = 0.30
+  )
 
   .check_number_in_valid_range(
     x = settings$sample_max_fraction_missing,
     var_name = "sample_max_fraction_missing",
-    range = c(0.0, 0.95))
+    range = c(0.0, 0.95)
+  )
 
   # filter_method --------------------------------------------------------------
   # Univariate filter methods
@@ -1702,12 +1788,14 @@
     var_name = "filter_method",
     type = "character_list",
     optional = TRUE,
-    default = "none")
+    default = "none"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$filter_method,
     var_name = "filter_method",
-    values = c("none", "low_variance", "univariate_test", "robustness"))
+    values = c("none", "low_variance", "univariate_test", "robustness")
+  )
 
   if (outcome_type == "multinomial" && "univariate_test" %in% settings$filter_method) {
     # The nnet package is required for univariate tests with multinomial
@@ -1715,10 +1803,11 @@
     if (!require_package(
       x = "nnet",
       purpose = "to filter features using univariate tests",
-      message_type = "backend_warning")) {
+      message_type = "backend_warning"
+    )) {
       # If the nnet package is not present, avoid the univariate test.
       settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
-      if (length(settings$filter_method) == 0) {
+      if (length(settings$filter_method) == 0L) {
         settings$filter_method <- "none"
       }
     }
@@ -1732,13 +1821,15 @@
     var_name = "univariate_test_threshold",
     type = "numeric",
     optional = TRUE,
-    default = 0.20)
+    default = 0.20
+  )
 
   .check_number_in_valid_range(
     x = settings$univar_threshold,
     var_name = "univariate_test_threshold",
     range = c(0.0, 1.0),
-    closed = c(FALSE, TRUE))
+    closed = c(FALSE, TRUE)
+  )
 
   # univariate_test_threshold_metric -------------------------------------------
   # Univariate model threshold metric
@@ -1748,12 +1839,14 @@
     var_name = "univariate_test_threshold_metric",
     type = "character",
     optional = TRUE,
-    default = "p_value")
+    default = "p_value"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$univar_metric,
     var_name = "univariate_test_threshold_metric",
-    values = c("p_value", "q_value"))
+    values = c("p_value", "q_value")
+  )
 
   # If q_value is provided, warn for deprecation and use p-values instead.
   if (settings$univar_metric == "q_value") {
@@ -1769,13 +1862,15 @@
     var_name = "univariate_test_max_feature_set_size",
     type = "integer",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$univar_feat_set_size)) {
     .check_number_in_valid_range(
       x = settings$univar_feat_set_size,
       var_name = "univariate_test_max_feature_set_size",
-      range = c(1, Inf))
+      range = c(1L, Inf)
+    )
   }
 
   # low_var_minimum_variance_threshold -----------------------------------------
@@ -1786,12 +1881,14 @@
       x_var = low_var_minimum_variance_threshold,
       var_name = "low_var_minimum_variance_threshold",
       type = "numeric",
-      optional = FALSE)
+      optional = FALSE
+    )
 
     .check_number_in_valid_range(
       x = settings$low_var_threshold,
       var_name = "low_var_minimum_variance_threshold",
-      range = c(0.0, Inf))
+      range = c(0.0, Inf)
+    )
   }
 
   # low_var_max_feature_set_size -----------------------------------------------
@@ -1802,13 +1899,15 @@
     var_name = "low_var_max_feature_set_size",
     type = "integer",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$low_var_max_feature_set_size)) {
     .check_number_in_valid_range(
       x = settings$low_var_max_feature_set_size,
       var_name = "low_var_max_feature_set_size",
-      range = c(1, Inf))
+      range = c(1L, Inf)
+    )
   }
 
   # robustness_icc_type --------------------------------------------------------
@@ -1819,12 +1918,14 @@
     var_name = "robustness_icc_type",
     type = "character",
     optional = TRUE,
-    default = "1")
+    default = "1"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$robustness_icc_type,
     var_name = "robustness_icc_type",
-    values = .get_available_icc_types())
+    values = .get_available_icc_types()
+  )
 
   # robustness_threshold_metric ------------------------------------------------
   # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low
@@ -1836,12 +1937,14 @@
     var_name = "robustness_threshold_metric",
     type = "character",
     optional = TRUE,
-    default = "icc_low")
+    default = "icc_low"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$robustness_threshold_param,
     var_name = "robustness_threshold_metric",
-    values = c("icc", "icc_low", "icc_panel", "icc_panel_low"))
+    values = c("icc", "icc_low", "icc_panel", "icc_panel_low")
+  )
 
   # robustness_threshold_value -------------------------------------------------
   # ICC value for thresholding.
@@ -1851,19 +1954,22 @@
     var_name = "robustness_threshold_value",
     type = "numeric",
     optional = TRUE,
-    default = 0.70)
+    default = 0.70
+  )
 
   .check_number_in_valid_range(
     x = settings$robustness_threshold_value,
     var_name = "robustness_threshold_value",
-    range = c(-Inf, 1.0))
+    range = c(-Inf, 1.0)
+  )
 
   # imputation_method ----------------------------------------------------------
   # Data imputation method. For datasets smaller than 100 features we use lasso,
   # and simple imputation is used otherwise.
   default_imputation_method <- ifelse(
-    get_n_features(data, outcome_type = outcome_type) < 100,
-    "lasso", "simple")
+    get_n_features(data, outcome_type = outcome_type) < 100L,
+    "lasso", "simple"
+  )
 
   settings$imputation_method <- .parse_arg(
     x_config = config$imputation_method,
@@ -1871,19 +1977,22 @@
     var_name = "imputation_method",
     type = "character",
     optional = TRUE,
-    default = default_imputation_method)
+    default = default_imputation_method
+  )
   
   .check_parameter_value_is_valid(
     x = settings$imputation_method,
     var_name = "imputation_method",
-    values = .get_available_imputation_methods())
+    values = .get_available_imputation_methods()
+  )
 
   if (settings$imputation_method == "lasso") {
     # If glmnet is not installed, use simple imputation.
     if (!require_package(
       x = "glmnet",
       purpose = "to impute data using lasso regression",
-      message_type = "backend_warning")) {
+      message_type = "backend_warning"
+    )) {
       settings$imputation_method <- "simple"
     }
   }
@@ -1896,18 +2005,21 @@
     var_name = "transformation_method",
     type = "character",
     optional = TRUE,
-    default = "yeo_johnson_robust")
+    default = "yeo_johnson_robust"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$transform_method,
     var_name = "transformation_method",
-    values = .get_available_transformation_methods())
+    values = .get_available_transformation_methods()
+  )
   
   # If power.transform is not installed, no transformation can be performed.
   if (!require_package(
     x = "power.transform",
     purpose = "to transform data",
-    message_type = "backend_warning")) {
+    message_type = "backend_warning"
+  )) {
     
     settings$transform_method <- "none"
   }
@@ -1957,12 +2069,14 @@
     var_name = "normalisation_method",
     type = "character",
     optional = TRUE,
-    default = "standardisation_robust")
+    default = "standardisation_robust"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$normalisation_method,
     var_name = "normalisation_method",
-    values = .get_available_normalisation_methods())
+    values = .get_available_normalisation_methods()
+  )
 
   # batch_normalisation_method -------------------------------------------------
   # Batch normalisation method
@@ -1972,18 +2086,22 @@
     var_name = "batch_normalisation_method",
     type = "character",
     optional = TRUE,
-    default = "none")
+    default = "none"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$batch_normalisation_method,
     var_name = "batch_normalisation_method",
-    values = .get_available_batch_normalisation_methods())
+    values = .get_available_batch_normalisation_methods()
+  )
 
   # If the batch normalisation method is combat, pre-normalisation of the
   # entire data is required.
-  if (settings$batch_normalisation_method %in% 
-      .get_available_batch_normalisation_methods(type = "combat") &&
-      settings$normalisation_method %in% c("none", "mean_centering")) {
+  if (
+    settings$batch_normalisation_method %in% 
+    .get_available_batch_normalisation_methods(type = "combat") &&
+    settings$normalisation_method %in% c("none", "mean_centering")
+  ) {
     settings$normalisation_method <- "standardisation"
   }
 
@@ -1995,14 +2113,16 @@
     var_name = "cluster_method",
     type = "character",
     optional = TRUE,
-    default = "hclust")
+    default = "hclust"
+  )
 
   # Check that the cluster package is installed, and revert to if none.
   if (!settings$cluster_method %in% c("none", "hclust")) {
     if (!require_package(
       x = "cluster",
       purpose = "to cluster similar features together",
-      message_type = "backend_warning")) {
+      message_type = "backend_warning"
+    )) {
       settings$cluster_method <- "hclust"
     }
   }
@@ -2012,7 +2132,8 @@
     require_package(
       x = "fastcluster",
       purpose = "to create clusters faster",
-      message_type = "backend_warning")
+      message_type = "backend_warning"
+    )
   }
 
   # cluster_linkage ------------------------------------------------------------
@@ -2023,13 +2144,15 @@
     var_name = "cluster_linkage_method",
     type = "character",
     optional = TRUE,
-    default = "average")
+    default = "average"
+  )
 
   # cluster_cut_method ---------------------------------------------------------
   # Feature cluster cut method
   default_cluster_cut_method <- ifelse(
     settings$cluster_method == "pam",
-    "silhouette", "fixed_cut")
+    "silhouette", "fixed_cut"
+  )
 
   settings$cluster_cut_method <- .parse_arg(
     x_config = config$cluster_cut_method,
@@ -2037,13 +2160,15 @@
     var_name = "cluster_cut_method",
     type = "character",
     optional = TRUE,
-    default = default_cluster_cut_method)
+    default = default_cluster_cut_method
+  )
 
   if (settings$cluster_cut_method == "dynamic_cut") {
     if (!require_package(
       x = "dynamicTreeCut",
       purpose = "to cut dendrograms dynamically",
-      message_type = "backend_warning")) {
+      message_type = "backend_warning"
+    )) {
       settings$cluster_cut_method <- "fixed_cut"
     }
   }
@@ -2057,7 +2182,8 @@
     var_name = "cluster_similarity_metric",
     type = "character",
     optional = TRUE,
-    default = "mutual_information")
+    default = "mutual_information"
+  )
 
   if (settings$cluster_similarity_metric %in%
       c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")) {
@@ -2065,8 +2191,10 @@
       x = "nnet",
       purpose = paste0(
         "to compute log-likelihood pseudo R2 similarity using the ",
-        settings$cluster_similarity_metric, " metric"),
-      message_type = "backend_warning")) {
+        settings$cluster_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
       settings$cluster_similarity_metric <- "spearman"
     }
     
@@ -2075,8 +2203,10 @@
       x = "praznik",
       purpose = paste0(
         "to compute similarity using the ",
-        settings$cluster_similarity_metric, " metric"),
-      message_type = "backend_warning")) {
+        settings$cluster_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
       settings$cluster_similarity_metric <- "spearman"
     }
   }
@@ -2092,7 +2222,8 @@
     var_name = "cluster_similarity_threshold",
     type = "numeric",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (is.null(settings$cluster_similarity_threshold)) {
     if (settings$cluster_cut_method %in% c("fixed_cut")) {
@@ -2132,7 +2263,8 @@
     var_name = "cluster_representation_method",
     type = "character",
     optional = TRUE,
-    default = "best_predictor")
+    default = "best_predictor"
+  )
 
   # Partioning around medioids only allows the use of medioids for
   # representation.
@@ -2145,8 +2277,9 @@
   if (settings$cluster_representation_method %in% c("mean")) {
     if (!settings$normalisation_method %in% c(
       "standardisation", "standardisation_trim", "standardisation_winsor",
-      "standardisation_robust", "quantile")) {
-      warning(
+      "standardisation_robust", "quantile"
+    )) {
+      ..warning(
         paste0(
           "When computing the meta-feature for a cluster using the mean value ",
           "of co-clustered features,  each feature is expected to be centered ",
@@ -2170,7 +2303,8 @@
     cluster_similarity_metric = settings$cluster_similarity_metric,
     cluster_representation_method = settings$cluster_representation_method,
     data_type = "cluster",
-    message_type = "backend_error")
+    message_type = "backend_error"
+  )
 
   # parallel_preprocessing -----------------------------------------------------
   # Parallel processing
@@ -2180,7 +2314,8 @@
     var_name = "parallel_preprocessing",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # Disable if parallel is FALSE.
   if (!parallel) settings$do_parallel <- FALSE
@@ -2298,7 +2433,8 @@
     vimp_aggregation_method = waiver(),
     vimp_aggregation_rank_threshold = waiver(),
     parallel_feature_selection = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
   
   # fs_method ------------------------------------------------------------------
@@ -2308,12 +2444,14 @@
     x_var = fs_method,
     var_name = "fs_method",
     type = "character_list",
-    optional = FALSE)
+    optional = FALSE
+  )
 
   sapply(
     settings$fs_methods, 
     .check_vimp_outcome_type, 
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # fs_method_parameter --------------------------------------------------------
   # Feature selection parameters
@@ -2323,13 +2461,15 @@
     var_name = "fs_method_parameter",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
   settings$param <- .parse_hyperparameters(
     data = data,
     parameter_list = settings$param,
     outcome_type = outcome_type,
-    fs_method = settings$fs_methods)
+    fs_method = settings$fs_methods
+  )
 
   # vimp_aggregation_method ----------------------------------------------------
   # Variable importance aggregation methods
@@ -2339,12 +2479,14 @@
     var_name = "vimp_aggregation_method",
     type = "character",
     optional = TRUE,
-    default = "borda")
+    default = "borda"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$aggregation,
     var_name = "vimp_aggregation_method",
-    values = .get_available_rank_aggregation_methods())
+    values = .get_available_rank_aggregation_methods()
+  )
 
   # vimp_aggregation_rank_threshold --------------------------------------------
   # Variable importance rank threshold (used by some aggregation methods)
@@ -2354,13 +2496,15 @@
     var_name = "vimp_aggregation_rank_threshold",
     type = "integer",
     optional = TRUE,
-    default = 5L)
+    default = 5L
+  )
 
   if (!is.null(settings$aggr_rank_threshold)) {
     .check_number_in_valid_range(
       x = settings$aggr_rank_threshold,
       var_name = "vimp_aggregation_rank_threshold",
-      range = c(1, Inf))
+      range = c(1L, Inf)
+    )
   }
 
   # parallel_feature_selection -------------------------------------------------
@@ -2371,7 +2515,8 @@
     var_name = "parallel_feature_selection",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # Disable if parallel is FALSE.
   if (!parallel) settings$do_parallel <- FALSE
@@ -2429,7 +2574,8 @@
     novelty_detector = waiver(),
     detector_parameters = waiver(),
     parallel_model_development = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
   
   # learner --------------------------------------------------------------------
@@ -2438,12 +2584,14 @@
     x_config = config$learner, x_var = learner,
     var_name = "learner",
     type = "character_list",
-    optional = FALSE)
+    optional = FALSE
+  )
 
   sapply(
     settings$learners,
     .check_learner_outcome_type, 
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # hyperparameters ------------------------------------------------------------
   # Model hyperparameters
@@ -2453,13 +2601,15 @@
     var_name = "hyperparameter",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
   settings$hyper_param <- .parse_hyperparameters(
     data = data,
     parameter_list = settings$hyper_param,
     outcome_type = outcome_type,
-    learner = settings$learners)
+    learner = settings$learners
+  )
 
   # novelty_detector -----------------------------------------------------------
   settings$novelty_detector <- .parse_arg(
@@ -2468,7 +2618,8 @@
     var_name = "novelty_detector",
     type = "character",
     optional = TRUE,
-    default = "isolation_forest")
+    default = "isolation_forest"
+  )
 
   .check_novelty_detector_available(detector = settings$novelty_detector)
 
@@ -2479,13 +2630,15 @@
     var_name = "detector_parameters",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
   settings$detector_parameters <- .parse_hyperparameters(
     data = data,
     parameter_list = settings$detector_parameters,
     detector = settings$novelty_detector,
-    outcome_type = "unsupervised")
+    outcome_type = "unsupervised"
+  )
 
   # parallel_model_development -------------------------------------------------
   # Parallelisation switch for model building
@@ -2495,7 +2648,8 @@
     var_name = "parallel_model_development",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # Disable if parallel is FALSE
   if (!parallel) settings$do_parallel <- FALSE
@@ -2824,7 +2978,8 @@
     exploration_method = waiver(),
     hyperparameter_learner = waiver(),
     parallel_hyperparameter_optimisation = waiver(),
-    ...) {
+    ...
+) {
   settings <- list()
 
   # smbo_random_initialisation -------------------------------------------------
@@ -2835,12 +2990,14 @@
     var_name = "smbo_random_initialisation",
     type = "character",
     optional = TRUE,
-    default = "fixed_subsample")
+    default = "fixed_subsample"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$hpo_grid_initialisation_method,
     var_name = "smbo_random_initialisation",
-    values = c("fixed_subsample", "fixed", "random"))
+    values = c("fixed_subsample", "fixed", "random")
+  )
 
   # smbo_n_random_sets ---------------------------------------------------------
   # Number of samples in the initial parameter grid.
@@ -2850,12 +3007,14 @@
     var_name = "smbo_n_random_sets",
     type = "integer",
     optional = TRUE,
-    default = 100)
+    default = 100L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_n_grid_initialisation_samples,
     var_name = "smbo_n_random_sets",
-    range = c(10, Inf))
+    range = c(10L, Inf)
+  )
 
   # optimisation_determine_vimp ------------------------------------------------
   # Variable importance for the bootstraps
@@ -2865,7 +3024,8 @@
     var_name = "optimisation_determine_vimp",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # max_smbo_iterations --------------------------------------------------------
   # Maximum number of SMBO iterations before stopping
@@ -2875,12 +3035,14 @@
     var_name = "max_smbo_iterations",
     type = "integer",
     optional = TRUE,
-    default = 20)
+    default = 20L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_smbo_iter_max,
     var_name = "max_smbo_iterations",
-    range = c(1, Inf))
+    range = c(1L, Inf)
+  )
 
   # optimisation_bootstraps ----------------------------------------------------
   # Maximum number of bootstraps for hyperparameter evaluation
@@ -2890,12 +3052,14 @@
     var_name = "optimisation_bootstraps",
     type = "integer",
     optional = TRUE,
-    default = 20)
+    default = 20L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_max_bootstraps,
     var_name = "optimisation_bootstraps",
-    range = c(10, Inf))
+    range = c(10L, Inf)
+  )
 
   # smbo_initial_bootstraps ----------------------------------------------------
   # Number of bootstraps evaluated initially
@@ -2905,12 +3069,14 @@
     var_name = "smbo_initial_bootstraps",
     type = "integer",
     optional = TRUE,
-    default = 1L)
+    default = 1L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_initial_bootstraps,
     var_name = "smbo_initial_bootstraps",
-    range = c(1, settings$hpo_max_bootstraps))
+    range = c(1L, settings$hpo_max_bootstraps)
+  )
 
   # smbo_step_bootstraps -------------------------------------------------------
   # Maximum number of bootstrap evaluated each intensify step of each SMBO
@@ -2921,12 +3087,14 @@
     var_name = "smbo_step_bootstraps",
     type = "integer",
     optional = TRUE,
-    default = 3L)
+    default = 3L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_bootstraps,
     var_name = "smbo_step_bootstraps",
-    range = c(1, settings$hpo_max_bootstraps))
+    range = c(1L, settings$hpo_max_bootstraps)
+  )
 
   # smbo_intensify_steps -------------------------------------------------------
   # Maximum number of intensify iterations during each SMBO iteration.
@@ -2936,12 +3104,14 @@
     var_name = "smbo_intensify_steps",
     type = "integer",
     optional = TRUE,
-    default = 5)
+    default = 5L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_intensify_max_iter,
     var_name = "smbo_intensify_steps",
-    range = c(1, Inf))
+    range = c(1L, Inf)
+  )
 
   # smbo_stochastic_reject_p_value ---------------------------------------------
   # Significance level for early stopping of intensity iterations. Only used for
@@ -2952,13 +3122,15 @@
     var_name = "smbo_stochastic_reject_p_value",
     type = "numeric",
     optional = TRUE,
-    default = 0.05)
+    default = 0.05
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_alpha,
     var_name = "smbo_stochastic_reject_p_value",
     range = c(0.0, 1.0),
-    closed = c(FALSE, TRUE))
+    closed = c(FALSE, TRUE)
+  )
 
   # smbo_stop_convergent_iterations --------------------------------------------
   # Number of converging iterations before stopping SMBO.
@@ -2968,12 +3140,14 @@
     var_name = "smbo_stop_convergent_iterations",
     type = "integer",
     optional = TRUE,
-    default = 3)
+    default = 3L
+  )
 
   .check_number_in_valid_range(
     x = settings$hpo_conv_stop,
     var_name = "smbo_stop_convergent_iterations",
-    range = c(1, Inf))
+    range = c(1L, Inf)
+  )
 
   # smbo_stop_tolerance --------------------------------------------------------
   # Convergence tolerance
@@ -2983,7 +3157,8 @@
     var_name = "smbo_stop_tolerance",
     type = "numeric",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Check provided settings. If NULL, convergence will be set by the algorithm.
   if (!is.null(settings$hpo_convergence_tolerance)) {
@@ -2991,7 +3166,8 @@
       x = settings$hpo_convergence_tolerance,
       var_name = "smbo_stop_tolerance",
       range = c(0.0, 1.0),
-      closed = c(FALSE, TRUE))
+      closed = c(FALSE, TRUE)
+    )
   }
 
   # smbo_time_limit ------------------------------------------------------------
@@ -3002,18 +3178,22 @@
     var_name = "smbo_time_limit",
     type = "numeric",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   if (!is.null(settings$hpo_time_limit)) {
     .check_number_in_valid_range(
       x = settings$hpo_time_limit,
       var_name = "smbo_time_limit",
       range = c(0.0, Inf),
-      closed = c(FALSE, TRUE))
+      closed = c(FALSE, TRUE)
+    )
 
-    require_package(c("callr", "microbenchmark"),
+    require_package(
+      c("callr", "microbenchmark"),
       purpose = "to measure hyperparameter optimisation time",
-      message_type = "backend_warning")
+      message_type = "backend_warning"
+    )
   }
 
   # hyperparameter_learner -----------------------------------------------------
@@ -3024,15 +3204,18 @@
     var_name = "hyperparameter_learner",
     type = "character",
     optional = TRUE,
-    default = "gaussian_process")
+    default = "gaussian_process"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$hpo_hyperparameter_learner,
     var_name = "hyperparameter_learner",
-    values = .get_available_hyperparameter_learners())
+    values = .get_available_hyperparameter_learners()
+  )
 
   .check_hyperparameter_learner_available(
-    hyperparameter_learner = settings$hpo_hyperparameter_learner)
+    hyperparameter_learner = settings$hpo_hyperparameter_learner
+  )
 
 
   # optimisation_function ------------------------------------------------------
@@ -3043,13 +3226,16 @@
     var_name = "optimisation_function",
     type = "character",
     optional = TRUE,
-    default = "validation")
+    default = "validation"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$hpo_optimisation_function,
     var_name = "optimisation_function",
     values = .get_available_optimisation_functions(
-      hyperparameter_learner = settings$hpo_hyperparameter_learner))
+      hyperparameter_learner = settings$hpo_hyperparameter_learner
+    )
+  )
 
 
   # acquisition_function -------------------------------------------------------
@@ -3060,12 +3246,14 @@
     var_name = "acquisition_function",
     type = "character",
     optional = TRUE,
-    default = "expected_improvement")
+    default = "expected_improvement"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$hpo_acquisition_function,
     var_name = "acquisition_function",
-    values = .get_available_acquisition_functions())
+    values = .get_available_acquisition_functions()
+  )
 
 
   # exploration_method ---------------------------------------------------------
@@ -3076,12 +3264,14 @@
     var_name = "exploration_method",
     type = "character",
     optional = TRUE,
-    default = "single_shot")
+    default = "single_shot"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$hpo_exploration_method,
     var_name = "exploration_method",
-    values = .get_available_hyperparameter_exploration_methods())
+    values = .get_available_hyperparameter_exploration_methods()
+  )
 
   # optimisation_metric --------------------------------------------------------
   # Performance metric for hyperparameter optimisation
@@ -3091,7 +3281,8 @@
     var_name = "optimisation_metric",
     type = "character_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Set default metric
   if (is.null(settings$hpo_metric)) {
@@ -3103,7 +3294,8 @@
   sapply(
     settings$hpo_metric,
     .check_metric_outcome_type,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # parallel_hyperparameter_optimisation ---------------------------------------
   # Parallelisation switch for parallel processing
@@ -3113,12 +3305,14 @@
     var_name = "parallel_hyperparameter_optimisation",
     type = "character",
     optional = TRUE,
-    default = "TRUE")
+    default = "TRUE"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$do_parallel,
     var_name = "parallel_hyperparameter_optimisation",
-    values = c("TRUE", "FALSE", "inner", "outer"))
+    values = c("TRUE", "FALSE", "inner", "outer")
+  )
 
   # Disable if parallel is FALSE
   if (!parallel) settings$do_parallel <- "FALSE"
@@ -3621,7 +3815,8 @@
     evaluation_times = waiver(),
     dynamic_model_loading = waiver(),
     parallel_evaluation = waiver(),
-    ...) {
+    ...
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome_event <- batch_id <- NULL
   
@@ -3635,7 +3830,8 @@
     var_name = "evaluate_top_level_only",
     type = "logical",
     optional = TRUE,
-    default = TRUE)
+    default = TRUE
+  )
 
   # evaluation_elements --------------------------------------------------------
   keep_evaluation_elements <- .parse_arg(
@@ -3651,7 +3847,8 @@
   .check_parameter_value_is_valid(
     x = keep_evaluation_elements,
     var_name = "evaluation_elements",
-    values = c(.get_available_data_elements(), "none", "false", "all", "true"))
+    values = c(.get_available_data_elements(), "none", "false", "all", "true")
+  )
   
   if (any(keep_evaluation_elements %in% c("all", "true"))) {
     keep_evaluation_elements <- .get_available_data_elements()
@@ -3669,13 +3866,15 @@
     var_name = "skip_evaluation_elements",
     type = "character_list",
     optional = TRUE,
-    default = "none")
+    default = "none"
+  )
 
   skipped_evaluation_elements <- tolower(skipped_evaluation_elements)
   .check_parameter_value_is_valid(
     x = skipped_evaluation_elements,
     var_name = "skip_evaluation_elements",
-    values = c(.get_available_data_elements(), "none", "false", "all", "true"))
+    values = c(.get_available_data_elements(), "none", "false", "all", "true")
+  )
 
   if (any(skipped_evaluation_elements %in% c("all", "true"))) {
     skipped_evaluation_elements <- .get_available_data_elements()
@@ -3688,20 +3887,22 @@
   # Instead of specifying the elements to skip, we specify the elements to keep.
   skipped_evaluation_elements <- setdiff(
     .get_available_data_elements(),
-    skipped_evaluation_elements)
-  
+    skipped_evaluation_elements
+  )
   
   if ("calibration_data" %in% settings$evaluation_data_elements) {
     require_package(
       x = "harmonicmeanp",
       purpose = "to compute p-values for model calibration tests",
-      message_type = "backend_warning")
+      message_type = "backend_warning"
+    )
   }
 
   settings$evaluation_data_elements <- intersect(
-    keep_evaluation_elements, skipped_evaluation_elements)
+    keep_evaluation_elements, skipped_evaluation_elements
+  )
   
-  if (length(settings$evaluation_data_elements) == 0) {
+  if (length(settings$evaluation_data_elements) == 0L) {
     settings$evaluation_data_elements <- NULL
   }
 
@@ -3711,7 +3912,8 @@
     require_package(
       x = ..required_plotting_packages(extended = TRUE),
       purpose = "to create plots",
-      message_type = "backend_warning")
+      message_type = "backend_warning"
+    )
   }
 
   # ensemble_method ------------------------------------------------------------
@@ -3722,12 +3924,14 @@
     var_name = "ensemble_method",
     type = "character",
     optional = TRUE,
-    default = "median")
+    default = "median"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$ensemble_method,
     var_name = "ensemble_method",
-    values = .get_available_ensemble_prediction_methods())
+    values = .get_available_ensemble_prediction_methods()
+  )
 
   # evaluation_metric ----------------------------------------------------------
   # List of performance metrics for evaluation
@@ -3737,12 +3941,14 @@
     var_name = "evaluation_metric",
     type = "character_list",
     optional = TRUE,
-    default = hpo_metric)
+    default = hpo_metric
+  )
 
   sapply(
     settings$metric,
     .check_metric_outcome_type, 
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # sample_limit ---------------------------------------------------------------
   # Number of samples that should be analysed.
@@ -3752,28 +3958,33 @@
     var_name = "sample_limit",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
-  if (length(settings$sample_limit) == 0) {
+  if (length(settings$sample_limit) == 0L) {
     # Default - use method-specific settings.
     settings$sample_limit <- NULL
     
-  } else if (length(settings$sample_limit) == 1 && is.null(names(settings$sample_limit))) {
+  } else if (length(settings$sample_limit) == 1L && is.null(names(settings$sample_limit))) {
     # Check that the contents are a correctly specified. At least 20 samples
     # should be present.
     .check_number_in_valid_range(
-      x = settings$sample_limit[[1]],
+      x = settings$sample_limit[[1L]],
       var_name = "sample_limit",
-      range = c(20L, Inf))
+      range = c(20L, Inf)
+    )
 
     # Add provided detail level to each possible element.
     settings$sample_limit <- lapply(
       .get_available_data_elements(check_has_sample_limit = TRUE),
       function(x, sample_limit) (sample_limit),
-      sample_limit = settings$sample_limit[[1]])
+      sample_limit = settings$sample_limit[[1L]]
+    )
 
     # Add name of respective data elements.
-    names(settings$sample_limit) <- .get_available_data_elements(check_has_sample_limit = TRUE)
+    names(settings$sample_limit) <- .get_available_data_elements(
+      check_has_sample_limit = TRUE
+    )
     
   } else {
     # Check that the list elements are correctly specified.
@@ -3781,7 +3992,8 @@
       names(settings$sample_limit),
       .check_parameter_value_is_valid,
       var_name = "sample_limit (data element name)",
-      values = .get_available_data_elements(check_has_sample_limit = TRUE))
+      values = .get_available_data_elements(check_has_sample_limit = TRUE)
+    )
 
     # Check that the list contents are correctly specified.
     sapply(
@@ -3790,9 +4002,11 @@
         .check_number_in_valid_range(
           x = x[[element_name]],
           var_name = paste0("sample_limit (", element_name, ")"),
-          range = c(20L, Inf))
+          range = c(20L, Inf)
+        )
       },
-      x = settings$sample_limit)
+      x = settings$sample_limit
+    )
   }
 
   # detail_level ---------------------------------------------------------------
@@ -3803,27 +4017,35 @@
     var_name = "detail_level",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
-  if (length(settings$detail_level) == 0) {
+  if (length(settings$detail_level) == 0L) {
     # Default - use method-specific settings.
     settings$detail_level <- NULL
-  } else if (length(settings$detail_level) == 1 && 
-             is.null(names(settings$detail_level))) {
+    
+  } else if (
+    length(settings$detail_level) == 1L && 
+    is.null(names(settings$detail_level))
+  ) {
     # Check that the contents are a correctly specified, single string.
     .check_parameter_value_is_valid(
-      x = settings$detail_level[[1]],
+      x = settings$detail_level[[1L]],
       var_name = "detail_level",
-      values = c("ensemble", "hybrid", "model"))
+      values = c("ensemble", "hybrid", "model")
+    )
 
     # Add provided detail level to each possible element.
     settings$detail_level <- lapply(
       .get_available_data_elements(check_has_detail_level = TRUE),
       function(x, detail_level) (detail_level),
-      detail_level = settings$detail_level[[1]])
+      detail_level = settings$detail_level[[1L]]
+    )
 
     # Add name of respective data elements.
-    names(settings$detail_level) <- .get_available_data_elements(check_has_detail_level = TRUE)
+    names(settings$detail_level) <- .get_available_data_elements(
+      check_has_detail_level = TRUE
+    )
     
   } else {
     # Check that the list elements are correctly specified.
@@ -3831,7 +4053,8 @@
       names(settings$detail_level),
       .check_parameter_value_is_valid,
       var_name = "detail_level (data element name)",
-      values = .get_available_data_elements(check_has_detail_level = TRUE))
+      values = .get_available_data_elements(check_has_detail_level = TRUE)
+    )
 
     # Check that the list contents are correctly specified.
     sapply(
@@ -3840,9 +4063,11 @@
         .check_parameter_value_is_valid(
           x = x[[element_name]],
           var_name = paste0("detail_level (", element_name, ")"),
-          values = c("ensemble", "hybrid", "model"))
+          values = c("ensemble", "hybrid", "model")
+        )
       },
-      x = settings$detail_level)
+      x = settings$detail_level
+    )
   }
 
   # estimation_type ------------------------------------------------------------
@@ -3852,31 +4077,38 @@
     x_var = estimation_type,
     var_name = "estimation_type",
     type = "list", optional = TRUE,
-    default = list())
+    default = list()
+  )
 
-  if (length(settings$estimation_type) == 0) {
+  if (length(settings$estimation_type) == 0L) {
     # Default - use method-specific settings.
     settings$estimation_type <- NULL
     
-  } else if (length(settings$estimation_type) == 1 &&
-             is.null(names(settings$estimation_type))) {
+  } else if (
+    length(settings$estimation_type) == 1L &&
+    is.null(names(settings$estimation_type))
+  ) {
     # Check that the contents are a correctly specified, single string.
     .check_parameter_value_is_valid(
-      x = settings$estimation_type[[1]],
+      x = settings$estimation_type[[1L]],
       var_name = "estimation_type",
       values = c(
         "point", "bias_correction", "bc",
-        "bootstrap_confidence_interval", "bci"))
+        "bootstrap_confidence_interval", "bci"
+      )
+    )
 
     # Add provided estimation type to each possible element.
     settings$estimation_type <- lapply(
       .get_available_data_elements(check_has_estimation_type = TRUE),
       function(x, estimation_type) (estimation_type),
-      estimation_type = settings$estimation_type[[1]])
+      estimation_type = settings$estimation_type[[1L]]
+    )
     
     # Add name of respective data elements.
     names(settings$estimation_type) <- .get_available_data_elements(
-      check_has_estimation_type = TRUE)
+      check_has_estimation_type = TRUE
+    )
     
   } else {
     # Check that the list elements are correctly specified.
@@ -3884,7 +4116,8 @@
       names(settings$estimation_type),
       .check_parameter_value_is_valid,
       var_name = "estimation_type (data element name)",
-      values = .get_available_data_elements(check_has_estimation_type = TRUE))
+      values = .get_available_data_elements(check_has_estimation_type = TRUE)
+    )
 
     # Check that the list contents are correctly specified.
     sapply(
@@ -3895,9 +4128,12 @@
           var_name = paste0("estimation_type (", element_name, ")"),
           values = c(
             "point", "bias_correction", "bc",
-            "bootstrap_confidence_interval", "bci"))
+            "bootstrap_confidence_interval", "bci"
+          )
+        )
       },
-      x = settings$estimation_type)
+      x = settings$estimation_type
+    )
   }
   
   # aggregate_results ----------------------------------------------------------
@@ -3908,28 +4144,35 @@
     var_name = "aggregate_results",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
 
-  if (length(settings$aggregate_results) == 0) {
+  if (length(settings$aggregate_results) == 0L) {
     # Default - use method-specific settings.
     settings$aggregate_results <- NULL
-  } else if (length(settings$aggregate_results) == 1 &&
-             is.null(names(settings$aggregate_results))) {
+    
+  } else if (
+    length(settings$aggregate_results) == 1L &&
+    is.null(names(settings$aggregate_results))
+  ) {
     # Check that the contents are a correctly specified, single string.
     .check_parameter_value_is_valid(
-      x = tolower(settings$aggregate_results[[1]]),
+      x = tolower(settings$aggregate_results[[1L]]),
       var_name = "aggregate_results",
-      values = c("true", "false", "none", "all", "default"))
+      values = c("true", "false", "none", "all", "default")
+    )
 
     # Add provided aggregate_results value to each possible element.
     settings$aggregate_results <- lapply(
       .get_available_data_elements(check_has_estimation_type = TRUE),
       function(x, aggregate_results) (aggregate_results),
-      aggregate_results = tolower(settings$aggregate_results[[1]]))
+      aggregate_results = tolower(settings$aggregate_results[[1L]])
+    )
 
     # Add name of respective data elements.
     names(settings$aggregate_results) <- .get_available_data_elements(
-      check_has_estimation_type = TRUE)
+      check_has_estimation_type = TRUE
+    )
     
   } else {
     # Check that the list elements are correctly specified.
@@ -3937,7 +4180,8 @@
       names(settings$aggregate_results),
       .check_parameter_value_is_valid,
       var_name = "aggregate_results (data element name)",
-      values = .get_available_data_elements(check_has_estimation_type = TRUE))
+      values = .get_available_data_elements(check_has_estimation_type = TRUE)
+    )
 
     # Check that the list contents are correctly specified.
     sapply(
@@ -3946,9 +4190,11 @@
         .check_parameter_value_is_valid(
           x = tolower(x[[element_name]]),
           var_name = paste0("aggregate_results (", element_name, ")"),
-          values = c("true", "false", "none", "all", "default"))
+          values = c("true", "false", "none", "all", "default")
+        )
       },
-      x = settings$aggregate_results)
+      x = settings$aggregate_results
+    )
   }
 
   # bootstrap_ci_method --------------------------------------------------------
@@ -3959,12 +4205,14 @@
     var_name = "bootstrap_ci_method",
     type = "character",
     optional = TRUE,
-    default = "percentile")
+    default = "percentile"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$bootstrap_ci_method,
     var_name = "bootstrap_ci_method",
-    values = .get_available_bootstrap_confidence_interval_methods())
+    values = .get_available_bootstrap_confidence_interval_methods()
+  )
 
   # confidence_level -----------------------------------------------------------
   # Width of the confidence intervals
@@ -3974,13 +4222,15 @@
     var_name = "confidence_level",
     type = "numeric",
     optional = TRUE,
-    default = 0.95)
+    default = 0.95
+  )
 
   .check_number_in_valid_range(
     x = settings$confidence_level,
     var_name = "confidence_level",
     range = c(0.0, 1.0),
-    closed = c(FALSE, FALSE))
+    closed = c(FALSE, FALSE)
+  )
 
   # feature_cluster_method -----------------------------------------------------
   # Feature cluster method
@@ -3990,7 +4240,8 @@
     var_name = "feature_cluster_method",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_method)
+    default = prep_cluster_method
+  )
 
   # feature_linkage_method -----------------------------------------------------
   # Feature linkage method
@@ -4000,7 +4251,8 @@
     var_name = "feature_linkage_method",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_linkage_method)
+    default = prep_cluster_linkage_method
+  )
 
   # feature_cluster_cut_method -------------------------------------------------
   # Feature cluster cluster cut method
@@ -4010,7 +4262,8 @@
     var_name = "feature_cluster_cut_method",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_cut_method)
+    default = prep_cluster_cut_method
+  )
 
   # feature_similarity_metric --------------------------------------------------
   # Feature similarity metric
@@ -4020,18 +4273,22 @@
     var_name = "feature_similarity_metric",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_similarity_metric)
+    default = prep_cluster_similarity_metric
+  )
 
   if (
-    any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in%
-        settings$evaluation_data_elements) &&
-    settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")) {
+    any(
+      c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements
+    ) && settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
+  ) {
     if (!require_package(
       x = "nnet",
       purpose = paste0(
         "to compute log-likelihood pseudo R2 similarity using the ",
-        settings$feature_similarity_metric, " metric"),
-      message_type = "backend_warning")) {
+        settings$feature_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
       settings$feature_similarity_metric <- "spearman"
     }
     
@@ -4040,8 +4297,10 @@
       x = "praznik",
       purpose = paste0(
         "to compute similarity using the ",
-        settings$feature_similarity_metric, " metric"),
-      message_type = "backend_warning")) {
+        settings$feature_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
       settings$cluster_similarity_metric <- "spearman"
     }
   }
@@ -4054,11 +4313,14 @@
     var_name = "feature_similarity_threshold",
     type = "numeric_list",
     optional = TRUE,
-    default = prep_cluster_similarity_threshold)
+    default = prep_cluster_similarity_threshold
+  )
 
   # Check the proposed cluster parameters.
-  if (any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in%
-          settings$evaluation_data_elements)) {
+  if (any(
+    c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in%
+    settings$evaluation_data_elements
+  )) {
     .check_cluster_parameters(
       cluster_method = settings$feature_cluster_method,
       cluster_linkage = settings$feature_linkage_method,
@@ -4066,7 +4328,8 @@
       cluster_similarity_threshold = settings$feature_similarity_threshold,
       cluster_similarity_metric = settings$feature_similarity_metric,
       data_type = "feature",
-      message_type = "backend_error")
+      message_type = "backend_error"
+    )
   }
 
   # sample_cluster_method ------------------------------------------------------
@@ -4077,7 +4340,8 @@
     var_name = "sample_cluster_method",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_method)
+    default = prep_cluster_method
+  )
 
   # sample_linkage_method ------------------------------------------------------
   # Sample cluster linkage method
@@ -4087,7 +4351,8 @@
     var_name = "sample_linkage_method",
     type = "character",
     optional = TRUE,
-    default = prep_cluster_linkage_method)
+    default = prep_cluster_linkage_method
+  )
 
   # sample_similarity_metric ---------------------------------------------------
   # Sample similarity metric
@@ -4097,16 +4362,21 @@
     var_name = "sample_similarity_metric",
     type = "character",
     optional = TRUE,
-    default = "gower_winsor")
+    default = "gower_winsor"
+  )
 
-  if (any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &&
-    settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")) {
+  if (
+    any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &&
+    settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
+  ) {
     if (!require_package(
       x = "nnet",
       purpose = paste0(
         "to compute log-likelihood pseudo R2 similarity using the ",
-        settings$sample_similarity_metric, " metric"),
-      message_type = "backend_warning")) {
+        settings$sample_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
       settings$sample_similarity_metric <- "gower_winsor"
     }
   }
@@ -4118,7 +4388,8 @@
       cluster_linkage = settings$sample_linkage_method,
       cluster_similarity_metric = settings$sample_similarity_metric,
       data_type = "sample",
-      message_type = "backend_error")
+      message_type = "backend_error"
+    )
   }
 
   # eval_aggregation_method ----------------------------------------------------
@@ -4129,12 +4400,14 @@
     var_name = "eval_aggregation_method",
     type = "character",
     optional = TRUE,
-    default = vimp_aggregation_method)
+    default = vimp_aggregation_method
+  )
 
   .check_parameter_value_is_valid(
     x = settings$aggregation,
     var_name = "eval_aggregation_method",
-    values = .get_available_rank_aggregation_methods())
+    values = .get_available_rank_aggregation_methods()
+  )
 
   # eval_aggregation_rank_threshold --------------------------------------------
   # Variable importance rank threshold (used by some aggregation methods)
@@ -4144,13 +4417,15 @@
     var_name = "eval_aggregation_rank_threshold",
     type = "integer",
     optional = TRUE,
-    default = vimp_aggregation_rank_threshold)
+    default = vimp_aggregation_rank_threshold
+  )
 
   if (!is.null(settings$aggr_rank_threshold)) {
     .check_number_in_valid_range(
       x = settings$aggr_rank_threshold,
       var_name = "eval_aggregation_rank_threshold",
-      range = c(1, Inf))
+      range = c(1L, Inf)
+    )
   }
 
   # eval_icc_type --------------------------------------------------------------
@@ -4161,12 +4436,14 @@
     var_name = "eval_icc_type",
     type = "character",
     optional = TRUE,
-    default = "1")
+    default = "1"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$icc_type,
     var_name = "eval_icc_type",
-    values = .get_available_icc_types())
+    values = .get_available_icc_types()
+  )
 
   # stratification_method ------------------------------------------------------
   # Method used to set stratification thresholds for Kaplan-Meier analysis
@@ -4176,20 +4453,23 @@
     var_name = "stratification_method",
     type = "character_list",
     optional = TRUE,
-    default = "median")
+    default = "median"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$strat_method,
     var_name = "stratification_method",
-    values = .get_available_stratification_methods())
+    values = .get_available_stratification_methods()
+  )
 
   if ("optimised" %in% settings$strat_method) {
     if (!require_package(
       x = "maxstat",
       purpose = "to determine an optimal risk threshold",
-      message_type = "backend_warning")) {
+      message_type = "backend_warning"
+    )) {
       settings$strat_method <- setdiff(settings$strat_method, "optimised")
-      if (length(settings$strat_method) == 0) settings$strat_method <- "median"
+      if (length(settings$strat_method) == 0L) settings$strat_method <- "median"
     }
   }
 
@@ -4204,14 +4484,16 @@
     var_name = "stratification_threshold",
     type = "numeric_list",
     optional = TRUE,
-    default = c(1 / 3, 2 / 3))
+    default = c(1.0 / 3.0, 2.0 / 3.0)
+  )
 
   sapply(
     settings$strat_quant_threshold,
     .check_number_in_valid_range,
     var_name = "stratification_threshold",
     range = c(0.0, 1.0),
-    closed = c(FALSE, FALSE))
+    closed = c(FALSE, FALSE)
+  )
 
   # time_max -------------------------------------------------------------------
   # Study end time (this is used for plotting, and Uno's concordance index).
@@ -4221,7 +4503,8 @@
     var_name = "time_max",
     type = "numeric",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # evaluation_times -----------------------------------------------------------
   # Times at which calibration is evaluated for time-to-event (survival) data.
@@ -4231,7 +4514,8 @@
     var_name = "evaluation_time",
     type = "numeric_list",
     optional = TRUE,
-    default = NULL)
+    default = NULL
+  )
 
   # Update time_max and eval_times only if we are dealing with survival
   # endpoints.
@@ -4245,13 +4529,13 @@
       } else if (!is.null(development_batch_id)) {
         # 98th percentile of all outcome times in the training cohorts.
         settings$time_max <- .get_default_time_max(
-          data[outcome_event == 1 & batch_id %in% development_batch_id]$outcome_time
+          data[outcome_event == 1L & batch_id %in% development_batch_id]$outcome_time
         )
         
       } else {
         # 98th percentile of all outcome times in the training cohorts.
         settings$time_max <- .get_default_time_max(
-          data[outcome_event == 1]$outcome_time
+          data[outcome_event == 1L]$outcome_time
         )
       }
     }
@@ -4260,7 +4544,8 @@
       settings$time_max,
       var_name = "time_max",
       range = c(0.0, Inf),
-      closed = c(FALSE, TRUE))
+      closed = c(FALSE, TRUE)
+    )
     
     # Identify evaluation times if they were not provided.
     if (is.null(settings$eval_times)) settings$eval_times <- settings$time_max
@@ -4270,7 +4555,8 @@
       .check_number_in_valid_range,
       var_name = "evaluation_times",
       range = c(0.0, Inf),
-      closed = c(FALSE, TRUE))
+      closed = c(FALSE, TRUE)
+    )
   }
 
   # dynamic_model_loading ------------------------------------------------------
@@ -4281,7 +4567,8 @@
     var_name = "dynamic_model_loading",
     type = "logical",
     optional = TRUE,
-    default = FALSE)
+    default = FALSE
+  )
 
   # parallel_evaluation --------------------------------------------------------
   # Parallelisation switch for parallel processing
@@ -4291,12 +4578,14 @@
     var_name = "parallel_evaluation",
     type = "character",
     optional = TRUE,
-    default = "TRUE")
+    default = "TRUE"
+  )
 
   .check_parameter_value_is_valid(
     x = settings$do_parallel,
     var_name = "parallel_evaluation",
-    values = c("TRUE", "FALSE", "inner", "outer"))
+    values = c("TRUE", "FALSE", "inner", "outer")
+  )
 
   # Disable if parallel is FALSE
   if (!parallel) settings$do_parallel <- "FALSE"
@@ -4354,7 +4643,7 @@
 
 .get_default_time_max <- function(x) {
   if (is_empty(x)) return(Inf)
-  if (all(!is.finite(x))) return(Inf)
+  if (!any(is.finite(x))) return(Inf)
   
   x <- x[is.finite(x)]
   

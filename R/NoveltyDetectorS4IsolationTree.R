@@ -5,7 +5,8 @@ NULL
 # familiarIsolationForest ------------------------------------------------------
 setClass(
   "familiarIsolationForest",
-  contains = "familiarNoveltyDetector")
+  contains = "familiarNoveltyDetector"
+)
 
 
 # initialize -------------------------------------------------------------------
@@ -41,7 +42,11 @@ setMethod(
 setMethod(
   "get_default_hyperparameters",
   signature(object = "familiarIsolationForest"),
-  function(object, data = NULL, ...) {
+  function(
+    object, 
+    data = NULL, 
+    ...
+  ) {
     # Initialise list and declare hyperparameter entries.
     param <- list()
     param$n_tree <- list()
@@ -63,7 +68,7 @@ setMethod(
     # number of trees ----------------------------------------------------------
     
     # We limit the number of trees to limit memory footprint.
-    default_n_trees <- log2(max(c(64, ceiling(sqrt(n_samples)))))
+    default_n_trees <- log2(max(c(64L, ceiling(sqrt(n_samples)))))
 
     # Note that the number of trees is defined in powers of 2, based on Oshiro,
     # T. M., Perez, P. S., & Baranauskas, J. A. (2012, July). How many trees in
@@ -71,15 +76,16 @@ setMethod(
     param$n_tree <- .set_hyperparameter(
       default = default_n_trees,
       type = "integer",
-      range = c(4, 10),
-      valid_range = c(0, Inf),
-      randomise = FALSE)
+      range = c(4L, 10L),
+      valid_range = c(0L, Inf),
+      randomise = FALSE
+    )
 
 
     # sample size --------------------------------------------------------------
     
     # We limit the number of samples in each tree to limit memory footprint.
-    default_sample_size <- max(c(128, ceiling(sqrt(n_samples))))
+    default_sample_size <- max(c(128L, ceiling(sqrt(n_samples))))
     if (n_samples < default_sample_size) default_sample_size <- n_samples
 
     # Express as fraction.
@@ -90,13 +96,14 @@ setMethod(
     param$sample_size <- .set_hyperparameter(
       default = default_sample_size,
       type = "numeric",
-      range = c(2 / n_samples, 1.0),
-      valid_range = c(0, 1),
-      randomise = FALSE)
+      range = c(2.0 / n_samples, 1.0),
+      valid_range = c(0.0, 1.0),
+      randomise = FALSE
+    )
 
     # number of candidate features selected at node ----------------------------
 
-    default_m_try <- 3 / n_features
+    default_m_try <- 3.0 / n_features
     if (default_m_try > 1.0) default_m_try <- 1.0
 
     # Note that the number of features is here noted as a fraction, but is used
@@ -106,41 +113,44 @@ setMethod(
       default = default_m_try,
       type = "numeric",
       range = c(0.0, 1.0),
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     # maximum tree depth -------------------------------------------------------
 
-    default_tree_depth <- ceiling(log2(default_sample_size * n_samples))
-    if (default_tree_depth < 1) default_tree_depth <- 1
+    default_tree_depth <- as.integer(ceiling(log2(default_sample_size * n_samples)))
+    if (default_tree_depth < 1L) default_tree_depth <- 1L
 
     # Determines the depth trees are allowed to grow to. Larger depths increase
     # the risk of overfitting.
     param$tree_depth <- .set_hyperparameter(
       default = default_tree_depth,
       type = "integer",
-      range = c(1, 10),
-      valid_range = c(1, Inf),
-      randomise = FALSE)
+      range = c(1L, 10L),
+      valid_range = c(1L, Inf),
+      randomise = FALSE
+    )
 
     # number of splitting dimensions -------------------------------------------
 
     # Switch between extended and conventional isolation trees.
     if (object@learner %in% c("isolation_forest", "extended_isolation_forest")) {
-      default_n_dim <- 3
+      default_n_dim <- 3L
     } else if (object@learner %in% c("simple_isolation_forest")) {
-      default_n_dim <- 1
+      default_n_dim <- 1L
     }
 
     # The number of splitting dimensions cannot be larger than the number of
     # features.
-    if (default_n_dim > n_features && n_features > 0) default_n_dim <- n_features
+    if (default_n_dim > n_features && n_features > 0L) default_n_dim <- n_features
 
     param$n_dim <- .set_hyperparameter(
       default = default_n_dim,
       type = "integer",
-      range = c(1, 3),
-      valid_range = c(1, Inf),
-      randomise = FALSE)
+      range = c(1L, 3L),
+      valid_range = c(1L, Inf),
+      randomise = FALSE
+    )
 
     return(param)
   }
@@ -153,7 +163,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarIsolationForest",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if the training data is ok.
     if (has_bad_training_data(object = object, data = data)) return(callNextMethod())
@@ -172,7 +183,8 @@ setMethod(
       data@data[[current_feature]] <- factor(
         x = data@data[[current_feature]],
         levels = levels(data@data[[current_feature]]),
-        ordered = FALSE)
+        ordered = FALSE
+      )
     }
 
     # Extract hyperparameters from the object.
@@ -185,12 +197,13 @@ setMethod(
     detector <- isotree::isolation.forest(
       data = data@data[, mget(get_feature_columns(data))],
       sample_size = ceiling(param$sample_size * nrow(data@data)),
-      ntrees = ceiling(2^(param$n_tree)),
+      ntrees = as.integer(ceiling(2.0^(param$n_tree))),
       ndim = param$n_dim,
-      ntry = max(c(1, ceiling(param$m_try * get_n_features(x = data)))),
+      ntry = max(c(1L, as.integer(ceiling(param$m_try * get_n_features(x = data))))),
       max_depth = param$tree_depth,
       nthreads = 1L,
-      missing_action = "fail")
+      missing_action = "fail"
+    )
 
     # Add model
     object@model <- detector
@@ -209,8 +222,14 @@ setMethod(
   "..predict",
   signature(
     object = "familiarIsolationForest",
-    data = "dataObject"),
-  function(object, data, type = "novelty", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "novelty",
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
@@ -226,7 +245,8 @@ setMethod(
       data@data[[current_feature]] <- factor(
         x = data@data[[current_feature]],
         levels = levels(data@data[[current_feature]]),
-        ordered = FALSE)
+        ordered = FALSE
+      )
     }
 
     # Find novelty values.
@@ -271,12 +291,14 @@ setMethod(
   "has_bad_training_data", 
   signature(
     object = "familiarNoveltyDetector",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data,
     allow_no_features = FALSE,
-    ...) {
+    ...
+  ) {
     # Checks the data for consistency and usability. Any errors are passed as
     # attributes
     
@@ -284,10 +306,11 @@ setMethod(
     return_value <- callNextMethod()
     if (return_value) return(return_value)
     
-    if (nrow(data@data) < 3) {
+    if (nrow(data@data) < 3L) {
       return_value <- TRUE
       attr(return_value, "error") <- paste0(
-        "Too few samples were available to train the isolation forest.")
+        "Too few samples were available to train the isolation forest."
+      )
       
       return(return_value)
     }

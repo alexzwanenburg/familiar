@@ -31,11 +31,13 @@ setMethod(
 .get_detector_hyperparameters <- function(
     data,
     detector,
-    names_only = FALSE) {
+    names_only = FALSE
+) {
   # Create familiarNoveltyDetector
   fam_detector <- methods::new(
     "familiarNoveltyDetector",
-    learner = detector)
+    learner = detector
+  )
 
   # Set up the specific model.
   fam_detector <- promote_detector(object = fam_detector)
@@ -43,7 +45,8 @@ setMethod(
   # Model hyperparameters
   detector_hyperparameters <- get_default_hyperparameters(
     object = fam_detector,
-    data = data)
+    data = data
+  )
 
   # Extract names from parameter list
   if (names_only) detector_hyperparameters <- names(detector_hyperparameters)
@@ -57,7 +60,8 @@ setMethod(
   # Create familiarNoveltyDetector
   fam_detector <- methods::new(
     "familiarNoveltyDetector",
-    learner = detector)
+    learner = detector
+  )
 
   # Set up the specific novelty detector
   fam_detector <- promote_detector(fam_detector)
@@ -68,10 +72,14 @@ setMethod(
   if (as_flag) return(detector_available)
 
   # Check if the familiar model has been successfully promoted.
-  if (!is_subclass(class(fam_detector)[1], "familiarNoveltyDetector")) {
-    stop(paste0(
-      detector, " is not a valid novelty detector. ",
-      "Please check the documentation for available novelty detectors."))
+  if (!is_subclass(class(fam_detector)[1L], "familiarNoveltyDetector")) {
+    ..error(
+      paste0(
+        detector, " is not a valid novelty detector. ",
+        "Please check the documentation for available novelty detectors."
+      ),
+      error_class = "input_argument_error"
+    )
   }
 
   # Check that the required package can be loaded.

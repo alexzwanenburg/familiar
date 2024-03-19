@@ -6,7 +6,8 @@ NULL
 # familiarNoneNoveltyDetector --------------------------------------------------
 setClass(
   "familiarNoneNoveltyDetector",
-  contains = "familiarNoveltyDetector")
+  contains = "familiarNoveltyDetector"
+)
 
 
 
