@@ -128,10 +128,10 @@ setGeneric(
       plot_sub_title = waiver(),
       caption = NULL,
       x_range = NULL,
-      x_n_breaks = 5,
+      x_n_breaks = 5L,
       x_breaks = NULL,
       y_range = NULL,
-      y_n_breaks = 5,
+      y_n_breaks = 5L,
       y_breaks = NULL,
       conf_int_style = c("ribbon", "step", "none"),
       conf_int_alpha = 0.4,
@@ -143,7 +143,8 @@ setGeneric(
       height = waiver(),
       units = waiver(),
       export_collection = FALSE,
-      ...) {
+      ...
+  ) {
     standardGeneric("plot_calibration_data")
   }
 )
@@ -175,10 +176,10 @@ setMethod(
       plot_sub_title = waiver(),
       caption = NULL,
       x_range = NULL,
-      x_n_breaks = 5,
+      x_n_breaks = 5L,
       x_breaks = NULL,
       y_range = NULL,
-      y_n_breaks = 5,
+      y_n_breaks = 5L,
       y_breaks = NULL,
       conf_int_style = c("ribbon", "step", "none"),
       conf_int_alpha = 0.4,
@@ -190,13 +191,16 @@ setMethod(
       height = waiver(),
       units = waiver(),
       export_collection = FALSE,
-      ...) {
+      ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list("object" = object, "data_element" = "calibration_data"),
-        list(...)))
+        list(...)
+      )
+    )
 
     return(do.call(
       plot_calibration_data,
@@ -233,7 +237,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -264,10 +270,10 @@ setMethod(
       plot_sub_title = waiver(),
       caption = NULL,
       x_range = NULL,
-      x_n_breaks = 5,
+      x_n_breaks = 5L,
       x_breaks = NULL,
       y_range = NULL,
-      y_n_breaks = 5,
+      y_n_breaks = 5L,
       y_breaks = NULL,
       conf_int_style = c("ribbon", "step", "none"),
       conf_int_alpha = 0.4,
@@ -279,7 +285,8 @@ setMethod(
       height = waiver(),
       units = waiver(),
       export_collection = FALSE,
-      ...) {
+      ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     .NATURAL <- NULL
 
@@ -289,7 +296,8 @@ setMethod(
     # Get input data
     x <- export_calibration_data(
       object = object,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     # Check that the data are not empty.
     if (is_empty(x$data)) return(NULL)
@@ -301,10 +309,10 @@ setMethod(
     }
 
     # Get data
-    calibration_data <- x$data[[1]]@data
-    density_data <- x$density[[1]]@data
-    linear_test_data <- x$linear_test[[1]]@data
-    gof_test_data <- x$gof_test[[1]]@data
+    calibration_data <- x$data[[1L]]@data
+    density_data <- x$density[[1L]]@data
+    linear_test_data <- x$linear_test[[1L]]@data
+    gof_test_data <- x$gof_test[[1L]]@data
 
     # Check that the calibration data are not empty.
     if (is_empty(calibration_data)) return(NULL)
@@ -313,7 +321,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = TRUE),
       purpose = "to create calibration plots",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -337,43 +346,47 @@ setMethod(
     }
 
     # x_range
-    if (is.null(x_range)) x_range <- c(0, 1)
+    if (is.null(x_range)) x_range <- c(0.0, 1.0)
 
     # x_breaks
     if (is.null(x_breaks)) {
       # Check input arguments.
       .check_input_plot_args(
         x_range = x_range,
-        x_n_breaks = x_n_breaks)
+        x_n_breaks = x_n_breaks
+      )
 
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
         m = x_n_breaks,
-        dmin = x_range[1],
-        dmax = x_range[2],
-        only.loose = TRUE)
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
 
-      x_range <- c(head(x_breaks, n = 1), tail(x_breaks, n = 1))
+      x_range <- c(head(x_breaks, n = 1L), tail(x_breaks, n = 1L))
     }
 
     # y_range
-    if (is.null(y_range)) y_range <- c(0, 1)
+    if (is.null(y_range)) y_range <- c(0.0, 1.0)
 
     # y_breaks
     if (is.null(y_breaks)) {
       # Check input arguments.
       .check_input_plot_args(
         y_range = y_range,
-        y_n_breaks = y_n_breaks)
+        y_n_breaks = y_n_breaks
+      )
 
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
         m = y_n_breaks,
-        dmin = y_range[1],
-        dmax = y_range[2],
-        only.loose = TRUE)
+        dmin = y_range[1L],
+        dmax = y_range[2L],
+        only.loose = TRUE
+      )
 
-      y_range <- c(head(y_breaks, n = 1), tail(y_breaks, n = 1))
+      y_range <- c(head(y_breaks, n = 1L), tail(y_breaks, n = 1L))
     }
 
     # x_label
@@ -403,13 +416,13 @@ setMethod(
     }
 
     # conf_int_style
-    if (length(conf_int_style) > 1) {
-      conf_int_style <- head(conf_int_style, n = 1)
+    if (length(conf_int_style) > 1L) {
+      conf_int_style <- head(conf_int_style, n = 1L)
     }
 
     # Set the style of the confidence interval to none, in case no confidence
     # interval data is present.
-    if (!x$data[[1]]@estimation_type %in% c("bci", "bootstrap_confidence_interval")) {
+    if (!x$data[[1L]]@estimation_type %in% c("bci", "bootstrap_confidence_interval")) {
       conf_int_style <- "none"
     }
 
@@ -424,8 +437,8 @@ setMethod(
       # analysis.
       if (object@outcome_type %in% c("survival")) {
         facet_by <- c(facet_by, "evaluation_time")
-      } else if (
-        object@outcome_type %in% c("multinomial")) {
+        
+      } else if (object@outcome_type %in% c("multinomial")) {
         facet_by <- c(facet_by, "positive_class")
       }
     }
@@ -447,7 +460,8 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = available_splitting_vars)
+      available = available_splitting_vars
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -457,7 +471,8 @@ setMethod(
     # Create a legend label
     legend_label <- .create_plot_legend_title(
       user_label = legend_label,
-      color_by = color_by)
+      color_by = color_by
+    )
 
     # Update show_density, show_goodness_of_fit and show_calibration_fit
     # variables so that they are FALSE in case color_by is set.
@@ -471,22 +486,26 @@ setMethod(
     .check_parameter_value_is_valid(
       x = show_calibration_fit,
       var_name = "show_calibration_fit",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
     
     .check_parameter_value_is_valid(
       x = show_goodness_of_fit,
       var_name = "show_goodness_of_fit",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
     
     .check_parameter_value_is_valid(
       x = show_density,
       var_name = "show_density",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
 
     # Check density_plot_height
     .check_plot_grid_unit(
       x = density_plot_height,
-      var_name = "density_plot_height")
+      var_name = "density_plot_height"
+    )
 
     # Check input arguments for validity.
     .check_input_plot_args(
@@ -500,7 +519,8 @@ setMethod(
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption)
+      caption = caption
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -512,7 +532,8 @@ setMethod(
       data_split <- split(
         unique(calibration_data[, mget(split_by)]),
         by = split_by,
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       data_split <- list(NULL)
@@ -522,7 +543,7 @@ setMethod(
     if (is.null(dir_path)) plot_list <- list()
 
     # Find grouping columns
-    grouping_column <- x$data[[1]]@grouping_column
+    grouping_column <- x$data[[1L]]@grouping_column
     grouping_column <- setdiff(grouping_column, "expected")
 
     # Iterate over splits
@@ -577,18 +598,22 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, facet_by) &&
-          object@outcome_type %in% c("survival")) {
+      if (
+        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        object@outcome_type %in% c("survival")
+      ) {
         additional_subtitle <- c(
           additional_subtitle,
-          .add_time_to_plot_subtitle(calibration_data_split$evaluation_time[1]))
+          .add_time_to_plot_subtitle(calibration_data_split$evaluation_time[1L])
+        )
       }
 
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = current_split)
+          x = current_split
+        )
       }
 
       # Generate plot
@@ -621,8 +646,9 @@ setMethod(
         gof_test = gof_test_data_split,
         density = density_data_split,
         outcome_type = object@outcome_type,
-        grouping_column = x$linear_test[[1]]@grouping_column,
-        is_point = x$data[[1]]@estimation_type %in% c("point"))
+        grouping_column = x$linear_test[[1L]]@grouping_column,
+        is_point = x$data[[1L]]@estimation_type %in% c("point")
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -637,7 +663,8 @@ setMethod(
           x = calibration_data_split,
           facet_by = facet_by,
           facet_wrap_cols = facet_wrap_cols,
-          show_density = show_density)
+          show_density = show_density
+        )
 
         # Save to file.
         do.call(
@@ -650,10 +677,13 @@ setMethod(
               "type" = "calibration",
               "x" = current_split,
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list and export
@@ -666,7 +696,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -702,27 +733,33 @@ setMethod(
     density,
     outcome_type,
     grouping_column,
-    is_point) {
+    is_point
+) {
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- .get_plot_layout_table(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Split data into facets. This is done by row.
   data_facet_list <- .split_data_by_plot_facet(
     x = x,
-    plot_layout_table = plot_layout_table)
+    plot_layout_table = plot_layout_table
+  )
   linear_test_facet_list <- .split_data_by_plot_facet(
     x = linear_test,
-    plot_layout_table = plot_layout_table)
+    plot_layout_table = plot_layout_table
+  )
   gof_test_facet_list <- .split_data_by_plot_facet(
     x = gof_test,
-    plot_layout_table = plot_layout_table)
+    plot_layout_table = plot_layout_table
+  )
   density_facet_list <- .split_data_by_plot_facet(
     x = density,
-    plot_layout_table = plot_layout_table)
+    plot_layout_table = plot_layout_table
+  )
 
   # Placeholders for plots.
   figure_list <- list()
@@ -756,7 +793,8 @@ setMethod(
       gof_test = gof_test_facet_list[[ii]],
       outcome_type = outcome_type,
       grouping_column = grouping_column,
-      is_point = is_point)
+      is_point = is_point
+    )
 
     # Extract plot elements from the main calibration plot.
     extracted_elements <- .extract_plot_grobs(p = p_calibration)
@@ -767,11 +805,14 @@ setMethod(
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(
       g = .convert_to_grob(p_calibration),
-      extension = "main")
+      extension = "main"
+    )
 
-    if (show_density && 
-        gtable::is.gtable(g_calibration) &&
-        !is_empty(density_facet_list[[ii]])) {
+    if (
+      show_density && 
+      gtable::is.gtable(g_calibration) &&
+      !is_empty(density_facet_list[[ii]])
+    ) {
       # Procedure for normal density plots.
       p_margin <- .create_calibration_density_subplot(
         x = density_facet_list[[ii]],
@@ -779,13 +820,15 @@ setMethod(
         x_range = x_range,
         x_breaks = x_breaks,
         flip = FALSE,
-        plot_height = density_plot_height)
+        plot_height = density_plot_height
+      )
 
       # Extract the panel element from the density plot.
       g_margin <- .gtable_extract(
         g = .convert_to_grob(p_margin),
         element = c("panel"),
-        partial_match = TRUE)
+        partial_match = TRUE
+      )
 
       # Insert in the calibration plot at the top margin.
       g_calibration <- .gtable_insert(
@@ -794,18 +837,21 @@ setMethod(
         where = "top",
         ref_element = "panel-main",
         partial_match = TRUE,
-        spacer = list("b" = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x")))
+        spacer = list("b" = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"))
+      )
     }
 
     # Add combined grob to list
     figure_list <- c(
       figure_list,
-      list(g_calibration))
+      list(g_calibration)
+    )
 
     # Add extract elements to the grob_element_list
     extracted_element_list <- c(
       extracted_element_list,
-      list(extracted_elements))
+      list(extracted_elements)
+    )
   }
 
   # Update the layout table.
@@ -816,14 +862,16 @@ setMethod(
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
     plot_layout_table = plot_layout_table,
     element_grobs = extracted_element_list,
-    ggtheme = ggtheme)
+    ggtheme = ggtheme
+  )
 
   return(g)
 }
@@ -855,7 +903,8 @@ setMethod(
     linear_test,
     gof_test,
     outcome_type,
-    is_point) {
+    is_point
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   type <- NULL
 
@@ -866,14 +915,16 @@ setMethod(
   # outcomes.
   cast_formula <- stats::as.formula(paste0(
     paste(setdiff(grouping_column, "type"), collapse = "+"),
-    "~type"))
+    "~type"
+  ))
   
   if (!is_empty(linear_test)) {
     # Cast wide on the value of the intercept or slope coefficient.
     linear_fit <- data.table::dcast(
       data = linear_test,
       cast_formula,
-      value.var = "value")
+      value.var = "value"
+    )
     
   } else {
     linear_fit <- NULL
@@ -884,11 +935,13 @@ setMethod(
   x_guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
   fit_guide_list <- .create_plot_guide_table(
     x = linear_fit,
     color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
 
   # Extract data
   x <- x_guide_list$data
@@ -898,7 +951,9 @@ setMethod(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("expected"),
-      y = !!sym("observed")))
+      y = !!sym("observed")
+    )
+  )
 
   # Add theme
   p <- p + ggtheme
@@ -908,14 +963,16 @@ setMethod(
     slope = 1.0,
     intercept = 0.0,
     colour = "grey80",
-    linetype = "dashed")
+    linetype = "dashed"
+  )
 
   # Add fill colors
   if (!is.null(color_by)) {
     if (is_point) {
       # Add scatter for individual data points.
       p <- p + ggplot2::geom_point(
-        mapping = ggplot2::aes(colour = !!sym("color_breaks")))
+        mapping = ggplot2::aes(colour = !!sym("color_breaks"))
+      )
       
     } else {
       if (utils::packageVersion("ggplot2") >= "3.4.0") {
@@ -925,13 +982,15 @@ setMethod(
         # Add line for individual data points.
         p <- p + ggplot2::geom_line(
           mapping = ggplot2::aes(colour = !!sym("color_breaks")),
-          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3)
+          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+        )
         
       } else {
         # For backward compatibility with ggplot2 versions prior to 3.4.0
         p <- p + ggplot2::geom_line(
           mapping = ggplot2::aes(colour = !!sym("color_breaks")),
-          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3)
+          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+        )
       }
     }
 
@@ -943,7 +1002,9 @@ setMethod(
         mapping = ggplot2::aes(
           colour = !!sym("color_breaks"),
           intercept = !!sym("offset"),
-          slope = !!sym("slope")))
+          slope = !!sym("slope")
+        )
+      )
     }
 
     # Set colour.
@@ -951,13 +1012,15 @@ setMethod(
       name = legend_label$guide_color,
       values = x_guide_list$guide_color$color_values,
       breaks = x_guide_list$guide_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
 
     p <- p + ggplot2::scale_fill_manual(
       name = legend_label$guide_color,
       values = x_guide_list$guide_color$color_values,
       breaks = x_guide_list$guide_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
     
   } else {
     if (is_point) {
@@ -970,13 +1033,15 @@ setMethod(
 
         # Add scatter for individual data points.
         p <- p + ggplot2::geom_line(
-          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3)
+          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+        )
         
       } else {
         # For backward compatibility with ggplot2 versions prior to version
         # 3.4.0.
         p <- p + ggplot2::geom_line(
-          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3)
+          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+        )
       }
     }
 
@@ -986,54 +1051,66 @@ setMethod(
         data = fit_guide_list$data,
         mapping = ggplot2::aes(
           intercept = !!sym("offset"),
-          slope = !!sym("slope")))
+          slope = !!sym("slope")
+        )
+      )
     }
   }
 
   # Plot confidence intervals
-  if (conf_int_style[1] != "none") {
-    if (conf_int_style[1] == "step") {
+  if (conf_int_style[1L] != "none") {
+    if (conf_int_style[1L] == "step") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(y = !!sym("ci_low")),
-          linetype = "dashed")
+          linetype = "dashed"
+        )
 
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(y = !!sym("ci_up")),
-          linetype = "dashed")
+          linetype = "dashed"
+        )
         
       } else {
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(
             y = !!sym("ci_low"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
 
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(
             y = !!sym("ci_up"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
       }
 
       # Remove linetype from the legend.
       p <- p + ggplot2::scale_linetype(guide = FALSE)
       
-    } else if (conf_int_style[1] == "ribbon") {
+    } else if (conf_int_style[1L] == "ribbon") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_ribbon(
           mapping = ggplot2::aes(
             ymin = !!sym("ci_low"),
-            ymax = !!sym("ci_up")),
-          alpha = conf_int_alpha)
+            ymax = !!sym("ci_up")
+          ),
+          alpha = conf_int_alpha
+        )
         
       } else {
         p <- p + ggplot2::geom_ribbon(
           mapping = ggplot2::aes(
             ymin = !!sym("ci_low"),
             ymax = !!sym("ci_up"),
-            fill = !!sym("color_breaks")),
-          alpha = conf_int_alpha)
+            fill = !!sym("color_breaks")
+          ),
+          alpha = conf_int_alpha
+        )
       }
     }
   }
@@ -1046,7 +1123,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -1054,20 +1132,24 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
   # Annotate calibration information.
-  if ((show_calibration_fit && !is_empty(linear_test)) ||
-      (show_goodness_of_fit && !is_empty(gof_test))) {
+  if (
+    (show_calibration_fit && !is_empty(linear_test)) ||
+    (show_goodness_of_fit && !is_empty(gof_test))
+  ) {
     # Merge test data
-    label <- character(0)
+    label <- character(0L)
 
     if (show_calibration_fit && !is_empty(linear_test)) {
       # Add calibration-in-the-large.
@@ -1076,40 +1158,48 @@ setMethod(
           label,
           paste0(
             "intercept: ",
-            format(round(linear_test[type == "offset"]$value, 2), nsmall = 2),
+            format(round(linear_test[type == "offset"]$value, 2L), nsmall = 2L),
             " (",
-            format(round(linear_test[type == "offset"]$ci_low, 2), nsmall = 2),
+            format(round(linear_test[type == "offset"]$ci_low, 2L), nsmall = 2L),
             "\u2013",
-            ifelse(round(linear_test[type == "offset"]$ci_up, 2) < 0, " ", ""),
-            format(round(linear_test[type == "offset"]$ci_up, 2), nsmall = 2),
-            ")"))
+            ifelse(round(linear_test[type == "offset"]$ci_up, 2L) < 0.0, " ", ""),
+            format(round(linear_test[type == "offset"]$ci_up, 2L), nsmall = 2L),
+            ")"
+          )
+        )
 
         # Add calibration slope.
         label <- c(
           label,
           paste0(
             "slope: ",
-            format(round(linear_test[type == "slope"]$value, 2), nsmall = 2),
+            format(round(linear_test[type == "slope"]$value, 2L), nsmall = 2L),
             " (",
-            format(round(linear_test[type == "slope"]$ci_low, 2), nsmall = 2),
+            format(round(linear_test[type == "slope"]$ci_low, 2L), nsmall = 2L),
             "\u2013",
-            ifelse(round(linear_test[type == "slope"]$ci_up, 2) < 0, " ", ""),
-            format(round(linear_test[type == "slope"]$ci_up, 2), nsmall = 2),
-            ")"))
+            ifelse(round(linear_test[type == "slope"]$ci_up, 2L) < 0.0, " ", ""),
+            format(round(linear_test[type == "slope"]$ci_up, 2L), nsmall = 2L),
+            ")"
+          )
+        )
         
       } else {
         label <- c(
           label,
           paste0(
             "intercept: ",
-            format(round(linear_test[type == "offset"]$value, 2), nsmall = 2)))
+            format(round(linear_test[type == "offset"]$value, 2L), nsmall = 2L)
+          )
+        )
 
         # Add calibration slope.
         label <- c(
           label,
           paste0(
             "slope: ",
-            format(round(linear_test[type == "slope"]$value, 2), nsmall = 2)))
+            format(round(linear_test[type == "slope"]$value, 2L), nsmall = 2L)
+          )
+        )
       }
     }
 
@@ -1120,7 +1210,9 @@ setMethod(
           label,
           paste0(
             "HL-test p: ",
-            format(signif(gof_test[type == "hosmer_lemeshow"]$p_value, 2), nsmall = 2)))
+            format(signif(gof_test[type == "hosmer_lemeshow"]$p_value, 2L), nsmall = 2L)
+          )
+        )
       }
 
       # Nam-D'Agostino test
@@ -1129,7 +1221,9 @@ setMethod(
           label,
           paste0(
             "ND-test p: ",
-            format(signif(gof_test[type == "nam_dagostino"]$p_value, 2), nsmall = 2)))
+            format(signif(gof_test[type == "nam_dagostino"]$p_value, 2L), nsmall = 2L)
+          )
+        )
       }
 
       # Greenwood-Nam-D'Agostino test
@@ -1138,12 +1232,14 @@ setMethod(
           label,
           paste0(
             "GND-test p: ",
-            format(signif(gof_test[type == "greenwood_nam_dagostino"]$p_value, 2), nsmall = 2)))
+            format(signif(gof_test[type == "greenwood_nam_dagostino"]$p_value, 2L), nsmall = 2L)
+          )
+        )
       }
     }
 
     # Combine all label elements, and use for annotation
-    if (length(label) > 0) {
+    if (length(label) > 0L) {
       label <- paste(label, collapse = "\n")
 
       # Obtain default settings.
@@ -1152,15 +1248,16 @@ setMethod(
       # Show in plot
       p <- p + ggplot2::annotate(
         "text",
-        x = x_range[1],
-        y = y_range[2],
+        x = x_range[1L],
+        y = y_range[2L],
         label = label,
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
         size = text_settings$geom_text_size,
         vjust = "inward",
-        hjust = "inward")
+        hjust = "inward"
+      )
     }
   }
 
@@ -1170,12 +1267,11 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Prevent clipping of confidence intervals.
-  p <- p + ggplot2::coord_cartesian(
-    xlim = x_range,
-    ylim = y_range)
+  p <- p + ggplot2::coord_cartesian(xlim = x_range, ylim = y_range)
 
   return(p)
 }
@@ -1188,18 +1284,22 @@ setMethod(
     x_range,
     x_breaks,
     flip = FALSE,
-    plot_height) {
+    plot_height
+) {
   # Create plot
   p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("expected"),
-      weight = !!sym("frequency")))
+      weight = !!sym("frequency")
+    )
+  )
   
   p <- p + ggplot2::geom_density(bw = 0.075)
   p <- p + ggplot2::scale_x_continuous(
     breaks = x_breaks,
-    limits = x_range)
+    limits = x_range
+  )
 
   # Set main theme
   p <- p + ggtheme
@@ -1215,7 +1315,8 @@ setMethod(
     axis.text.y = ggplot2::element_blank(),
     axis.ticks.x = ggplot2::element_blank(),
     axis.title.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank())
+    axis.title.y = ggplot2::element_blank()
+  )
 
   if (flip) {
     p <- p + ggplot2::scale_y_reverse()
@@ -1234,22 +1335,24 @@ setMethod(
     x,
     facet_by,
     facet_wrap_cols,
-    show_density) {
+    show_density
+) {
   # Obtain facetting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Set default height and width for each subplot (in cm).
-  default_width <- 6
-  default_height <- ifelse(show_density, 6, 5.5)
+  default_width <- 6.0
+  default_height <- ifelse(show_density, 6.0, 5.5)
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }
