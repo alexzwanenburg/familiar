@@ -56,8 +56,9 @@ create_randomised_groups <- function(
     n_max_groups = NULL, 
     n_min_groups = NULL, 
     n_min_y_in_group = NULL, 
-    n_groups_init = 30, 
-    fast_mode = TRUE) {
+    n_groups_init = 30L, 
+    fast_mode = TRUE
+) {
 
   # Suppress NOTES due to non-standard evaluation in data.table
   group_id <- cum_y <- weight <- cum_prob_lower <- cum_prob_upper <- NULL
@@ -68,26 +69,26 @@ create_randomised_groups <- function(
   n_x <- length(x)
 
   # - Get number of y
-  if (is.null(y)) y <- rep(0, n_x)
+  if (is.null(y)) y <- rep(0L, n_x)
   n_y <- sum(y)
 
   # - Get the maximum of groups
   if (is.null(n_max_groups)) {
-    n_max_groups <- ceiling(2.5 * n_x^(1 / 3))
+    n_max_groups <- ceiling(2.5 * n_x^(1.0 / 3.0))
   }
 
   # - Update maximum number of groups
-  if (n_y > 0 && !is.null(n_min_y_in_group)) {
+  if (n_y > 0.0 && !is.null(n_min_y_in_group)) {
     n_max_groups <- min(c(n_max_groups, floor(n_y / n_min_y_in_group)))
   }
 
   # - Update mininum number of groups based on n_max_groups
   if (is.null(n_min_groups)) {
-    n_min_groups <- min(c(n_max_groups, ceiling(1.0 * n_x^(1 / 3))))
+    n_min_groups <- min(c(n_max_groups, ceiling(1.0 * n_x^(1.0 / 3.0))))
   }
 
   # Some checks
-  if (n_max_groups < n_min_groups || n_max_groups > n_x || n_max_groups < 2) {
+  if (n_max_groups < n_min_groups || n_max_groups > n_x || n_max_groups < 2L) {
     return(NULL)
   }
 
@@ -102,7 +103,7 @@ create_randomised_groups <- function(
     dt_agg <- dt_agg[, ":="("x" = x, "y" = y)][order(x)]
 
     # Initial loop counter
-    loop_iter <- 0
+    loop_iter <- 0L
 
     while (TRUE) {
       # Draw a random number of groups between n_min_groups and n_max_groups
@@ -111,8 +112,9 @@ create_randomised_groups <- function(
       } else {
         n_group_draw <- fam_sample(
           x = seq.int(from = n_min_groups, to = n_max_groups, by = 1L),
-          size = 1, 
-          replace = FALSE)
+          size = 1L, 
+          replace = FALSE
+        )
       }
 
       # Draw a randomised groups assignment
@@ -120,13 +122,15 @@ create_randomised_groups <- function(
         fam_sample(
           x = seq_len(n_group_draw),
           size = n_x, 
-          replace = TRUE))
+          replace = TRUE
+        )
+      )
 
       # Assign group id
       dt_agg[, "group_id" := random_group_id]
 
       # Check if all groups have the minimum required y (e.g. events/group size)
-      if (n_y > 0 && !is.null(n_min_y_in_group)) {
+      if (n_y > 0L && !is.null(n_min_y_in_group)) {
         dt_y <- dt_agg[, list(y_in_group = sum(y)), by = group_id]
         if (all(dt_y$y_in_group >= n_min_y_in_group)) break
         
@@ -137,11 +141,11 @@ create_randomised_groups <- function(
       }
 
       # Update loop_iter in case the sample was not good enough
-      loop_iter <- loop_iter + 1
+      loop_iter <- loop_iter + 1L
 
       # Break from outer loop after 10 unsuccessful random samplings and create
       # a static split instead
-      if (loop_iter >= 10) {
+      if (loop_iter >= 10L) {
         # Cumulative sum over y
         dt_agg[, "cum_y" := cumsum(y)]
 
@@ -150,9 +154,11 @@ create_randomised_groups <- function(
           x = cum_y,
           vec = c(
             -Inf,
-            stats::quantile(x = cum_y, (1:n_min_groups - 1) / n_min_groups),
-            Inf))]
-
+            stats::quantile(x = cum_y, (1L:(n_min_groups - 1L)) / n_min_groups),
+            Inf
+          )
+        )]
+        
         # Break from loop
         break
       }
@@ -163,8 +169,8 @@ create_randomised_groups <- function(
 
     # - Update maximum number of groups based on n_min_groups
     if (!is.null(n_min_groups)) {
-      if (n_max_groups < n_min_groups + 2) {
-        n_max_groups <- n_min_groups + 2
+      if (n_max_groups < n_min_groups + 2L) {
+        n_max_groups <- n_min_groups + 2L
       }
     }
 
@@ -185,12 +191,13 @@ create_randomised_groups <- function(
 
     # Randomly reduce group sizes by 1
     n_samples_subtract <- init_group_size * n_groups_init - n_x
-    if (n_samples_subtract > 0) {
+    if (n_samples_subtract > 0L) {
       group_ind <- fam_sample(
         x = seq_len(n_groups_init),
         size = n_samples_subtract,
-        replace = FALSE)
-      group_size[group_ind] <- group_size[group_ind] - 1
+        replace = FALSE
+      )
+      group_size[group_ind] <- group_size[group_ind] - 1L
       rm("group_ind")
     }
 
@@ -198,7 +205,7 @@ create_randomised_groups <- function(
     dt[, "group_id" := rep(seq_len(n_groups_init), times = group_size)]
     rm("init_group_size", "n_samples_subtract", "group_size", "n_groups_init")
 
-    loop_iter <- 0
+    loop_iter <- 0L
 
     # Outer loop that checks whether the final number of groups is not smaller
     # than n_min_groups
@@ -211,48 +218,49 @@ create_randomised_groups <- function(
       # - weight is the unnormalised selection probability
       # - exclude is a flag to set weights to 0 for groups that would otherwise
       #   grow too large.
-      dt_s <- dt_agg[, list(group_size = .N, exclude = FALSE, weight = 1 / .N), by = group_id]
+      dt_s <- dt_agg[, list(group_size = .N, exclude = FALSE, weight = 1.0 / .N), by = group_id]
 
       # Determine the total weight for normalizing weights into probabilities
       total_weight <- sum(dt_s$weight)
       dt_s[, "cum_prob_upper" := cumsum(weight) / (total_weight)]
-      dt_s[, "cum_prob_lower" := c(0, dt_s$cum_prob_upper[seq_along(dt_s$cum_prob_upper) - 1])]
+      dt_s[, "cum_prob_lower" := c(0.0, dt_s$cum_prob_upper[seq_along(dt_s$cum_prob_upper) - 1.0])]
 
       # Inner loop that agglomerates groups
       while (n_groups > n_max_groups) {
         # Draw two numbers uniformly from [0,1]
-        r_prob <- stats::runif(n = 2)
+        r_prob <- stats::runif(n = 2L)
 
         # Get the group id that contains r_prob[1]
         sel_group_id <- dt_s[data.table::between(
-          r_prob[1], 
+          r_prob[1L], 
           lower = cum_prob_lower, 
-          upper = cum_prob_upper)]$group_id[1]
+          upper = cum_prob_upper
+        )]$group_id[1L]
 
         # Get neighbouring group_ids
-        group_left <- tail(dt_s[group_id < sel_group_id], n = 1)
-        group_right <- head(dt_s[group_id > sel_group_id], n = 1)
+        group_left <- tail(dt_s[group_id < sel_group_id], n = 1L)
+        group_right <- head(dt_s[group_id > sel_group_id], n = 1L)
 
         # Get join probabilities
-        if (nrow(group_left) == 0) {
-          left_prob <- 0
+        if (nrow(group_left) == 0L) {
+          left_prob <- 0.0
         } else {
           left_prob <- group_left$weight
         }
-        if (nrow(group_right) == 0) {
-          right_prob <- 0
+        if (nrow(group_right) == 0L) {
+          right_prob <- 0.0
         } else {
           right_prob <- group_right$weight
         }
         cum_join_prob <- left_prob + right_prob
 
         # Only join if the combined joining probability is not 0
-        if (cum_join_prob > 0) {
+        if (cum_join_prob > 0.0) {
           # Normalise probability
           left_prob <- left_prob / cum_join_prob
 
           # Determine join
-          if (r_prob[2] < left_prob) {
+          if (r_prob[2L] < left_prob) {
             join_id <- group_left$group_id
           } else {
             join_id <- group_right$group_id
@@ -278,23 +286,23 @@ create_randomised_groups <- function(
         dt_s[group_size >= max_group_size, "exclude" := TRUE]
 
         # Set weights
-        dt_s[, "weight" := 1 / group_size]
-        dt_s[exclude == TRUE, "weight" := 0]
+        dt_s[, "weight" := 1.0 / group_size]
+        dt_s[exclude == TRUE, "weight" := 0.0]
 
         # Get total weight for normalisation
         total_weight <- sum(dt_s$weight)
 
         # Break from inner loop if there are no more weights to set
-        if (total_weight == 0) {
-          dt_s[, "cum_prob_upper" := 0]
-          dt_s[, "cum_prob_lower" := 0]
+        if (total_weight == 0.0) {
+          dt_s[, "cum_prob_upper" := 0.0]
+          dt_s[, "cum_prob_lower" := 0.0]
 
           break
         }
 
         # Set probabilities
         dt_s[, "cum_prob_upper" := cumsum(weight) / (total_weight)]
-        dt_s[, "cum_prob_lower" := c(0, dt_s$cum_prob_upper[seq_along(dt_s$cum_prob_upper) - 1])]
+        dt_s[, "cum_prob_lower" := c(0.0, dt_s$cum_prob_upper[seq_along(dt_s$cum_prob_upper) - 1.0])]
 
         # Finally, determine n_groups
         n_groups <- data.table::uniqueN(dt_s, by = "group_id")
@@ -302,7 +310,7 @@ create_randomised_groups <- function(
       rm("total_weight")
 
       # Check if all groups have the minimum required y (e.g. events/group size)
-      if (n_y > 0 && !is.null(n_min_y_in_group)) {
+      if (n_y > 0L && !is.null(n_min_y_in_group)) {
         # Count y in each group
         dt_y <- dt_agg[, list(y_in_group = sum(y)), by = group_id]
         dt_y <- merge(dt_y, dt_s, by = "group_id")[order(group_id)]
@@ -314,22 +322,20 @@ create_randomised_groups <- function(
         # Combine data until every group is valid.
         while (!all(dt_y$exclude)) {
           # Find the smallest group, and add this to a neighbour
-          sel_group_id <- dt_y[exclude == FALSE][group_size == min(dt_y$group_size)]$group_id[1]
+          sel_group_id <- dt_y[exclude == FALSE][group_size == min(dt_y$group_size)]$group_id[1L]
 
           # Get neighbouring group_ids
-          group_left <- tail(dt_y[group_id < sel_group_id], n = 1)
-          group_right <- head(dt_y[group_id > sel_group_id], n = 1)
+          group_left <- tail(dt_y[group_id < sel_group_id], n = 1L)
+          group_right <- head(dt_y[group_id > sel_group_id], n = 1L)
 
           # Preferentially add to a neighbour without sufficient y, but where
           # addition would allow the combined group to exist Break if there is
           # just one group.
-          if (nrow(group_left) == 0 && nrow(group_right) == 0) {
-            break
-          }
+          if (nrow(group_left) == 0L && nrow(group_right) == 0L) break
 
-          if (nrow(group_left) == 0) {
+          if (nrow(group_left) == 0L) {
             join <- "right"
-          } else if (nrow(group_right) == 0) {
+          } else if (nrow(group_right) == 0L) {
             join <- "left"
           } else {
             # This requires some heuristics. General principle is to combine the
@@ -369,7 +375,7 @@ create_randomised_groups <- function(
               join <- "right"
             } else {
               # It's a toss-up
-              join <- sample(c("left", "right"), size = 1)
+              join <- sample(c("left", "right"), size = 1L)
             }
             rm("n_y_left", "n_y_right", "n_y_sel", "c_y_left", "c_y_right")
           }
@@ -388,11 +394,15 @@ create_randomised_groups <- function(
           rm("join_id", "sel_group_id")
 
           # Update table
-          dt_y <- dt_y[, list(
-            group_size = sum(group_size),
-            y_in_group = sum(y_in_group),
-            exclude = as.logical(max(exclude))),
-            by = group_id]
+          dt_y <- dt_y[
+            ,
+            list(
+              "group_size" = sum(group_size),
+              "y_in_group" = sum(y_in_group),
+              "exclude" = as.logical(max(exclude))
+            ),
+            by = group_id
+          ]
           dt_y[y_in_group >= n_min_y_in_group, "exclude" := TRUE]
         }
 
@@ -403,17 +413,15 @@ create_randomised_groups <- function(
       n_groups <- data.table::uniqueN(dt_agg, by = "group_id")
 
       # Break from outer loop
-      if (n_groups >= n_min_groups) {
-        break
-      }
+      if (n_groups >= n_min_groups) break
 
       # Update loop_iter in case efforts were not successful
-      loop_iter <- loop_iter + 1
+      loop_iter <- loop_iter + 1L
 
       # Break from outer loop after 5 unsuccessful iterations and create a
       # static split instead
-      if (loop_iter >= 5) {
-        if (n_y > 0 && !is.null(n_min_y_in_group)) {
+      if (loop_iter >= 5L) {
+        if (n_y > 0L && !is.null(n_min_y_in_group)) {
           # Cumulative sum over y
           dt_agg[, "cum_y" := cumsum(y)]
 
@@ -422,8 +430,10 @@ create_randomised_groups <- function(
             x = cum_y,
             vec = c(
               -Inf,
-              stats::quantile(x = cum_y, (1:n_min_groups - 1) / n_min_groups),
-              Inf))]
+              stats::quantile(x = cum_y, (1L:(n_min_groups - 1L)) / n_min_groups),
+              Inf
+            )
+          )]
           
         } else {
           # Assign static group ids
@@ -431,8 +441,10 @@ create_randomised_groups <- function(
             x = seq_len(n_x),
             vec = c(
               -Inf,
-              stats::quantile(x = seq_len(n_x), (1:n_min_groups - 1) / n_min_groups), 
-              Inf))]
+              stats::quantile(x = seq_len(n_x), (1L:(n_min_groups - 1L)) / n_min_groups), 
+              Inf
+            )
+          )]
         }
 
         # Break from loop
@@ -445,7 +457,8 @@ create_randomised_groups <- function(
   out_groups <- split(
     dt_agg[, mget(c(get_id_columns(id_depth = "series"), "group_id"))], 
     by = "group_id",
-    keep.by = FALSE)
+    keep.by = FALSE
+  )
 
   return(out_groups)
 }

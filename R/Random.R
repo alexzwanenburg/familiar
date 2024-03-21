@@ -15,12 +15,14 @@
     size, 
     replace, 
     seed = NULL, 
-    rstream_object = NULL) {
+    rstream_object = NULL
+) {
   # Create a random generator stream to avoid touching seeds globally.
 
   if (is.null(seed) && is.null(rstream_object)) {
     ..error_reached_unreachable_code(
-      "..fam_sample: seed and rstream_object cannot both be NULL")
+      "..fam_sample: seed and rstream_object cannot both be NULL"
+    )
   }
 
   if (!is.null(seed) && is.null(rstream_object)) {
@@ -29,7 +31,8 @@
 
   if (!is(rstream_object, "rstream.runif")) {
     ..error_reached_unreachable_code(
-      "..fam_sample: rstream_object is not an rstream.runif object.")
+      "..fam_sample: rstream_object is not an rstream.runif object."
+    )
   }
 
   # Determine the number of random values to generate. When samples are
@@ -42,10 +45,11 @@
 
   if (replace) {
     # Generate sample indices.
-    x_indices <- ceiling(random_values * length(x))
+    x_indices <- as.integer(ceiling(random_values * length(x)))
 
     # Replace index 0, if present.
-    x_indices[x_indices == 0] <- 1
+    x_indices[x_indices == 0L] <- 1L
+    
   } else {
     # Create sample indices by ranking indices.
     x_indices <- data.table::frank(random_values, ties.method = "first")
@@ -77,7 +81,8 @@ fam_rnorm <- function(
     mean = mean, 
     sd = sd, 
     seed = seed, 
-    rstream_object = rstream_object))
+    rstream_object = rstream_object
+  ))
 }
 
 
@@ -87,12 +92,14 @@ fam_rnorm <- function(
     mean = 0.0, 
     sd = 1.0, 
     seed = NULL,
-    rstream_object = NULL) {
+    rstream_object = NULL
+) {
   # Based on Marsaglia polar method.
 
   if (is.null(seed) && is.null(rstream_object)) {
     ..error_reached_unreachable_code(
-      "..fam_rnorm: seed and rstream_object cannot both be NULL")
+      "..fam_rnorm: seed and rstream_object cannot both be NULL"
+    )
   }
 
   if (!is.null(seed) && is.null(rstream_object)) {
@@ -101,13 +108,15 @@ fam_rnorm <- function(
 
   if (!is(rstream_object, "rstream.runif")) {
     ..error_reached_unreachable_code(
-      "..fam_rnorm: rstream_object is not an rstream.runif object.")
+      "..fam_rnorm: rstream_object is not an rstream.runif object."
+    )
   }
 
   x <- sapply(
     seq_len(n),
     ..fam_rnorm, 
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   return(mean + sd * x)
 }
@@ -120,12 +129,12 @@ fam_rnorm <- function(
     x_1 <- rstream::rstream.sample(rstream_object, 1L) * 2.0 - 1.0
     x_2 <- rstream::rstream.sample(rstream_object, 1L) * 2.0 - 1.0
 
-    s <- x_1^2 + x_2^2
+    s <- x_1^2.0 + x_2^2.0
 
-    if (s < 1) break
+    if (s < 1.0) break
   }
 
-  if (s == 0) return(0)
+  if (s == 0.0) return(0.0)
 
   return(x_1 * sqrt(-2.0 * log(s) / s))
 }
@@ -137,13 +146,15 @@ fam_runif <- function(
     min = 0.0, 
     max = 1.0, 
     seed = NULL, 
-    rstream_object = NULL) {
+    rstream_object = NULL
+) {
   
   if (is.null(seed) && is.null(rstream_object)) {
     return(stats::runif(
       n = n, 
       min = min, 
-      max = max))
+      max = max
+    ))
   }
 
   return(.fam_runif(
@@ -151,7 +162,8 @@ fam_runif <- function(
     min = min, 
     max = max, 
     seed = seed,
-    rstream_object = rstream_object))
+    rstream_object = rstream_object
+  ))
 }
 
 
@@ -161,10 +173,12 @@ fam_runif <- function(
     min = 0.0, 
     max = 1.0, 
     seed = NULL, 
-    rstream_object = NULL) {
+    rstream_object = NULL
+) {
   if (is.null(seed) && is.null(rstream_object)) {
     ..error_reached_unreachable_code(
-      "..fam_runif: seed and rstream_object cannot both be NULL")
+      "..fam_runif: seed and rstream_object cannot both be NULL"
+    )
   }
 
   if (!is.null(seed) && is.null(rstream_object)) {
@@ -173,7 +187,8 @@ fam_runif <- function(
 
   if (!is(rstream_object, "rstream.runif")) {
     ..error_reached_unreachable_code(
-      "..fam_runif: rstream_object is not an rstream.runif object.")
+      "..fam_runif: rstream_object is not an rstream.runif object."
+    )
   }
 
   # Create uniformly sampled data.

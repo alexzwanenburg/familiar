@@ -359,7 +359,7 @@ setMethod(
     object <- load_models(object, dir_path = dir_path)
 
     # Extract predictions for each individual model
-    if (length(object@model_list) > 0) {
+    if (length(object@model_list) > 0L) {
       predict_list <- lapply(
         object@model_list,
         .predict,
@@ -394,7 +394,7 @@ setMethod(
         )
         
         # Extract the merged object.
-        predict_list <- predict_list[[1]]
+        predict_list <- predict_list[[1L]]
       }
     }
     
@@ -421,7 +421,7 @@ setMethod(
     ...
   ) {
 
-    if (length(type) != 1) {
+    if (length(type) != 1L) {
       ..error_reached_unreachable_code(paste0(
         "Only one type of prediction is expected as argument to .predict. ",
         "Found: ", paste_s(type)
@@ -438,9 +438,9 @@ setMethod(
     )
     
     # user specified type ------------------------------------------------------
-    if (any(!type %in% .get_available_prediction_type_arguments())) {
+    if (!all(type %in% .get_available_prediction_type_arguments())) {
       # Select the first non-standard type.
-      type <- setdiff(type, .get_available_prediction_type_arguments())[1]
+      type <- setdiff(type, .get_available_prediction_type_arguments())[1L]
 
       # Select only features used by the model.
       data <- select_features(
@@ -466,9 +466,9 @@ setMethod(
     if (type == "novelty") {
       # Predict instance novelty.
       return(.predict_novelty(
-          object = object,
-          data = data
-        ))
+        object = object,
+        data = data
+      ))
     }
     
     # Keep only model features in data for the remaining predictions.
@@ -534,7 +534,7 @@ setMethod(
       prediction_table@detail_level <- "ensemble"
       prediction_table@percentiles <- percentiles
       prediction_table@ensemble_method <- ensemble_method
-      prediction_table@estimation_type = ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval")
+      prediction_table@estimation_type <- ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval")
     }
     
     return(prediction_table)
@@ -588,7 +588,8 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data" = data),
+          "data" = data
+        ),
         list(...)
       )
     ))
@@ -688,16 +689,17 @@ setMethod(
 
         # First check if the method exists.
         if (!stratification_method %in% object@km_info$stratification_method) {
-          stop(paste0(
+          ..error(paste0(
             "Data for stratification method ", stratification_method,
-            " was not found with the object."))
+            " was not found with the object."
+          ))
         }
 
         # Select stratification threshold for the given method.
         stratification_threshold <- object@km_info$parameters[[stratification_method]]$cutoff
       } else {
         # Select stratification threshold for the first method.
-        stratification_threshold <- object@km_info$parameters[[1]]$cutoff
+        stratification_threshold <- object@km_info$parameters[[1L]]$cutoff
       }
     }
 
@@ -710,10 +712,6 @@ setMethod(
       data = data,
       time = time
     )
- 
-#     # Check for valid predictions -- DO NOT CHECK HERE TO PREVENT passing empty
-#     if (is_empty(predictions)) return(NULL)
-#     if (!any_predictions_valid(predictions)) return(NULL)
 
     # Find risk groups for each instance.
     assigned_risk_group <- .apply_risk_threshold(
@@ -745,7 +743,8 @@ setMethod(
     time,
     stratification_threshold = NULL,
     stratification_method = NULL,
-    ...) {
+    ...
+  ) {
     return(NULL)
   }
 )
