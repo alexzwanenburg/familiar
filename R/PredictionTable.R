@@ -234,8 +234,8 @@ as_prediction_table <- function(
     object <- methods::new("predictionTableNovelty")
     
   } else {
-    rlang::abort(
-      message = paste0(
+    ..error(
+      paste0(
         "The type argument was not recognized: ", type,
         "One of regression, classification, hazard_ratio, cumulative_hazard, ",
         "expected_survival_time, survival_probability, grouping, 
@@ -277,8 +277,8 @@ as_prediction_table <- function(
   if (!is.waive(y) && !is.null(y)) {
     if (survival::is.Surv(y)) {
       object@reference_data <- data.table::data.table(
-        "outcome_time" = y[, 1],
-        "outcome_event" = y[, 2]
+        "outcome_time" = y[, 1L],
+        "outcome_event" = y[, 2L]
       )
     } else {
       object@reference_data <- data.table::as.data.table(y)
@@ -286,18 +286,18 @@ as_prediction_table <- function(
     
   } else if (is(data, "dataObject")) {
     outcome_columns <- .get_outcome_columns(data@outcome_type)
-    if (length(outcome_columns) > 0) {
+    if (length(outcome_columns) > 0L) {
       y <- data@data[, mget(outcome_columns)]
       object@reference_data <- data.table::copy(y)
     }
     
   } else if (is(data, "familiarDataElementPredictionTable")) {
     outcome_columns <- .get_outcome_columns(data@outcome_type)
-    if(.is_merged_prediction_table(data) && length(outcome_columns) > 0) {
+    if (.is_merged_prediction_table(data) && length(outcome_columns) > 0L) {
       y <- data@data[, mget(outcome_columns)]
       object@reference_data <- data.table::copy(y)
       
-    } else if (length(outcome_columns) > 0) {
+    } else if (length(outcome_columns) > 0L) {
       y <- data@reference_data[, mget(outcome_columns)]
       object@reference_data <- data.table::copy(y)
     }
@@ -357,7 +357,7 @@ as_prediction_table <- function(
     object <- add_data_element_identifier(
       x = object,
       evaluation_time = time
-    )[[1]]
+    )[[1L]]
     
     object@time <- time
   }
@@ -376,10 +376,10 @@ as_prediction_table <- function(
       class_levels <- get_outcome_class_levels(model_object)
     }
     if (is.unset(class_levels) && !is_empty(object@reference_data)) {
-      if (is.factor(object@reference_data[[1]])) {
-        class_levels <- levels(object@reference_data[[1]])
+      if (is.factor(object@reference_data[[1L]])) {
+        class_levels <- levels(object@reference_data[[1L]])
       } else {
-        class_levels <- unique_na(object@reference_data[[1]])
+        class_levels <- unique_na(object@reference_data[[1L]])
       }
     }
     if (is.unset(class_levels) && !is_empty(names(x))) {
@@ -418,19 +418,35 @@ as_prediction_table <- function(
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && is(data, "dataObject")) {
       if (is(data@outcome_info, "outcomeInfo")) {
-        value_range <- suppressWarnings(range(data@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+        value_range <- suppressWarnings(range(
+          data@outcome_info@distribution$fivenum, 
+          na.rm = TRUE, 
+          finite = TRUE
+        ))
       }
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && is(model_object, "familiarModelUnion")) {
       if (is(model_object@outcome_info, "outcomeInfo")) {
-        value_range <- suppressWarnings(range(model_object@outcome_info@distribution$fivenum, na.rm = TRUE, finite = TRUE))
+        value_range <- suppressWarnings(range(
+          model_object@outcome_info@distribution$fivenum, 
+          na.rm = TRUE, 
+          finite = TRUE
+        ))
       }
     }
     if ((is.unset(value_range) || !all(is.finite(value_range))) && !is_empty(object@reference_data)) {
-      value_range <- suppressWarnings(range(object@reference_data[[1]], na.rm = TRUE, finite = TRUE))
+      value_range <- suppressWarnings(range(
+        object@reference_data[[1L]],
+        na.rm = TRUE, 
+        finite = TRUE
+      ))
     }
     if (is.unset(value_range) || !all(is.finite(value_range))) {
-      value_range <- suppressWarnings(range(object@prediction_data[[1]], na.rm = TRUE, finite = TRUE))
+      value_range <- suppressWarnings(range(
+        object@prediction_data[[1L]],
+        na.rm = TRUE, 
+        finite = TRUE
+      ))
     }
     
     object@observed_value_range <- value_range
@@ -513,24 +529,26 @@ setMethod(
     
     if (!is_empty(object@reference_data)) {
       if (n_instances != nrow(object@reference_data)) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "The number of instances of predicted values (",
             n_instances, ") do not match the number of reference values (",
-            nrow(object@reference_data), ")."),
-          class = "prediction_table_error"
+            nrow(object@reference_data), ")."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
     
     if (!is_empty(object@identifier_data)) {
       if (n_instances != nrow(object@identifier_data)) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "The number of instances of predicted values (",
             n_instances, ") do not match the number of instances determined ",
-            "from identifier data (", nrow(object@reference_data), ")."),
-          class = "prediction_table_error"
+            "from identifier data (", nrow(object@reference_data), ")."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
@@ -554,16 +572,18 @@ setMethod(
     if (is.null(object@outcome_type)) object@outcome_type <- "continuous"
     if (object@outcome_type != "continuous") {
       ..error_reached_unreachable_code(
-        "The outcome type of predictionTableRegression objects should be \"continuous\".")
+        "The outcome type of predictionTableRegression objects should be \"continuous\"."
+      )
     }
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data) != 1) {
-      rlang::abort(
-        message = paste0(
+    if (ncol(object@prediction_data) != 1L) {
+      ..error(
+        paste0(
           "Only one set of predicted values was expected, but (",
-          ncol(object@prediction_data), ") sets were provided."),
-        class = "prediction_table_error"
+          ncol(object@prediction_data), ") sets were provided."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
@@ -572,23 +592,25 @@ setMethod(
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$predicted_outcome)) {
-      rlang::abort(
-        message = paste0(
+      ..error(
+        paste0(
           "Predicted values are expected to be numeric, but data with class ",
-          paste0(class(object@prediction_data$predicted_outcome), collapse = ", "),
-          " were encountered."),
-        class = "prediction_table_error"
+          paste_s(class(object@prediction_data$predicted_outcome)),
+          " were encountered."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
     if (!is_empty(object@reference_data)) {
       # Check that one set of reference data are provided.
-      if (ncol(object@reference_data) != 1) {
-        rlang::abort(
-          message = paste0(
+      if (ncol(object@reference_data) != 1L) {
+        ..error(
+          paste0(
             "Only one set of reference values was expected, but (",
-            ncol(object@reference_data), ") sets were provided."),
-          class = "prediction_table_error"
+            ncol(object@reference_data), ") sets were provided."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -598,11 +620,12 @@ setMethod(
       
       # Check that reference data are numeric.
       if (!is.numeric(object@reference_data[[outcome_column]])) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Reference values are expected to be numeric, but data with class ",
-            class(object@v[[outcome_column]]), " were encountered."),
-          class = "prediction_table_error"
+            paste_s(class(object@reference_data[[outcome_column]])), " were encountered."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
@@ -619,28 +642,30 @@ setMethod(
   function(object) {
     
     ..in_valid_range <- function(x) {
-      return (all(x >= 0.0, na.rm = TRUE) && all(x <= 1.0, na.rm = TRUE))
+      return(all(x >= 0.0, na.rm = TRUE) && all(x <= 1.0, na.rm = TRUE))
     }
     
     ..test_columns_numeric <- function(object) {
       if (!all(sapply(object@prediction_data, is.numeric))) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Predicted values are expected to be numeric, but data with classes ",
-            paste0(unique(sapply(object@prediction_data, class)), collapse = ", "),
-            " were encountered."),
-          class = "prediction_table_error"
+            paste_s(unique(sapply(object@prediction_data, class))),
+            " were encountered."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
     
     ..test_columns_probabilities <- function(object) {
       if (!all(sapply(object@prediction_data, ..in_valid_range))) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Predicted values are expected to be probabilities between 0.0 and 1.0, ",
-            "but values outside this range were found."),
-          class = "prediction_table_error"
+            "but values outside this range were found."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
@@ -652,12 +677,13 @@ setMethod(
     
     # Check outcome type
     if (is.null(object@outcome_type)) {
-      object@outcome_type <- ifelse(length(object@classes) == 2, "binomial", "multinomial")
+      object@outcome_type <- ifelse(length(object@classes) == 2L, "binomial", "multinomial")
     }
     if (!object@outcome_type %in% c("binomial", "multinomial")) {
       ..error_reached_unreachable_code(paste0(
         "The outcome type of predictionTableClassification objects should be 
-        \"binomial\ or \"multinomial\"."))
+        \"binomial\ or \"multinomial\"."
+      ))
     }
     
     if (object@outcome_type == "binomial") {
@@ -665,13 +691,14 @@ setMethod(
       # should contain numeric values between 0.0 and 1.0.
       
       # Check that one or two sets of prediction data are provided.
-      if (ncol(object@prediction_data) > 2) {
-        rlang::abort(
-          message = paste0(
+      if (ncol(object@prediction_data) > 2L) {
+        ..error(
+          paste0(
             "For binomial (two-class) endpoints, either one or two sets of ",
             "predicted values are expected. However (",
-            ncol(object@prediction_data), ") sets were provided."),
-          class = "prediction_table_error"
+            ncol(object@prediction_data), ") sets were provided."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -681,30 +708,32 @@ setMethod(
       # Check that all columns contain values between 0.0 and 1.0.
       ..test_columns_probabilities(object)
       
-      if (length(object@classes) != 2) {
-        rlang::abort(
-          message = paste0(
+      if (length(object@classes) != 2L) {
+        ..error(
+          paste0(
             "Two classes are expected for binomial (two-class) but ",
             length(object@classes), " were found: ",
-            paste0(object@classes, collapse = ", ")),
-          class = "prediction_table_error"
+            paste_s(object@classes)
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
       # Insert complementary column. First we determine the name of the
       # associated class.
-      if (ncol(object@prediction_data) == 1) {
+      if (ncol(object@prediction_data) == 1L) {
         if (all(colnames(object@prediction_data) %in% object@classes)) {
           positive_class <- colnames(object@prediction_data)
           
         } else {
           positive_class <- tail(object@classes, n = 1L)
           
-          rlang::warn(
-            message = paste0(
+          ..warning(
+            paste0(
               "The positive class cannot be directly inferred from names of the ",
-              "provided prediction data, and is assumed to be ", positive_class, "."),
-            class = "prediction_table_warning"
+              "provided prediction data, and is assumed to be ", positive_class, "."
+            ),
+            warning_class = "prediction_table_warning"
           )
           
           data.table::setnames(object@prediction_data, new = positive_class)
@@ -720,14 +749,15 @@ setMethod(
         # against a known class, and we infer that these appear in the order of 
         # classes.
         
-        rlang::warn(
-          message = paste0(
+        ..warning(
+          paste0(
             "Neither set of predicted values (",
-            paste0(colnames(object@prediction_data), collapse = ", "),
+            paste_s(colnames(object@prediction_data)),
             ") can be directly assigned to a corresponding class (",
-            paste0(object@classes, collapse = ", "), "). We assume these sets ",
-            "are ordered according to the provided classes."),
-          class = "prediction_table_warning"
+            paste_s(object@classes), "). We assume these sets ",
+            "are ordered according to the provided classes."
+          ),
+          warning_class = "prediction_table_warning"
         )
         data.table::setnames(object@prediction_data, new = object@classes)
         
@@ -738,18 +768,20 @@ setMethod(
         
         unassigned_class <- setdiff(object@classes, colnames(object@prediction_data))
         unassigned_column <- setdiff(colnames(object@prediction_data), object@classes)
-        rlang::warn(
-          message = paste0(
+        ..warning(
+          paste0(
             "One of the sets of predicted values (", unassigned_column,
             ") cannot be directly assigned to a corresponding class (",
-            paste0(object@classes, collapse = ", "), "). We assume that this ",
-            "set corresponds to the ", unassigned_class,  " class."),
-          class = "prediction_table_warning"
+            paste_s(object@classes), "). We assume that this ",
+            "set corresponds to the ", unassigned_class,  " class."
+          ),
+          warning_class = "prediction_table_warning"
         )
         data.table::setnames(
           x = object@prediction_data, 
           old = unassigned_column, 
-          new = unassigned_class)
+          new = unassigned_class
+        )
       }
       
     } else {
@@ -763,35 +795,38 @@ setMethod(
       ..test_columns_probabilities(object)
       
       # Check that at least two sets of prediction data are provided.
-      if (ncol(object@prediction_data) <2) {
+      if (ncol(object@prediction_data) < 2L) {
         rlang::abort(
-          message = paste0(
+          paste0(
             "For multinomial (multi-class) endpoints, at least two sets of ",
             "predicted values are expected. However (",
-            ncol(object@prediction_data), ") sets were provided."),
-          class = "prediction_table_error"
+            ncol(object@prediction_data), ") sets were provided."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
       # Check that at least two classes are provided.
-      if (length(object@classes) < 2) {
-        rlang::abort(
-          message = paste0(
+      if (length(object@classes) < 2L) {
+        ..error(
+          paste0(
             "At least two classes are expected for multinomial (multi-class) ",
             "endpoints, but only ", length(object@classes), " were found: ",
-            paste0(object@classes, collapse = ", ")),
-          class = "prediction_table_error"
+            paste_s(object@classes)
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
       # Check that the number of classes and provided sets match.
       if (length(object@classes) != length(colnames(object@prediction_data))) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "The same number of classes and sets of predicted values are ",
             "expected. Found: ", length(object@classes), " classes and ",
-            length(colnames(object@prediction_data)), " sets."),
-          class = "prediction_table_error"
+            length(colnames(object@prediction_data)), " sets."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -801,14 +836,15 @@ setMethod(
         # against a known class, and we infer that these appear in the order of 
         # classes.
         
-        rlang::warn(
-          message = paste0(
+        ..warning(
+          paste0(
             "Neither set of predicted values (",
-            paste0(colnames(object@prediction_data), collapse = ", "),
+            paste_s(colnames(object@prediction_data)),
             ") can be directly assigned to a corresponding class (",
-            paste0(object@classes, collapse = ", "), "). We assume these sets ",
-            "are ordered according to the provided classes."),
-          class = "prediction_table_warning"
+            paste_s(object@classes), "). We assume these sets ",
+            "are ordered according to the provided classes."
+          ),
+          warning_class = "prediction_table_warning"
         )
         data.table::setnames(object@prediction_data, new = object@classes)
         
@@ -819,19 +855,21 @@ setMethod(
         
         unassigned_class <- setdiff(object@classes, colnames(object@prediction_data))
         unassigned_column <- setdiff(colnames(object@prediction_data), object@classes)
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Some sets of predicted values (",
-            paste0(unassigned_column, collapse = ", "),
+            paste_s(unassigned_column),
             ") cannot be directly assigned to a corresponding class (",
-            paste0(object@classes, collapse = ", "), ". Please name all ",
-            "sets of predicted values according to their class."),
-          class = "prediction_table_warning"
+            paste_s(object@classes), ". Please name all ",
+            "sets of predicted values according to their class."
+          ),
+          error_class = "prediction_table_warning"
         )
         data.table::setnames(
           x = object@prediction_data, 
           old = unassigned_column, 
-          new = unassigned_class)
+          new = unassigned_class
+        )
       }
     }
     
@@ -840,12 +878,13 @@ setMethod(
     
     if (!is_empty(object@reference_data)) {
       # Check that one set of reference data are provided.
-      if (ncol(object@reference_data) != 1) {
-        rlang::abort(
-          message = paste0(
+      if (ncol(object@reference_data) != 1L) {
+        ..error(
+          paste0(
             "Only one set of reference values was expected, but (",
-            ncol(object@reference_data), ") sets were provided."),
-          class = "prediction_table_error"
+            ncol(object@reference_data), ") sets were provided."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -856,14 +895,16 @@ setMethod(
       # Check that reference data only contains the known classes.
       missing_classes <- setdiff(
         unique_na(object@reference_data[[outcome_column]]),
-        object@classes)
+        object@classes
+      )
         
-      if (length(missing_classes) > 0) {
-        rlang::abort(
-          message = paste0(
+      if (length(missing_classes) > 0L) {
+        ..error(
+          paste0(
             "One or more reference values are present that are not listed as ",
-            "classes: ", paste0(missing_classes, collapse = ", ")),
-          class = "prediction_table_error"
+            "classes: ", paste_s(missing_classes)
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
@@ -888,16 +929,18 @@ setMethod(
     if (is.null(object@outcome_type)) object@outcome_type <- "survival"
     if (object@outcome_type != "survival") {
       ..error_reached_unreachable_code(
-        "The outcome type of predictionTableSurvival objects should be \"survival\".")
+        "The outcome type of predictionTableSurvival objects should be \"survival\"."
+      )
     }
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data) != 1) {
-      rlang::abort(
-        message = paste0(
+    if (ncol(object@prediction_data) != 1L) {
+      ..error(
+        paste0(
           "Only one set of predicted values was expected, but (",
-          ncol(object@prediction_data), ") sets were provided."),
-        class = "prediction_table_error"
+          ncol(object@prediction_data), ") sets were provided."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
@@ -906,23 +949,25 @@ setMethod(
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$predicted_outcome)) {
-      rlang::abort(
-        message = paste0(
+      ..error(
+        paste0(
           "Predicted values are expected to be numeric, but data with class ",
-          paste0(class(object@prediction_data$predicted_outcome), collapse = ", "),
-          " were encountered."),
-        class = "prediction_table_error"
+          paste_s(class(object@prediction_data$predicted_outcome)),
+          " were encountered."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
     if (!is_empty(object@reference_data)) {
       # Check that two sets of reference data are provided (time, status).
-      if (ncol(object@reference_data) != 2) {
-        rlang::abort(
-          message = paste0(
+      if (ncol(object@reference_data) != 2L) {
+        ..error(
+          paste0(
             "Both time and status data are expected, but (",
-            ncol(object@reference_data), ") set(s) of reference data were provided."),
-          class = "prediction_table_error"
+            ncol(object@reference_data), ") set(s) of reference data were provided."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -931,14 +976,14 @@ setMethod(
       data.table::setnames(object@reference_data, new = outcome_column)
       
       # Check that the time column is numeric and positive.
-      time_column <- object@reference_data[[outcome_column[1]]]
+      time_column <- object@reference_data[[outcome_column[1L]]]
       if (!is.numeric(time_column)) {
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Observed time is expected to be numeric, but data with class ",
-            paste0(class(time_column), collapse = ", "),
-            " were encountered."),
-          class = "prediction_table_error"
+            paste_s(time_column), " were encountered."
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -947,25 +992,27 @@ setMethod(
         negative_values <- negative_values[is.finite(negative_values)]
         negative_values <- negative_values[negative_values < 0.0]
         
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Observed time can not be negative, but negative values were found: ",
-            paste_sh(negative_values)),
-          class = "prediction_table_error"
+            paste_sh(negative_values)
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
       # Check that the status columns contains 0s and 1s, or can be converted to
       # such values.
-      status_column <- object@reference_data[[outcome_column[2]]]
+      status_column <- object@reference_data[[outcome_column[2L]]]
       status_indicators <- as.character(unique_na(status_column))
       
-      if (length(status_indicators) > 2) {
-        rlang::abort(
-          message = paste0(
+      if (length(status_indicators) > 2L) {
+        ..error(
+          paste0(
             "Event status may only contain two values that indicate censoring ",
-            "and event. Found: ", paste_sh(status_indicators)),
-          class = "prediction_table_error"
+            "and event. Found: ", paste_sh(status_indicators)
+          ),
+          error_class = "prediction_table_error"
         )
       }
       
@@ -975,21 +1022,22 @@ setMethod(
         new_status_column[status_column %in% object@censored] <- 0L
         
         object@reference_data <- data.table::copy(object@reference_data)
-        object@reference_data[[outcome_column[2]]] <- new_status_column
+        object@reference_data[[outcome_column[2L]]] <- new_status_column
         
       } else if (all(status_indicators %in% c("0", "1"))) {
         # Do nothing.
         
       } else if (all(status_indicators %in% c(
-        .get_available_default_censoring_indicator()),
-        .get_available_default_event_indicator())) {
+        .get_available_default_censoring_indicator(),
+        .get_available_default_event_indicator()
+      ))) {
         
         # Convert to 0s and 1s.
         new_status_column <- rep_len(1L, length(status_column))
         new_status_column[status_column %in% .get_available_default_censoring_indicator()] <- 0L
         
         object@reference_data <- data.table::copy(object@reference_data)
-        object@reference_data[[outcome_column[2]]] <- new_status_column
+        object@reference_data[[outcome_column[2L]]] <- new_status_column
         
       } else {
         
@@ -999,15 +1047,17 @@ setMethod(
         } else {
           indicator_values <- c(
             .get_available_default_censoring_indicator(),
-            .get_available_default_event_indicator())
+            .get_available_default_event_indicator()
+          )
         }
         
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "Could not map potential status and event indicators (",
             paste_s(indicator_values), ") to values present in the status column (",
-            paste_sh(status_indicators), ")."),
-          class = "prediction_table_error"
+            paste_sh(status_indicators), ")."
+          ),
+          error_class = "prediction_table_error"
         )
       }
     }
@@ -1031,12 +1081,13 @@ setMethod(
     object@outcome_type <- "unsupervised"
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data) != 1) {
-      rlang::abort(
-        message = paste0(
+    if (ncol(object@prediction_data) != 1L) {
+      ..error(
+        paste0(
           "Only one set of predicted values was expected, but (",
-          ncol(object@prediction_data), ") sets were provided."),
-        class = "prediction_table_error"
+          ncol(object@prediction_data), ") sets were provided."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
@@ -1045,12 +1096,13 @@ setMethod(
     
     # Check that prediction data are numeric.
     if (!is.numeric(object@prediction_data$novelty)) {
-      rlang::abort(
-        message = paste0(
+      ..error(
+        paste0(
           "Predicted values are expected to be numeric, but data with class ",
-          paste0(class(object@prediction_data$novelty), collapse = ", "),
-          " were encountered."),
-        class = "prediction_table_error"
+          paste_s(class(object@prediction_data$novelty)),
+          " were encountered."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
@@ -1073,12 +1125,13 @@ setMethod(
     object@outcome_type <- "unsupervised"
     
     # Check that one set of prediction data are provided.
-    if (ncol(object@prediction_data) != 1) {
-      rlang::abort(
-        message = paste0(
+    if (ncol(object@prediction_data) != 1L) {
+      ..error(
+        paste0(
           "Only one set of predicted values was expected, but (",
-          ncol(object@prediction_data), ") sets were provided."),
-        class = "prediction_table_error"
+          ncol(object@prediction_data), ") sets were provided."
+        ),
+        error_class = "prediction_table_error"
       )
     }
     
@@ -1086,19 +1139,20 @@ setMethod(
     data.table::setnames(object@prediction_data, new = "group")
     
     # Check that prediction data contains the groups, or set groups if absent.
-    if (all(!is.na(object@groups))) {
+    if (!any(object@groups)) {
       group_labels <- unique_na(object@prediction_data$group)
       
       if (!all(group_labels %in% object@groups)) {
         unknown_group_label <- setdiff(group_labels, object@groups)
         
-        rlang::abort(
-          message = paste0(
+        ..error(
+          paste0(
             "The set of predicted values contains group labels that could ",
             "not be matched to provided labels. The following labels were not ",
             "recognised: ", paste_s(unknown_group_label), ". ",
-            "The following labels were expected: ", paste_s(object@groups)),
-          class = "prediction_table_error"
+            "The following labels were expected: ", paste_s(object@groups)
+          ),
+          error_class = "prediction_table_error"
         )
       }
     } else {
@@ -1294,12 +1348,12 @@ setMethod(
     outcome_columns <- c("outcome", "outcome_time", "outcome_event")
     if (.is_merged_prediction_table(object)) {
       present_outcome_columns <- intersect(colnames(object@data), outcome_columns)
-      if (length(present_outcome_columns) == 0) return(object)
+      if (length(present_outcome_columns) == 0L) return(object)
       
       object@data[, (present_outcome_columns) := NULL]
       
       grouping_columns <- setdiff(object@grouping_column, present_outcome_columns)
-      if (length(grouping_columns) == 0) grouping_columns <- NULL
+      if (length(grouping_columns) == 0L) grouping_columns <- NULL
       object@grouping_column <- grouping_columns
       
     } else {
@@ -1490,8 +1544,8 @@ setMethod(
     if (!"predicted_class" %in% colnames(object@data)) {
       
       # First define the class with the highest probability.
-      class_indices <- apply(object@data[, mget(object@classes)], 1, which.max, simplify = FALSE)
-      class_indices <- sapply(class_indices, function(x) (ifelse(length(x) == 1, x, NA_integer_)))
+      class_indices <- apply(object@data[, mget(object@classes)], 1L, which.max, simplify = FALSE)
+      class_indices <- sapply(class_indices, function(x) (ifelse(length(x) == 1L, x, NA_integer_)))
       class_predictions <- factor(class_indices, levels = seq_along(object@classes), labels = object@classes)
       
       object@data[, "predicted_class" := class_predictions]
@@ -1510,7 +1564,12 @@ setMethod(
 setMethod(
   "filter_missing_outcome",
   signature(data = "familiarDataElementPredictionTable"),
-  function(data, is_validation = FALSE, outcome_type = NULL, ...) {
+  function(
+    data, 
+    is_validation = FALSE, 
+    outcome_type = NULL, 
+    ...
+  ) {
     # This method removes instances where reference data are missing.
     # See other methods for filter_missing_outcome in DataObject.R.
     
@@ -1547,7 +1606,7 @@ setMethod(
     if (is_validation) {
       # Check whether all outcome information is missing for validation. It may
       # be a prospective study. In that case, keep all data.
-      if (all(!outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
+      if (!any(outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
     }
     
     # Filter instances.
@@ -1852,10 +1911,10 @@ setMethod(
         
         column_names <- prediction_columns[ii]
         
-        if (length(ensemble_values[[ii]]) > 1) {
+        if (length(ensemble_values[[ii]]) > 1L) {
           column_names <- c(
             column_names,
-            paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2:length(ensemble_values[[ii]])])
+            paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2L:length(ensemble_values[[ii]])])
           )
         }
         
@@ -1899,7 +1958,7 @@ setMethod(
     data <- add_data_element_identifier(
       x = data,
       model_name = "custom_prediction_table"
-    )[[1]]
+    )[[1L]]
     
     return(data)
   }
@@ -1987,7 +2046,8 @@ setMethod(
     object,
     dir_path = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)

@@ -99,13 +99,14 @@ setGeneric(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_variable_importance")
   }
 )
@@ -145,18 +146,20 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Set the data element.
     data_element <- switch(
       type,
       "feature_selection" = "fs_vimp",
-      "model" = "model_vimp")
+      "model" = "model_vimp"
+    )
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -170,8 +173,11 @@ setMethod(
           "feature_cluster_cut_method" = feature_cluster_cut_method,
           "feature_similarity_threshold" = feature_similarity_threshold,
           "aggregation_method" = aggregation_method,
-          "rank_threshold" = rank_threshold),
-        list(...)))
+          "rank_threshold" = rank_threshold
+        ),
+        list(...)
+      )
+    )
 
     return(do.call(
       plot_variable_importance,
@@ -208,8 +214,11 @@ setMethod(
           "width" = width,
           "height" = height,
           "units" = units,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -248,13 +257,14 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
@@ -291,7 +301,8 @@ setMethod(
       height = height,
       units = units,
       export_collection = export_collection,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -304,8 +315,11 @@ plot_feature_selection_occurrence <- function(...) {
     args = c(
       list(
         "type" = "feature_selection",
-        "aggregation_method" = "stability"),
-      list(...))))
+        "aggregation_method" = "stability"
+      ),
+      list(...)
+    )
+  ))
 }
 
 
@@ -316,7 +330,9 @@ plot_feature_selection_variable_importance <- function(...) {
     plot_variable_importance,
     args = c(
       list("type" = "feature_selection"),
-      list(...))))
+      list(...)
+    )
+  ))
 }
 
 
@@ -328,8 +344,11 @@ plot_model_signature_occurrence <- function(...) {
     args = c(
       list(
         "type" = "model",
-        "aggregation_method" = "stability"),
-      list(...))))
+        "aggregation_method" = "stability"
+      ),
+      list(...)
+    )
+  ))
 }
 
 
@@ -339,7 +358,9 @@ plot_model_signature_variable_importance <- function(...) {
     plot_variable_importance,
     args = c(
       list("type" = "model"),
-      list(...))))
+      list(...)
+    )
+  ))
 }
 
 
@@ -377,7 +398,8 @@ plot_model_signature_variable_importance <- function(...) {
     height,
     units,
     export_collection = FALSE,
-    ...) {
+    ...
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   data_set <- NULL
 
@@ -387,20 +409,25 @@ plot_model_signature_variable_importance <- function(...) {
       object = object,
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     available_splitting <- "fs_method"
+    
   } else if (type == "model") {
     x <- export_model_vimp(
       object = object,
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     available_splitting <- c("fs_method", "learner")
+    
   } else {
     ..error_reached_unreachable_code(paste0(
-      ".plot_variable_importance: unknown value for type (", type, ")"))
+      ".plot_variable_importance: unknown value for type (", type, ")"
+    ))
   }
 
   # Check that the data are not empty.
@@ -410,13 +437,14 @@ plot_model_signature_variable_importance <- function(...) {
   if (is.list(x)) {
     if (is_empty(x)) return(NULL)
 
-    if (length(x) > 1) {
+    if (length(x) > 1L) {
       ..error_reached_unreachable_code(
-        ".plot_variable_importance: list of data elements contains unmerged elements.")
+        ".plot_variable_importance: list of data elements contains unmerged elements."
+      )
     }
 
     # Get x directly.
-    x <- x[[1]]
+    x <- x[[1L]]
   }
 
   # Check that the data are not empty.
@@ -428,8 +456,10 @@ plot_model_signature_variable_importance <- function(...) {
     purpose = ifelse(
       type == "feature_selection",
       "to plot variable importance determined through feature selection methods",
-      "to plot model-based variable importance"),
-    message_type = "warning")) {
+      "to plot model-based variable importance"
+    ),
+    message_type = "warning"
+  )) {
     return(NULL)
   }
 
@@ -439,7 +469,8 @@ plot_model_signature_variable_importance <- function(...) {
   .check_parameter_value_is_valid(
     x = show_cluster, 
     var_name = "show_cluster",
-    values = c(FALSE, TRUE))
+    values = c(FALSE, TRUE)
+  )
 
   if (show_cluster) {
     # Get feature similarity data.
@@ -452,7 +483,7 @@ plot_model_signature_variable_importance <- function(...) {
       export_dendrogram = FALSE,
       export_ordered_data = FALSE,
       export_clustering = TRUE
-    )[[1]]
+    )[[1L]]
     
   } else {
     feature_similarity <- NULL
@@ -481,6 +512,7 @@ plot_model_signature_variable_importance <- function(...) {
   if (is.null(y_range) && x@rank_aggregation_method == "stability") {
     # for occurrence plots
     y_range <- c(0.0, 1.0)
+    
   } else if (is.null(y_range)) {
     # for variable importance score-based plots
     y_range <- c(0.0, max(x@data$score, na.rm = TRUE))
@@ -490,16 +522,18 @@ plot_model_signature_variable_importance <- function(...) {
   if (is.null(y_breaks)) {
     .check_input_plot_args(
       y_range = y_range,
-      y_n_breaks = y_n_breaks)
+      y_n_breaks = y_n_breaks
+    )
 
     # Create breaks and update x_range
     y_breaks <- labeling::extended(
       m = y_n_breaks,
-      dmin = y_range[1],
-      dmax = y_range[2],
-      only.loose = TRUE)
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = TRUE
+    )
     
-    y_range <- c(0, tail(y_breaks, n = 1))
+    y_range <- c(0.0, tail(y_breaks, n = 1L))
   }
 
   # Add default parameters.
@@ -513,7 +547,8 @@ plot_model_signature_variable_importance <- function(...) {
     split_by = split_by,
     color_by = color_by,
     facet_by = facet_by,
-    available = available_splitting)
+    available = available_splitting
+  )
 
   # Update splitting variables
   split_by <- split_var_list$split_by
@@ -523,7 +558,8 @@ plot_model_signature_variable_importance <- function(...) {
   # legend_label
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
-    color_by = color_by)
+    color_by = color_by
+  )
 
   # Perform last checks prior to plotting
   .check_input_plot_args(
@@ -536,7 +572,8 @@ plot_model_signature_variable_importance <- function(...) {
     rotate_x_tick_labels = rotate_x_tick_labels,
     facet_wrap_cols = facet_wrap_cols,
     y_range = y_range,
-    y_breaks = y_breaks)
+    y_breaks = y_breaks
+  )
 
   # Create plots ---------------------------------------------------------------
 
@@ -562,7 +599,8 @@ plot_model_signature_variable_importance <- function(...) {
     data.table::setnames(
       x = x_sub,
       old = "name",
-      new = "feature")
+      new = "feature"
+    )
 
     # Join cluster and univariate data.
     if (show_cluster) {
@@ -572,10 +610,11 @@ plot_model_signature_variable_importance <- function(...) {
           y = feature_similarity@data,
           by.x = c("feature", available_splitting, "ensemble_model_name"),
           by.y = c("feature", available_splitting, "ensemble_model_name"),
-          allow.cartesian = TRUE)
+          allow.cartesian = TRUE
+        )
 
         # Model-based ranking does not aggregate along data-set.
-        x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1])]
+        x_temporary <- x_temporary[data_set %in% c(unique(x_temporary$data_set)[1L])]
       }
 
       # Check that the resulting data is not empty, because this would
@@ -584,7 +623,8 @@ plot_model_signature_variable_importance <- function(...) {
         x_temporary <- data.table::copy(x_sub)
         x_temporary[, ":="(
           "cluster_id" = .I,
-          "cluster_size" = 1L)]
+          "cluster_size" = 1L
+        )]
       }
 
       # Replace x_sub
@@ -595,14 +635,16 @@ plot_model_signature_variable_importance <- function(...) {
       plot_title <- ifelse(
         type == "feature_selection",
         "Feature selection-based variable importance",
-        "Model-based variable importance")
+        "Model-based variable importance"
+      )
     }
 
     if (autogenerate_plot_subtitle) {
       plot_sub_title <- .create_plot_subtitle(
         split_by = split_by,
         additional = list("aggregation_method" = x@rank_aggregation_method),
-        x = x_sub)
+        x = x_sub
+      )
     }
 
     # Generate plot
@@ -625,7 +667,8 @@ plot_model_signature_variable_importance <- function(...) {
       plot_sub_title = plot_sub_title,
       caption = caption,
       y_range = y_range,
-      y_breaks = y_breaks)
+      y_breaks = y_breaks
+    )
 
     # Check empty output
     if (is.null(p)) next
@@ -640,7 +683,8 @@ plot_model_signature_variable_importance <- function(...) {
         x = x_sub,
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
-        rotate_x_tick_labels = rotate_x_tick_labels)
+        rotate_x_tick_labels = rotate_x_tick_labels
+      )
 
       # Save to file.
       do.call(
@@ -655,10 +699,13 @@ plot_model_signature_variable_importance <- function(...) {
             "x" = x_sub,
             "split_by" = split_by,
             "additional" = list("aggregation_method" = x@rank_aggregation_method),
-            "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-            "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-            "units" = ifelse(is.waive(units), "cm", units)),
-          list(...)))
+            "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+            "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+            "units" = ifelse(is.waive(units), "cm", units)
+          ),
+          list(...)
+        )
+      )
     } else {
       # Store as list and export
       plot_list <- c(plot_list, list(p))
@@ -670,7 +717,8 @@ plot_model_signature_variable_importance <- function(...) {
     dir_path = dir_path,
     plot_list = plot_list,
     export_collection = export_collection,
-    object = object))
+    object = object
+  ))
 }
 
 
@@ -694,7 +742,8 @@ plot_model_signature_variable_importance <- function(...) {
     plot_sub_title,
     caption,
     y_range,
-    y_breaks) {
+    y_breaks
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   rank <- NULL
 
@@ -713,7 +762,8 @@ plot_model_signature_variable_importance <- function(...) {
   guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
 
   # Extract data
   x <- guide_list$data
@@ -730,14 +780,17 @@ plot_model_signature_variable_importance <- function(...) {
   # Perform last checks prior to plotting
   .check_input_plot_args(
     y_range = y_range,
-    y_breaks = y_breaks)
+    y_breaks = y_breaks
+  )
 
   # Create basic plot
   p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("feature"),
-      y = !!sym("score")))
+      y = !!sym("score")
+    )
+  )
   p <- p + ggtheme
   
   # Add fill colours.
@@ -748,20 +801,23 @@ plot_model_signature_variable_importance <- function(...) {
     p <- p + ggplot2::geom_bar(
       stat = "identity",
       mapping = ggplot2::aes(fill = !!sym("color_breaks")),
-      position = "dodge")
+      position = "dodge"
+    )
 
     p <- p + ggplot2::scale_fill_manual(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
     
   } else if (!is.waive(gradient_palette)) {
     # A gradient palette is used to colour the bars by value.
     p <- p + ggplot2::geom_bar(
       stat = "identity",
       mapping = ggplot2::aes(fill = !!sym("value")),
-      show.legend = FALSE)
+      show.legend = FALSE
+    )
 
     # Determine gradient order. This is so that bars of more important features
     # are always colored with the high-range colors, independent of the
@@ -770,8 +826,8 @@ plot_model_signature_variable_importance <- function(...) {
     gradient_order <- "identity"
 
     # Determine best and worst scores.
-    best_score <- x[rank == 1]$score[1]
-    worst_score <- x[rank == max(x$rank)]$score[1]
+    best_score <- x[rank == 1L]$score[1L]
+    worst_score <- x[rank == max(x$rank)]$score[1L]
 
     # Invert gradient if the worst score is higher than the best score.
     if (best_score < worst_score) gradient_order <- "reverse"
@@ -779,12 +835,14 @@ plot_model_signature_variable_importance <- function(...) {
     # Get gradient colours
     gradient_colours <- .get_palette(
       x = gradient_palette,
-      palette_type = "sequential")
+      palette_type = "sequential"
+    )
 
     p <- p + ggplot2::scale_fill_gradientn(
       colors = gradient_colours,
       limits = y_range,
-      trans = gradient_order)
+      trans = gradient_order
+    )
     
   } else {
     # Bars are not coloured based on occurrence/importance.
@@ -794,13 +852,15 @@ plot_model_signature_variable_importance <- function(...) {
   # Set breaks and  limits on the y-axis
   p <- p + ggplot2::scale_y_continuous(
     breaks = y_breaks,
-    limits = y_range)
+    limits = y_range
+  )
 
   # Determine how things are facetted
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -808,12 +868,14 @@ plot_model_signature_variable_importance <- function(...) {
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
@@ -826,25 +888,29 @@ plot_model_signature_variable_importance <- function(...) {
       p <- p + ggplot2::geom_text(
         ggplot2::aes(
           label = !!sym("cluster_name"),
-          y = 0.0),
+          y = 0.0
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
         size = text_settings$geom_text_size,
-        vjust = "inward")
+        vjust = "inward"
+      )
       
     } else {
       p <- p + ggplot2::geom_text(
         ggplot2::aes(
           label = !!sym("cluster_name"),
           y = 0.0,
-          group = !!sym("color_breaks")),
+          group = !!sym("color_breaks")
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
         size = text_settings$geom_text_size,
         vjust = "inward",
-        position = ggplot2::position_dodge(width = 0.9))
+        position = ggplot2::position_dodge(width = 0.9)
+      )
     }
   }
 
@@ -854,7 +920,8 @@ plot_model_signature_variable_importance <- function(...) {
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Rotate x-axis ticks
   if (rotate_x_tick_labels) {
@@ -862,7 +929,9 @@ plot_model_signature_variable_importance <- function(...) {
       axis.text.x = ggplot2::element_text(
         vjust = 0.25, 
         hjust = 1.0, 
-        angle = 90.0))
+        angle = 90.0
+      )
+    )
   }
 
   return(p)
@@ -874,12 +943,14 @@ plot_model_signature_variable_importance <- function(...) {
     x,
     facet_by,
     facet_wrap_cols,
-    rotate_x_tick_labels) {
+    rotate_x_tick_labels
+) {
   # Get plot layout dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Determine the number of features within each facet.
   n_features <- data.table::uniqueN(x = x$feature)
@@ -887,11 +958,11 @@ plot_model_signature_variable_importance <- function(...) {
 
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.07mm)
   # spacing. Then add some room for other plot elements.
-  default_width <- n_features * 0.5 + (n_features - 1) * 0.07 + 1.0
-  default_width <- max(c(4, default_width))
+  default_width <- n_features * 0.5 + (n_features - 1L) * 0.07 + 1.0
+  default_width <- max(c(4.0, default_width))
 
   # Set default height.
-  default_height <- 4
+  default_height <- 4.0
 
   # Reserve space for x-axis tick labels. Assume that the typical width of a
   # character is about 5 points (1.8 mm). For the x-axis we only reserve extra
@@ -900,10 +971,10 @@ plot_model_signature_variable_importance <- function(...) {
   x_tick_space <- ifelse(rotate_x_tick_labels, longest_name * 0.18, 0.36)
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height + x_tick_space, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height + x_tick_space, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }

@@ -94,7 +94,7 @@ setGeneric(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 3,
+    y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
     show_dendrogram = c("top", "right"),
@@ -103,7 +103,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_feature_similarity")
   }
 )
@@ -139,7 +140,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 3,
+    y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
     show_dendrogram = c("top", "right"),
@@ -148,7 +149,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
@@ -159,8 +161,11 @@ setMethod(
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
-          "feature_similarity_threshold" = feature_similarity_threshold),
-        list(...)))
+          "feature_similarity_threshold" = feature_similarity_threshold
+        ),
+        list(...)
+      )
+    )
 
     return(do.call(
       plot_feature_similarity,
@@ -191,7 +196,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -226,7 +233,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     y_range = NULL,
-    y_n_breaks = 3,
+    y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
     show_dendrogram = c("top", "right"),
@@ -235,7 +242,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
@@ -247,20 +255,22 @@ setMethod(
       feature_cluster_cut_method = feature_cluster_cut_method,
       feature_similarity_threshold = feature_similarity_threshold,
       export_dendrogram = FALSE,
-      export_ordered_data = FALSE)
+      export_ordered_data = FALSE
+    )
 
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
 
     # Obtain data element from list.
     if (is.list(x)) {
-      if (length(x) > 1) {
+      if (length(x) > 1L) {
         ..error_reached_unreachable_code(
-          "plot_feature_similarity: list of data elements contains unmerged elements.")
+          "plot_feature_similarity: list of data elements contains unmerged elements."
+        )
       }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
 
     # Check that the data are not empty.
@@ -270,7 +280,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = TRUE),
       purpose = "to plot feature similarity heatmaps",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -315,20 +326,21 @@ setMethod(
         show_dendrogram <- NULL
       }
       
-    } else if (length(show_dendrogram) == 0) {
+    } else if (length(show_dendrogram) == 0L) {
       show_dendrogram <- NULL
       
     } else {
       .check_parameter_value_is_valid(
         x = show_dendrogram,
         var_name = "show_dendrogram",
-        values = c("top", "bottom", "left", "right"))
+        values = c("top", "bottom", "left", "right")
+      )
 
       # Check that bottom and top, and left and right do not appear together.
       if (all(c("top", "bottom") %in% show_dendrogram)) {
-        stop("Dendrograms can not be drawn both above and below the plot.")
+        ..error("Dendrograms can not be drawn both above and below the plot.")
       } else if (all(c("left", "right") %in% show_dendrogram)) {
-        stop("Dendrograms can not be drawn both to the left and right of the plot.")
+        ..error("Dendrograms can not be drawn both to the left and right of the plot.")
       }
     }
 
@@ -353,7 +365,8 @@ setMethod(
       x = x@data,
       split_by = split_by,
       facet_by = facet_by,
-      available = c("data_set", "fs_method", "learner"))
+      available = c("data_set", "fs_method", "learner")
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -368,7 +381,8 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      rotate_x_tick_labels = rotate_x_tick_labels)
+      rotate_x_tick_labels = rotate_x_tick_labels
+    )
 
     ##### Create plots -------------------------------------------------
 
@@ -395,7 +409,8 @@ setMethod(
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = list("metric" = x@similarity_metric),
-          x = x_sub)
+          x = x_sub
+        )
       }
 
       # Generate plot
@@ -420,7 +435,8 @@ setMethod(
         y_breaks = y_breaks,
         rotate_x_tick_labels = rotate_x_tick_labels,
         show_dendrogram = show_dendrogram,
-        dendrogram_height = dendrogram_height)
+        dendrogram_height = dendrogram_height
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -440,7 +456,8 @@ setMethod(
           facet_wrap_cols = facet_wrap_cols,
           features = as.character(features),
           show_dendrogram = show_dendrogram,
-          rotate_x_tick_labels = rotate_x_tick_labels)
+          rotate_x_tick_labels = rotate_x_tick_labels
+        )
 
         # Save to file.
         do.call(
@@ -454,10 +471,14 @@ setMethod(
               "subtype" = "similarity",
               "x" = x_sub,
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
+        
       } else {
         # Store as list for export.
         plot_list <- c(plot_list, list(p))
@@ -469,7 +490,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -496,7 +518,8 @@ setMethod(
     y_breaks,
     rotate_x_tick_labels,
     show_dendrogram,
-    dendrogram_height) {
+    dendrogram_height
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
   
@@ -505,13 +528,15 @@ setMethod(
   plot_layout_table <- .get_plot_layout_table(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
   
   # Define the split in data required for faceting.
   data_split <- split(
     plot_layout_table,
     by = c("col_id", "row_id"),
-    sorted = TRUE)
+    sorted = TRUE
+  )
 
   # Create plots to join
   figure_list <- list()
@@ -522,13 +547,15 @@ setMethod(
       x_split <- methods::new(
         "familiarDataElementFeatureSimilarity",
         data,
-        data = x[current_split, on = .NATURAL, nomatch = NULL])
+        data = x[current_split, on = .NATURAL, nomatch = NULL]
+      )
       
     } else {
       x_split <- methods::new(
         "familiarDataElementFeatureSimilarity",
         data,
-        data = x)
+        data = x
+      )
     }
 
     # Add in clustering information and a dendrogram.
@@ -541,7 +568,8 @@ setMethod(
     # Complete the similarity data
     similarity_data <- .complete_feature_similarity_table(
       x = x_split@data,
-      similarity_metric = x_split@similarity_metric)
+      similarity_metric = x_split@similarity_metric
+    )
 
     # Create similarity heatmap
     p_heatmap <- .create_feature_similarity_heatmap(
@@ -559,7 +587,8 @@ setMethod(
       caption = caption,
       rotate_x_tick_labels = rotate_x_tick_labels,
       show_dendrogram = show_dendrogram,
-      similarity_metric = x_split@similarity_metric)
+      similarity_metric = x_split@similarity_metric
+    )
 
     # Extract plot elements from the heatmap.
     extracted_elements <- .extract_plot_grobs(p = p_heatmap)
@@ -570,7 +599,8 @@ setMethod(
     # Rename plot elements.
     g_heatmap <- .rename_plot_grobs(
       g = .convert_to_grob(p_heatmap),
-      extension = "main")
+      extension = "main"
+    )
 
     # Add dendrogram
     if (!is.null(show_dendrogram) && inherits(dendrogram, "hclust")) {
@@ -590,7 +620,8 @@ setMethod(
           y_n_breaks = y_n_breaks,
           y_breaks = y_breaks,
           plot_height = dendrogram_height,
-          rotate_x_tick_labels = rotate_x_tick_labels)
+          rotate_x_tick_labels = rotate_x_tick_labels
+        )
 
         # Determine the axis element
         axis_element <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
@@ -600,7 +631,8 @@ setMethod(
         g_dendro <- .gtable_extract(
           g = .convert_to_grob(p_dendro),
           element = c("panel", axis_element),
-          partial_match = TRUE)
+          partial_match = TRUE
+        )
 
         # Insert the dendrogram at the position correct position around the
         # heatmap.
@@ -609,7 +641,8 @@ setMethod(
           g_new = g_dendro,
           where = position,
           ref_element = "panel-main",
-          partial_match = TRUE)
+          partial_match = TRUE
+        )
       }
     }
 
@@ -628,14 +661,16 @@ setMethod(
     x_label_shared = x_label_shared,
     y_text_shared = FALSE,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
     plot_layout_table = plot_layout_table,
     element_grobs = extracted_element_list,
-    ggtheme = ggtheme)
+    ggtheme = ggtheme
+  )
 
   return(g)
 }
@@ -657,7 +692,8 @@ setMethod(
     caption,
     rotate_x_tick_labels,
     show_dendrogram,
-    similarity_metric) {
+    similarity_metric
+) {
   
   if (is.null(gradient_palette_range) && !is.null(similarity_metric)) {
     # Find the palette range.
@@ -666,9 +702,10 @@ setMethod(
 
   # Determine whether a sequential or divergent palette should be used by default.
   palette_type <- ifelse(
-    length(gradient_palette_range) > 2,
+    length(gradient_palette_range) > 2L,
     "divergent",
-    "sequential")
+    "sequential"
+  )
 
   # Should the palette be inverted? This is because for some metrics, clusters
   # are those with least distance, not highest similarity.
@@ -681,7 +718,8 @@ setMethod(
   p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(
     x = !!sym("feature_name_1"),
     y = !!sym("feature_name_2"),
-    fill = !!sym("value")))
+    fill = !!sym("value")
+  ))
   p <- p + ggtheme
 
   if (!is_empty(x)) {
@@ -696,17 +734,19 @@ setMethod(
   gradient_colours <- .get_palette(
     x = gradient_palette,
     palette_type = palette_type,
-    diverge_to_white = TRUE)
+    diverge_to_white = TRUE
+  )
   if (invert_palette) gradient_colours <- rev(gradient_colours)
 
-  if (length(gradient_palette_range) > 0) {
+  if (length(gradient_palette_range) > 0L) {
     # Add gradient palette. If the legend is not shown, legend_label equals
     # NULL.
     p <- p + ggplot2::scale_fill_gradientn(
       name = legend_label,
       colors = gradient_colours,
       limits = range(gradient_palette_range),
-      oob = scales::squish)
+      oob = scales::squish
+    )
   }
 
   # Show dendrogram determines where tick labels and axis labels are placed. By
@@ -725,8 +765,8 @@ setMethod(
 
   # Specify both axes. Note that only the heatmap is shown, without additional
   # space between the plot area and the axes.
-  p <- p + ggplot2::scale_x_discrete(position = x_axis_position, expand = c(0, 0))
-  p <- p + ggplot2::scale_y_discrete(position = y_axis_position, expand = c(0, 0))
+  p <- p + ggplot2::scale_x_discrete(position = x_axis_position, expand = c(0.0, 0.0))
+  p <- p + ggplot2::scale_y_discrete(position = y_axis_position, expand = c(0.0, 0.0))
 
   # Set labels.
   p <- p + ggplot2::labs(
@@ -734,14 +774,16 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Determine how plots are facetted. The actual facets are created in the
   # calling function, not here.
   facet_by_list <- .parse_plot_facet_by(
     x = x, 
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -750,13 +792,15 @@ setMethod(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
     }
   }
 
@@ -766,7 +810,9 @@ setMethod(
       axis.text.x = ggplot2::element_text(
         vjust = 0.25, 
         hjust = 1.0, 
-        angle = 90.0))
+        angle = 90.0
+      )
+    )
   }
 
   return(p)
@@ -782,13 +828,14 @@ setMethod(
     y_n_breaks,
     y_breaks,
     plot_height,
-    rotate_x_tick_labels) {
+    rotate_x_tick_labels
+) {
   # Check if there is any data to plot.
   if (is_empty(x)) return(NULL)
   
   # Define the range along the x-axis.
   x_range <- range(x$x_1)
-  x_range <- c(x_range[1] - 0.5, x_range[2] + 0.5)
+  x_range <- c(x_range[1L] - 0.5, x_range[2L] + 0.5)
 
   # y_range
   if (is.null(y_range)) y_range <- range(c(x$y_1, x$y_2))
@@ -797,23 +844,27 @@ setMethod(
   if (is.null(y_breaks)) {
     .check_input_plot_args(
       y_range = y_range,
-      y_n_breaks = y_n_breaks)
+      y_n_breaks = y_n_breaks
+    )
 
     # Create breaks and update y_range
     y_breaks <- labeling::extended(
       m = y_n_breaks,
-      dmin = y_range[1],
-      dmax = y_range[2],
-      only.loose = TRUE)
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = TRUE
+    )
 
     y_range <- c(
-      head(y_breaks, n = 1),
-      tail(y_breaks, n = 1))
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
+    )
   }
 
   .check_input_plot_args(
     y_range = y_range,
-    y_breaks = y_breaks)
+    y_breaks = y_breaks
+  )
 
   # Create basic plot
   p <- ggplot2::ggplot(
@@ -822,7 +873,9 @@ setMethod(
       x = !!sym("x_1"),
       y = !!sym("y_1"),
       xend = !!sym("x_2"),
-      yend = !!sym("y_2")))
+      yend = !!sym("y_2")
+    )
+  )
   p <- p + ggtheme
   
   # Plot line segments.
@@ -831,40 +884,52 @@ setMethod(
   if (position == "right") {
     p <- p + ggplot2::scale_x_continuous(
       limits = x_range, 
-      expand = c(0, 0))
+      expand = c(0.0, 0.0)
+    )
     p <- p + ggplot2::scale_y_continuous(
       limits = y_range, 
-      breaks = y_breaks)
+      breaks = y_breaks
+    )
     p <- p + ggplot2::coord_flip()
     
   } else if (position == "bottom") {
     p <- p + ggplot2::scale_x_continuous(
       limits = x_range, 
-      expand = c(0, 0))
+      expand = c(0.0, 0.0)
+    )
     p <- p + ggplot2::scale_y_reverse(
       limits = rev(y_range),
-      breaks = rev(y_breaks))
+      breaks = rev(y_breaks)
+    )
     
   } else if (position == "left") {
     p <- p + ggplot2::scale_x_continuous(
       limits = x_range, 
-      expand = c(0, 0))
+      expand = c(0.0, 0.0)
+    )
+    
     p <- p + ggplot2::scale_y_reverse(
       limits = rev(y_range),
-      breaks = rev(y_breaks))
+      breaks = rev(y_breaks)
+    )
     p <- p + ggplot2::coord_flip()
     
   } else if (position == "top") {
     p <- p + ggplot2::scale_x_continuous(
       limits = x_range, 
-      expand = c(0, 0))
+      expand = c(0.0, 0.0)
+    )
+    
     p <- p + ggplot2::scale_y_continuous(
       limits = y_range, 
-      breaks = y_breaks)
+      breaks = y_breaks
+    )
+    
   } else {
     ..error_reached_unreachable_code(paste0(
       ".create_feature_similarity_dendrogram_plot: unknown position encountered: ",
-      position))
+      position
+    ))
   }
 
   # Remove some theme elements and reduce margins. The histogram height is left.
@@ -873,7 +938,8 @@ setMethod(
     panel.background = ggplot2::element_blank(),
     panel.border = ggplot2::element_blank(),
     axis.title.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank())
+    axis.title.y = ggplot2::element_blank()
+  )
 
   if (position %in% c("top", "bottom")) {
     # Remove x-axis
@@ -895,7 +961,9 @@ setMethod(
         axis.text.x = ggplot2::element_text(
           vjust = 0.25, 
           hjust = 1.0, 
-          angle = 90.0))
+          angle = 90.0
+        )
+      )
     }
   }
 
@@ -919,12 +987,14 @@ setMethod(
     facet_wrap_cols,
     features,
     rotate_x_tick_labels,
-    show_dendrogram) {
+    show_dendrogram
+) {
   # Obtain facetting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Determine the number of elements along the x-axis.
   x_n_elements <- y_n_elements <- length(features)
@@ -949,10 +1019,10 @@ setMethod(
   dendro_width <- ifelse(any(c("left", "right") %in% show_dendrogram), 1.5, 0.0)
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * (default_height + x_tick_space + dendro_height), 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * (default_height + x_tick_space + dendro_height), 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * (default_width + y_tick_space + dendro_width), 19))
+  width <- min(c(2.0 + plot_dims[2L] * (default_width + y_tick_space + dendro_width), 19.0))
 
   return(c(height, width))
 }
@@ -981,12 +1051,13 @@ setMethod(
 
   # Add self-paired features.
   features <- unique(x$feature_name_1)
-  y <- x[rep(1, length(features))]
+  y <- x[rep(1.0, length(features))]
   y[, ":="("feature_name_1" = features,
     "feature_name_2" = features,
     "value" = 1.0,
     "label_order_1" = NULL,
-    "label_order_2" = NULL)]
+    "label_order_2" = NULL
+  )]
   y <- merge(x = y, y = feature_1_order, by = "feature_name_1", all = FALSE)
   y <- merge(x = y, y = feature_2_order, by = "feature_name_2", all = FALSE)
 
@@ -996,10 +1067,12 @@ setMethod(
   # Reorder features
   x$feature_name_1 <- factor(
     x = x$feature_name_1, 
-    levels = feature_1_order$feature_name_1[order(feature_1_order$label_order_1)])
+    levels = feature_1_order$feature_name_1[order(feature_1_order$label_order_1)]
+  )
   x$feature_name_2 <- factor(
     x = x$feature_name_2,
-    levels = feature_2_order$feature_name_2[order(feature_2_order$label_order_2)])
+    levels = feature_2_order$feature_name_2[order(feature_2_order$label_order_2)]
+  )
 
   return(x)
 }

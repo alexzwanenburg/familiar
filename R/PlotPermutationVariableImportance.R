@@ -114,7 +114,7 @@ setGeneric(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     conf_int_style = c("point_line", "line", "bar_line", "none"),
     conf_int_alpha = 0.4,
@@ -122,7 +122,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_permutation_variable_importance")
   }
 )
@@ -152,7 +153,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     conf_int_style = c("point_line", "line", "bar_line", "none"),
     conf_int_alpha = 0.4,
@@ -160,15 +161,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "permutation_vimp"),
-        list(...)))
+          "data_element" = "permutation_vimp"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_permutation_variable_importance,
@@ -196,7 +201,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -225,7 +232,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     conf_int_style = c("point_line", "line", "bar_line", "none"),
     conf_int_alpha = 0.4,
@@ -233,7 +240,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     value <- ci_low <- ci_up <- NULL
     
@@ -245,7 +253,8 @@ setMethod(
     # Get input data.
     x <- export_permutation_vimp(
       object = object,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     # Check that the data are not empty (e.g. NULL).
     if (is_empty(x)) return(NULL)
@@ -260,11 +269,14 @@ setMethod(
     if (is.list(x)) {
       if (is_empty(x)) return(NULL)
 
-      if (length(x) > 1) ..error_reached_unreachable_code(
-        "plot_model_performance: list of data elements contains unmerged elements.")
+      if (length(x) > 1L) {
+        ..error_reached_unreachable_code(
+          "plot_model_performance: list of data elements contains unmerged elements."
+        )
+      }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
 
     # Check that the data are not empty.
@@ -274,7 +286,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = FALSE),
       purpose = "to create permutation variable importance plots",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -282,8 +295,8 @@ setMethod(
     ggtheme <- .check_ggtheme(ggtheme)
 
     # conf_int_style
-    if (length(conf_int_style) > 1) {
-      conf_int_style <- head(conf_int_style, n = 1)
+    if (length(conf_int_style) > 1L) {
+      conf_int_style <- head(conf_int_style, n = 1L)
     }
 
     # Set the style of the confidence interval to none, in case no confidence
@@ -306,6 +319,7 @@ setMethod(
         levels = similarity_values,
         labels = format(x = similarity_values, nsmall = 1L)
       )
+      
     } else if (all(is.infinite(x@data$similarity_threshold))) {
       # This happens when data is not based on fixed cuts of a dendrogram.
       x@data$similarity_threshold <- factor(
@@ -317,9 +331,10 @@ setMethod(
       # Remove unused levels.
       x@data$similarity_threshold <- droplevels(x@data$similarity_threshold)
     } else {
-      stop(paste0(
+      ..error(paste0(
         "Combinations of results from different types of clustering algorithms ",
-        "cannot plotted in one figure."))
+        "cannot plotted in one figure."
+      ))
     }
 
     # Set default splitting variables if none are provided.
@@ -336,7 +351,8 @@ setMethod(
 
     # Set available splitting variables.
     available_splitting_variables <- c(
-      "fs_method", "learner", "data_set", "metric", "similarity_threshold")
+      "fs_method", "learner", "data_set", "metric", "similarity_threshold"
+    )
     if (object@outcome_type %in% c("survival")) {
       available_splitting_variables <- c(available_splitting_variables, "evaluation_time")
     }
@@ -347,7 +363,8 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = available_splitting_variables)
+      available = available_splitting_variables
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -358,27 +375,31 @@ setMethod(
     if (is.waive(legend_label)) {
       legend_label <- .create_plot_legend_title(
         user_label = legend_label,
-        color_by = color_by)
+        color_by = color_by
+      )
 
       # Update "similarity threshold" in the legend label to be more specific.
       if (!is.null(color_by)) {
         if (grepl(
           pattern = "similarity threshold",
           x = legend_label$guide_color,
-          fixed = TRUE)) {
+          fixed = TRUE
+        )) {
           if (all(levels(x@data$similarity_threshold) %in% c("clustered", "individual"))) {
             legend_label$guide_color <- sub(
               pattern = "similarity threshold",
               replacement = "clustering",
               x = legend_label$guide_color,
-              fixed = TRUE)
+              fixed = TRUE
+            )
             
           } else {
             legend_label$guide_color <- sub(
               pattern = "similarity threshold",
               replacement = "threshold",
               x = legend_label$guide_color,
-              fixed = TRUE)
+              fixed = TRUE
+            )
           }
         }
       }
@@ -396,8 +417,9 @@ setMethod(
       function(x, outcome_type) {
         
         if (!is_higher_better(
-          metric = as.character(x$metric[1]),
-          outcome_type = outcome_type)) {
+          metric = as.character(x$metric[1L]),
+          outcome_type = outcome_type
+        )) {
           # For metrics where lower scores mark better model performance, a
           # feature is more important when the variable importance is more
           # negative.
@@ -409,11 +431,13 @@ setMethod(
             data.table::setnames(
               x = x,
               old = c("ci_low", "ci_up"),
-              new = c("ci_up", "ci_low"))
+              new = c("ci_up", "ci_low")
+            )
             
             x[, ":="(
               "ci_low" = -ci_low,
-              "ci_up" = -ci_up)]
+              "ci_up" = -ci_up
+            )]
           }
         }
         
@@ -425,7 +449,8 @@ setMethod(
     # Recombine dataset.
     x@data <- data.table::rbindlist(
       x@data,
-      use.names = TRUE)
+      use.names = TRUE
+    )
 
     if ("metric" %in% facet_by || "metric" %in% color_by) {
       available_metrics <- "combined"
@@ -464,7 +489,8 @@ setMethod(
         x_range <- data.table::rbindlist(x_range)
         x_range <- list("combined" = data.table::data.table(
           "min_value" = min(x_range$min_value, na.rm = TRUE),
-          "max_value" = max(x_range$max_value, na.rm = TRUE)))
+          "max_value" = max(x_range$max_value, na.rm = TRUE)
+        ))
       }
       
     } else if (is.list(x_range)) {
@@ -472,13 +498,15 @@ setMethod(
       .check_parameter_value_is_valid(
         x = names(x_range),
         var_name = "x_range",
-        values = available_metrics)
+        values = available_metrics
+      )
 
       .check_argument_length(
         x = unique(names(x_range)),
         var_name = "x_range",
         min = length(available_metrics),
-        max = length(available_metrics))
+        max = length(available_metrics)
+      )
 
       # Convert to the correct
       x_range <- lapply(
@@ -488,8 +516,10 @@ setMethod(
           
           return(data.table::data.table(
             "min_value" = min(x_range),
-            "max_value" = max(x_range)))
-        })
+            "max_value" = max(x_range)
+          ))
+        }
+      )
       
     } else {
       # For user-provided input.
@@ -501,9 +531,11 @@ setMethod(
         function(metric, x_range) {
           return(data.table::data.table(
             "min_value" = min(x_range),
-            "max_value" = max(x_range)))
+            "max_value" = max(x_range)
+          ))
         },
-        x_range = x_range)
+        x_range = x_range
+      )
       
       # Update names of the list elements
       names(x_range) <- available_metrics
@@ -522,31 +554,36 @@ setMethod(
             m = x_n_breaks,
             dmin = x_range$min_value,
             dmax = x_range$max_value,
-            only.loose = TRUE)
+            only.loose = TRUE
+          )
           
           return(x_breaks)
         },
-        x_n_breaks = x_n_breaks)
+        x_n_breaks = x_n_breaks
+      )
       
     } else if (is.list(x_breaks)) {
       # Check whether all metrics are present in the data provided by the user.
       .check_parameter_value_is_valid(
         x = names(x_breaks),
         var_name = "x_breaks",
-        values = available_metrics)
+        values = available_metrics
+      )
 
       .check_argument_length(
         x = unique(names(x_breaks)),
         var_name = "x_breaks",
         min = length(available_metrics),
-        max = length(available_metrics))
+        max = length(available_metrics)
+      )
 
       # Check breaks.
       sapply(
         x_breaks, 
         function(x_breaks) {
           .check_input_plot_args(x_breaks = x_breaks)
-        })
+        }
+      )
       
     } else {
       .check_input_plot_args(x_breaks = x_breaks)
@@ -556,13 +593,14 @@ setMethod(
     x_range <- lapply(
       available_metrics, 
       function(metric, x_range, x_breaks) {
-        x_range[[metric]]$min_value <- head(x_breaks[[metric]], n = 1)
-        x_range[[metric]]$max_value <- tail(x_breaks[[metric]], n = 1)
+        x_range[[metric]]$min_value <- head(x_breaks[[metric]], n = 1L)
+        x_range[[metric]]$max_value <- tail(x_breaks[[metric]], n = 1L)
         
         return(x_range[[metric]])
       },
       x_range = x_range,
-      x_breaks = x_breaks)
+      x_breaks = x_breaks
+    )
     
     # Set names.
     names(x_range) <- available_metrics
@@ -577,7 +615,8 @@ setMethod(
       facet_wrap_cols = facet_wrap_cols,
       conf_int_alpha = conf_int_alpha,
       conf_int_style = conf_int_style,
-      conf_int_default = c("point_line", "line", "bar_line", "none"))
+      conf_int_default = c("point_line", "line", "bar_line", "none")
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -609,11 +648,13 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, facet_by) &&
-          object@outcome_type %in% c("survival")) {
+      if (
+        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        object@outcome_type %in% c("survival")
+      ) {
         additional_subtitle <- c(
           additional_subtitle,
-          .add_time_to_plot_subtitle(x_sub$evaluation_time[1])
+          .add_time_to_plot_subtitle(x_sub$evaluation_time[1L])
         )
       }
 
@@ -621,7 +662,8 @@ setMethod(
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = x_sub)
+          x = x_sub
+        )
       }
 
       # Generate plot
@@ -641,7 +683,8 @@ setMethod(
         conf_int_alpha = conf_int_alpha,
         conf_int_style = conf_int_style,
         x_range = x_range,
-        x_breaks = x_breaks)
+        x_breaks = x_breaks
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -655,7 +698,8 @@ setMethod(
         def_plot_dims <- .determine_permutation_importance_plot_dimensions(
           x = x_sub,
           facet_by = facet_by,
-          facet_wrap_cols = facet_wrap_cols)
+          facet_wrap_cols = facet_wrap_cols
+        )
 
         # Save to file.
         do.call(
@@ -669,10 +713,13 @@ setMethod(
               "subtype" = "permutation",
               "x" = x_sub,
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list and export
@@ -685,7 +732,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -715,7 +763,8 @@ setMethod(
     conf_int_style,
     conf_int_alpha,
     x_range,
-    x_breaks) {
+    x_breaks
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- metric <- similarity_threshold <- order_id <- i.order_id <- NULL
   data_set <- learner <- fs_method <- NULL
@@ -729,7 +778,7 @@ setMethod(
     if ("metric" %in% facet_by || "metric" %in% color_by) {
       x_label <- "variable importance"
     } else {
-      x_label <- as.character(x$metric[1])
+      x_label <- as.character(x$metric[1L])
     }
   }
 
@@ -740,7 +789,7 @@ setMethod(
   if ("metric" %in% color_by || "metric" %in% facet_by) {
     available_metric <- "combined"
   } else {
-    available_metric <- as.character(x$metric[1])
+    available_metric <- as.character(x$metric[1L])
   }
 
   # Sort features. In the outer loop iterate over metrics. In the inner loop
@@ -764,15 +813,18 @@ setMethod(
           if (data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break
 
           for (current_threshold in rev(levels(x$similarity_threshold))) {
-            for (id_table in split(x[
-              data_set == current_data_set &
-              fs_method == current_fs_method &
-              learner == current_learner &
-              metric == current_metric &
-              similarity_threshold == current_threshold],
-              by = "order_id")) {
+            for (id_table in split(
+              x[
+                data_set == current_data_set &
+                fs_method == current_fs_method &
+                learner == current_learner &
+                metric == current_metric &
+                similarity_threshold == current_threshold
+              ],
+              by = "order_id"
+            )) {
               
-              if (nrow(id_table) < 2) next
+              if (nrow(id_table) < 2L) next
 
               # Local copy
               id_table <- data.table::copy(id_table)
@@ -796,13 +848,15 @@ setMethod(
   # Order features by order_id
   x$feature <- factor(
     x = x$feature,
-    levels = rev(unique(x[, mget(c("feature", "order_id"))])[order(order_id)][["feature"]]))
+    levels = rev(unique(x[, mget(c("feature", "order_id"))])[order(order_id)][["feature"]])
+  )
 
   # Generate a guide table
   guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
 
   # Extract data
   x <- guide_list$data
@@ -818,14 +872,17 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym("feature"),
           y = !!sym("value"),
-          fill = !!sym("color_breaks")))
+          fill = !!sym("color_breaks")
+        )
+      )
 
       p <- p + ggplot2::scale_fill_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
         guide = ggplot2::guide_legend(reverse = TRUE),
-        drop = FALSE)
+        drop = FALSE
+      )
       
     } else if (conf_int_style %in% c("bar_line")) {
       p <- ggplot2::ggplot(
@@ -834,21 +891,25 @@ setMethod(
           x = !!sym("feature"),
           y = !!sym("value"),
           fill = !!sym("color_breaks"),
-          color = !!sym("color_breaks")))
+          color = !!sym("color_breaks")
+        )
+      )
       
       p <- p + ggplot2::scale_fill_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
         guide = ggplot2::guide_legend(reverse = TRUE),
-        drop = FALSE)
+        drop = FALSE
+      )
       
       p <- p + ggplot2::scale_colour_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
         guide = ggplot2::guide_legend(reverse = TRUE),
-        drop = FALSE)
+        drop = FALSE
+      )
       
     } else if (conf_int_style %in% c("line", "point_line")) {
       p <- ggplot2::ggplot(
@@ -856,24 +917,32 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym("feature"),
           y = !!sym("value"),
-          color = !!sym("color_breaks")))
+          color = !!sym("color_breaks")
+        )
+      )
       
       p <- p + ggplot2::scale_colour_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
         guide = ggplot2::guide_legend(reverse = TRUE),
-        drop = FALSE)
+        drop = FALSE
+      )
       
     } else {
       ..error_reached_unreachable_code(
-        ".plot_permutation_variable_importance: unknown confidence interval style.")
+        ".plot_permutation_variable_importance: unknown confidence interval style."
+      )
     }
   } else {
     # Basic plot.
-    p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(
-      x = !!sym("feature"),
-      y = !!sym("value")))
+    p <- ggplot2::ggplot(
+      data = x, 
+      mapping = ggplot2::aes(
+        x = !!sym("feature"),
+        y = !!sym("value")
+      )
+    )
   }
 
   # Add theme.
@@ -883,13 +952,16 @@ setMethod(
   if (conf_int_style %in% c("bar_line")) {
     p <- p + ggplot2::geom_col(
       alpha = conf_int_alpha,
-      position = "dodge")
+      position = "dodge"
+    )
 
     p <- p + ggplot2::geom_linerange(
       mapping = ggplot2::aes(
         ymin = !!sym("ci_low"),
-        ymax = !!sym("ci_up")),
-      position = ggplot2::position_dodge(width = 0.9))
+        ymax = !!sym("ci_up")
+      ),
+      position = ggplot2::position_dodge(width = 0.9)
+    )
     
   } else if (conf_int_style %in% c("none")) {
     p <- p + ggplot2::geom_col(position = "dodge")
@@ -898,19 +970,24 @@ setMethod(
     p <- p + ggplot2::geom_linerange(
       mapping = ggplot2::aes(
         ymin = !!sym("ci_low"),
-        ymax = !!sym("ci_up")),
-      position = ggplot2::position_dodge(width = 0.8))
+        ymax = !!sym("ci_up")
+      ),
+      position = ggplot2::position_dodge(width = 0.8)
+    )
     
   } else if (conf_int_style %in% c("point_line")) {
     p <- p + ggplot2::geom_pointrange(
       mapping = ggplot2::aes(
         ymin = !!sym("ci_low"),
-        ymax = !!sym("ci_up")),
-      position = ggplot2::position_dodge(width = 0.9))
+        ymax = !!sym("ci_up")
+      ),
+      position = ggplot2::position_dodge(width = 0.9)
+    )
     
   } else {
     ..error_reached_unreachable_code(
-      ".plot_permutation_variable_importance: unknown confidence interval style.")
+      ".plot_permutation_variable_importance: unknown confidence interval style."
+    )
   }
 
   # Set breaks and limits
@@ -926,7 +1003,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -934,20 +1012,23 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
   # Add a line to indicate 0.0, if 0.0 is included in the range.
-  if (x_range[1] <= 0.0 && x_range[2] >= 0.0) {
+  if (x_range[1L] <= 0.0 && x_range[2L] >= 0.0) {
     p <- p + ggplot2::geom_hline(
       yintercept = 0.0,
-      linetype = "dotted")
+      linetype = "dotted"
+    )
   }
 
   # Update labels. Note that the inversion of x_label and y_label is correct, as
@@ -957,7 +1038,8 @@ setMethod(
     y = x_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   return(p)
 }
@@ -967,12 +1049,14 @@ setMethod(
 .determine_permutation_importance_plot_dimensions <- function(
     x, 
     facet_by, 
-    facet_wrap_cols) {
+    facet_wrap_cols
+) {
   # Get plot layout dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Determine the number of features within each facet.
   n_features <- data.table::uniqueN(x = x$feature)
@@ -980,17 +1064,17 @@ setMethod(
 
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.7mm)
   # spacing. Then add some room for other plot elements.
-  default_height <- n_features * 0.5 + (n_features - 1) * 0.07 + 1.0
+  default_height <- n_features * 0.5 + (n_features - 1L) * 0.07 + 1.0
 
   # Set a default height. Assume that the typical width of a character is about
   # 5 points (1.8mm).
-  default_width <- 6 + longest_name * 0.18
+  default_width <- 6.0 + longest_name * 0.18
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }
