@@ -4,7 +4,8 @@ NULL
 
 setClass(
   "familiarCorrelationVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 
 
@@ -55,7 +56,7 @@ setMethod(
     # Drop non-event data for censored data analysis for calculating correlation
     # and set outcome column.
     if (object@outcome_type == "survival") {
-      data@data <- data@data[outcome_event == 1, ]
+      data@data <- data@data[outcome_event == 1L, ]
 
       # Check whether the filtered data does not allow for assessing variable
       # importance.
@@ -71,7 +72,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -87,6 +89,7 @@ setMethod(
             y = data[["outcome_time"]],
             method = correlation_method
           )
+          
         } else {
           # Use the outcome column for continuous and count data.
           correlation_coefficient <- stats::cor(
@@ -107,10 +110,12 @@ setMethod(
     vimp_object <- methods::new("vimpTable",
       vimp_table = data.table::data.table(
         "score" = abs(correlation_coefficients),
-        "name" = feature_columns),
+        "name" = feature_columns
+      ),
       encoding_table = encoded_data$reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }
