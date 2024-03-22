@@ -2,21 +2,23 @@ test_all_learners_available <- function(learners) {
   # Create placeholder flags.
   learner_available <- logical(length(learners))
   names(learner_available) <- learners
-
+  
   # Iterate over learners.
   for (learner in learners) {
     # Determine if the learner is available for any outcome.
     for (outcome_type in c(
-      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk"
+    )) {
       # Create a familiarModel object.
       object <- methods::new(
         "familiarModel",
         outcome_type = outcome_type,
-        learner = learner)
-
+        learner = learner
+      )
+      
       # Promote the learner to the right class.
       object <- promote_learner(object = object)
-
+      
       # Check if the learner is available for the outcome.
       if (is_available(object)) {
         learner_available[learner] <- TRUE
@@ -24,7 +26,7 @@ test_all_learners_available <- function(learners) {
       }
     }
   }
-
+  
   # Iterate over learners
   for (learner in learners) {
     testthat::test_that(
@@ -47,13 +49,14 @@ test_all_learners_train_predict_vimp <- function(
     except_predict_survival = NULL,
     has_vimp = TRUE,
     can_trim = TRUE,
-    debug = FALSE) {
+    debug = FALSE
+) {
   if (debug) {
     test_fun <- debug_test_that
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Iterate over the outcome type.
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
@@ -64,12 +67,12 @@ test_all_learners_train_predict_vimp <- function(
     empty_data <- test_create_empty_data(outcome_type)
     no_feature_data <- test_create_data_without_feature(outcome_type)
     bad_data <- test_create_bad_data(outcome_type)
-
+    
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
-
+    
     # Iterate over learners.
     for (learner in learners) {
       # Create a familiarModel object.
@@ -78,32 +81,32 @@ test_all_learners_train_predict_vimp <- function(
         outcome_type = outcome_type,
         learner = learner
       )
-
+      
       # Promote the learner to the right class.
       object <- promote_learner(object = object)
-
+      
       # Test if the learner is available for the current outcome_type
       if (!is_available(object)) next
-
+      
       # Parse hyperparameter list
       hyperparameters <- c(
         hyperparameter_list[[outcome_type]],
         list("sign_size" = get_n_features(full_data))
       )
-
+      
       # Find required hyperparameters
       learner_hyperparameters <- .get_preset_hyperparameters(
         learner = learner,
         outcome_type = outcome_type,
         names_only = TRUE
       )
-
+      
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
-
+      
       # Full dataset -----------------------------------------------------------
-
+      
       # Train the model.
       model <- suppressWarnings(test_train(
         data = full_data,
@@ -114,18 +117,18 @@ test_all_learners_train_predict_vimp <- function(
         time_max = 3.5,
         trim_model = FALSE
       ))
-
+      
       # Create a trimmed model -- this is the only instance were we do that
       # without setting the time-out to infinite to test whether the timeout
       # handler returns it correctly.
       trimmed_model <- trim_model(model)
-
+      
       # Generate a file name to save the model to.
       file_name <- tempfile(fileext = ".rds")
-
+      
       # Save file.
       saveRDS(trimmed_model, file = file_name)
-
+      
       # Read file contents as a reloaded model.
       reloaded_model <- readRDS(file = file_name)
       
@@ -137,11 +140,11 @@ test_all_learners_train_predict_vimp <- function(
         paste0("Model for ", outcome_type, " created using ", learner, " can be trimmed."),
         {
           if (can_trim) {
-            testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
-            testthat::expect_equal(reloaded_model@is_trimmed, TRUE)
+            testthat::expect_true(trimmed_model@is_trimmed)
+            testthat::expect_true(reloaded_model@is_trimmed)
           } else {
-            testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
-            testthat::expect_equal(reloaded_model@is_trimmed, FALSE)
+            testthat::expect_false(trimmed_model@is_trimmed)
+            testthat::expect_false(reloaded_model@is_trimmed)
           }
         }
       )
@@ -150,7 +153,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Model for ", outcome_type, " can be created using ",
-          learner, " using a complete dataset."),
+          learner, " using a complete dataset."
+        ),
         {
           # Test that the model was successfully created.
           testthat::expect_equal(
@@ -160,7 +164,7 @@ test_all_learners_train_predict_vimp <- function(
           
           if (outcome_type == "survival") {
             # Calibration info is present
-            testthat::expect_equal(has_calibration_info(model), TRUE)
+            testthat::expect_true(has_calibration_info(model))
           }
         }
       )
@@ -169,7 +173,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
-          learner, " for a complete dataset."),
+          learner, " for a complete dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data = full_data))
@@ -194,7 +199,7 @@ test_all_learners_train_predict_vimp <- function(
             
           } else if (outcome_type %in% c("survival")) {
             testthat::expect_s4_class(prediction_table, "predictionTableSurvival")
-
+            
             # Check prediction of survival probability.
             testthat::expect_s4_class(
               suppressWarnings(.predict(model, data = full_data, type = "survival_probability")),
@@ -240,7 +245,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
-          learner, " for a one-sample dataset."),
+          learner, " for a one-sample dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -258,7 +264,8 @@ test_all_learners_train_predict_vimp <- function(
             # Expect that the class levels are the same as those in the model.
             testthat::expect_equal(
               get_outcome_class_levels(prediction_table),
-              get_outcome_class_levels(model))
+              get_outcome_class_levels(model)
+            )
           }
           
           # Expect that the trimmed model produces the same predictions.
@@ -291,7 +298,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can not be made using ",
-          learner, " for an empty dataset."),
+          learner, " for an empty dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -309,7 +317,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type,
-            " can be made using ", learner, " for a complete dataset."),
+            " can be made using ", learner, " for a complete dataset."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -400,7 +409,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type, 
-            " can be made using ", learner, " for a one-sample dataset."),
+            " can be made using ", learner, " for a one-sample dataset."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -493,7 +503,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Model has variable importance for ", outcome_type, " and ", 
-          learner, " for the complete dataset."),
+          learner, " for the complete dataset."
+        ),
         {
           # Extract the variable importance table.
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
@@ -518,9 +529,9 @@ test_all_learners_train_predict_vimp <- function(
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table has two rows.
-            testthat::expect_true(nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features)
-            testthat::expect_true(nrow(vimp_table_trim) > 0 && nrow(vimp_table_trim) <= n_features)
-            testthat::expect_true(nrow(vimp_table_reloaded) > 0 && nrow(vimp_table_reloaded) <= n_features)
+            testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
+            testthat::expect_true(nrow(vimp_table_trim) > 0L && nrow(vimp_table_trim) <= n_features)
+            testthat::expect_true(nrow(vimp_table_reloaded) > 0L && nrow(vimp_table_reloaded) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
@@ -536,7 +547,7 @@ test_all_learners_train_predict_vimp <- function(
           }
         }
       )
-
+      
       # Bootstrapped dataset ---------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(
@@ -549,12 +560,13 @@ test_all_learners_train_predict_vimp <- function(
         create_bootstrap = TRUE,
         trim_model = FALSE
       ))
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " can be created using ",
-          learner, " using a complete dataset."),
+          learner, " using a complete dataset."
+        ),
         {
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -584,7 +596,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Naive predictions for ", outcome_type, " can be made using ",
-          learner, " for a complete dataset."), 
+          learner, " for a complete dataset."
+        ), 
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -643,12 +656,13 @@ test_all_learners_train_predict_vimp <- function(
       
       # Create a trimmed model.
       trimmed_model <- trim_model(model, timeout = Inf)
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " can be created using ",
-          learner, " using a one-feature dataset."),
+          learner, " using a one-feature dataset."
+        ),
         {
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -664,7 +678,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
-          learner, " for a one-feature dataset."), 
+          learner, " for a one-feature dataset."
+        ), 
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -704,7 +719,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
-          learner, " for a one-feature, one-sample dataset."),
+          learner, " for a one-feature, one-sample dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -745,7 +761,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type,
-            " can be made using ", learner, " for a one-feature dataset."), 
+            " can be made using ", learner, " for a one-feature dataset."
+          ), 
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -808,7 +825,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type, 
-            " can be made using ", learner, " for a one-feature, one-sample dataset."),
+            " can be made using ", learner, " for a one-feature, one-sample dataset."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -879,12 +897,13 @@ test_all_learners_train_predict_vimp <- function(
         learner = learner,
         time_max = 3.5
       ))
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " can not be created using ",
-          learner, " using a bad dataset."),
+          learner, " using a bad dataset."
+        ),
         {
           # Test that the model was successfully created.
           testthat::expect_false(model_is_trained(model))
@@ -895,7 +914,7 @@ test_all_learners_train_predict_vimp <- function(
           }
         }
       )
-
+      
       # Bad dataset without features -------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(
@@ -907,12 +926,13 @@ test_all_learners_train_predict_vimp <- function(
         learner = learner,
         time_max = 3.5
       ))
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " can not be created using ", 
-          learner, " using a dataset for ."), 
+          learner, " using a dataset for ."
+        ), 
         {
           # Test that the model could not be successfully created.
           testthat::expect_false(model_is_trained(model))
@@ -923,7 +943,7 @@ test_all_learners_train_predict_vimp <- function(
       if (outcome_type %in% c("survival", "competing_risk")) {
         # Set up non-censoring dataset.
         no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
-
+        
         # Train the model.
         model <- suppressWarnings(test_train(
           data = no_censoring_data,
@@ -933,15 +953,16 @@ test_all_learners_train_predict_vimp <- function(
           learner = learner,
           time_max = 3.5
         ))
-
+        
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
-
+        
         # Test that models can be created.
         test_fun(
           paste0(
             "Model for ", outcome_type, " can be created using ",
-            learner, " using a dataset without censoring."),
+            learner, " using a dataset without censoring."
+          ),
           {
             # Test that the model was successfully created.
             testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -957,7 +978,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample predictions for ", outcome_type, " can be made using ",
-            learner, " for a dataset without censoring."),
+            learner, " for a dataset without censoring."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -989,7 +1011,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type, 
-            " can be made using ", learner, " for a dataset without censoring."), 
+            " can be made using ", learner, " for a dataset without censoring."
+          ), 
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -1064,15 +1087,16 @@ test_all_learners_train_predict_vimp <- function(
           learner = learner,
           time_max = 3.5
         ))
-
+        
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
-
+        
         # Test that models can be created.
         test_fun(
           paste0(
             "Model for ", outcome_type, " can be created using ",
-            learner, " using a dataset with one censored sample."), 
+            learner, " using a dataset with one censored sample."
+          ), 
           {
             # Test that the model was successfully created.
             testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -1088,7 +1112,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample predictions for ", outcome_type, " can be made using ",
-            learner, " for a dataset with one censored sample."),
+            learner, " for a dataset with one censored sample."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -1120,7 +1145,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type,
-            " can be made using ", learner, " for a dataset with one censored sample."),
+            " can be made using ", learner, " for a dataset with one censored sample."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -1196,7 +1222,7 @@ test_all_learners_train_predict_vimp <- function(
           learner = learner,
           time_max = 3.5
         ))
-
+        
         # Create a trimmed model.
         trimmed_model <- trim_model(model, timeout = Inf)
         
@@ -1204,7 +1230,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Model for ", outcome_type, " can be created using ", learner,
-            " using a dataset with few censored samples."), 
+            " using a dataset with few censored samples."
+          ), 
           {
             # Test that the model was successfully created.
             testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -1220,7 +1247,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample predictions for ", outcome_type, " can be made using ",
-            learner, " for a dataset with few censored samples."),
+            learner, " for a dataset with few censored samples."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -1252,7 +1280,8 @@ test_all_learners_train_predict_vimp <- function(
         test_fun(
           paste0(
             "Sample survival predictions for ", outcome_type, 
-            " can be made using ", learner, " for a dataset with few censored samples."),
+            " can be made using ", learner, " for a dataset with few censored samples."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -1326,12 +1355,13 @@ test_all_learners_train_predict_vimp <- function(
         learner = learner,
         time_max = 3.5
       ))
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " cannot be created using ",
-          learner, " for a fully prospective dataset."), 
+          learner, " for a fully prospective dataset."
+        ), 
         {
           # Test that the model was not created.
           testthat::expect_false(model_is_trained(model))
@@ -1339,7 +1369,7 @@ test_all_learners_train_predict_vimp <- function(
       )
       
       # Mostly prospective dataset ---------------------------------------------
-
+      
       # Train the model.
       model <- suppressWarnings(test_train(
         data = mostly_prospective_data,
@@ -1350,12 +1380,13 @@ test_all_learners_train_predict_vimp <- function(
         learner = learner,
         time_max = 3.5
       ))
-
+      
       # Test that models can be created.
       test_fun(
         paste0(
           "Model for ", outcome_type, " cannot be created using ", learner,
-          " for an almost fully prospective dataset, where outcome is known for just a single sample."),
+          " for an almost fully prospective dataset, where outcome is known for just a single sample."
+        ),
         {
           # Test that the model was not created.
           testthat::expect_false(model_is_trained(model))
@@ -1363,7 +1394,7 @@ test_all_learners_train_predict_vimp <- function(
       )
       
       # Partially prospective dataset ------------------------------------------
-
+      
       # Train the model.
       model <- suppressWarnings(test_train(
         data = partially_prospective_data,
@@ -1378,7 +1409,8 @@ test_all_learners_train_predict_vimp <- function(
       test_fun(
         paste0(
           "Model for ", outcome_type, " can be created using ", learner,
-          " for a partially prospective dataset, where outcome is known for most samples."),
+          " for a partially prospective dataset, where outcome is known for most samples."
+        ),
         {
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
@@ -1393,55 +1425,55 @@ test_all_learners_train_predict_vimp <- function(
 test_all_learners_parallel_train_predict_vimp <- function(
     learners,
     hyperparameter_list = NULL,
-    has_vimp = TRUE) {
+    has_vimp = TRUE
+) {
   # This function serves to test whether packages are loaded correctly for model
   # training, variable importance and so forth.
   
   # Disable randomForestSRC OpenMP core use.
-  options(rf.cores = as.integer(1))
+  options(rf.cores = 1L)
   on.exit(options(rf.cores = -1L), add = TRUE)
-
+  
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+  
   # Iterate over the outcome type.
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-
+    
     # Iterate over learners.
     for (learner in learners) {
-      if (
-        !.check_learner_outcome_type(
+      if (!.check_learner_outcome_type(
         learner = learner,
         outcome_type = outcome_type,
-        as_flag = TRUE)
-      ) {
+        as_flag = TRUE
+      )) {
         next
       }
-
+      
       # Parse hyperparameter list
       hyperparameters <- c(
         hyperparameter_list[[outcome_type]],
         list("sign_size" = get_n_features(full_data))
       )
-
+      
       # Find required hyperparameters
       learner_hyperparameters <- .get_preset_hyperparameters(
         learner = learner,
         outcome_type = outcome_type,
         names_only = TRUE
       )
-
+      
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
-
+      
       # Train models -----------------------------------------------------------
       cl_train <- .test_start_cluster(n_cores = 2L)
-
+      
       # Train the models.
       model_list <- parallel::parLapply(
         cl = cl_train,
@@ -1454,25 +1486,26 @@ test_all_learners_parallel_train_predict_vimp <- function(
         time_max = 3.5,
         trim_model = FALSE
       )
-
+      
       # Test that models can be created.
       testthat::test_that(
         paste0(
           "Model for ", outcome_type, " can be created using ",
-          learner, " using a complete dataset."),
+          learner, " using a complete dataset."
+        ),
         {
           # Test that the model was successfully created.
-          testthat::expect_true(model_is_trained(model_list[[1]]))
-          testthat::expect_true(model_is_trained(model_list[[2]]))
+          testthat::expect_true(model_is_trained(model_list[[1L]]))
+          testthat::expect_true(model_is_trained(model_list[[2L]]))
         }
       )
       
       # Terminate cluster.
       cl_train <- .terminate_cluster(cl_train)
-
+      
       # Variable importance ----------------------------------------------------
       cl_vimp <- .test_start_cluster(n_cores = 2L)
-
+      
       # Extract variable importance objects.
       vimp_table_list <- parallel::parLapply(
         cl = cl_vimp,
@@ -1480,43 +1513,44 @@ test_all_learners_parallel_train_predict_vimp <- function(
         .vimp,
         data = full_data
       )
-
+      
       # Extract the variable importance tables themselves.
       vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
-
+      
       # Test that the model has variable importance.
       testthat::test_that(
         paste0(
           "Model has variable importance for ", outcome_type, " and ",
-          learner, " for the complete dataset."),
+          learner, " for the complete dataset."
+        ),
         {
           if (has_vimp) {
             # Get the number of features
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table has two rows.
-            testthat::expect_true(nrow(vimp_table_list[[1]]) > 0 && nrow(vimp_table_list[[1]]) <= n_features)
-            testthat::expect_true(nrow(vimp_table_list[[2]]) > 0 && nrow(vimp_table_list[[2]]) <= n_features)
+            testthat::expect_true(nrow(vimp_table_list[[1L]]) > 0L && nrow(vimp_table_list[[1L]]) <= n_features)
+            testthat::expect_true(nrow(vimp_table_list[[2L]]) > 0L && nrow(vimp_table_list[[2L]]) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_true(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)))
-            testthat::expect_true(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)))
+            testthat::expect_in(vimp_table_list[[1L]]$name, get_feature_columns(full_data))
+            testthat::expect_in(vimp_table_list[[2L]]$name, get_feature_columns(full_data))
             
           } else {
             # Expect that the vimp table has no rows.
-            testthat::expect_true(is_empty(vimp_table_list[[1]]))
-            testthat::expect_true(is_empty(vimp_table_list[[2]]))
+            testthat::expect_true(is_empty(vimp_table_list[[1L]]))
+            testthat::expect_true(is_empty(vimp_table_list[[2L]]))
           }
         }
       )
-
+      
       # Terminate cluster.
       cl_vimp <- .terminate_cluster(cl_vimp)
-
+      
       # Predictions ------------------------------------------------------------
       cl_predict <- .test_start_cluster(n_cores = 2L)
-
+      
       # Extract predictions.
       prediction_list <- parallel::parLapply(
         cl = cl_predict,
@@ -1524,16 +1558,17 @@ test_all_learners_parallel_train_predict_vimp <- function(
         .predict,
         data = full_data
       )
-
+      
       # Test that models can be used to predict the outcome.
       testthat::test_that(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
-          learner, " for a complete dataset."),
+          learner, " for a complete dataset."
+        ),
         {
           # Test that the predictions were successfully made.
-          testthat::expect_true(any_predictions_valid(prediction_list[[1]]))
-          testthat::expect_true(any_predictions_valid(prediction_list[[2]]))
+          testthat::expect_true(any_predictions_valid(prediction_list[[1L]]))
+          testthat::expect_true(any_predictions_valid(prediction_list[[2L]]))
         }
       )
       
@@ -1549,29 +1584,30 @@ test_all_novelty_detectors_available <- function(detectors) {
   # Create placeholder flags.
   detector_available <- logical(length(detectors))
   names(detector_available) <- detectors
-
+  
   # Iterate over learners.
   for (detector in detectors) {
     # Create a familiarModel object.
     object <- methods::new(
       "familiarNoveltyDetector",
-      learner = detector)
-
+      learner = detector
+    )
+    
     # Promote the learner to the right class.
     object <- promote_detector(object = object)
-
+    
     # Check if the learner is available for the outcome.
     if (is_available(object)) {
       detector_available[detector] <- TRUE
     }
   }
-
+  
   # Iterate over learners
   for (detector in detectors) {
     testthat::test_that(
       paste0(detector, " is available."), 
       {
-        testthat::expect_equal(unname(detector_available[detector]), TRUE)
+        testthat::expect_true(unname(detector_available[detector]))
       }
     )
   }
@@ -1586,16 +1622,17 @@ test_all_novelty_detectors <- function(
     except_predict = NULL,
     except_predict_survival = NULL,
     can_trim = TRUE,
-    debug = FALSE) {
+    debug = FALSE
+) {
   if (debug) {
     test_fun <- debug_test_that
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
-
+  
   # Obtain data.
   full_data <- test_create_good_data(outcome_type)
   full_one_sample_data <- test_create_one_sample_data(outcome_type)
@@ -1603,41 +1640,43 @@ test_all_novelty_detectors <- function(
   one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
   empty_data <- test_create_empty_data(outcome_type)
   no_feature_data <- test_create_data_without_feature(outcome_type)
-
+  
   # Iterate over learners.
   for (detector in detectors) {
     # Create a familiarNoveltyDetector object.
     object <- methods::new(
       "familiarNoveltyDetector",
-      learner = detector)
-
+      learner = detector
+    )
+    
     # Promote the novelty detector to the right class.
     object <- promote_detector(object = object)
-
+    
     # Test if the detector is available.
     if (!is_available(object)) next
-
+    
     # Full dataset -------------------------------------------------------------
-
+    
     # Train the novelty detector.
     model <- suppressWarnings(test_train_novelty_detector(
       data = full_data,
       cluster_method = "none",
       imputation_method = "simple",
       hyperparameter_list = hyperparameter_list,
-      detector = detector))
-
+      detector = detector
+    ))
+    
     # Create a trimmed detector.
     trimmed_model <- trim_model(model, timeout = Inf)
-
+    
     # Check that the the novelty detector can be trimmed.
     test_fun(
       paste0("Detector created using the ", detector, " algorithm can be trimmed."),
       {
         if (can_trim) {
-          testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
+          testthat::expect_true(trimmed_model@is_trimmed)
         } else {
-          testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+          testthat::expect_false(trimmed_model@is_trimmed)
         }
       }
     )
@@ -1646,75 +1685,89 @@ test_all_novelty_detectors <- function(
     test_fun(
       paste0(
         "Detector can be created using the ", detector,
-        " algorithm using a complete dataset."),
+        " algorithm using a complete dataset."
+      ),
       {
         # Test that the novelty detector was successfully created.
         testthat::expect_equal(
           model_is_trained(model),
-          !detector %in% except_train)
+          !detector %in% except_train
+        )
       }
     )
-
+    
     # Test that the novelty detector can be used to predict the outcome.
     test_fun(
       paste0(
         "Novely predictions can be made using the ", detector, 
-        " algorithm for a complete dataset."), 
+        " algorithm for a complete dataset."
+      ), 
       {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
           model,
-          data = full_data))
+          data = full_data
+        ))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
           any_predictions_valid(prediction_table),
-          !detector %in% c(except_train, except_predict))
+          !detector %in% c(except_train, except_predict)
+        )
         
         # Expect that the trimmed novelty detector produces the same predictions.
         prediction_table_trim <- suppressWarnings(.predict(
           trimmed_model,
-          data = full_data))
+          data = full_data
+        ))
         
         testthat::expect_equal(
           prediction_table,
           prediction_table_trim,
-          ignore_attr = TRUE)
+          ignore_attr = TRUE
+        )
       }
     )
-
+    
     # Test that the novelty detector can be used to predict the outcome.
     test_fun(
       paste0(
         "Novelty predictions can be made using the ", detector, 
-        " algorithm for a one-sample dataset."),
+        " algorithm for a one-sample dataset."
+      ),
       {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
           model,
-          data = full_one_sample_data))
+          data = full_one_sample_data
+        ))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
           any_predictions_valid(prediction_table),
-          !detector %in% c(except_train, except_predict))
+          !detector %in% c(except_train, except_predict)
+        )
         
         # Expect that the trimmed novelty detector produces the same predictions.
         prediction_table_trim <- suppressWarnings(.predict(
           trimmed_model,
-          data = full_one_sample_data))
+          data = full_one_sample_data
+        ))
         
         testthat::expect_equal(
           prediction_table,
           prediction_table_trim,
-          ignore_attr = TRUE)
+          ignore_attr = TRUE
+        )
       }
     )
     
     # Test that the novelty detector cannot predict for empty datasets.
-    test_fun(paste0(
-      "Novelty predictions can not be made using the ", detector,
-      " algorithm for an empty dataset."),
+    test_fun(
+      paste0(
+        "Novelty predictions can not be made using the ", detector,
+        " algorithm for an empty dataset."
+      ),
       {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
@@ -1732,7 +1785,8 @@ test_all_novelty_detectors <- function(
       cluster_method = "none",
       imputation_method = "simple",
       hyperparameter_list = hyperparameter_list,
-      detector = detector))
+      detector = detector
+    ))
     
     # Create a trimmed novelty detector.
     trimmed_model <- trim_model(model, timeout = Inf)
@@ -1741,12 +1795,14 @@ test_all_novelty_detectors <- function(
     test_fun(
       paste0(
         "Detector can be created using the ", detector,
-        " algorithm using a one-feature dataset."),
+        " algorithm using a one-feature dataset."
+      ),
       {
         # Test that the novelty detector was successfully created.
         testthat::expect_equal(
           model_is_trained(model),
-          !detector %in% except_train)
+          !detector %in% except_train
+        )
       }
     )
     
@@ -1754,28 +1810,33 @@ test_all_novelty_detectors <- function(
     test_fun(
       paste0(
         "Novelty predictions can be made using the ", detector,
-        " algorithm for a one-feature dataset."), 
+        " algorithm for a one-feature dataset."
+      ), 
       {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
           model,
-          data = one_feature_data))
+          data = one_feature_data
+        ))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
           any_predictions_valid(prediction_table),
-          !detector %in% c(except_train, except_predict))
+          !detector %in% c(except_train, except_predict)
+        )
         
         # Expect that the trimmed novelty detector produces the same
         # predictions.
         prediction_table_trim <- suppressWarnings(.predict(
           trimmed_model,
-          data = one_feature_data))
+          data = one_feature_data
+        ))
         
         testthat::expect_equal(
           prediction_table,
           prediction_table_trim,
-          ignore_attr = TRUE)
+          ignore_attr = TRUE
+        )
       }
     )
     
@@ -1783,28 +1844,33 @@ test_all_novelty_detectors <- function(
     test_fun(
       paste0(
         "Novelty predictions can be made using the ", detector, 
-        " algorithm for a one-feature, one-sample dataset."),
+        " algorithm for a one-feature, one-sample dataset."
+      ),
       {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(
           model,
-          data = one_feature_one_sample_data))
+          data = one_feature_one_sample_data
+        ))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(
           any_predictions_valid(prediction_table),
-          !detector %in% c(except_train, except_predict))
+          !detector %in% c(except_train, except_predict)
+        )
         
         # Expect that the trimmed novelty detector produces the same
         # predictions.
         prediction_table_trim <- suppressWarnings(.predict(
           trimmed_model,
-          data = one_feature_one_sample_data))
+          data = one_feature_one_sample_data
+        ))
         
         testthat::expect_equal(
           prediction_table,
           prediction_table_trim,
-          ignore_attr = TRUE)
+          ignore_attr = TRUE
+        )
       }
     )
     
@@ -1816,16 +1882,18 @@ test_all_novelty_detectors <- function(
       cluster_method = "none",
       imputation_method = "simple",
       hyperparameter_list = hyperparameter_list,
-      detector = detector))
-
+      detector = detector
+    ))
+    
     # Test that the novelty detector can be created.
     test_fun(
       paste0(
         "Detector can not be created using the ", detector,
-        " algorithm using a bad dataset."), 
+        " algorithm using a bad dataset."
+      ), 
       {
         # Test that the novelty detector was successfully created.
-        testthat::expect_equal(model_is_trained(model), FALSE)
+        testthat::expect_false(model_is_trained(model))
       }
     )
     
@@ -1836,16 +1904,18 @@ test_all_novelty_detectors <- function(
       data_bypass = full_data,
       imputation_method = "simple",
       hyperparameter_list = hyperparameter_list,
-      detector = detector))
+      detector = detector
+    ))
     
     # Test that the novelty detector can be created.
     test_fun(
       paste0(
         "Detector can not be created using the ", detector,
-        " algorithm using a dataset without features."), 
+        " algorithm using a dataset without features."
+      ), 
       {
         # Test that the novelty detector was successfully created.
-        testthat::expect_equal(model_is_trained(model), FALSE)
+        testthat::expect_false(model_is_trained(model))
       }
     )
   }
@@ -1857,7 +1927,8 @@ test_all_novelty_detectors_parallel <- function(
     detectors,
     except_train = NULL,
     except_predict = NULL,
-    hyperparameter_list = NULL) {
+    hyperparameter_list = NULL
+) {
   # This function serves to test whether packages are loaded correctly for
   # novelty detection.
   
@@ -1876,7 +1947,8 @@ test_all_novelty_detectors_parallel <- function(
   for (detector in detectors) {
     if (!.check_novelty_detector_available(
       detector = detector,
-      as_flag = TRUE)) {
+      as_flag = TRUE
+    )) {
       next
     }
     
@@ -1886,12 +1958,16 @@ test_all_novelty_detectors_parallel <- function(
     # Train the models.
     model_list <- parallel::parLapply(
       cl = cl_train,
-      list("1" = full_data, "2" = full_data),
+      list(
+        "1" = full_data,
+        "2" = full_data
+      ),
       test_train_novelty_detector,
       cluster_method = "none",
       imputation_method = "simple",
       detector = detector,
-      hyperparameter_list = hyperparameter_list)
+      hyperparameter_list = hyperparameter_list
+    )
     
     # Test that models can be created.
     testthat::test_that(
@@ -1899,11 +1975,13 @@ test_all_novelty_detectors_parallel <- function(
       {
         # Test that the model was successfully created.
         testthat::expect_equal(
-          model_is_trained(model_list[[1]]),
-          !detector %in% except_train)
+          model_is_trained(model_list[[1L]]),
+          !detector %in% except_train
+        )
         testthat::expect_equal(
-          model_is_trained(model_list[[2]]),
-          !detector %in% except_train)
+          model_is_trained(model_list[[2L]]),
+          !detector %in% except_train
+        )
       }
     )
     
@@ -1918,7 +1996,8 @@ test_all_novelty_detectors_parallel <- function(
       cl = cl_predict,
       model_list,
       .predict,
-      data = full_data)
+      data = full_data
+    )
     
     # Test that models can be used to assess novelty.
     testthat::test_that(
@@ -1926,11 +2005,13 @@ test_all_novelty_detectors_parallel <- function(
       {
         # Test that the predictions were successfully made.
         testthat::expect_equal(
-          any_predictions_valid(prediction_list[[1]]),
-          !detector %in% c(except_train, except_predict))
+          any_predictions_valid(prediction_list[[1L]]),
+          !detector %in% c(except_train, except_predict)
+        )
         testthat::expect_equal(
-          any_predictions_valid(prediction_list[[2]]),
-          !detector %in% c(except_train, except_predict))
+          any_predictions_valid(prediction_list[[2L]]),
+          !detector %in% c(except_train, except_predict)
+        )
       }
     )
     
@@ -1951,12 +2032,14 @@ test_all_vimp_methods_available <- function(vimp_methods) {
   for (vimp_method in vimp_methods) {
     # Determine if the learner is available for any outcome.
     for (outcome_type in c(
-      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk"
+    )) {
       # Create a familiarModel object.
       object <- methods::new(
         "familiarVimpMethod",
         outcome_type = outcome_type,
-        vimp_method = vimp_method)
+        vimp_method = vimp_method
+      )
       
       # Promote the learner to the right class.
       object <- promote_vimp_method(object = object)
@@ -1974,7 +2057,7 @@ test_all_vimp_methods_available <- function(vimp_methods) {
     testthat::test_that(
       paste0(vimp_method, " is available."),
       {
-        testthat::expect_equal(unname(vimp_method_available[vimp_method]), TRUE)
+        testthat::expect_true(unname(vimp_method_available[vimp_method]))
       }
     )
   }
@@ -1992,7 +2075,7 @@ test_all_vimp_methods <- function(
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Iterate over the outcome type.
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
@@ -2004,12 +2087,12 @@ test_all_vimp_methods <- function(
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test_create_bad_data(outcome_type)
-
+    
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
-
+    
     # Iterate over variable importance methods.
     for (vimp_method in vimp_methods) {
       # Create a familiarVimpMethod object.
@@ -2018,29 +2101,29 @@ test_all_vimp_methods <- function(
         outcome_type = outcome_type,
         vimp_method = vimp_method
       )
-
+      
       # Promote the learner to the right class.
       object <- promote_vimp_method(object = object)
-
+      
       # Test if the learner is available for the current outcome_type
       if (!is_available(object)) next
-
+      
       # Parse hyperparameter list
       hyperparameters <- c(hyperparameter_list[[outcome_type]])
-
+      
       # Find required hyperparameters
       vimp_method_hyperparameters <- .get_preset_hyperparameters(
         fs_method = vimp_method,
         outcome_type = outcome_type,
         names_only = TRUE
       )
-
+      
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(vimp_method_hyperparameters, names(hyperparameters))]
-
+      
       # Full dataset -----------------------------------------------------------
-
+      
       # Process dataset.
       vimp_object <- prepare_vimp_object(
         data = full_data,
@@ -2054,7 +2137,8 @@ test_all_vimp_methods <- function(
       test_fun(
         paste0(
           "Variable importance can be computed for ", outcome_type, " with the ",
-          vimp_method, " using a complete dataset."),
+          vimp_method, " using a complete dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
@@ -2065,18 +2149,14 @@ test_all_vimp_methods <- function(
           n_features <- get_n_features(full_data)
           
           # Expect that the vimp table is not empty.
-          testthat::expect_true(
-            nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features
-          )
+          testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_true(
-            all(vimp_table$name %in% get_feature_columns(full_data))
-          )
+          testthat::expect_in(vimp_table$name, get_feature_columns(full_data))
           
           # Expect that not all features have the same rank.
-          if (nrow(vimp_table) > 1) {
+          if (nrow(vimp_table) > 1L) {
             testthat::expect_true(!all(vimp_table$rank == 1L))
           }
         }
@@ -2084,73 +2164,77 @@ test_all_vimp_methods <- function(
       
       test_fun(
         paste0(
-        "Variable importance can be computed for ", outcome_type, " with the ",
-        vimp_method, " using a complete dataset with one invariant feature."),
+          "Variable importance can be computed for ", outcome_type, " with the ",
+          vimp_method, " using a complete dataset with one invariant feature."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            full_one_invariant_data)))
+            full_one_invariant_data
+          )))
           
           # Get the number of features
           n_features <- get_n_features(full_one_invariant_data)
           
-          # Expect that the vimp table is not empty..
-          testthat::expect_equal(
-            nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-            TRUE)
+          # Expect that the vimp table is not empty.
+          testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(
-            all(vimp_table$name %in% get_feature_columns(full_one_invariant_data)),
-            TRUE)
+          testthat::expect_in(vimp_table$name, get_feature_columns(full_one_invariant_data))
         }
       )
       
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, 
-          " with the ", vimp_method, " using an empty dataset."),
+          " with the ", vimp_method, " using an empty dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            empty_data)))
+            empty_data
+          )))
           
           # Expect that the vimp table has two rows.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
       
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, 
-          " with the ", vimp_method, " using a bad dataset."),
+          " with the ", vimp_method, " using a bad dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            bad_data)))
+            bad_data
+          )))
           
           # Expect that the vimp table has two rows.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
       
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, 
-          " with the ", vimp_method, " using a one-sample dataset."),
+          " with the ", vimp_method, " using a one-sample dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            full_one_sample_data)))
+            full_one_sample_data
+          )))
           
           # Expect that the vimp table has two rows.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
       
       # One-feature dataset ----------------------------------------------------
-
+      
       # Process dataset.
       vimp_object <- prepare_vimp_object(
         data = one_feature_data,
@@ -2158,61 +2242,66 @@ test_all_vimp_methods <- function(
         vimp_method_parameter_list = hyperparameters,
         outcome_type = outcome_type,
         cluster_method = "none",
-        imputation_method = "simple")
-
+        imputation_method = "simple"
+      )
+      
       test_fun(
         paste0(
           "Variable importance can be computed for ", outcome_type, " with the ",
-          vimp_method, " using a one-feature dataset."), 
+          vimp_method, " using a one-feature dataset."
+        ), 
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            one_feature_data)))
+            one_feature_data
+          )))
           
           # Expect that the vimp table is not empty.
-          testthat::expect_equal(nrow(vimp_table), 1)
+          testthat::expect_equal(nrow(vimp_table), 1L)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(
-            all(vimp_table$name %in% get_feature_columns(one_feature_data)),
-            TRUE)
+          testthat::expect_in(vimp_table$name, get_feature_columns(one_feature_data))
         }
       )
-
+      
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, " with the ",
-          vimp_method, " using a one-feature dataset with an invariant feature."),
+          vimp_method, " using a one-feature dataset with an invariant feature."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            one_feature_invariant_data)))
+            one_feature_invariant_data
+          )))
           
           # Expect that the vimp table is empty.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
-
+      
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type,
-          " with the ", vimp_method, " using a one-feature, one-sample dataset."),
+          " with the ", vimp_method, " using a one-feature, one-sample dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            one_feature_one_sample_data)))
+            one_feature_one_sample_data
+          )))
           
           # Expect that the vimp table is empty.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
-
+      
       if (outcome_type %in% c("survival", "competing_risk")) {
         # Dataset without censored instances -----------------------------------
-
+        
         no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
-
+        
         # Process dataset.
         vimp_object <- prepare_vimp_object(
           data = no_censoring_data,
@@ -2220,37 +2309,36 @@ test_all_vimp_methods <- function(
           vimp_method_parameter_list = hyperparameters,
           outcome_type = outcome_type,
           cluster_method = "none",
-          imputation_method = "simple")
-
+          imputation_method = "simple"
+        )
+        
         test_fun(
           paste0(
             "Variable importance can be computed for ", outcome_type, " with the ",
-            vimp_method, " using a dataset without censoring."),
+            vimp_method, " using a dataset without censoring."
+          ),
           {
             vimp_table <- suppressWarnings(get_vimp_table(.vimp(
               vimp_object,
-              no_censoring_data)))
+              no_censoring_data
+            )))
             
             # Get the number of features
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table is not empty..
-            testthat::expect_equal(
-              nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-              TRUE)
+            testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_equal(
-              all(vimp_table$name %in% get_feature_columns(full_data)),
-              TRUE)
+            testthat::expect_in(vimp_table$name, get_feature_columns(full_data))
           }
         )
         
         # Dataset with one censored instance -----------------------------------
-
+        
         one_censored_data <- test_create_good_data_one_censored(outcome_type)
-
+        
         # Process dataset.
         vimp_object <- prepare_vimp_object(
           data = one_censored_data,
@@ -2258,36 +2346,35 @@ test_all_vimp_methods <- function(
           vimp_method_parameter_list = hyperparameters,
           outcome_type = outcome_type,
           cluster_method = "none",
-          imputation_method = "simple")
-
+          imputation_method = "simple"
+        )
+        
         test_fun(
           paste0(
             "Variable importance can be computed for ", outcome_type, " with the ",
-            vimp_method, " using a dataset with one censored instance."),
+            vimp_method, " using a dataset with one censored instance."
+          ),
           {
             vimp_table <- suppressWarnings(get_vimp_table(.vimp(
               vimp_object,
-              one_censored_data)))
+              one_censored_data
+            )))
             
             # Get the number of features
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table is not empty..
-            testthat::expect_equal(
-              nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-              TRUE)
+            testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_equal(
-              all(vimp_table$name %in% get_feature_columns(full_data)),
-              TRUE)
+            testthat::expect_in(vimp_table$name, get_feature_columns(full_data))
           }
         )
-
+        
         # Dataset with few censored instances ----------------------------------
         few_censored_data <- test_create_good_data_few_censored(outcome_type)
-
+        
         # Process dataset.
         vimp_object <- prepare_vimp_object(
           data = few_censored_data,
@@ -2295,36 +2382,35 @@ test_all_vimp_methods <- function(
           vimp_method_parameter_list = hyperparameters,
           outcome_type = outcome_type,
           cluster_method = "none",
-          imputation_method = "simple")
-
+          imputation_method = "simple"
+        )
+        
         test_fun(
           paste0(
             "Variable importance can be computed for ", outcome_type, " with the ",
-            vimp_method, " using a dataset with few censored instances."),
+            vimp_method, " using a dataset with few censored instances."
+          ),
           {
             vimp_table <- suppressWarnings(get_vimp_table(.vimp(
               vimp_object,
-              few_censored_data)))
+              few_censored_data
+            )))
             
             # Get the number of features
             n_features <- get_n_features(full_data)
             
             # Expect that the vimp table is not empty..
-            testthat::expect_equal(
-              nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-              TRUE)
+            testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
             
             # Expect that the names in the vimp table correspond to those of the
             # features.
-            testthat::expect_equal(
-              all(vimp_table$name %in% get_feature_columns(full_data)),
-              TRUE)
+            testthat::expect_in(vimp_table$name, get_feature_columns(full_data))
           }
         )
       }
-
+      
       # Fully prospective dataset ----------------------------------------------
-
+      
       # Set up the vimp object.
       vimp_object <- prepare_vimp_object(
         data = full_data,
@@ -2332,19 +2418,22 @@ test_all_vimp_methods <- function(
         vimp_method_parameter_list = hyperparameters,
         outcome_type = outcome_type,
         cluster_method = "none",
-        imputation_method = "simple")
-
+        imputation_method = "simple"
+      )
+      
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, " with the ",
-          vimp_method, " for a fully prospective dataset."),
+          vimp_method, " for a fully prospective dataset."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            fully_prospective_data)))
+            fully_prospective_data
+          )))
           
           # Expect that the vimp table is empty.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
       
@@ -2353,41 +2442,41 @@ test_all_vimp_methods <- function(
       test_fun(
         paste0(
           "Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
-          " for an almost fully prospective dataset, where outcome is known for just a single sample."),
+          " for an almost fully prospective dataset, where outcome is known for just a single sample."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            mostly_prospective_data)))
+            mostly_prospective_data
+          )))
           
           # Expect that the vimp table is empty.
-          testthat::expect_equal(is_empty(vimp_table), TRUE)
+          testthat::expect_true(is_empty(vimp_table))
         }
       )
-
+      
       # Partially prospective dataset ------------------------------------------
-
+      
       test_fun(
         paste0(
           "Variable importance can be computed for ", outcome_type, " with the ", vimp_method,
-          " for a partially prospective dataset, where outcome is known for most samples."),
+          " for a partially prospective dataset, where outcome is known for most samples."
+        ),
         {
           vimp_table <- suppressWarnings(get_vimp_table(.vimp(
             vimp_object,
-            partially_prospective_data)))
+            partially_prospective_data
+          )))
           
           # Get the number of features
           n_features <- get_n_features(full_data)
           
-          # Expect that the vimp table is not empty..
-          testthat::expect_equal(
-            nrow(vimp_table) > 0 && nrow(vimp_table) <= n_features,
-            TRUE)
+          # Expect that the vimp table is not empty.
+          testthat::expect_true(nrow(vimp_table) > 0L && nrow(vimp_table) <= n_features)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(
-            all(vimp_table$name %in% get_feature_columns(partially_prospective_data)),
-            TRUE)
+          testthat::expect_in(vimp_table$name, get_feature_columns(partially_prospective_data))
         }
       )
     }
@@ -2398,103 +2487,112 @@ test_all_vimp_methods <- function(
 
 test_all_vimp_methods_parallel <- function(
     vimp_methods,
-    hyperparameter_list = NULL) {
+    hyperparameter_list = NULL
+) {
   # This function serves to test whether packages are loaded correctly for
   # assessing variable importance.
-
+  
   # Disable randomForestSRC OpenMP core use.
-  options(rf.cores = as.integer(1))
+  options(rf.cores = 1L)
   on.exit(options(rf.cores = -1L), add = TRUE)
-
+  
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+  
   # Iterate over the outcome type.
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
-
+    
     for (vimp_method in vimp_methods) {
       if (!.check_vimp_outcome_type(
         method = vimp_method,
         outcome_type = outcome_type,
-        as_flag = TRUE)) {
+        as_flag = TRUE
+      )) {
         next
       }
-
+      
       # Parse hyperparameter list
       hyperparameters <- c(hyperparameter_list[[outcome_type]])
-
+      
       # Find required hyperparameters
       vimp_method_hyperparameters <- .get_preset_hyperparameters(
         fs_method = vimp_method,
         outcome_type = outcome_type,
-        names_only = TRUE)
-
+        names_only = TRUE
+      )
+      
       # Select hyperparameters that are being used, and are present in the input
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(vimp_method_hyperparameters, names(hyperparameters))]
-
+      
       # Prepare vimp object ----------------------------------------------------
       cl_train <- .test_start_cluster(n_cores = 2L)
-
+      
       # Prepare the variable importance objects.
       vimp_object_list <- parallel::parLapply(
         cl = cl_train,
-        list("1" = full_data, "2" = full_data),
+        list(
+          "1" = full_data, 
+          "2" = full_data
+        ),
         prepare_vimp_object,
         vimp_method = vimp_method,
         vimp_method_parameter_list = hyperparameters,
         outcome_type = outcome_type,
         cluster_method = "none",
-        imputation_method = "simple")
-
+        imputation_method = "simple"
+      )
+      
       # Terminate cluster.
       cl_train <- .terminate_cluster(cl_train)
-
+      
       # Variable importance ----------------------------------------------------
       cl_vimp <- .test_start_cluster(n_cores = 2L)
-
+      
       # Extract variable importance data.
       vimp_table_list <- parallel::parLapply(
         cl = cl_vimp,
         vimp_object_list,
         .vimp,
-        data = full_data)
-
+        data = full_data
+      )
+      
       # Extract the actual tables.
       vimp_table_list <- lapply(vimp_table_list, get_vimp_table)
-
+      
       # Test that the model has variable importance.
       testthat::test_that(
         paste0(
           "Variable importance method produces variable importance for ",
-          outcome_type, " and ", vimp_method, " for the complete dataset."),
+          outcome_type, " and ", vimp_method, " for the complete dataset."
+        ),
         {
           # Get the number of features
           n_features <- get_n_features(full_data)
           
           # Expect that the vimp table has two rows.
-          testthat::expect_equal(
-            nrow(vimp_table_list[[1]]) > 0 && nrow(vimp_table_list[[1]]) <= n_features,
-            TRUE)
-          testthat::expect_equal(
-            nrow(vimp_table_list[[2]]) > 0 && nrow(vimp_table_list[[2]]) <= n_features,
-            TRUE)
+          testthat::expect_true(
+            nrow(vimp_table_list[[1L]]) > 0L && nrow(vimp_table_list[[1L]]) <= n_features
+          )
+          testthat::expect_true(
+            nrow(vimp_table_list[[2L]]) > 0L && nrow(vimp_table_list[[2L]]) <= n_features
+          )
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(
-            all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)),
-            TRUE)
-          testthat::expect_equal(
-            all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)),
-            TRUE)
+          testthat::expect_true(
+            all(vimp_table_list[[1L]]$name %in% get_feature_columns(full_data))
+          )
+          testthat::expect_true(
+            all(vimp_table_list[[2L]]$name %in% get_feature_columns(full_data))
+          )
         }
       )
-
+      
       # Terminate cluster.
       cl_vimp <- .terminate_cluster(cl_vimp)
     }
@@ -2507,18 +2605,19 @@ test_all_metrics_available <- function(metrics) {
   # Create placeholder flags.
   metric_available <- logical(length(metrics))
   names(metric_available) <- metrics
-
+  
   # Iterate over metrics
   for (metric in metrics) {
     # Determine if the metric is available for any outcome.
     for (outcome_type in c(
-      "continuous", "binomial", "multinomial", "survival", "competing_risk")) {
+      "continuous", "binomial", "multinomial", "survival", "competing_risk"
+    )) {
       # Create a metric object
       object <- as_metric(
         metric = metric,
         outcome_type = outcome_type
       )
-
+      
       # Check if the learner is available for the outcome.
       if (is_available(object)) {
         metric_available[metric] <- TRUE
@@ -2526,7 +2625,7 @@ test_all_metrics_available <- function(metrics) {
       }
     }
   }
-
+  
   # Iterate over learners
   for (metric in metrics) {
     testthat::test_that(
@@ -2545,13 +2644,14 @@ test_all_metrics <- function(
     not_available_single_sample = FALSE,
     not_available_all_samples_identical = FALSE,
     not_available_all_predictions_identical = FALSE,
-    debug = FALSE) {
+    debug = FALSE
+) {
   if (debug) {
     test_fun <- debug_test_that
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Iterate over the outcome type.
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
@@ -2563,36 +2663,39 @@ test_all_metrics <- function(
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     bad_data <- test_create_bad_data(outcome_type)
-
+    
     # Data with different degrees of censoring.
     no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
     one_censored_data <- test_create_good_data_one_censored(outcome_type)
     few_censored_data <- test_create_good_data_few_censored(outcome_type)
-
+    
     # Prospective datasets with (partially) missing outcomes
     fully_prospective_data <- test_create_prospective_data(outcome_type)
     mostly_prospective_data <- test_create_mostly_prospective_data(outcome_type)
     partially_prospective_data <- test_create_partially_prospective_data(outcome_type)
-
+    
     # Set exceptions per outcome type.
     .not_available_single_sample <- not_available_single_sample
     if (is.character(.not_available_single_sample)) {
       .not_available_single_sample <- any(
-        .not_available_single_sample == outcome_type)
+        .not_available_single_sample == outcome_type
+      )
     }
-
+    
     .not_available_all_samples_identical <- not_available_all_samples_identical
     if (is.character(.not_available_all_samples_identical)) {
       .not_available_all_samples_identical <- any(
-        .not_available_all_samples_identical == outcome_type)
+        .not_available_all_samples_identical == outcome_type
+      )
     }
-
+    
     .not_available_all_predictions_identical <- not_available_all_predictions_identical
     if (is.character(.not_available_all_predictions_identical)) {
       .not_available_all_predictions_identical <- any(
-        .not_available_all_predictions_identical == outcome_type)
+        .not_available_all_predictions_identical == outcome_type
+      )
     }
-
+    
     # Iterate over metrics
     for (metric in metrics) {
       # Check if the metric is available for the current outcome type, and skip
@@ -2600,10 +2703,11 @@ test_all_metrics <- function(
       if (!.check_metric_outcome_type(
         metric = metric, 
         outcome_type = outcome_type, 
-        as_flag = TRUE)) {
+        as_flag = TRUE
+      )) {
         break
       }
-
+      
       # Parse hyperparameter list
       hyperparameters <- list(
         "sign_size" = get_n_features(full_data),
@@ -2627,9 +2731,9 @@ test_all_metrics <- function(
           "survival" = "cox"
         )
       )
-
+      
       # Full dataset -----------------------------------------------------------
-
+      
       # Train the model.
       model <- suppressWarnings(test_train(
         data = full_data,
@@ -2646,12 +2750,13 @@ test_all_metrics <- function(
         metric = metric,
         outcome_type = outcome_type
       )
-
+      
       # Test that metric values can be computed for the full model.
       test_fun(
         paste0(
           "1A. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-          metric_object@name, " (", metric_object@metric, ") metric for a complete dataset."),
+          metric_object@name, " (", metric_object@metric, ") metric for a complete dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data = full_data))
@@ -2683,27 +2788,28 @@ test_all_metrics <- function(
           # Expect that the score is a finite, non-missing number.
           testthat::expect_true(data.table::between(
             score,
-            lower = metric_object@value_range[1],
-            upper = metric_object@value_range[2]
+            lower = metric_object@value_range[1L],
+            upper = metric_object@value_range[2L]
           ))
           
           # Expect that the objective score is a non-missing number in the range
           # [-1, 1].
           testthat::expect_true(data.table::between(
-              objective_score,
-              lower = -1.0,
-              upper = 1.0
+            objective_score,
+            lower = -1.0,
+            upper = 1.0
           ))
         }
       )
-
+      
       if (outcome_type %in% c("survival", "competing_risk")) {
         # Test that metric values can be computed for the full model, but with
         # data without censored instances.
         test_fun(
           paste0(
-          "1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-          metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."),
+            "1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+            metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -2726,17 +2832,17 @@ test_all_metrics <- function(
             
             # Expect that the score is a finite, non-missing number.
             testthat::expect_true(data.table::between(
-                score,
-                lower = metric_object@value_range[1],
-                upper = metric_object@value_range[2]
+              score,
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
             
             # Expect that the objective score is a non-missing number in the
             # range [-1, 1].
             testthat::expect_true(data.table::between(
-                objective_score,
-                lower = -1.0,
-                upper = 1.0
+              objective_score,
+              lower = -1.0,
+              upper = 1.0
             ))
           }
         )
@@ -2747,7 +2853,8 @@ test_all_metrics <- function(
           paste0(
             "1C. Model performance for ", outcome_type, " outcomes can be assessed by the ",
             metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
-            "with one censored instances."),
+            "with one censored instances."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -2773,28 +2880,29 @@ test_all_metrics <- function(
             
             # Expect that the score is a finite, non-missing number.
             testthat::expect_true(data.table::between(
-                score,
-                lower = metric_object@value_range[1],
-                upper = metric_object@value_range[2]
+              score,
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
             
             # Expect that the objective score is a non-missing number in the
             # range [-1, 1].
             testthat::expect_true(data.table::between(
-                objective_score,
-                lower = -1.0,
-                upper = 1.0
+              objective_score,
+              lower = -1.0,
+              upper = 1.0
             ))
           }
         )
-
+        
         # Test that metric values can be computed for the full model, but with
         # data with few censored instances.
         test_fun(
           paste0(
             "1D. Model performance for ", outcome_type, " outcomes can be assessed by the ",
             metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
-            "with few censored samples."),
+            "with few censored samples."
+          ),
           {
             # Expect predictions to be made.
             prediction_table <- suppressWarnings(.predict(
@@ -2820,28 +2928,29 @@ test_all_metrics <- function(
             
             # Expect that the score is a finite, non-missing number.
             testthat::expect_true(data.table::between(
-                score,
-                lower = metric_object@value_range[1],
-                upper = metric_object@value_range[2]
+              score,
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
             
             # Expect that the objective score is a non-missing number in the
             # range [-1, 1].
             testthat::expect_true(data.table::between(
-                objective_score,
-                lower = -1.0,
-                upper = 1.0
+              objective_score,
+              lower = -1.0,
+              upper = 1.0
             ))
           }
         )
       }
-
+      
       # Test that metric values can be computed for the full model.
       test_fun(
         paste0(
           "1E. Model performance for ", outcome_type, " outcomes can be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
-          "with some missing outcome values."),
+          "with some missing outcome values."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -2875,27 +2984,28 @@ test_all_metrics <- function(
           
           # Expect that the score is a finite, non-missing number.
           testthat::expect_true(data.table::between(
-              score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
+            score,
+            lower = metric_object@value_range[1L],
+            upper = metric_object@value_range[2L]
           ))
           
           # Expect that the objective score is a non-missing number in the range
           # [-1, 1].
           testthat::expect_true(data.table::between(
-              objective_score,
-              lower = -1.0,
-              upper = 1.0
+            objective_score,
+            lower = -1.0,
+            upper = 1.0
           ))
         }
       )
-
+      
       # Test for a dataset with fully missing outcomes.
       test_fun(
         paste0(
           "1F. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
-          "that misses observed outcomes."),
+          "that misses observed outcomes."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -2926,20 +3036,21 @@ test_all_metrics <- function(
             data = prediction_table,
             object = model
           )
-
+          
           # Expect that the score is NA.
           testthat::expect_true(is.na(score))
           testthat::expect_true(is.na(objective_score))
         }
       )
-
+      
       # Test that metric values can/cannot be computed for a one-sample dataset.
       test_fun(
         paste0(
           "2A. Model performance for ", outcome_type, " outcomes ",
           ifelse(.not_available_single_sample, "cannot", "can"),
           " be assessed by the ", metric_object@name,
-          " (", metric_object@metric, ") metric for a one-sample data set."),
+          " (", metric_object@metric, ") metric for a one-sample data set."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -2979,8 +3090,8 @@ test_all_metrics <- function(
           } else {
             testthat::expect_true(data.table::between(
               score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
           }
           
@@ -2997,14 +3108,15 @@ test_all_metrics <- function(
           }
         }
       )
-
+      
       test_fun(
         paste0(
           "2B. Model performance for ", outcome_type, " outcomes ",
           ifelse(.not_available_single_sample, "cannot", "can"),
           " be assessed by the ", metric_object@name,
           " (", metric_object@metric, ") metric for a dataset with only ",
-          "one instance with known outcomes."),
+          "one instance with known outcomes."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3044,8 +3156,8 @@ test_all_metrics <- function(
           } else {
             testthat::expect_true(data.table::between(
               score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
           }
           
@@ -3069,7 +3181,8 @@ test_all_metrics <- function(
       test_fun(
         paste0(
           "3. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
-          metric_object@name, " (", metric_object@metric, ") metric for an empty dataset."),
+          metric_object@name, " (", metric_object@metric, ") metric for an empty dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3106,53 +3219,54 @@ test_all_metrics <- function(
         ifelse(.not_available_all_samples_identical, "cannot", "can"),
         " be assessed by the ",
         metric_object@name, " (", metric_object@metric, ") metric for a dataset ",
-        "with identical samples."),
-        {
-          # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(
-            model,
-            data = identical_sample_data
+        "with identical samples."
+      ),
+      {
+        # Expect predictions to be made.
+        prediction_table <- suppressWarnings(.predict(
+          model,
+          data = identical_sample_data
+        ))
+        
+        # Test that the predictions were successfully made.
+        testthat::expect_true(any_predictions_valid(prediction_table))
+        
+        # Compute a score.
+        score <- compute_metric_score(
+          metric = metric_object,
+          data = prediction_table
+        )
+        
+        # Compute an objective score.
+        objective_score <- compute_objective_score(
+          metric = metric_object,
+          data = prediction_table,
+          object = model
+        )
+        
+        # Expect that the score is a finite, non-missing number.
+        if (.not_available_all_samples_identical) {
+          testthat::expect_true(is.na(score))
+        } else {
+          testthat::expect_true(data.table::between(
+            score,
+            lower = metric_object@value_range[1L],
+            upper = metric_object@value_range[2L]
           ))
-          
-          # Test that the predictions were successfully made.
-          testthat::expect_true(any_predictions_valid(prediction_table))
-          
-          # Compute a score.
-          score <- compute_metric_score(
-            metric = metric_object,
-            data = prediction_table
-          )
-          
-          # Compute an objective score.
-          objective_score <- compute_objective_score(
-            metric = metric_object,
-            data = prediction_table,
-            object = model
-          )
-          
-          # Expect that the score is a finite, non-missing number.
-          if (.not_available_all_samples_identical) {
-            testthat::expect_true(is.na(score))
-          } else {
-            testthat::expect_true(data.table::between(
-              score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
-            ))
-          }
-          
-          # Expect that the objective score is a non-missing number in the range
-          # [-1, 1].
-          if (.not_available_all_samples_identical) {
-            testthat::expect_true(is.na(objective_score))
-          } else {
-            testthat::expect_true(data.table::between(
-              objective_score,
-              lower = -1.0,
-              upper = 1.0
-            ))
-          }
         }
+        
+        # Expect that the objective score is a non-missing number in the range
+        # [-1, 1].
+        if (.not_available_all_samples_identical) {
+          testthat::expect_true(is.na(objective_score))
+        } else {
+          testthat::expect_true(data.table::between(
+            objective_score,
+            lower = -1.0,
+            upper = 1.0
+          ))
+        }
+      }
       )
       
       # One-feature data set ---------------------------------------------------
@@ -3176,7 +3290,8 @@ test_all_metrics <- function(
       test_fun(
         paste0(
           "5. Model performance for ", outcome_type, " outcomes can be assessed by the ",
-          metric_object@name, " (", metric_object@metric, ") metric for a one-feature dataset."),
+          metric_object@name, " (", metric_object@metric, ") metric for a one-feature dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3211,8 +3326,8 @@ test_all_metrics <- function(
           # Expect that the score is a finite, non-missing number.
           testthat::expect_true(data.table::between(
             score,
-            lower = metric_object@value_range[1],
-            upper = metric_object@value_range[2]
+            lower = metric_object@value_range[1L],
+            upper = metric_object@value_range[2L]
           ))
           
           # Expect that the objective score is a non-missing number in the range
@@ -3224,14 +3339,15 @@ test_all_metrics <- function(
           ))
         }
       )
-
+      
       # Test that metric values cannot be computed for a one-sample dataset.
       test_fun(
         paste0(
           "6. Model performance for ", outcome_type, " outcomes ",
           ifelse(.not_available_single_sample, "cannot", "can"),
           " be assessed by the ", metric_object@name,
-          " (", metric_object@metric, ") metric for a one-feature, one-sample dataset."),
+          " (", metric_object@metric, ") metric for a one-feature, one-sample dataset."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3271,8 +3387,8 @@ test_all_metrics <- function(
           } else {
             testthat::expect_true(data.table::between(
               score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
           }
           
@@ -3290,7 +3406,7 @@ test_all_metrics <- function(
           }
         }
       )
-
+      
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
       test_fun(
@@ -3299,7 +3415,8 @@ test_all_metrics <- function(
           ifelse(.not_available_all_predictions_identical, "can", "cannot"),
           " be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a ",
-          "one-feature dataset with identical predictions."),
+          "one-feature dataset with identical predictions."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3339,8 +3456,8 @@ test_all_metrics <- function(
           } else {
             testthat::expect_true(data.table::between(
               score,
-              lower = metric_object@value_range[1],
-              upper = metric_object@value_range[2]
+              lower = metric_object@value_range[1L],
+              upper = metric_object@value_range[2L]
             ))
           }
           
@@ -3358,7 +3475,7 @@ test_all_metrics <- function(
           }
         }
       )
-
+      
       # Bad dataset ------------------------------------------------------------
       # Train the model.
       model <- suppressWarnings(test_train(
@@ -3375,14 +3492,15 @@ test_all_metrics <- function(
         metric = metric,
         outcome_type = outcome_type
       )
-
+      
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
       test_fun(
         paste0(
           "8. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a bad ",
-          "dataset where the model fails to train."),
+          "dataset where the model fails to train."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3427,12 +3545,13 @@ test_all_metrics <- function(
         metric = metric,
         outcome_type = outcome_type
       )
-
+      
       test_fun(
         paste0(
           "9. Model performance for ", outcome_type, " outcomes cannot be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a model ",
-          "that only produces invalid predictions."),
+          "that only produces invalid predictions."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3490,7 +3609,8 @@ test_all_metrics <- function(
         paste0(
           "10. Model performance for ", outcome_type, " outcomes can be assessed by the ",
           metric_object@name, " (", metric_object@metric, ") metric for a model ",
-          "that produces some invalid predictions."),
+          "that produces some invalid predictions."
+        ),
         {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(
@@ -3525,8 +3645,8 @@ test_all_metrics <- function(
           # Expect that the score is a finite, non-missing number.
           testthat::expect_true(data.table::between(
             score,
-            lower = metric_object@value_range[1],
-            upper = metric_object@value_range[2]
+            lower = metric_object@value_range[1L],
+            upper = metric_object@value_range[2L]
           ))
           
           # Expect that the objective score is a non-missing number in the range
@@ -3557,7 +3677,8 @@ test_hyperparameter_optimisation <- function(
     ...,
     test_specific_config = FALSE,
     debug = FALSE,
-    parallel = waiver()) {
+    parallel = waiver()
+) {
   if (debug) {
     test_fun <- debug_test_that
     verbose <- TRUE
@@ -3565,21 +3686,21 @@ test_hyperparameter_optimisation <- function(
     test_fun <- testthat::test_that
     verbose <- FALSE
   }
-
+  
   # Set parallelisation.
   if (is.waive(parallel)) parallel <- !debug
-
+  
   if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores = as.integer(1))
+    options(rf.cores = 1L)
     on.exit(options(rf.cores = -1L), add = TRUE)
-
+    
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
     on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+    
     # Start local cluster in the overall process.
     cl <- .test_start_cluster(n_cores = 2L)
     on.exit(.terminate_cluster(cl), add = TRUE)
@@ -3587,24 +3708,24 @@ test_hyperparameter_optimisation <- function(
   } else {
     cl <- NULL
   }
-
+  
   # Clean up dots
   dots <- list(...)
   dots$cl <- NULL
   dots$verbose <- NULL
-
+  
   if (is.null(learners)) {
     is_vimp <- TRUE
     method_pool <- vimp_methods
-
+    
     if (is.null(learners)) learners <- "glm"
   } else {
     is_vimp <- FALSE
     method_pool <- learners
-
+    
     if (is.null(vimp_methods)) vimp_methods <- "mim"
   }
-
+  
   # Iterate over the outcome type.
   for (outcome_type in outcome_type_available) {
     # Multi-feature data sets.
@@ -3612,23 +3733,23 @@ test_hyperparameter_optimisation <- function(
     identical_sample_data <- test_create_all_identical_data(outcome_type)
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-
+    
     # One-feature data sets.
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
     one_feature_invariant_data <- test_create_single_feature_invariant_data(outcome_type)
-
+    
     # Set exceptions per outcome type.
     .not_available_no_samples <- not_available_no_samples
     if (is.character(.not_available_no_samples)) {
       .not_available_no_samples <- any(.not_available_no_samples == outcome_type)
     }
-
+    
     .not_available_invariant_data <- FALSE
     if (is.character(.not_available_invariant_data)) {
       .not_available_invariant_data <- any(.not_available_invariant_data == outcome_type)
     }
-
+    
     # Iterate over learners or variable importance methods.
     for (current_method in method_pool) {
       if (is_vimp) {
@@ -3638,45 +3759,49 @@ test_hyperparameter_optimisation <- function(
         learner <- current_method
         vimp_method <- vimp_methods
       }
-
+      
       if (!.check_learner_outcome_type(
         learner = learner,
         outcome_type = outcome_type,
-        as_flag = TRUE)) { 
+        as_flag = TRUE
+      )) { 
         next 
       }
       
       if (!.check_vimp_outcome_type(
         method = vimp_method, 
         outcome_type = outcome_type,
-        as_flag = TRUE)) {
+        as_flag = TRUE
+      )) {
         next
       }
       
       # Full data set-----------------------------------------------------------
-
+      
       # Create object
       object <- .test_create_hyperparameter_object(
         data = full_data,
         vimp_method = vimp_method,
         learner = learner,
         is_vimp = is_vimp,
-        set_signature_feature = TRUE)
-
+        set_signature_feature = TRUE
+      )
+      
       # Check that object is available for the outcome.
       if (!is_available(object)) next
-
+      
       .not_available_invariant_data <- FALSE
       .no_hyperparameters <- FALSE
-
+      
       # Check default parameters
       default_hyperparameters <- get_default_hyperparameters(
         object,
-        data = full_data)
+        data = full_data
+      )
       
-      if (length(default_hyperparameters) > 0) {
+      if (length(default_hyperparameters) > 0L) {
         randomised_hyperparameters <- sapply(default_hyperparameters, function(x) x$randomise)
-
+        
         if ("sign_size" %in% names(randomised_hyperparameters)) {
           .not_available_invariant_data <- sum(randomised_hyperparameters) > 1L ||
             !randomised_hyperparameters["sign_size"]
@@ -3687,14 +3812,15 @@ test_hyperparameter_optimisation <- function(
         .no_hyperparameters <- TRUE
         .not_available_invariant_data <- TRUE
       }
-
+      
       if (verbose) {
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a complete data set."))
+          outcome_type, " outcomes for a complete data set."
+        ))
       }
-
+      
       # Hyperparameter optimisation on a full dataset.
       new_object <- do.call(
         optimise_hyperparameters,
@@ -3709,56 +3835,61 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
-
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
+      
       # Test that hyperparameters were set.
       test_fun(
         paste0(
           "1. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes can be created for a complete data set."),
+          outcome_type, " outcomes can be created for a complete data set."
+        ),
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
             
           } else if (!.no_hyperparameters || !not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make
                 # sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
-                  TRUE)
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)), 
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L)
+                )
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data))
+                )
                 
                 if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2L)
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_none_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data))
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_no_features_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0L)
+                  )
                 }
               }
             }
@@ -3770,9 +3901,10 @@ test_hyperparameter_optimisation <- function(
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a data set with only identical entries."))
+          outcome_type, " outcomes for a data set with only identical entries."
+        ))
       }
-
+      
       # Optimise for data that are completely identical.
       new_object <- do.call(
         optimise_hyperparameters,
@@ -3787,56 +3919,61 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
-
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
+      
       # Test that hyperparameters were set.
       test_fun(
         paste0(
           "2. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes can be created for a data set with only identical entries."),
+          outcome_type, " outcomes can be created for a data set with only identical entries."
+        ),
         {
           if (.no_hyperparameters || .not_available_invariant_data) {
             # Test that no hyperparameters are set. Models cannot
             # train on completely invariant data.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
           } else if (!.not_available_invariant_data) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make
                 # sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
-                  TRUE)
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)),
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L)
+                )
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data))
+                )
                 
                 if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2L)
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_none_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data))
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_no_features_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0L)
+                  )
                 }
               }
             }
@@ -3848,9 +3985,10 @@ test_hyperparameter_optimisation <- function(
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a data set with only one entry."))
+          outcome_type, " outcomes for a data set with only one entry."
+        ))
       }
-
+      
       # Optimise for data that consist of only one sample.
       new_object <- do.call(
         optimise_hyperparameters,
@@ -3865,58 +4003,63 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
       
       # Test.
       test_fun(
         paste0(
           "3. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes can be created for a data set with only one entry."),
+          outcome_type, " outcomes can be created for a data set with only one entry."
+        ),
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Single entry data cannot be
             # used to generate hyperparameter sets unless they are always
             # available.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make
                 # sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2),
-                  TRUE)
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data)),
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L)
+                )
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size <= get_n_features(full_data))
+                )
                 
                 if (vimp_method %in% .get_available_signature_only_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2L)
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_none_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data)),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == get_n_features(full_data))
+                  )
                 }
                 
                 if (vimp_method %in% .get_available_no_features_vimp_methods()) {
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 0L)
+                  )
                 }
               }
             }
@@ -3931,21 +4074,22 @@ test_hyperparameter_optimisation <- function(
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters), 
-                names(get_default_hyperparameters(object)))
+                names(get_default_hyperparameters(object))
+              )
               
               if (!is_vimp) {
                 if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                   # Test that sign_size hyperparameters make
                   # sense.
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 2L)
+                  )
                 }
               }
               
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+              testthat::expect_true(is.null(new_object@hyperparameters))
             }
           }
         }
@@ -3955,9 +4099,10 @@ test_hyperparameter_optimisation <- function(
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for an empty data set."))
+          outcome_type, " outcomes for an empty data set."
+        ))
       }
-
+      
       # Optimise when data is missing.
       new_object <- do.call(
         optimise_hyperparameters,
@@ -3972,8 +4117,11 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
       
       # Test.
       test_fun(
@@ -3982,21 +4130,23 @@ test_hyperparameter_optimisation <- function(
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
           outcome_type, " outcomes ",
           ifelse(!not_available_no_samples, "can", "cannot"),
-          " be created for an empty data set."), 
+          " be created for an empty data set."
+        ), 
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Empty datasets cannot be
             # used to create hyperparameters.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
           } else {
             # Not always available, but with hyperparameters. For some methods
@@ -4008,24 +4158,25 @@ test_hyperparameter_optimisation <- function(
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
-                names(get_default_hyperparameters(object)))
+                names(get_default_hyperparameters(object))
+              )
               
               if (!is_vimp && !is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make
                 # sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size == 2), 
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 2L)
+                )
               }
               
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+              testthat::expect_true(is.null(new_object@hyperparameters))
             }
           }
         }
       )
-
+      
       # One-feature data set ---------------------------------------------------
       # Create object
       object <- .test_create_hyperparameter_object(
@@ -4033,15 +4184,17 @@ test_hyperparameter_optimisation <- function(
         vimp_method = vimp_method,
         learner = learner,
         is_vimp = is_vimp,
-        set_signature_feature = FALSE)
-
+        set_signature_feature = FALSE
+      )
+      
       if (verbose) {
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a data set with only one feature."))
+          outcome_type, " outcomes for a data set with only one feature."
+        ))
       }
-
+      
       # Optimise parameters for a dataset with only one feature.
       new_object <- do.call(
         optimise_hyperparameters,
@@ -4056,33 +4209,38 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
       
       test_fun(
         paste0(
           "5. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes can be created for a data set with only one feature."),
+          outcome_type, " outcomes can be created for a data set with only one feature."
+        ),
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
           } else if (!.no_hyperparameters || !not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1L)
+                )
               }
             }
           }
@@ -4093,7 +4251,8 @@ test_hyperparameter_optimisation <- function(
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a data set with only one feature and sample."))
+          outcome_type, " outcomes for a data set with only one feature and sample."
+        ))
       }
       
       # Optimise parameters for a dataset with only one feature and sample.
@@ -4110,35 +4269,40 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
       
       test_fun(
         paste0(
           "6. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes can be created for a data set with only one feature and sample."),
+          outcome_type, " outcomes can be created for a data set with only one feature and sample."
+        ),
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Hyperparameters cannot be
             # set for datasets with only a single sample.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1L)
+                )
               }
             }
             
@@ -4152,14 +4316,15 @@ test_hyperparameter_optimisation <- function(
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
-                names(get_default_hyperparameters(object)))
+                names(get_default_hyperparameters(object))
+              )
               
               if (!is_vimp) {
                 if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                   # Test that sign_size hyperparameters make sense.
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1L)
+                  )
                 }
               }
             } else {
@@ -4174,7 +4339,8 @@ test_hyperparameter_optimisation <- function(
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
-          outcome_type, " outcomes for a data set with only one, invariant feature."))
+          outcome_type, " outcomes for a data set with only one, invariant feature."
+        ))
       }
       
       # Optimise parameters for a dataset with only one, invariant feature.
@@ -4191,36 +4357,41 @@ test_hyperparameter_optimisation <- function(
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
             "is_vimp" = is_vimp,
-            "verbose" = verbose),
-          dots))
+            "verbose" = verbose
+          ),
+          dots
+        )
+      )
       
       test_fun(
         paste0(
           "7. Hyperparameters for the ", current_method,
           ifelse(is_vimp, " variable importance method", " learner"), " and ",
           outcome_type, " outcomes can be created for a data set with ",
-          "only one, invariant feature."),
+          "only one, invariant feature."
+        ),
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Hyperparameters cannot be
             # set for datasets with invariant features.
-            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+            testthat::expect_true(is.null(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+            testthat::expect_false(is.null(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
               names(new_object@hyperparameters),
-              names(get_default_hyperparameters(object)))
+              names(get_default_hyperparameters(object))
+            )
             
             if (!is_vimp) {
               if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                 # Test that sign_size hyperparameters make sense.
-                testthat::expect_equal(
-                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
-                  TRUE)
+                testthat::expect_true(
+                  all(new_object@hyperparameter_data$parameter_table$sign_size == 1L)
+                )
               }
             }
             
@@ -4234,14 +4405,15 @@ test_hyperparameter_optimisation <- function(
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
-                names(get_default_hyperparameters(object)))
+                names(get_default_hyperparameters(object))
+              )
               
               if (!is_vimp) {
                 if (!is.null(new_object@hyperparameter_data$parameter_table)) {
                   # Test that sign_size hyperparameters make sense.
-                  testthat::expect_equal(
-                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1),
-                    TRUE)
+                  testthat::expect_true(
+                    all(new_object@hyperparameter_data$parameter_table$sign_size == 1L)
+                  )
                 }
               }
             } else {
@@ -4276,7 +4448,7 @@ test_plots <- function(
   if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores = as.integer(1))
+    options(rf.cores = 1L)
     on.exit(options(rf.cores = -1L), add = TRUE)
     
     # Disable multithreading on data.table to prevent reduced performance due to
@@ -4297,7 +4469,7 @@ test_plots <- function(
     cl = cl
   )
   
-  while(TRUE) {
+  while (TRUE) {
     # Generate parameters.
     collection <- test_collection_generator()
     if (coro::is_exhausted(collection)) break
@@ -4319,16 +4491,16 @@ test_plots <- function(
         if (collection$expectation == "all_present") {
           testthat::expect_true(all(which_present))
         } else if (collection$expectation == "all_absent") {
-          testthat::expect_true(all(!which_present))
+          testthat::expect_true(!any(which_present))
         } else if (collection$expectation == "any_absent") {
-          testthat::expect_true(any(!which_present))
+          testthat::expect_true(!all(which_present))
         } else {
           ..error_reached_unreachable_code(paste0("unexpected expectation value:", collection$expectation))
         }
       }
     )
   }
- 
+  
 }
 
 
@@ -4344,8 +4516,9 @@ test_plot_ordering <- function(
     use_prediction_table = FALSE,
     prediction_type = NULL,
     debug = FALSE,
-    parallel = waiver()) {
-
+    parallel = waiver()
+) {
+  
   ..as_familiar_data_object <- function(
     object, 
     data, 
@@ -4396,36 +4569,37 @@ test_plot_ordering <- function(
   
   # Set parallelisation.
   if (is.waive(parallel)) parallel <- !debug
-
+  
   if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores = as.integer(1))
+    options(rf.cores = 1L)
     on.exit(options(rf.cores = -1L), add = TRUE)
-
+    
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
     on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+    
     # Start local cluster in the overall process.
     cl <- .test_start_cluster(n_cores = 2L)
     on.exit(.terminate_cluster(cl), add = TRUE)
+    
   } else {
     cl <- NULL
   }
-
+  
   if (is.null(experiment_args$imputation_method)) experiment_args$imputation_method <- "simple"
   if (is.null(experiment_args$cluster_method)) experiment_args$cluster_method <- "none"
   if (is.null(experiment_args$fs_method)) experiment_args$fs_method <- "mim"
   if (is.null(experiment_args$time_max)) experiment_args$time_max <- 3.5
-
+  
   # Iterate over the outcome type.
   for (outcome_type in outcome_type_available) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
-
+    
     # Parse hyperparameter list
     hyperparameters_lasso <- list(
       "sign_size" = get_n_features(full_data),
@@ -4434,8 +4608,10 @@ test_plot_ordering <- function(
         "continuous" = "gaussian",
         "binomial" = "binomial",
         "multinomial" = "multinomial",
-        "survival" = "cox"))
-
+        "survival" = "cox"
+      )
+    )
+    
     # Train the lasso model.
     model_full_lasso <- suppressWarnings(do.call(
       test_train,
@@ -4444,11 +4620,12 @@ test_plot_ordering <- function(
           "data" = full_data,
           "hyperparameter_list" = hyperparameters_lasso,
           "learner" = "lasso",
-          "create_novelty_detector" = create_novelty_detector),
+          "create_novelty_detector" = create_novelty_detector
+        ),
         experiment_args
       )
     ))
-
+    
     # Parse hyperparameter list
     hyperparameters_glm <- list(
       "sign_size" = get_n_features(full_data),
@@ -4469,11 +4646,12 @@ test_plot_ordering <- function(
           "data" = full_data,
           "hyperparameter_list" = hyperparameters_glm,
           "learner" = "glm",
-          "create_novelty_detector" = create_novelty_detector),
+          "create_novelty_detector" = create_novelty_detector
+        ),
         experiment_args
       )
     ))
-
+    
     # Create familiar data objects.
     data_good_full_lasso_1 <- ..as_familiar_data_object(
       object = model_full_lasso,
@@ -4504,7 +4682,7 @@ test_plot_ordering <- function(
       prediction_type = prediction_type[[outcome_type]],
       ...
     )
-    # data_empty_glm_2 <- ..duplicate_familiar_data_object(data_empty_glm_1)
+    
     data_empty_lasso_1 <- ..as_familiar_data_object(
       object = model_full_lasso,
       data = empty_data,
@@ -4553,10 +4731,10 @@ test_plot_ordering <- function(
         which_present <- .test_which_plot_present(plot_list)
         
         if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present), TRUE)
+          testthat::expect_equal(all(which_present))
           
         } else {
-          testthat::expect_equal(all(!which_present), TRUE)
+          testthat::expect_true(!any(which_present))
         }
       }
     )
@@ -4577,21 +4755,21 @@ test_export <- function(
   } else {
     test_fun <- testthat::test_that
   }
-
+  
   # Set parallelisation.
   if (is.waive(parallel)) parallel <- !debug
-
+  
   if (parallel) {
     # Set options.
     # Disable randomForestSRC OpenMP core use.
-    options(rf.cores = as.integer(1))
+    options(rf.cores = 1L)
     on.exit(options(rf.cores = -1L), add = TRUE)
-
+    
     # Disable multithreading on data.table to prevent reduced performance due to
     # resource collisions with familiar parallelisation.
     data.table::setDTthreads(1L)
     on.exit(data.table::setDTthreads(0L), add = TRUE)
-
+    
     # Start local cluster in the overall process.
     cl <- .test_start_cluster(n_cores = 2L)
     on.exit(.terminate_cluster(cl), add = TRUE)
@@ -4599,13 +4777,13 @@ test_export <- function(
   } else {
     cl <- NULL
   }
-
+  
   test_collection_generator <- .generate_test_collection(
     ...,
     cl = cl
   )
   
-  while(TRUE) {
+  while (TRUE) {
     # Generate parameters.
     collection <- test_collection_generator()
     if (coro::is_exhausted(collection)) break
@@ -4633,9 +4811,9 @@ test_export <- function(
           if (debug) show(data_elements)
           
         } else if (collection$expectation == "all_absent") {
-          testthat::expect_true(all(!which_present))
+          testthat::expect_true(!any(which_present))
         } else if (collection$expectation == "any_absent") {
-          testthat::expect_true(any(!which_present))
+          testthat::expect_true(!all(which_present))
         } else {
           ..error_reached_unreachable_code(paste0("unexpected expectation value:", collection$expectation))
         }
@@ -4658,7 +4836,7 @@ test_export_specific <- function(
     create_novelty_detector = FALSE,
     debug = FALSE
 ) {
-
+  
   ..duplicate_familiar_data_object <- function(x) {
     x <- set_object_name(x)
     x@fs_method <- "mifs"
@@ -4667,12 +4845,12 @@ test_export_specific <- function(
   
   # Create list for output.
   out_elements <- list()
-
+  
   # Iterate over the outcome type.
   for (outcome_type in outcome_type_available) {
     # Obtain data.
     main_data <- test_create_good_data(outcome_type)
-
+    
     data <- switch(
       use_data_set,
       "full" = test_create_good_data(outcome_type),
@@ -4692,7 +4870,7 @@ test_export_specific <- function(
       )
     )
     
-    if (n_models == 1) {
+    if (n_models == 1L) {
       # Train the model.
       model_full <- suppressWarnings(test_train(
         data = main_data,
@@ -4707,7 +4885,7 @@ test_export_specific <- function(
     } else {
       # Train a set of models.
       model_full <- list()
-
+      
       for (ii in seq_len(n_models)) {
         temp_model <- suppressWarnings(test_train(
           data = test_create_bootstrapped_data(outcome_type, seed = ii),
@@ -4724,7 +4902,7 @@ test_export_specific <- function(
         model_full[[ii]] <- temp_model
       }
     }
-
+    
     if (use_prediction_table) {
       # Generate data from prediction tables.
       data_good_full_1 <- as_familiar_data(
@@ -4771,10 +4949,10 @@ test_export_specific <- function(
     # Save data elements and add name.
     current_element <- list(data_elements)
     names(current_element) <- outcome_type
-
+    
     out_elements <- c(out_elements, current_element)
   }
-
+  
   return(out_elements)
 }
 
@@ -4787,7 +4965,8 @@ integrated_test <- function(
     outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     warning_good = NULL,
     warning_bad = NULL,
-    debug = FALSE) {
+    debug = FALSE
+) {
   if (debug) {
     test_fun <- debug_test_that
     suppress_fun <- identity
@@ -4795,25 +4974,26 @@ integrated_test <- function(
     test_fun <- testthat::test_that
     suppress_fun <- suppressMessages
   }
-
+  
   # Set flag for missing learner.
   learner_unset <- is.null(learner)
-
+  
   for (outcome_type in outcome_type_available) {
     .warning_good <- warning_good
     if (is.list(warning_good)) {
       .warning_good <- warning_good[[outcome_type]]
     }
-
+    
     .warning_bad <- warning_bad
     if (is.list(warning_bad)) {
       .warning_bad <- warning_bad[[outcome_type]]
     }
-
+    
     test_fun(
       paste0(
         "Experiment for a good dataset with ", outcome_type, 
-        " outcome functions correctly."),
+        " outcome functions correctly."
+      ),
       {
         # Create datasets
         full_data <- test_create_good_data(outcome_type)
@@ -4830,7 +5010,9 @@ integrated_test <- function(
               "continuous" = "gaussian",
               "binomial" = "binomial",
               "multinomial" = "multinomial",
-              "survival" = "cox"))
+              "survival" = "cox"
+            )
+          )
           
           # Parse as list.
           hyperparameters <- list("lasso" = hyperparameters)
@@ -4844,8 +5026,10 @@ integrated_test <- function(
               hyperparameter = hyperparameters,
               time_max = 3.5,
               verbose = debug,
-              ...)),
-            .warning_good)
+              ...
+            )),
+            .warning_good
+          )
           
         } else {
           output <- suppress_fun(summon_familiar(
@@ -4854,7 +5038,8 @@ integrated_test <- function(
             hyperparameter = hyperparameters,
             time_max = 3.5,
             verbose = debug,
-            ...))
+            ...
+          ))
         }
         
         testthat::expect_equal(is.null(output), FALSE)
@@ -4864,13 +5049,15 @@ integrated_test <- function(
     test_fun(
       paste0(
         "Experiment for a bad dataset with ", outcome_type, 
-        " outcome functions correctly."), 
+        " outcome functions correctly."
+      ), 
       {
         # Create datasets. We explicitly insert NA data to circumvent an initial
         # plausibility check.
         bad_data <- test_create_bad_data(
           outcome_type = outcome_type,
-          add_na_data = TRUE)
+          add_na_data = TRUE
+        )
         
         if (learner_unset) {
           # Set learner
@@ -4884,7 +5071,9 @@ integrated_test <- function(
               "continuous" = "gaussian",
               "binomial" = "binomial",
               "multinomial" = "multinomial",
-              "survival" = "cox"))
+              "survival" = "cox"
+            )
+          )
           
           # Parse as list.
           hyperparameters <- list("lasso" = hyperparameters)
@@ -4899,8 +5088,10 @@ integrated_test <- function(
               feature_max_fraction_missing = 0.95,
               time_max = 3.5,
               verbose = debug,
-              ...)),
-            .warning_bad)
+              ...
+            )),
+            .warning_bad
+          )
           
         } else {
           # Note that we set a very high feature_max_fraction_missing to deal
@@ -4913,7 +5104,8 @@ integrated_test <- function(
             feature_max_fraction_missing = 0.95,
             time_max = 3.5,
             verbose = debug,
-            ...))
+            ...
+          ))
         }
         
         testthat::expect_equal(is.null(output), FALSE)
@@ -4927,11 +5119,11 @@ integrated_test <- function(
 debug_test_that <- function(desc, code) {
   # This is a drop-in replacement for testthat::test_that that makes it easier
   # to debug errors.
-
-  if (!is.character(desc) || length(desc) != 1) {
+  
+  if (!is.character(desc) || length(desc) != 1L) {
     stop("\"desc\" should be a character string")
   }
-
+  
   # Execute the code
   code <- substitute(code)
   eval(code, envir = parent.frame())
@@ -4941,14 +5133,11 @@ debug_test_that <- function(desc, code) {
 
 test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   # Test that no deprecation warnings are given.
-  if (length(x) > 0) {
+  if (length(x) > 0L) {
     for (current_string in deprecation_string) {
-      testthat::expect_equal(
-        any(grepl(
-          x = x, 
-          pattern = current_string, 
-          fixed = TRUE)),
-        FALSE)
+      testthat::expect_false(any(grepl(
+        x = x, pattern = current_string, fixed = TRUE
+      )))
     }
   }
 }
@@ -4958,28 +5147,28 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 .test_which_plot_present <- function(p) {
   # Check if the top element is null or empty.
   if (is.null(p)) return(FALSE)
-  if (length(p) == 0) return(FALSE)
-
+  if (length(p) == 0L) return(FALSE)
+  
   # Check that the top element is a gtable or ggplot.
   if (gtable::is.gtable(p) || ggplot2::is.ggplot(p)) {
     return(TRUE)
   }
-
+  
   plot_present <- sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot)
   if (any(plot_present)) {
     return(plot_present)
   }
-
+  
   if (all(sapply(p, is.null))) {
     return(!sapply(p, is.null))
   }
-
+  
   # If the code gets here, p is a nested list.
   p <- unlist(p, recursive = FALSE)
-
+  
   if (is.null(p)) return(FALSE)
-  if (length(p) == 0) return(FALSE)
-
+  if (length(p) == 0L) return(FALSE)
+  
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
 }
 
@@ -4988,10 +5177,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 .test_which_data_element_present <- function(x, outcome_type) {
   # Check if the top element is null or empty.
   if (is_empty(x)) return(FALSE)
-
+  
   data_element_present <- !sapply(x, is_empty)
   if (!any(data_element_present)) return(FALSE)
-
+  
   return(data_element_present)
 }
 
@@ -5000,35 +5189,36 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 .test_start_cluster <- function(n_cores = NULL) {
   # Determine the number of available cores.
   n_cores_available <- parallel::detectCores() - 1L
-
+  
   # Determine the number of available cores.
   if (is.null(n_cores)) n_cores <- n_cores_available
   if (n_cores > n_cores_available) n_cores <- n_cores_available
-  if (n_cores < 2) return(NULL)
-
+  if (n_cores < 2L) return(NULL)
+  
   assign("is_external_cluster", FALSE, envir = familiar_global_env)
-
+  
   # Start a new cluster
   cl <- .start_cluster(
     n_cores = n_cores,
-    cluster_type = "psock")
-
+    cluster_type = "psock"
+  )
+  
   # If the cluster doesn't start, return a NULL
   if (is.null(cl)) return(NULL)
-
+  
   # Set library paths to avoid issues with non-standard library locations.
   libs <- .libPaths()
   parallel::clusterExport(cl = cl, varlist = "libs", envir = environment())
   parallel::clusterEvalQ(cl = cl, .libPaths(libs))
-
+  
   # Load familiar and data.table libraries to each cluster node.
   parallel::clusterEvalQ(cl = cl, library(familiar))
   parallel::clusterEvalQ(cl = cl, library(data.table))
-
+  
   # Set options on each cluster node.
-  parallel::clusterEvalQ(cl = cl, options(rf.cores = as.integer(1)))
+  parallel::clusterEvalQ(cl = cl, options(rf.cores = 1L))
   parallel::clusterEvalQ(cl = cl, data.table::setDTthreads(1L))
-
+  
   return(cl)
 }
 
@@ -5041,13 +5231,15 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     is_vimp,
     cluster_method = "none",
     ...,
-    set_signature_feature = FALSE) {
+    set_signature_feature = FALSE
+) {
+  
   if (set_signature_feature) {
-    signature_features <- get_feature_columns(data)[1:2]
+    signature_features <- get_feature_columns(data)[1L:2L]
   } else {
     signature_features <- NULL
   }
-
+  
   # Create feature info list.
   feature_info_list <- create_feature_info(
     data = data,
@@ -5057,34 +5249,44 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     imputation_method = "simple",
     ...,
     signature = signature_features,
-    parallel = FALSE)
-
+    parallel = FALSE
+  )
+  
   # Find required features.
   required_features <- get_required_features(
     x = data,
-    feature_info_list = feature_info_list)
-
+    feature_info_list = feature_info_list
+  )
+  
   if (is_vimp) {
     # Create the variable importance met hod object or familiar model object
     # to compute variable importance with.
-    object <- promote_vimp_method(object = methods::new("familiarVimpMethod",
-      outcome_type = data@outcome_type,
-      vimp_method = vimp_method,
-      required_features = required_features,
-      feature_info = feature_info_list,
-      outcome_info = data@outcome_info))
+    object <- promote_vimp_method(
+      object = methods::new(
+        "familiarVimpMethod",
+        outcome_type = data@outcome_type,
+        vimp_method = vimp_method,
+        required_features = required_features,
+        feature_info = feature_info_list,
+        outcome_info = data@outcome_info
+      )
+    )
     
   } else {
     # Create familiar model object.
-    object <- promote_learner(object = methods::new("familiarModel",
-      outcome_type = data@outcome_type,
-      learner = learner,
-      fs_method = vimp_method,
-      required_features = required_features,
-      feature_info = feature_info_list,
-      outcome_info = data@outcome_info))
+    object <- promote_learner(
+      object = methods::new(
+        "familiarModel",
+        outcome_type = data@outcome_type,
+        learner = learner,
+        fs_method = vimp_method,
+        required_features = required_features,
+        feature_info = feature_info_list,
+        outcome_info = data@outcome_info
+      )
+    )
   }
-
+  
   return(object)
 }
 
@@ -5212,7 +5414,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     # Full data ----------------------------------------------------------------
     
-    if (n_models == 1) {
+    if (n_models == 1L) {
       # Train the model.
       model_full <- suppressWarnings(test_train(
         cl = cl,
@@ -5346,7 +5548,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     ))
     
     test_expectation <- "all_absent"
-    if (outcome_type %in% outcome_type_available && (!.not_available_any_prospective || !.not_available_single_sample)) {
+    if (
+      outcome_type %in% outcome_type_available &&
+      (!.not_available_any_prospective || !.not_available_single_sample)
+    ) {
       test_expectation <- "all_present"
     }
     
@@ -5433,7 +5638,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       "message" = test_message,
       "expectation" = test_expectation
     ))
-
+    
     rm("single_instance_data")
     
     # Bootstrapped data --------------------------------------------------------
@@ -5483,7 +5688,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       learner = "lasso",
       hyperparameter = hyperparameters,
       cluster_similarity_threshold = 0.7,
-      time_max = 60,
+      time_max = 3.5,
       parallel = FALSE,
       verbose = FALSE
     ))
@@ -5655,10 +5860,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     multi_model_data <- list(
       test_create_good_data(outcome_type),
-      test_create_bootstrapped_data(outcome_type, seed = 1844),
-      test_create_bootstrapped_data(outcome_type, seed = 1863)
+      test_create_bootstrapped_data(outcome_type, seed = 1844L),
+      test_create_bootstrapped_data(outcome_type, seed = 1863L)
     )
-
+    
     multi_model_set <- suppressWarnings(lapply(
       multi_model_data,
       test_train,
@@ -5776,7 +5981,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     familiar_data_list <- mapply(
       set_object_name,
-      list(good_one_feature_data_1, good_one_feature_data_2, good_one_sample_one_feature_data_1, good_one_sample_one_feature_data_2),
+      list(
+        good_one_feature_data_1, good_one_feature_data_2, 
+        good_one_sample_one_feature_data_1, good_one_sample_one_feature_data_2
+      ),
       c("development_1", "development_2", "validation_1", "validation_2")
     )
     
@@ -5818,7 +6026,10 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
     
     familiar_data_list <- mapply(
       set_object_name,
-      list(good_one_feature_data_1, good_one_feature_data_2, good_identical_one_feature_data_1, good_identical_one_feature_data_2),
+      list(
+        good_one_feature_data_1, good_one_feature_data_2, 
+        good_identical_one_feature_data_1, good_identical_one_feature_data_2
+      ),
       c("development_1", "development_2", "validation_1", "validation_2")
     )
     

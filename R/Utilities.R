@@ -3,9 +3,9 @@
 
 stop_or_warn <- function(message, as_error = TRUE, call = rlang::caller_env()) {
   if (as_error) {
-    rlang::abort(message, call = call)
+    ..error(message, call = call)
   } else {
-    rlang::warn(message, call = call)
+    ..warning(message, call = call)
   }
 }
 
@@ -16,7 +16,7 @@ is.unset <- function(x) {
     return(TRUE)
   } else if (is.waive(x)) {
     return(TRUE)
-  } else if (length(x) == 0){ 
+  } else if (length(x) == 0L) { 
     return(TRUE)
   } else if (all(is.na(x))) {
     return(TRUE)
@@ -53,7 +53,8 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
     FUN = univariate_fun,
     progress_bar = FALSE,
     outcome_data = data_obj@data[, mget(outcome_columns)],
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   return(coefficient_p_values)
 }
@@ -76,7 +77,7 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
       level_names <- levels(x)
       level_count <- nlevels(x)
 
-      x <- lapply(level_names[2:level_count], function(ii, x) (as.numeric(x == ii)), x = x)
+      x <- lapply(level_names[2L:level_count], function(ii, x) (as.numeric(x == ii)), x = x)
     }
   } else {
     # Numeric variables are only stored as a list.
@@ -99,7 +100,7 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Cox regression model for univariate analysis
 
   # Check if any data was provided.
-  if (length(x) == 0) {
+  if (length(x) == 0L) {
     return(NA_real_)
   }
 
@@ -109,7 +110,7 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
 
   # Remove missing elements.
   valid_elements <- is.finite(x) & is.finite(y_time) & is.finite(y_event)
-  if (sum(valid_elements) <= 1) return(NA_real_)
+  if (sum(valid_elements) <= 1L) return(NA_real_)
 
   # Keep only valid elements.
   x <- x[valid_elements]
@@ -124,14 +125,18 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
     ..univariate_test_variable_encoding(x, insert_intercept = FALSE),
     data.table::data.table(
       "time" = y_time,
-      "event" = y_event))
+      "event" = y_event
+    )
+  )
 
   # Construct model
   model <- tryCatch(
     coxph(
       Surv(time, event) ~ .,
-      data = data),
-    error = identity)
+      data = data
+    ),
+    error = identity
+  )
 
   # Check if the model did not converge.
   if (inherits(model, "error")) return(NA_real_)
@@ -140,10 +145,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   z <- .compute_z_statistic(model)
 
   # Compute the p-value from a t-distribution
-  p_value <- 2 * (1.0 - stats::pt(abs(z), df = length(x)))
+  p_value <- 2.0 * (1.0 - stats::pt(abs(z), df = length(x)))
 
   # Check if the value is finite.
-  if (all(!is.finite(p_value))) return(NA_real_)
+  if (!any(is.finite(p_value))) return(NA_real_)
 
   # Return p-value.
   return(unname(min(p_value, na.rm = TRUE)))
@@ -155,14 +160,14 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Gaussian regression for univariable analysis
 
   # Check if any data was provided.
-  if (length(x) == 0) return(NA_real_)
+  if (length(x) == 0L) return(NA_real_)
 
   # Extract response
   y <- outcome_data$outcome
 
   # Remove missing elements.
   valid_elements <- is.finite(x) & is.finite(y)
-  if (sum(valid_elements) <= 1) return(NA_real_)
+  if (sum(valid_elements) <= 1L) return(NA_real_)
 
   # Keep only valid elements.
   x <- x[valid_elements]
@@ -174,7 +179,8 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Bind data.
   data <- cbind(
     ..univariate_test_variable_encoding(x, insert_intercept = TRUE),
-    data.table::data.table("response" = y))
+    data.table::data.table("response" = y)
+  )
 
   if (require_package("fastglm", message_type = "silent")) {
     # Using fastglm.
@@ -188,7 +194,9 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
         "x" = as.matrix(data[, mget(predictors)]),
         "y" = data$response,
         "family" = stats::gaussian(link = "identity"),
-        "method" = 3L))
+        "method" = 3L
+      )
+    )
 
     # Check for errors.
     if (!is.null(model$error)) return(NA_real_)
@@ -201,8 +209,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
     model <- tryCatch(
       stats::glm(response ~ . - 1,
         data = data,
-        family = stats::gaussian(link = "identity")),
-      error = identity)
+        family = stats::gaussian(link = "identity")
+      ),
+      error = identity
+    )
 
     # Check if the model did not converge.
     if (inherits(model, "error")) return(NA_real_)
@@ -215,10 +225,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   z <- z[!names(z) %in% "intercept__"]
 
   # Compute the p-value from a t-distribution
-  p_value <- 2 * (1.0 - stats::pt(abs(z), df = length(x)))
+  p_value <- 2.0 * (1.0 - stats::pt(abs(z), df = length(x)))
 
   # Check if the value is finite.
-  if (all(!is.finite(p_value))) return(NA_real_)
+  if (!any(is.finite(p_value))) return(NA_real_)
 
   # Return p-value.
   return(unname(min(p_value, na.rm = TRUE)))
@@ -230,14 +240,14 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Binomial model for univariable analysis using logistic regression
 
   # Check if any data was provided.
-  if (length(x) == 0) return(NA_real_)
+  if (length(x) == 0L) return(NA_real_)
 
   # Extract response
   y <- outcome_data$outcome
 
   # Remove missing elements.
   valid_elements <- is.finite(x) & is.finite(y)
-  if (sum(valid_elements) <= 1) return(NA_real_)
+  if (sum(valid_elements) <= 1L) return(NA_real_)
 
   # Keep only valid elements.
   x <- x[valid_elements]
@@ -249,7 +259,8 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Bind data.
   data <- cbind(
     ..univariate_test_variable_encoding(x, insert_intercept = TRUE),
-    data.table::data.table("response" = y))
+    data.table::data.table("response" = y)
+  )
 
   if (require_package("fastglm", message_type = "silent")) {
     # Using fastglm.
@@ -262,7 +273,9 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
         "x" = as.matrix(data[, mget(predictors)]),
         "y" = as.numeric(data$response) - 1,
         "family" = stats::binomial(link = "logit"),
-        "method" = 3L))
+        "method" = 3L
+      )
+    )
 
     # Check for errors.
     if (!is.null(model$error)) return(NA_real_)
@@ -279,7 +292,9 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
           "x" = as.matrix(data[, mget(setdiff(predictors, "intercept__"))]),
           "y" = as.numeric(data$response) - 1,
           "family" = stats::binomial(link = "logit"),
-          "method" = 3L))
+          "method" = 3L
+        )
+      )
 
       # Check for errors, and only attempt to replace model by model_2 if no
       # errors are present.
@@ -298,8 +313,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
       stats::glm(
         response ~ . - 1,
         data = data,
-        family = stats::binomial(link = "logit")),
-      error = identity))
+        family = stats::binomial(link = "logit")
+      ),
+      error = identity
+    ))
 
     # Check if the model did not converge
     if (inherits(model, "error")) return(NA_real_)
@@ -312,10 +329,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   z <- z[names(z) != "intercept__"]
 
   # Compute the p-value from a t-distribution
-  p_value <- 2 * (1.0 - stats::pt(abs(z), df = length(x)))
+  p_value <- 2.0 * (1.0 - stats::pt(abs(z), df = length(x)))
 
   # Check if the value is finite.
-  if (all(!is.finite(p_value))) return(NA_real_)
+  if (!any(is.finite(p_value))) return(NA_real_)
 
   # Return p-value.
   return(unname(min(p_value, na.rm = TRUE)))
@@ -327,14 +344,14 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Multinomial model for univariable analysis using logistic regression
 
   # Check if any data was provided.
-  if (length(x) == 0) return(NA_real_)
+  if (length(x) == 0L) return(NA_real_)
 
   # Extract response
   y <- outcome_data$outcome
 
   # Remove missing elements.
   valid_elements <- is.finite(x) & is.finite(y)
-  if (sum(valid_elements) <= 1) return(NA_real_)
+  if (sum(valid_elements) <= 1L) return(NA_real_)
 
   # Keep only valid elements.
   x <- x[valid_elements]
@@ -346,12 +363,14 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   # Bind data.
   data <- cbind(
     ..univariate_test_variable_encoding(x, insert_intercept = TRUE),
-    data.table::data.table("response" = y))
+    data.table::data.table("response" = y)
+  )
 
   # Check if the package is installed and attached.
   require_package(
     x = "nnet",
-    purpose = "to determine univariate p-values for multinomial outcomes")
+    purpose = "to determine univariate p-values for multinomial outcomes"
+  )
 
   # Construct model
   model <- do.call_with_handlers(
@@ -359,7 +378,9 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
     args = list(
       response ~ . - 1,
       "data" = data,
-      "maxit" = 500))
+      "maxit" = 500L
+    )
+  )
 
   # Check for errors.
   if (!is.null(model$error)) return(NA_real_)
@@ -369,13 +390,15 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
 
   # Check if the model converged. NNET might fail to converge if the
   # Hauck-Donner effect is present.
-  if (model$convergence == 1) {
+  if (model$convergence == 1L) {
     model_2 <- do.call_with_handlers(
       nnet::multinom,
       args = list(
         response ~ . - 1 - intercept__,
         "data" = data,
-        "maxit" = 500))
+        "maxit" = 500L
+      )
+    )
 
     # Check for errors, and only attempt to replace model by model_2 if no
     # errors are present.
@@ -385,7 +408,7 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
 
       # If the Hauck-Donner effect is indeed present, the new model without the
       # intercept should converge quickly.
-      if (model_2$convergence == 0) model <- model_2
+      if (model_2$convergence == 0L) model <- model_2
     }
   }
 
@@ -397,10 +420,10 @@ compute_univariable_p_values <- function(cl = NULL, data_obj, feature_columns) {
   z <- if (is.matrix(z)) as.vector(z[, predictors]) else z[predictors]
 
   # Compute the p-value from a t-distribution
-  p_value <- 2 * (1.0 - stats::pt(abs(z), df = length(x) * (nlevels(y) - 1L)))
+  p_value <- 2.0 * (1.0 - stats::pt(abs(z), df = length(x) * (nlevels(y) - 1L)))
 
   # Check if the value is finite.
-  if (all(!is.finite(p_value))) return(NA_real_)
+  if (!any(is.finite(p_value))) return(NA_real_)
 
   # Return p-value.
   return(unname(min(p_value, na.rm = TRUE)))
@@ -457,105 +480,105 @@ compute_icc <- function(x, feature, id_data, type = "1") {
 
   # Calculate mean squared errors: msb between subjects (bj), msj between raters
   # (ai), mse of error (eij) and msw of error with rater (ai + eij).
-  if (n_samples > 1) {
-    msb <- sum(data$bj^2, na.rm = TRUE) / (n_samples - 1)
+  if (n_samples > 1L) {
+    msb <- sum(data$bj^2.0, na.rm = TRUE) / (n_samples - 1.0)
   }
 
   if (type == "1") {
     # Calculate mean squared of error with rater
-    msw <- (sum(data$eij^2, na.rm = TRUE) + sum(data$ai^2, na.rm = TRUE)) /
-      (n_samples * (n_raters - 1))
+    msw <- (sum(data$eij^2.0, na.rm = TRUE) + sum(data$ai^2.0, na.rm = TRUE)) /
+      (n_samples * (n_raters - 1.0))
 
     # Calculate icc for individual rater and rater panel
-    if (msb == 0 && msw == 0) {
-      icc <- 1
-      icc_panel <- 1
-      icc_ci_low <- 1
-      icc_ci_up <- 1
-      icc_panel_ci_low <- 1
-      icc_panel_ci_up <- 1
+    if (msb == 0.0 && msw == 0.0) {
+      icc <- 1.0
+      icc_panel <- 1.0
+      icc_ci_low <- 1.0
+      icc_ci_up <- 1.0
+      icc_panel_ci_low <- 1.0
+      icc_panel_ci_up <- 1.0
       
     } else {
-      icc <- (msb - msw) / (msb + (n_raters - 1) * msw)
+      icc <- (msb - msw) / (msb + (n_raters - 1.0) * msw)
       icc_panel <- (msb - msw) / msb
 
       # Fisher score
       s_fisher <- msb / msw
-      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples - 1, n_samples * (n_raters - 1))
-      s_fisher_up <- s_fisher / stats::qf(0.025, n_samples - 1, n_samples * (n_raters - 1))
+      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples - 1L, n_samples * (n_raters - 1L))
+      s_fisher_up <- s_fisher / stats::qf(0.025, n_samples - 1L, n_samples * (n_raters - 1L))
 
       # Calcuate confidence intervals from fisher score
-      icc_ci_low <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
-      icc_ci_up <- (s_fisher_up - 1) / (s_fisher_up + n_raters - 1)
-      icc_panel_ci_low <- 1 - 1 / s_fisher_low
-      icc_panel_ci_up <- 1 - 1 / s_fisher_up
+      icc_ci_low <- (s_fisher_low - 1.0) / (s_fisher_low + n_raters - 1.0)
+      icc_ci_up <- (s_fisher_up - 1.0) / (s_fisher_up + n_raters - 1.0)
+      icc_panel_ci_low <- 1.0 - 1.0 / s_fisher_low
+      icc_panel_ci_up <- 1.0 - 1.0 / s_fisher_up
     }
   }
 
   if (type == "2") {
     # Calculate mean squared error (mse) and mean squared rater error (msj)
-    msj <- sum(data$ai^2, na.rm = TRUE) / (n_raters - 1)
-    mse <- sum(data$eij^2, na.rm = TRUE) / ((n_samples - 1) * (n_raters - 1))
+    msj <- sum(data$ai^2.0, na.rm = TRUE) / (n_raters - 1.0)
+    mse <- sum(data$eij^2.0, na.rm = TRUE) / ((n_samples - 1.0) * (n_raters - 1.0))
 
     # Calculate icc for individual rater and rater panel
-    if (msb == 0 && mse == 0) {
-      icc <- 1
-      icc_panel <- 1
-      icc_ci_low <- 1
-      icc_ci_up <- 1
-      icc_panel_ci_low <- 1
-      icc_panel_ci_up <- 1
+    if (msb == 0.0 && mse == 0.0) {
+      icc <- 1.0
+      icc_panel <- 1.0
+      icc_ci_low <- 1.0
+      icc_ci_up <- 1.0
+      icc_panel_ci_low <- 1.0
+      icc_panel_ci_up <- 1.0
       
     } else {
-      icc <- (msb - mse) / (msb + (n_raters - 1) * mse + (n_raters / n_samples) * (msj - mse))
+      icc <- (msb - mse) / (msb + (n_raters - 1.0) * mse + (n_raters / n_samples) * (msj - mse))
       icc_panel <- (msb - mse) / (msb + (msj - mse) / n_samples)
 
       # Determine confidence intervals
-      vn <- (n_raters - 1) * (n_samples - 1) * 
-        (n_raters * icc * msj / mse + n_samples * (1 + (n_raters - 1) * icc) - n_raters * icc)^2
-      vd <- (n_samples - 1) * n_raters^2 * icc^2 * (msj / mse)^2 + 
-        (n_samples * (1 + (n_raters - 1) * icc) - n_raters * icc)^2
+      vn <- (n_raters - 1.0) * (n_samples - 1.0) * 
+        (n_raters * icc * msj / mse + n_samples * (1.0 + (n_raters - 1.0) * icc) - n_raters * icc)^2.0
+      vd <- (n_samples - 1.0) * n_raters^2.0 * icc^2.0 * (msj / mse)^2.0 + 
+        (n_samples * (1.0 + (n_raters - 1.0) * icc) - n_raters * icc)^2.0
       v <- vn / vd
-      thresh_low <- stats::qf(0.975, n_samples - 1, v)
-      thresh_up <- stats::qf(0.025, n_samples - 1, v)
+      thresh_low <- stats::qf(0.975, n_samples - 1L, v)
+      thresh_up <- stats::qf(0.025, n_samples - 1L, v)
 
       # Calcuate confidence intervals from fisher score
       icc_ci_low <- n_samples * (msb - thresh_low * mse) / 
         (thresh_low * (n_raters * msj + (n_raters * n_samples - n_raters - n_samples) * mse) + n_samples * msb)
       icc_ci_up <- n_samples * (msb - thresh_up * mse) / 
         (thresh_up * (n_raters * msj + (n_raters * n_samples - n_raters - n_samples) * mse) + n_samples * msb)
-      icc_panel_ci_low <- icc_ci_low * n_raters / (1 + icc_ci_low * (n_raters - 1))
-      icc_panel_ci_up <- icc_ci_up * n_raters / (1 + icc_ci_up * (n_raters - 1))
+      icc_panel_ci_low <- icc_ci_low * n_raters / (1.0 + icc_ci_low * (n_raters - 1.0))
+      icc_panel_ci_up <- icc_ci_up * n_raters / (1.0 + icc_ci_up * (n_raters - 1.0))
     }
   }
 
   if (type == "3") {
     # Calculate mean squared error (mse)
-    mse <- sum(data$eij^2, na.rm = TRUE) / ((n_samples - 1) * (n_raters - 1))
+    mse <- sum(data$eij^2.0, na.rm = TRUE) / ((n_samples - 1.0) * (n_raters - 1.0))
 
     # Calculate icc for individual rater and rater panel
-    if (msb == 0 && mse == 0) {
-      icc <- 1
-      icc_panel <- 1
-      icc_ci_low <- 1
-      icc_ci_up <- 1
-      icc_panel_ci_low <- 1
-      icc_panel_ci_up <- 1
+    if (msb == 0.0 && mse == 0.0) {
+      icc <- 1.0
+      icc_panel <- 1.0
+      icc_ci_low <- 1.0
+      icc_ci_up <- 1.0
+      icc_panel_ci_low <- 1.0
+      icc_panel_ci_up <- 1.0
       
     } else {
-      icc <- (msb - mse) / (msb + (n_raters - 1) * mse)
+      icc <- (msb - mse) / (msb + (n_raters - 1.0) * mse)
       icc_panel <- (msb - mse) / msb
 
       # Fisher score
       s_fisher <- msb / mse
-      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples - 1, (n_samples - 1) * (n_raters - 1))
-      s_fisher_up <- s_fisher / stats::qf(0.025, n_samples - 1, (n_samples - 1) * (n_raters - 1))
+      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples - 1L, (n_samples - 1L) * (n_raters - 1L))
+      s_fisher_up <- s_fisher / stats::qf(0.025, n_samples - 1L, (n_samples - 1L) * (n_raters - 1L))
 
       # Calcuate confidence intervals from fisher score
-      icc_ci_low <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
-      icc_ci_up <- (s_fisher_up - 1) / (s_fisher_up + n_raters - 1)
-      icc_panel_ci_low <- 1 - 1 / s_fisher_low
-      icc_panel_ci_up <- 1 - 1 / s_fisher_up
+      icc_ci_low <- (s_fisher_low - 1.0) / (s_fisher_low + n_raters - 1.0)
+      icc_ci_up <- (s_fisher_up - 1.0) / (s_fisher_up + n_raters - 1.0)
+      icc_panel_ci_low <- 1.0 - 1.0 / s_fisher_low
+      icc_panel_ci_up <- 1.0 - 1.0 / s_fisher_up
     }
   }
 
@@ -576,7 +599,8 @@ compute_icc <- function(x, feature, id_data, type = "1") {
     "icc_up" = icc_ci_up,
     "icc_panel" = icc_panel,
     "icc_panel_low" = icc_panel_ci_low,
-    "icc_panel_up" = icc_panel_ci_up))
+    "icc_panel_up" = icc_panel_ci_up
+  ))
 }
 
 
@@ -587,11 +611,12 @@ compute_icc <- function(x, feature, id_data, type = "1") {
 
   # Find the position of the period preceding the file extension.
   indicator <- tail(
-    gregexpr(pattern = ".", text = x, fixed = TRUE)[[1]],
-    n = 1L)
+    gregexpr(pattern = ".", text = x, fixed = TRUE)[[1L]],
+    n = 1L
+  )
 
   # Check when period (.) is not found in x.
-  if (indicator == -1) return("")
+  if (indicator == -1L) return("")
 
   # Find the extension
   extension <- substr(x, start = indicator + 1L, stop = nchar(x))
@@ -608,13 +633,13 @@ harmonic_p_value <- function(x) {
     x <- x$p_value
 
     # Fix numeric issues due to very small p-values.
-    x[x < 1E-15] <- 1E-15
+    x[x < 1.0E-15] <- 1.0E-15
 
     return(list("p_value" = harmonicmeanp::p.hmp(x, L = length(x))))
     
   } else {
     # Fix numeric issues due to very small p-values.
-    x[x < 1E-15] <- 1E-15
+    x[x < 1.0E-15] <- 1.0E-15
 
     return(harmonicmeanp::p.hmp(x, L = length(x)))
   }
@@ -639,7 +664,7 @@ get_estimate <- function(x, na.rm = TRUE) {
 
   if (is.numeric(x)) {
     # Determine the estimate.
-    if (length(x) > 0) {
+    if (length(x) > 0L) {
       y <- mean(x)
     } else {
       y <- NA_real_
@@ -647,7 +672,7 @@ get_estimate <- function(x, na.rm = TRUE) {
     
   } else {
     # Determine the estimate.
-    if (length(x) > 0) {
+    if (length(x) > 0L) {
       y <- get_mode(x)
     } else {
       y <- NA
@@ -661,7 +686,7 @@ get_estimate <- function(x, na.rm = TRUE) {
 .sanitise_dots <- function(class, ...) {
   dots <- list(...)
 
-  if (length(dots) == 0) return(dots)
+  if (length(dots) == 0L) return(dots)
 
   slot_names <- names(methods::getSlots(class))
 
@@ -672,11 +697,13 @@ get_estimate <- function(x, na.rm = TRUE) {
 
 get_placeholder_vimp_table <- function(
     vimp_method,
-    run_table = NULL) {
+    run_table = NULL
+) {
   # Set vimp method.
   vimp_object <- methods::new(
     "vimpTable",
-    vimp_method = vimp_method)
+    vimp_method = vimp_method
+  )
 
   # Set run table.
   vimp_object@run_table <- run_table
@@ -695,7 +722,8 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
     ..error_value_not_allowed(
       x = id_depth, 
       var_name = "id_depth", 
-      values = c("batch", "sample", "series", "repetition"))
+      values = c("batch", "sample", "series", "repetition")
+    )
   }
 
   if (is.null(single_column)) {
@@ -705,7 +733,8 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
       "batch" = "batch_id",
       "sample" = c("batch_id", "sample_id"),
       "series" = c("batch_id", "sample_id", "series_id"),
-      "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id"))
+      "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id")
+    )
     
   } else {
     id_columns <- switch(
@@ -713,7 +742,8 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
       "batch" = "batch_id",
       "sample" = "sample_id",
       "series" = "series_id",
-      "repetition" = "repetition_id")
+      "repetition" = "repetition_id"
+    )
   }
 
   return(id_columns)
@@ -733,11 +763,12 @@ get_object_file_name <- function(
     is_ensemble = NULL,
     is_validation = NULL,
     with_extension = TRUE,
-    dir_path = NULL) {
+    dir_path = NULL
+) {
   # Generate file name for an object
 
   if (!object_type %in% c("familiarModel", "familiarEnsemble", "familiarData")) {
-    stop("The object type was not recognised.")
+    ..error("The object type was not recognised.")
   }
 
   # Generate the basic string
@@ -746,7 +777,8 @@ get_object_file_name <- function(
     learner, "_", 
     fs_method, "_", 
     data_id, "_", 
-    run_id)
+    run_id
+  )
 
   if (object_type == "familiarModel") {
     # For familiarModel objects
@@ -757,26 +789,27 @@ get_object_file_name <- function(
     # For familiarEnsemble objects
 
     if (is.null(is_ensemble)) {
-      stop("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
+      ..error("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
     }
 
     output_str <- paste0(
       base_str, "_", 
-      ifelse(is_ensemble, "ensemble", "pool"))
+      ifelse(is_ensemble, "ensemble", "pool")
+    )
     
   } else if (object_type == "familiarData") {
     # For familiarData objects
 
     if (is.null(is_ensemble)) {
-      stop("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
+      ..error("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
     }
 
     if (is.null(is_validation)) {
-      stop("The \"is_validation\" parameter is not set to TRUE or FALSE.")
+      ..error("The \"is_validation\" parameter is not set to TRUE or FALSE.")
     }
 
     if (is.null(pool_data_id) || is.null(pool_run_id)) {
-      stop()
+      ..error("pool_data_id and pool_run_id should be provided.")
     }
 
     output_str <- paste0(
@@ -807,12 +840,14 @@ get_object_dir_path <- function(
     dir_path, 
     object_type, 
     learner = NULL, 
-    fs_method = NULL) {
+    fs_method = NULL
+) {
   # Generate the directory path to an object
 
   if (!object_type %in% c(
-    "familiarModel", "familiarEnsemble", "familiarData", "familiarCollection")) {
-    stop("The object type was not recognised.")
+    "familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"
+  )) {
+    ..error("The object type was not recognised.")
   }
 
   if (object_type %in% c("familiarModel", "familiarEnsemble")) {
@@ -832,7 +867,8 @@ extract_from_slot <- function(
     object_list, 
     slot_name, 
     slot_element = NULL, 
-    na.rm = FALSE) {
+    na.rm = FALSE
+) {
   # Extracts values from a slot in an object. Providing slot_element allows
   # extraction from a list in a slot
 
@@ -851,7 +887,8 @@ extract_from_slot <- function(
         }
       }, 
       slot_name = slot_name,
-      slot_element = slot_element)
+      slot_element = slot_element
+    )
   }
 
   if (na.rm) {
@@ -859,9 +896,11 @@ extract_from_slot <- function(
     slot_values <- slot_values[!sapply(slot_values, is.null)]
 
     # Then remove NA
-    if (is.numeric(slot_values) ||
-        is.logical(slot_values) ||
-        is.character(slot_values)) {
+    if (
+      is.numeric(slot_values) ||
+      is.logical(slot_values) ||
+      is.character(slot_values)
+    ) {
       slot_values <- slot_values[!sapply(slot_values, is.na)]
     }
 
@@ -884,10 +923,11 @@ all_empty_slot <- function(object_list, slot_name, slot_element = NULL) {
     object_list = object_list,
     slot_name = slot_name,
     slot_element = slot_element,
-    na.rm = TRUE)
+    na.rm = TRUE
+  )
 
   # Determine if there are any slot values that have a value.
-  return(length(slot_values) == 0)
+  return(length(slot_values) == 0L)
 }
 
 
@@ -910,20 +950,20 @@ is_singular_data <- function(x) {
 
   # Drop any NA data.
   x <- x[!is.na(x)]
-  if (length(x) <= 1) return(TRUE)
+  if (length(x) <= 1L) return(TRUE)
 
   if (any(class_x %in% "factor")) {
-    return(length(levels(droplevels(x))) == 1)
+    return(nlevels(droplevels(x)) == 1L)
     
   } else if (any(class_x %in% c("numeric", "integer", "logical"))) {
     # Drop any infinite data
     x <- x[is.finite(x)]
-    if (length(x) <= 1) return(TRUE)
+    if (length(x) <= 1L) return(TRUE)
 
-    return(stats::var(x, na.rm = TRUE) == 0)
+    return(stats::var(x, na.rm = TRUE) == 0.0)
     
   } else if (any(class_x %in% c("character"))) {
-    return(length(unique(x)) == 1)
+    return(length(unique(x)) == 1L)
     
   } else {
     return(TRUE)
@@ -964,7 +1004,8 @@ is_valid_data <- function(x) {
     # namespace) methods for an object.
     associated_methods <- c(
       associated_methods,
-      attr(utils::methods(class = object_class), "info")$generic)
+      attr(utils::methods(class = object_class), "info")$generic
+    )
   }
 
   # Keep only unique methods.
@@ -1001,7 +1042,8 @@ is_valid_data <- function(x) {
   } else if (inherits(model, "fastglm")) {
     require_package(
       x = "fastglm",
-      purpose = "to determine z-scores for generalised linear regression models")
+      purpose = "to determine z-scores for generalised linear regression models"
+    )
 
     if (is.null(mu)) mu <- stats::coef(model)
 
@@ -1035,7 +1077,7 @@ is_valid_data <- function(x) {
   # Compute z-score
   z <- mu / stdevs
 
-  if (fix_all_missing && all(!is.finite(z))) z <- mu
+  if (fix_all_missing && !any(is.finite(z))) z <- mu
 
   # Return z-score, as p-values can become very small.
   return(abs(z))
@@ -1048,7 +1090,8 @@ is_any <- function(object, class2) {
   return(any(sapply(
     class2,
     function(class, object) is(object, class2 = class),
-    object = object)))
+    object = object
+  )))
 }
 
 
@@ -1056,31 +1099,33 @@ is_any <- function(object, class2) {
 fivenum_summary <- function(x, na.rm = FALSE) {
   # Compute fivenumber summary
   y <- stats::fivenum(x = x, na.rm = na.rm)
-
+  
   # Return as data.table
   return(data.table::data.table(
-    "min" = y[1],
-    "Q1" = y[2],
-    "median" = y[3],
-    "Q3" = y[4],
-    "max" = y[5]))
+    "min" = y[1L],
+    "Q1" = y[2L],
+    "median" = y[3L],
+    "Q3" = y[4L],
+    "max" = y[5L]
+  ))
 }
 
 
 
 trim <- function(x, fraction = 0.1) {
   if (fraction < 0.0 || fraction > 0.5) {
-    stop("Trimming fraction should be between 0.0 and 0.5.")
+    ..error("Trimming fraction should be between 0.0 and 0.5.")
   }
 
   # Determine thresholds based on fraction.
   threshold <- stats::quantile(
     x = x, 
-    probs = c(fraction, 1 - fraction), 
-    na.rm = TRUE)
+    probs = c(fraction, 1.0 - fraction), 
+    na.rm = TRUE
+  )
 
   # Set mask
-  x_mask <- x >= threshold[1] & x <= threshold[2]
+  x_mask <- x >= threshold[1L] & x <= threshold[2L]
 
   # Return trimmed array
   return(x[x_mask])
@@ -1090,18 +1135,19 @@ trim <- function(x, fraction = 0.1) {
 
 winsor <- function(x, fraction = 0.1) {
   if (fraction < 0.0 || fraction > 0.5) {
-    stop("Winsoring fraction should be between 0.0 and 0.5.")
+    ..error("Winsoring fraction should be between 0.0 and 0.5.")
   }
 
   # Determine thresholds based on fraction.
   threshold <- stats::quantile(
     x = x, 
-    probs = c(fraction, 1 - fraction),
-    na.rm = TRUE)
+    probs = c(fraction, 1.0 - fraction),
+    na.rm = TRUE
+  )
 
   # Values outside valid range are assigned edge values
-  x[x < threshold[1]] <- threshold[1]
-  x[x > threshold[2]] <- threshold[2]
+  x[x < threshold[1L]] <- threshold[1L]
+  x[x > threshold[2L]] <- threshold[2L]
 
   return(x)
 }
@@ -1195,7 +1241,7 @@ is_subclass <- function(class_1, class_2) {
 
   # The classes are ordered by distance. Therefore class 2 cannot be a subclass
   # of class 1 if it is less distant.
-  if (extending_classes[1] == class_2) return(FALSE)
+  if (extending_classes[1L] == class_2) return(FALSE)
 
   return(TRUE)
 }
@@ -1213,18 +1259,21 @@ is_subclass <- function(class_1, class_2) {
     "normalisation",
     "batch_normalisation",
     "imputation",
-    "clustering")
+    "clustering"
+  )
 
   if (!all(x %in% preprocessing_levels)) {
     ..error_reached_unreachable_code(paste0(
       ".as_preprocessing_level: one or more of x could not be matched to ",
-      "preprocessing levels."))
+      "preprocessing levels."
+    ))
   }
 
   return(factor(
     x = x,
     levels = preprocessing_levels,
-    ordered = TRUE))
+    ordered = TRUE
+  ))
 }
 
 
@@ -1253,7 +1302,8 @@ is_subclass <- function(class_1, class_2) {
       return(element_content)
     },
     x = x,
-    flatten = flatten)
+    flatten = flatten
+  )
   
   names(flattened_list) <- element_names
   
@@ -1283,16 +1333,16 @@ near <- function(x, y, df = 2.0, tol = .Machine$double.eps) {
   # value in y.
   .near <- function(x, tol) (x <= tol)
 
-  if (length(x) != length(y) && length(y) != 1) {
-    stop("x and y should have the same length, or y should be a single value.")
+  if (length(x) != length(y) && length(y) != 1L) {
+    ..error("x and y should have the same length, or y should be a single value.")
   }
 
   if (!is.numeric(x)) {
-    stop("x should be a numeric value.")
+    ..error("x should be a numeric value.")
   }
 
   if (!is.numeric(y)) {
-    stop("y should be a numeric value.")
+    ..error("y should be a numeric value.")
   }
 
   return(sapply(abs(x - y), .near, tol = df * tol))
@@ -1310,7 +1360,8 @@ approximately <- function(x, y, tol = sqrt(.Machine$double.eps)) {
     x = x,
     y = y,
     df = 1.0,
-    tol = tol))
+    tol = tol
+  ))
 }
 
 
@@ -1330,7 +1381,7 @@ huber_estimate <- function(x, k = 1.28, tol = 1E-4) {
     x <- winsor(x, fraction = 0.90)
     x <- x[is.finite(x)]
     
-    if(length(x) <= 1) {
+    if (length(x) <= 1L) {
       return(list("mu" = NA_real_, "sigma" = NA_real_))
     }
     

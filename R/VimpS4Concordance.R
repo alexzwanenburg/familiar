@@ -4,7 +4,8 @@ NULL
 
 setClass(
   "familiarConcordanceVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 
 .get_available_concordance_vimp_method <- function(show_general = TRUE) {
@@ -62,7 +63,8 @@ setMethod(
 
       return(..vimp(
         object = new_vimp_object,
-        data = data))
+        data = data
+      ))
       
     } else if (object@outcome_type %in% c("continuous")) {
       # For continuous outcomes use kendall's tau.
@@ -73,7 +75,8 @@ setMethod(
 
       return(..vimp(
         object = new_vimp_object,
-        data = data))
+        data = data
+      ))
       
     } else if (object@outcome_type == "survival") {
       # Compute the concordance index for each feature.
@@ -85,7 +88,8 @@ setMethod(
         data = data,
         object = object,
         encoding_method = "dummy",
-        drop_levels = FALSE)
+        drop_levels = FALSE
+      )
 
       # Find feature columns in the data.
       feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -95,16 +99,19 @@ setMethod(
         encoded_data$encoded_data@data[, mget(feature_columns)],
         ..compute_concordance_index,
         time = encoded_data$encoded_data@data$outcome_time,
-        event = encoded_data$encoded_data@data$outcome_event)
+        event = encoded_data$encoded_data@data$outcome_event
+      )
 
       # Create variable importance object.
       vimp_object <- methods::new("vimpTable",
         vimp_table = data.table::data.table(
           "score" = abs(c_index - 0.5),
-          "name" = feature_columns),
+          "name" = feature_columns
+        ),
         encoding_table = encoded_data$reference_table,
         score_aggregation = "max",
-        invert = TRUE)
+        invert = TRUE
+      )
 
       return(vimp_object)
       

@@ -5,7 +5,10 @@ NULL
 
 
 # test_train (generic) ---------------------------------------------------------
-setGeneric("test_train", function(data, ...) standardGeneric("test_train"))
+setGeneric(
+  "test_train",
+  function(data, ...) standardGeneric("test_train")
+)
 
 
 
@@ -19,22 +22,27 @@ setMethod(
     learner,
     hyperparameter_list = list(),
     create_bootstrap = FALSE,
-    ...) {
+    ...
+  ) {
     if (!is.null(data_bypass)) {
       # Convert data_bypass to dataObject.
       data_bypass <- do.call(
         as_data_object,
         args = c(
           list("data" = data_bypass),
-          list(...)))
+          list(...)
+        )
+      )
     }
 
     # Convert data to dataObject.
     data <- do.call(
       as_data_object,
       args = c(
-      list("data" = data),
-      list(...)))
+        list("data" = data),
+        list(...)
+      )
+    )
 
     return(do.call(
       test_train, 
@@ -44,8 +52,11 @@ setMethod(
           "data_bypass" = data_bypass,
           "learner" = learner,
           "hyperparameter_list" = hyperparameter_list,
-          "create_bootstrap" = create_bootstrap),
-        list(...))))
+          "create_bootstrap" = create_bootstrap
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -65,7 +76,8 @@ setMethod(
     create_naive = FALSE,
     cl = NULL,
     trim_model = FALSE,
-    ...) {
+    ...
+  ) {
     # The bypass data allows for bypassing important aspects of the
     # pre-processing pipeline, e.g. the preprocessing checks. This enables
     # testing of very rare cases where preprocessing may run fine, but the
@@ -88,7 +100,7 @@ setMethod(
     dots$hyperparameter <- NULL
 
     # Create setting_hyperparam so that it can be parsed correctly.
-    if (!learner %in% names(hyperparameter_list) && length(hyperparameter_list) > 0) {
+    if (!learner %in% names(hyperparameter_list) && length(hyperparameter_list) > 0L) {
       setting_hyperparam <- list()
       setting_hyperparam[[learner]] <- hyperparameter_list
     } else {
@@ -107,8 +119,11 @@ setMethod(
           "parallel" = FALSE,
           "fs_method" = fs_method,
           "learner" = learner,
-          "hyperparameter" = setting_hyperparam),
-        dots))
+          "hyperparameter" = setting_hyperparam
+        ),
+        dots
+      )
+    )
     
     # Push settings to the backend.
     .assign_settings_to_global(settings = settings)
@@ -125,7 +140,8 @@ setMethod(
       data = data_bypass@data,
       file_paths = NULL,
       project_id = character(),
-      outcome_type = settings$data$outcome_type)
+      outcome_type = settings$data$outcome_type
+    )
 
     # Extract the generic data.
     feature_info_list <- feature_info_list[["generic"]]
@@ -136,24 +152,27 @@ setMethod(
       data = data_bypass,
       feature_info_list = feature_info_list,
       settings = settings,
-      verbose = FALSE)
+      verbose = FALSE
+    )
 
     # Remove invariant features from the data
     data <- filter_features(
       data = data,
-      available_features = get_available_features(
-        feature_info_list = feature_info_list))
+      available_features = get_available_features(feature_info_list = feature_info_list)
+    )
 
     # Find features that are required for processing the data
     required_features <- get_required_features(
       x = data,
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
 
     # Find important features, i.e. those that constitute the signature either
     # individually or as part of a cluster.
     model_features <- get_model_features(
       x = data,
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
 
     # Naive models do not require features.
     if (create_naive) required_features <- model_features <- NULL
@@ -164,23 +183,27 @@ setMethod(
     param_list <- .get_preset_hyperparameters(
       data = data,
       learner = learner,
-      names_only = FALSE)
+      names_only = FALSE
+    )
 
     # Update with user-provided settings.
     param_list <- .update_hyperparameters(
       parameter_list = param_list,
-      user_list = settings$mb$hyper_param[[learner]])
+      user_list = settings$mb$hyper_param[[learner]]
+    )
 
     # Determine which hyperparameters still need to be specified.
     unset_parameters <- sapply(
       param_list,
-      function(hyperparameter_entry) hyperparameter_entry$randomise)
+      function(hyperparameter_entry) hyperparameter_entry$randomise
+    )
 
     # Raise an error if any hyperparameters were not set.
     if (any(unset_parameters)) {
-      stop(paste0(
+      ..error(paste0(
         "The following hyperparameters need to be specified: ",
-        paste_s(names(unset_parameters)[unset_parameters])))
+        paste_s(names(unset_parameters)[unset_parameters])
+      ))
     }
 
     # Obtain the final list of hyperparameters.
@@ -205,7 +228,7 @@ setMethod(
       feature_info = feature_info_list,
       outcome_info = outcome_info,
       settings = settings$eval,
-      project_id = 0
+      project_id = 0L
     )
 
     # Add package version/
@@ -215,7 +238,8 @@ setMethod(
     data <- process_input_data(
       object = object,
       data = data,
-      stop_at = "clustering")
+      stop_at = "clustering"
+    )
 
     # Create bootstraps.
     if (create_bootstrap) {
@@ -235,7 +259,8 @@ setMethod(
       data = data,
       get_additional_info = TRUE,
       trim_model = trim_model,
-      timeout = Inf)
+      timeout = Inf
+    )
 
     # Train novelty detector.
     object <- .train_novelty_detector(
@@ -269,14 +294,17 @@ setMethod(
     detector,
     hyperparameter_list = list(),
     create_bootstrap = FALSE,
-    ...) {
+    ...
+  ) {
     if (!is.null(data_bypass)) {
       # Convert data_bypass to dataObject.
       data_bypass <- do.call(
         as_data_object,
         args = c(
           list("data" = data_bypass),
-          list(...)))
+          list(...)
+        )
+      )
     }
 
     # Convert data to dataObject.
@@ -284,7 +312,9 @@ setMethod(
       as_data_object, 
       args = c(
         list("data" = data),
-        list(...)))
+        list(...)
+      )
+    )
     
     return(do.call(
       test_train_novelty_detector,
@@ -294,8 +324,11 @@ setMethod(
           "data_bypass" = data_bypass,
           "detector" = detector,
           "hyperparameter_list" = hyperparameter_list,
-          "create_bootstrap" = create_bootstrap),
-        list(...))))
+          "create_bootstrap" = create_bootstrap
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -312,7 +345,8 @@ setMethod(
     create_bootstrap = FALSE,
     cl = NULL,
     trim_model = FALSE,
-    ...) {
+    ...
+  ) {
     # The bypass data allows for bypassing important aspects of the
     # pre-processing pipeline, e.g. the preprocessing checks. This enables
     # testing of very rare cases where preprocessing may run fine, but the
@@ -335,7 +369,7 @@ setMethod(
     dots$hyperparameter <- NULL
 
     # Create setting_hyperparam so that it can be parsed correctly.
-    if (!detector %in% names(hyperparameter_list) && length(hyperparameter_list) > 0) {
+    if (!detector %in% names(hyperparameter_list) && length(hyperparameter_list) > 0L) {
       setting_hyperparam <- list()
       setting_hyperparam[[detector]] <- hyperparameter_list
     } else {
@@ -352,8 +386,11 @@ setMethod(
           "fs_method" = "none",
           "learner" = "glm",
           "novelty_detector" = detector,
-          "detector_parameters" = setting_hyperparam),
-        dots))
+          "detector_parameters" = setting_hyperparam
+        ),
+        dots
+      )
+    )
 
     # Push settings to the backend.
     .assign_settings_to_global(settings = settings)
@@ -365,7 +402,8 @@ setMethod(
       data = data_bypass@data,
       file_paths = NULL,
       project_id = character(),
-      outcome_type = settings$data$outcome_type)
+      outcome_type = settings$data$outcome_type
+    )
 
     # Extract the generic data.
     feature_info_list <- feature_info_list[["generic"]]
@@ -376,13 +414,13 @@ setMethod(
       data = data_bypass,
       feature_info_list = feature_info_list,
       settings = settings,
-      verbose = FALSE)
+      verbose = FALSE
+    )
 
     # Remove invariant features from the data
     data <- filter_features(
       data = data,
-      available_features = get_available_features(
-        feature_info_list = feature_info_list)
+      available_features = get_available_features(feature_info_list = feature_info_list)
     )
 
     # Find features that are required for processing the data.
@@ -395,7 +433,8 @@ setMethod(
     # individually or as part of a cluster.
     model_features <- get_model_features(
       x = data,
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
 
     # Prepare hyperparameters --------------------------------------------------
 
@@ -403,29 +442,34 @@ setMethod(
     param_list <- .get_preset_hyperparameters(
       data = data,
       detector = detector,
-      names_only = FALSE)
+      names_only = FALSE
+    )
 
     # Update with user-provided settings.
     param_list <- .update_hyperparameters(
       parameter_list = param_list,
-      user_list = settings$mb$detector_parameters[[detector]])
+      user_list = settings$mb$detector_parameters[[detector]]
+    )
 
     # Determine which hyperparameters still need to be specified.
     unset_parameters <- sapply(
       param_list, 
-      function(hyperparameter_entry) hyperparameter_entry$randomise)
+      function(hyperparameter_entry) hyperparameter_entry$randomise
+    )
 
     # Raise an error if any hyperparameters were not set.
     if (any(unset_parameters)) {
-      stop(paste0(
+      ..error(paste0(
         "The following hyperparameters need to be specified: ",
-        paste_s(names(unset_parameters)[unset_parameters])))
+        paste_s(names(unset_parameters)[unset_parameters])
+      ))
     }
 
     # Obtain the final list of hyperparameters.
     param_list <- lapply(
       param_list, 
-      function(hyperparameter_entry) hyperparameter_entry$init_config)
+      function(hyperparameter_entry) hyperparameter_entry$init_config
+    )
 
     # Prepare model and data ---------------------------------------------------
 
@@ -438,7 +482,8 @@ setMethod(
       model_features = model_features,
       feature_info = feature_info_list,
       run_table = get_placeholder_run_table(),
-      project_id = 0)
+      project_id = 0L
+    )
 
     # Add package version/
     object <- add_package_version(object = object)
@@ -447,7 +492,8 @@ setMethod(
     data <- process_input_data(
       object = object,
       data = data,
-      stop_at = "clustering")
+      stop_at = "clustering"
+    )
 
     # Create bootstraps.
     if (create_bootstrap) {
@@ -455,7 +501,9 @@ setMethod(
         data = data,
         samples = fam_sample(
           x = data@data,
-          replace = TRUE))
+          replace = TRUE
+        )
+      )
     }
 
     # Train model.
@@ -464,7 +512,8 @@ setMethod(
       data = data,
       get_additional_info = TRUE,
       trim_model = trim_model,
-      timeout = Inf)
+      timeout = Inf
+    )
 
     return(object)
   }
@@ -478,5 +527,6 @@ get_placeholder_run_table <- function() {
     "data_id" = 1L, 
     "can_pre_process" = TRUE,
     "perturbation" = "main",
-    "perturb_level" = 1))
+    "perturb_level" = 1L
+  ))
 }

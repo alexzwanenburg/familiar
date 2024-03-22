@@ -19,13 +19,15 @@
   vimp_table <- .compute_feature_occurrence(
     vimp_table = vimp_table,
     threshold = rank_threshold,
-    n_runs = n_runs)
+    n_runs = n_runs
+  )
 
   # Rename "occurrence" column for consistency
   data.table::setnames(
     x = vimp_table,
     old = "occurrence",
-    new = "score")
+    new = "score"
+  )
 
   # Attach to vimpTable object.
   x@vimp_table <- vimp_table
@@ -46,9 +48,11 @@
 
   # Calculate occurrence with a rank l.eq rank_threshold and weight by
   # exponential rank: better ranks receive higher scores
-  x@vimp_table <- x@vimp_table[, list(
-    "score" = sum(exp(-rank / rank_threshold) * (rank <= rank_threshold))),
-    by = c("name")]
+  x@vimp_table <- x@vimp_table[
+    ,
+    list("score" = sum(exp(-rank / rank_threshold) * (rank <= rank_threshold))),
+    by = c("name")
+  ]
 
   # Set correct invert value.
   x@invert <- TRUE

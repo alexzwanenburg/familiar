@@ -4,16 +4,19 @@ NULL
 
 setClass(
   "familiarRegressionVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 setClass(
   "familiarUnivariateRegressionVimp",
-  contains = "familiarRegressionVimp")
+  contains = "familiarRegressionVimp"
+)
 
 setClass(
   "familiarMultivariateRegressionVimp",
   contains = "familiarRegressionVimp",
-  prototype = methods::prototype(multivariate = TRUE))
+  prototype = methods::prototype(multivariate = TRUE)
+)
 
 
 
@@ -24,10 +27,10 @@ setMethod(
   function(.Object, ...) {
     # Update with parent class first.
     .Object <- callNextMethod()
-
+    
     # Set the required package
     .Object@multivariate <- TRUE
-
+    
     return(.Object)
   }
 )
@@ -68,76 +71,85 @@ setMethod(
     param$learner <- list()
     param$metric <- list()
     param$drop_rate <- list()
-
+    
     if (is.null(data)) return(param)
-
+    
     # number of bootstrap iterations -------------------------------------------
     param$n_bootstrap <- .set_hyperparameter(
       default = 10L,
       type = "integer",
-      range = c(1, Inf),
-      randomise = FALSE)
-
+      range = c(1L, Inf),
+      randomise = FALSE
+    )
+    
     # rate at which least performing features are dropped ----------------------
     param$drop_rate <- .set_hyperparameter(
       default = 0.333, 
       type = "numeric",
-      range = c(0, 1),
-      randomise = FALSE)
-
+      range = c(0.0, 1.0),
+      randomise = FALSE
+    )
+    
     # distribution family to use for linear regression -------------------------
     learner_default <- switch(
       object@outcome_type,
       "binomial" = "glm_logistic",
       "multinomial" = "glm_multinomial",
       "continuous" = "glm_gaussian",
-      "survival" = "cox")
-
+      "survival" = "cox"
+    )
+    
     # Set the learner range, i.e. all generalised linear models.
     learner_range <- unique(c(
       .get_available_glm_learners(),
       .get_available_cox_learners(),
-      .get_available_survival_regression_learners()))
-
+      .get_available_survival_regression_learners()
+    ))
+    
     # Determine which learners are available for the outcome_type
     learner_is_available <- sapply(
       learner_range,
       .check_learner_outcome_type,
       outcome_type = object@outcome_type,
-      as_flag = TRUE)
-
+      as_flag = TRUE
+    )
+    
     # Create the learner hyperparameter
     param$learner <- .set_hyperparameter(
       default = learner_default,
       type = "factor",
       range = learner_range[learner_is_available],
-      randomise = FALSE)
-
+      randomise = FALSE
+    )
+    
     # performance metric -------------------------------------------------------
     metric_default <- switch(
       object@outcome_type,
       "binomial" = "auc_roc",
       "multinomial" = "auc_roc",
       "continuous" = "mse",
-      "survival" = "concordance_index")
-
+      "survival" = "concordance_index"
+    )
+    
     # Get all available metrics.
     metric_range <- .get_all_metrics()
-
+    
     # Determine which of the metrics is available for the outcome type.
     metric_is_available <- sapply(
       metric_range,
       .check_metric_outcome_type,
       outcome_type = object@outcome_type,
-      as_flag = TRUE)
-
+      as_flag = TRUE
+    )
+    
     # Create the metric hyperparameter
     param$metric <- .set_hyperparameter(
       default = metric_default,
       type = "factor",
       range = metric_range[metric_is_available],
-      randomise = FALSE)
-
+      randomise = FALSE
+    )
+    
     return(param)
   }
 )
@@ -151,22 +163,22 @@ setMethod(
   function(object, data, ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
     score <- name <- available <- selected <- NULL
-
+    
     if (is_empty(data)) return(callNextMethod())
-
+    
     # Aggregate data.
     data <- aggregate_data(data)
-
+    
     # Find feature columns in data table.
     feature_columns <- get_feature_columns(x = data)
-
+    
     # Generate iteration list.
     iteration_list <- .create_bootstraps(
       n_iter = object@hyperparameters$n_bootstrap,
       outcome_type = object@outcome_type,
       data = data@data
     )
-
+    
     # Create a generic model.
     fam_model <- promote_learner(
       object = methods::new(
@@ -196,23 +208,25 @@ setMethod(
       object = fam_model,
       data = data
     )
-
+    
     # Generate score table.
     score_table <- data.table::data.table(
       "name" = feature_columns,
       "available" = TRUE,
       "selected" = FALSE,
-      "select_step" = 0,
-      "score" = as.double(NA)
+      "select_step" = 0L,
+      "score" = NA_real_
     )
-
+    
     # Find signature features, if any.
     signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
-
-    if (length(signature_feature) > 0 &&
-        is(object, "familiarMultivariateRegressionVimp")) {
+    
+    if (
+      length(signature_feature) > 0L &&
+      is(object, "familiarMultivariateRegressionVimp")
+    ) {
       # For multivariate regression with features in a signature.
-
+      
       # Get the objective score for the signature.
       objective_score <- ..regression_vimp_assess_feature(
         feature = NULL,
@@ -222,10 +236,10 @@ setMethod(
         iteration_list = iteration_list,
         fixed_set = signature_feature
       )
-
+      
       # Set max_objective_score.
       max_objective_score <- objective_score$score
-
+      
       # Update the score table.
       score_table[
         name %in% signature_feature,
@@ -238,12 +252,12 @@ setMethod(
       ]
       
       # Iteration counter.
-      ii <- length(signature_feature) + 1
+      ii <- length(signature_feature) + 1L
       
     } else {
       # For multivariate regression without signature features, or univariate
       # regression.
-
+      
       # Compute objective score for every feature.
       objective_score <- lapply(
         feature_columns,
@@ -254,10 +268,10 @@ setMethod(
         iteration_list = iteration_list,
         fixed_set = NULL
       )
-
+      
       # Combine into data.table.
       objective_score <- data.table::rbindlist(objective_score)
-
+      
       # In case of univariate regression, return at this point.
       if (is(object, "familiarUnivariateRegressionVimp")) {
         # Create variable importance object.
@@ -273,13 +287,13 @@ setMethod(
         
         return(vimp_object)
       }
-
+      
       # Proceed with forward selection and multivariate regression.
-
+      
       # Find the best performing feature.
       max_objective_score <- max(objective_score$score)
       best_feature <- objective_score[score == max_objective_score]$name
-
+      
       # Update the score_table.
       score_table[
         name %in% best_feature,
@@ -287,41 +301,41 @@ setMethod(
           "score" = max_objective_score,
           "available" = FALSE,
           "selected" = TRUE,
-          "select_step" = 1
+          "select_step" = 1L
         )
       ]
       
       # Identify features to be dropped.
       n_available <- nrow(objective_score) - length(best_feature)
       n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
-
+      
       # Make dropped features unavailable.
-      if (n_dropped > 0) {
+      if (n_dropped > 0L) {
         # Identify the worst performing features.
         bad_features <- tail(objective_score[(order(-score))], n = n_dropped)$name
         score_table[name %in% bad_features, "available" := FALSE]
       }
-
+      
       # Iteration counter.
-      ii <- 2
+      ii <- 2L
     }
-
+    
     # Determine the features still available.
     available_features <- score_table[available == TRUE, ]$name
     selected_features <- score_table[selected == TRUE, ]$name
-
+    
     # Set current objective score.
     previous_objective_score <- max_objective_score
-
-
-    while (length(available_features) > 0) {
+    
+    
+    while (length(available_features) > 0L) {
       # Generate new iteration list.
       iteration_list <- .create_bootstraps(
         n_iter = object@hyperparameters$n_bootstrap,
         outcome_type = object@outcome_type,
         data = data@data
       )
-
+      
       # Compute objective score for every feature.
       objective_score <- lapply(
         available_features,
@@ -332,17 +346,17 @@ setMethod(
         iteration_list = iteration_list,
         fixed_set = selected_features
       )
-
+      
       # Combine into data.table.
       objective_score <- data.table::rbindlist(objective_score)
-
+      
       # Find the best performing feature.
       max_objective_score <- max(objective_score$score)
       best_feature <- objective_score[score == max_objective_score]$name
-
+      
       # Only continue adding, if the expected value changed.
       if (max_objective_score <= previous_objective_score) break
-
+      
       # Update the score_table.
       score_table[
         name %in% best_feature, 
@@ -357,33 +371,33 @@ setMethod(
       # Identify features to be dropped.
       n_available <- nrow(objective_score) - length(best_feature)
       n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
-
+      
       # Make dropped features unavailable.
-      if (n_dropped > 0) {
+      if (n_dropped > 0L) {
         # Identify the worst performing features.
         bad_features <- tail(objective_score[(order(-score))], n = n_dropped)$name
         score_table[name %in% bad_features, "available" := FALSE]
       }
-
+      
       # In addition, drop any features that do not improve upon the previous
       # best score.
       bad_features <- objective_score[score < previous_objective_score]$name
       score_table[name %in% bad_features, "available" := FALSE]
-
+      
       # Determine the features still available.
       available_features <- score_table[available == TRUE, ]$name
       selected_features <- score_table[selected == TRUE, ]$name
-
+      
       # Update iteration counter.
-      ii <- ii + 1
-
+      ii <- ii + 1L
+      
       # Set current objective score.
       previous_objective_score <- max_objective_score
     }
-
+    
     # Create variable importance table from the score table.
     vimp_table <- score_table[selected == TRUE, c("name", "score", "select_step")]
-
+    
     # Create variable importance object.
     vimp_object <- methods::new(
       "vimpTable",
@@ -394,7 +408,7 @@ setMethod(
       score_aggregation = "max",
       invert = FALSE
     )
-
+    
     return(vimp_object)
   }
 )
@@ -410,7 +424,7 @@ setMethod(
     fixed_set) {
   # Make local copy of the data prior to filtering features.
   data <- data.table::copy(data)
-
+  
   # Remove features that are neither in feature nor fixed_set.
   data <- filter_features(
     data,
@@ -541,13 +555,13 @@ setMethod(
     score_table = data.table::rbindlist(performance_data),
     optimisation_function = "max_validation"
   )
-
+  
   # Compute the summary score.
   performance_data <- .summarise_metric_optimisation_score(
     score_table = performance_data,
     method = "median"
   )
-
+  
   # Return sample mean and standard deviation of the objective score.
   return(data.table::data.table(
     "name" = feature,

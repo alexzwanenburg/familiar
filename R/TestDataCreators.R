@@ -1,11 +1,9 @@
 test_create_good_data <- function(
     outcome_type,
     to_data_object = TRUE,
-    seed = 1844,
-    rstream_object = NULL) {
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
+    seed = 1844L,
+    rstream_object = NULL
+) {
   
   # Create random stream object so that the same numbers are produced every
   # time.
@@ -15,7 +13,7 @@ test_create_good_data <- function(
     r <- rstream_object
   }
   
-  n_series_instances <- 150
+  n_series_instances <- 150L
   
   # Draw random numbers for four features.
   feature_1 <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
@@ -34,7 +32,8 @@ test_create_good_data <- function(
     outcome_value <- factor(
       x = outcome_value,
       levels = c(FALSE, TRUE),
-      labels = c("red", "green"))
+      labels = c("red", "green")
+    )
     
   } else if (outcome_type == "multinomial") {
     outcome_value <- numeric(n_series_instances)
@@ -47,7 +46,8 @@ test_create_good_data <- function(
     outcome_value <- factor(
       x = outcome_value,
       levels = c(0.0, 1.0, 2.0),
-      labels = c("red", "green", "blue"))
+      labels = c("red", "green", "blue")
+    )
     
   } else if (outcome_type == "continuous") {
     outcome_value <- outcome_raw
@@ -58,14 +58,12 @@ test_create_good_data <- function(
     outcome_event <- rep_len(1L, length.out = n_series_instances)
 
     # Censor randomly.
-    outcome_event[
-      fam_sample(
-        seq_len(n_series_instances),
-        size = ceiling(0.4 * n_series_instances),
-        replace = FALSE,
-        rstream_object = r
-      )
-    ] <- 0L
+    outcome_event[fam_sample(
+      seq_len(n_series_instances),
+      size = ceiling(0.4 * n_series_instances),
+      replace = FALSE,
+      rstream_object = r
+    )] <- 0L
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
@@ -94,13 +92,15 @@ test_create_good_data <- function(
       breaks = c(0.0, 0.333, 0.667, 1.0),
       labels = c("good", "better", "best"),
       ordered_result = TRUE
-    ))
+    )
+  )
   
   # Add outcome.
   if (outcome_type %in% "survival") {
     data[, ":="(
       "outcome_time" = outcome_time,
-      "outcome_event" = outcome_event)]
+      "outcome_event" = outcome_event
+    )]
     outcome_column <- c("outcome_time", "outcome_event")
     
   } else {
@@ -132,9 +132,10 @@ test_create_small_good_data <- function(outcome_type) {
   # Now select a subset of the data.
   data@data <- data@data[fam_sample(
     seq_len(nrow(data@data)),
-    size = 30,
+    size = 30L,
     replace = FALSE,
-    seed = 1844)]
+    seed = 1844L
+  )]
 
   return(data)
 }
@@ -162,7 +163,7 @@ test_create_good_data_without_censoring <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
-  data@data[, "outcome_event" := 1]
+  data@data[, "outcome_event" := 1L]
 
   return(data)
 }
@@ -178,10 +179,10 @@ test_create_good_data_one_censored <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
-  data@data[, "outcome_event" := 1]
+  data@data[, "outcome_event" := 1L]
 
   # Set one instance to censored.
-  data@data[1L, "outcome_event" := 0]
+  data@data[1L, "outcome_event" := 0L]
 
   return(data)
 }
@@ -196,10 +197,10 @@ test_create_good_data_few_censored <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   # Set all data to event.
-  data@data[, "outcome_event" := 1]
+  data@data[, "outcome_event" := 1L]
 
   # Set a few instances to censored.
-  data@data[seq_len(4), "outcome_event" := 0]
+  data@data[seq_len(4L), "outcome_event" := 0L]
 
   return(data)
 }
@@ -209,8 +210,9 @@ test_create_good_data_few_censored <- function(outcome_type) {
 test_create_good_data_random_missing <- function(
     outcome_type,
     n_missing_frac = 0.05,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Some data points are NA, but not instances.
   if (!is.null(seed) && is.null(rstream_object)) {
     rstream_object <- .start_random_number_stream(seed = seed)
@@ -232,12 +234,15 @@ test_create_good_data_random_missing <- function(
       seq_len(n_rows),
       size = n_randomise,
       replace = TRUE,
-      rstream_object = rstream_object),
+      rstream_object = rstream_object
+    ),
     "feature" = fam_sample(
       feature_columns,
       size = n_randomise,
       replace = TRUE,
-      rstream_object = rstream_object))
+      rstream_object = rstream_object
+    )
+  )
   
   # Select only unique data points.
   random_data <- unique(random_data)
@@ -246,7 +251,8 @@ test_create_good_data_random_missing <- function(
   random_data <- split(
     random_data,
     by = "feature",
-    drop = TRUE)
+    drop = TRUE
+  )
 
   # Update feature columns.
   for (feature in feature_columns) {
@@ -269,7 +275,7 @@ test_create_empty_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   # Now empty the data.
-  data@data <- head(data@data, n = 0)
+  data@data <- head(data@data, n = 0L)
 
   return(data)
 }
@@ -295,20 +301,21 @@ test_create_bootstrapped_data <- function(outcome_type, seed = 1844L, to_data_ob
   # Create good dataset first and work from there.
   data <- test_create_good_data(
     outcome_type = outcome_type,
-    to_data_object = to_data_object)
+    to_data_object = to_data_object
+  )
 
   # Now keep only the first sample.
   if (to_data_object) {
-    data@data <- data@data[
-      fam_sample(seq_len(nrow(data@data)),
+    data@data <- data@data[fam_sample(
+      seq_len(nrow(data@data)),
       size = nrow(data@data),
       replace = TRUE,
       seed = seed
     )][order(sample_id)]
     
   } else {
-    data@data <- data[
-      fam_sample(seq_len(nrow(data)),
+    data@data <- data[fam_sample(
+      seq_len(nrow(data)),
       size = nrow(data),
       replace = TRUE,
       seed = seed
@@ -324,13 +331,14 @@ test_create_one_sample_data <- function(outcome_type, to_data_object = TRUE) {
   # Create good dataset first and work from there.
   data <- test_create_good_data(
     outcome_type = outcome_type,
-    to_data_object = to_data_object)
+    to_data_object = to_data_object
+  )
 
   # Now keep only the first sample.
   if (to_data_object) {
-    data@data <- head(data@data, n = 1)
+    data@data <- head(data@data, n = 1L)
   } else {
-    data <- head(data, n = 1)
+    data <- head(data, n = 1L)
   }
 
   return(data)
@@ -343,10 +351,10 @@ test_create_all_identical_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   # Now keep only the first sample.
-  data@data <- head(data@data, n = 1)
+  data@data <- head(data@data, n = 1L)
 
   # Fill the dataset with the same sample.
-  data@data <- data@data[rep.int(1L, 10)]
+  data@data <- data@data[rep.int(1L, 10L)]
 
   # Set unique subject ids.
   data@data[, "sample_id" := paste0("sample_", seq_len(nrow(data@data)))]
@@ -365,8 +373,8 @@ test_create_single_feature_data <- function(outcome_type) {
     "feature_2b" = NULL,
     "feature_3a" = NULL,
     "feature_3b" = NULL,
-    "feature_4" = NULL)
-  ]
+    "feature_4" = NULL
+  )]
 
   return(data)
 }
@@ -378,7 +386,7 @@ test_create_single_feature_one_sample_data <- function(outcome_type) {
   data <- test_create_single_feature_data(outcome_type = outcome_type)
 
   # Now keep only the first sample.
-  data@data <- head(data@data, n = 1)
+  data@data <- head(data@data, n = 1L)
 
   return(data)
 }
@@ -393,7 +401,7 @@ test_create_single_feature_invariant_data <- function(outcome_type) {
   feature_column <- get_feature_columns(data)
 
   # Set the feature to a fixed value.
-  data@data[, (feature_column) := data@data[[feature_column]][1]]
+  data@data[, (feature_column) := data@data[[feature_column]][1L]]
 
   return(data)
 }
@@ -421,19 +429,21 @@ test_create_single_feature_two_values_data <- function(outcome_type) {
 test_create_wide_data <- function(outcome_type) {
   # Create random stream object so that the same numbers are produced every
   # time.
-  r <- .start_random_number_stream(seed = 1844)
+  r <- .start_random_number_stream(seed = 1844L)
 
   data <- test_create_good_data(
     outcome_type = outcome_type,
-    rstream_object = r)
+    rstream_object = r
+  )
   
   # Add twenty random features
   random_data <- lapply(
-    seq_len(20), 
+    seq_len(20L), 
     function(ii, n, r) fam_rnorm(n = n, rstream_object = r),
     n = nrow(data@data),
-    r = r)
-  names(random_data) <- paste0("random_feature_", seq_len(20))
+    r = r
+  )
+  names(random_data) <- paste0("random_feature_", seq_len(20L))
   
   # Add to dataset
   data@data <- cbind(data@data, data.table::as.data.table(random_data))
@@ -458,7 +468,7 @@ test_create_bad_data <- function(outcome_type, add_na_data = FALSE) {
 
   if (outcome_type == "survival") {
     # For survival data it would be really bad if all data are censored.
-    data@data[, "outcome_event" := 0]
+    data@data[, "outcome_event" := 0L]
     
   } else if (outcome_type == "multinomial") {
     # For multinomial data, having not all classes is bad.
@@ -521,10 +531,12 @@ test_create_small_bad_data <- function(outcome_type) {
   data <- test_create_bad_data(outcome_type = outcome_type)
 
   # Now select a subset of the data.
-  data@data <- data@data[fam_sample(seq_len(nrow(data@data)),
-    size = 30,
+  data@data <- data@data[fam_sample(
+    seq_len(nrow(data@data)),
+    size = 30L,
     replace = FALSE,
-    seed = 1844)]
+    seed = 1844L
+  )]
 
   return(data)
 }
@@ -537,9 +549,14 @@ test_create_prospective_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
   
   if (outcome_type %in% c("survival", "competing_risk")) {
-    data@data[, ":="(
-      "outcome_time" = NA,
-      "outcome_event" = NA)]
+    data@data[
+      ,
+      ":="(
+        "outcome_time" = NA,
+        "outcome_event" = NA_integer_
+      )
+    ]
+    
   } else {
     data@data[, ":="("outcome" = NA)]
   }
@@ -555,11 +572,16 @@ test_create_partially_prospective_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type %in% c("survival", "competing_risk")) {
-    data@data[c(1, 2), ":="(
-      "outcome_time" = NA,
-      "outcome_event" = NA)]
+    data@data[
+      c(1L, 2L),
+      ":="(
+        "outcome_time" = NA,
+        "outcome_event" = NA_integer_
+      )
+    ]
+    
   } else {
-    data@data[c(1, 2), ":="("outcome" = NA)]
+    data@data[c(1L, 2L), ":="("outcome" = NA)]
   }
 
   return(data)
@@ -576,9 +598,14 @@ test_create_mostly_prospective_data <- function(outcome_type) {
   data <- test_create_good_data(outcome_type = outcome_type)
 
   if (outcome_type %in% c("survival", "competing_risk")) {
-    data@data[sample_id != "sample_1", ":="(
-      "outcome_time" = NA,
-      "outcome_event" = NA)]
+    data@data[
+      sample_id != "sample_1",
+      ":="(
+        "outcome_time" = NA,
+        "outcome_event" = NA_integer_
+      )
+    ]
+    
   } else {
     data@data[sample_id != "sample_1", ":="("outcome" = NA)]
   }
@@ -590,14 +617,15 @@ test_create_mostly_prospective_data <- function(outcome_type) {
 
 test_create_synthetic_series_data <- function(
     outcome_type,
-    n_batch = 3,
-    n_samples = 10,
-    n_series = 3,
-    n_rep = 3,
+    n_batch = 3L,
+    n_samples = 10L,
+    n_series = 3L,
+    n_rep = 3L,
     n_numeric = 4L,
     rare_outcome = FALSE,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
 
@@ -627,7 +655,8 @@ test_create_synthetic_series_data <- function(
     outcome_value <- factor(
       x = outcome_value,
       levels = c(FALSE, TRUE),
-      labels = c("0", "1"))
+      labels = c("0", "1")
+    )
     
   } else if (outcome_type == "multinomial") {
     outcome_value <- numeric(n_series_instances)
@@ -642,13 +671,15 @@ test_create_synthetic_series_data <- function(
       outcome_value <- factor(
         x = outcome_value,
         levels = c(0.0, 1.0, 2.0, 3.0),
-        labels = c("0", "1", "2", "3"))
+        labels = c("0", "1", "2", "3")
+      )
       
     } else {
       outcome_value <- factor(
         x = outcome_value,
         levels = c(0.0, 1.0, 2.0),
-        labels = c("0", "1", "2"))
+        labels = c("0", "1", "2")
+      )
       
     }
   } else if (outcome_type == "continuous") {
@@ -657,7 +688,7 @@ test_create_synthetic_series_data <- function(
   } else if (outcome_type == "survival") {
     # Outcome follows an exponential distribution.
     outcome_time <- exp(outcome_raw)
-    outcome_event <- rep_len(1, length.out = n_series_instances)
+    outcome_event <- rep_len(1L, length.out = n_series_instances)
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
@@ -672,13 +703,15 @@ test_create_synthetic_series_data <- function(
     "feature_1" = feature_1,
     "feature_2" = feature_2,
     "feature_3" = feature_3,
-    "feature_4" = feature_4)
+    "feature_4" = feature_4
+  )
 
   # Add outcome.
   if (outcome_type %in% "survival") {
     data[, ":="(
       "outcome_time" = outcome_time,
-      "outcome_event" = outcome_event)]
+      "outcome_event" = outcome_event
+    )]
     outcome_column <- c("outcome_time", "outcome_event")
     
   } else {
@@ -691,10 +724,11 @@ test_create_synthetic_series_data <- function(
     "feature_1" = feature_1 + batch_id - 1.0,
     "feature_2" = feature_2 + batch_id - 1.0,
     "feature_3" = feature_3 + batch_id - 1.0,
-    "feature_4" = feature_4 + batch_id - 1.0)]
+    "feature_4" = feature_4 + batch_id - 1.0
+  )]
 
   # Create repetitions.
-  if (n_rep > 1) {
+  if (n_rep > 1L) {
     repeated_rows <- rep(seq_len(n_series_instances), each = n_rep)
     data <- data[repeated_rows, ]
 
@@ -703,7 +737,8 @@ test_create_synthetic_series_data <- function(
       "feature_1" = feature_1 + fam_rnorm(n = n_rep * n_series_instances, mean = 0.0, sd = 0.125, rstream_object = r),
       "feature_2" = feature_2 + fam_rnorm(n = n_rep * n_series_instances, mean = 0.0, sd = 0.125, rstream_object = r),
       "feature_3" = feature_3 + fam_rnorm(n = n_rep * n_series_instances, mean = 0.0, sd = 0.125, rstream_object = r),
-      "feature_4" = feature_4 + fam_rnorm(n = n_rep * n_series_instances, mean = 0.0, sd = 0.125, rstream_object = r))]
+      "feature_4" = feature_4 + fam_rnorm(n = n_rep * n_series_instances, mean = 0.0, sd = 0.125, rstream_object = r)
+    )]
 
     data[feature_1 <= 0.0, "feature_1" := 0.01]
     data[feature_2 <= 0.0, "feature_2" := 0.01]
@@ -711,10 +746,10 @@ test_create_synthetic_series_data <- function(
     data[feature_4 <= 0.0, "feature_4" := 0.01]
   }
 
-  if (n_numeric < 4) data$feature_1 <- factor(floor(data$feature_1))
-  if (n_numeric < 3) data$feature_2 <- factor(floor(data$feature_2))
-  if (n_numeric < 2) data$feature_3 <- factor(floor(data$feature_3))
-  if (n_numeric < 1) data$feature_4 <- factor(floor(data$feature_4))
+  if (n_numeric < 4L) data$feature_1 <- factor(floor(data$feature_1))
+  if (n_numeric < 3L) data$feature_2 <- factor(floor(data$feature_2))
+  if (n_numeric < 2L) data$feature_3 <- factor(floor(data$feature_3))
+  if (n_numeric < 1L) data$feature_4 <- factor(floor(data$feature_4))
 
   # Convert to a data object.
   data <- as_data_object(
@@ -734,21 +769,23 @@ test_create_synthetic_series_data <- function(
 test_create_synthetic_series_one_outcome <- function(
     outcome_type,
     n_numeric = 4L,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Create test data.
   data <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
   } else if (outcome_type %in% c("continuous")) {
-    data@data[, "outcome" := 1]
+    data@data[, "outcome" := 1L]
   } else if (outcome_type == "survival") {
-    data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1)]
+    data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1L)]
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
@@ -761,14 +798,16 @@ test_create_synthetic_series_one_outcome <- function(
 test_create_synthetic_series_one_sample_data <- function(
     outcome_type,
     n_numeric = 4L,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Create test data.
   data <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Select the first instance
   data@data <- head(data@data, n = 1L)
@@ -781,20 +820,22 @@ test_create_synthetic_series_one_sample_data <- function(
 test_create_synthetic_series_invariant_feature_data <- function(
     outcome_type,
     n_numeric = 4L,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Create test data.
   data <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Select the first instance
-  data@data$feature_1 <- data@data$feature_1[1]
-  data@data$feature_2 <- data@data$feature_2[1]
-  data@data$feature_3 <- data@data$feature_3[1]
-  data@data$feature_4 <- data@data$feature_4[1]
+  data@data$feature_1 <- data@data$feature_1[1L]
+  data@data$feature_2 <- data@data$feature_2[1L]
+  data@data$feature_3 <- data@data$feature_3[1L]
+  data@data$feature_4 <- data@data$feature_4[1L]
 
   return(data)
 }
@@ -804,17 +845,19 @@ test_create_synthetic_series_invariant_feature_data <- function(
 test_create_synthetic_series_one_feature_invariant_data <- function(
     outcome_type,
     n_numeric = 4L,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Create test data.
   data <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Select the first instance for feature 2.
-  data@data$feature_2 <- data@data$feature_2[1]
+  data@data$feature_2 <- data@data$feature_2[1L]
 
   return(data)
 }
@@ -825,8 +868,9 @@ test_create_synthetic_series_na_data <- function(
     outcome_type,
     n_numeric = 4L,
     n_missing_frac = 0.1,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Some instances are completely NA.
 
   # Create test data.
@@ -834,15 +878,18 @@ test_create_synthetic_series_na_data <- function(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Select which rows will be updated.
   n_rows <- nrow(data@data)
-  na_rows <- fam_sample(seq_len(n_rows),
+  na_rows <- fam_sample(
+    seq_len(n_rows),
     size = ceiling(n_missing_frac * n_rows),
     replace = FALSE,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Identify the feature columns.
   feature_columns <- get_feature_columns(data)
@@ -865,8 +912,9 @@ test_create_synthetic_series_random_na_data <- function(
     outcome_type,
     n_numeric = 4L,
     n_missing_frac = 0.1,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Some data points are NA, but not instances.
 
   if (!is.null(seed) && is.null(rstream_object)) {
@@ -892,11 +940,13 @@ test_create_synthetic_series_random_na_data <- function(
     "row_id" = fam_sample(seq_len(n_rows),
       size = n_randomise,
       replace = TRUE,
-      rstream_object = rstream_object),
+      rstream_object = rstream_object
+    ),
     "feature" = fam_sample(feature_columns,
       size = n_randomise,
       replace = TRUE,
-      rstream_object = rstream_object)
+      rstream_object = rstream_object
+    )
   )
   
   # Select only unique data points.
@@ -925,8 +975,9 @@ test_create_synthetic_series_random_na_data <- function(
 test_create_synthetic_series_one_feature_all_na_data <- function(
     outcome_type,
     n_numeric = 4L,
-    seed = 1844,
-    rstream_object = NULL) {
+    seed = 1844L,
+    rstream_object = NULL
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_2 <- NULL
 
@@ -935,7 +986,8 @@ test_create_synthetic_series_one_feature_all_na_data <- function(
     outcome_type = outcome_type,
     n_numeric = n_numeric,
     seed = seed,
-    rstream_object = rstream_object)
+    rstream_object = rstream_object
+  )
 
   # Set the first feature column to NA.
   if (is.factor(data@data[["feature_2"]])) {
@@ -959,7 +1011,9 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
 
     # Find new feature columns for the correlated features
     new_feature_columns <- paste0(
-      "feature_", seq_along(original_feature_columns) + length(original_feature_columns))
+      "feature_",
+      seq_along(original_feature_columns) + length(original_feature_columns)
+    )
 
     # Add in correlated features.
     for (ii in seq_along(original_feature_columns)) {
@@ -973,8 +1027,9 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
   data_1 <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = 3L,
-    n_samples = 20,
-    seed = 1)
+    n_samples = 20L,
+    seed = 1L
+  )
 
   # Add correlated features.
   data_1 <- ..extend_feature_set(data_1)
@@ -983,16 +1038,18 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
   data_2 <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = 3L,
-    n_samples = 20,
-    seed = 2)
+    n_samples = 20L,
+    seed = 2L
+  )
   # Do not add correlated features to dataset 2.
 
   # Draw a third dataset.
   data_3 <- test_create_synthetic_series_data(
     outcome_type = outcome_type,
     n_numeric = 3L,
-    n_samples = 20,
-    seed = 3)
+    n_samples = 20L,
+    seed = 3L
+  )
 
   # Add correlated features, but remove the original features.
   data_3 <- ..extend_feature_set(data_3)
@@ -1000,14 +1057,15 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
     "feature_1" = NULL,
     "feature_2" = NULL,
     "feature_3" = NULL,
-    "feature_4" = NULL)]
+    "feature_4" = NULL
+  )]
 
   # Draw a fourth dataset that cannot be used for training, e.g. contains just
   # one sample.
   data_4 <- test_create_synthetic_series_one_outcome(
     outcome_type = outcome_type,
     n_numeric = 3L,
-    seed = 4
+    seed = 4L
   )
 
   # Add correlated features.
@@ -1017,7 +1075,8 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
     "set_1" = data_1,
     "set_2" = data_2,
     "set_3" = data_3,
-    "set_4" = data_4))
+    "set_4" = data_4
+  ))
 }
 
 
@@ -1025,11 +1084,12 @@ test_create_multiple_synthetic_series <- function(outcome_type) {
 
 test_create_synthetic_correlated_data <- function(
     ...,
-    seed = 1844,
+    seed = 1844L,
     rstream_object = NULL,
-    cluster_size = c(1, 1, 1, 1),
+    cluster_size = c(1L, 1L, 1L, 1L),
     mix_feature_types = TRUE,
-    allow_anti_correlation = TRUE) {
+    allow_anti_correlation = TRUE
+) {
   # Create random stream object so that the same numbers are produced every
   # time.
   if (is.null(rstream_object)) {
@@ -1043,10 +1103,12 @@ test_create_synthetic_correlated_data <- function(
     test_create_synthetic_series_data,
     args = c(
       list("rstream_object" = r),
-      list(...)))
+      list(...)
+    )
+  )
 
   if (length(cluster_size) != get_n_features(base_data)) {
-    stop(paste0("The cluster_size argument should match the number of features."))
+    ..error(paste0("The cluster_size argument should match the number of features."))
   }
 
   # Get feature names prior to extending the dataset.
@@ -1058,7 +1120,7 @@ test_create_synthetic_correlated_data <- function(
 
   for (ii in seq_along(cluster_size)) {
     # Skip if no clusters are required.
-    if (cluster_size[ii] == 1) next()
+    if (cluster_size[ii] == 1L) next
 
     # Isolate feature data. Force reading this data just in case.
     x <- base_data@data[[original_feature_names[ii]]]
@@ -1068,13 +1130,14 @@ test_create_synthetic_correlated_data <- function(
       # Create the name of the new feature.
       new_feature_name <- paste0(original_feature_names[ii], "_", LETTERS[jj])
 
-      if (jj == 1) {
+      if (jj == 1L) {
         # The first feature should just be renamed.
         data.table::setnames(data@data,
           old = original_feature_names[ii],
-          new = new_feature_name)
+          new = new_feature_name
+        )
         
-      } else if (jj == 2 && is.factor(x) && mix_feature_types) {
+      } else if (jj == 2L && is.factor(x) && mix_feature_types) {
         # Add numeric feature when mixing data types.
         data@data[, (new_feature_name) := as.numeric(x) * 1.1]
         
@@ -1082,11 +1145,15 @@ test_create_synthetic_correlated_data <- function(
         # For categorical features, remix the levels.
         y <- factor(x,
           levels = levels(x),
-          labels = levels(x)[fam_sample(
-            seq_along(levels(x)),
-            size = length(levels(x)),
-            replace = FALSE,
-            rstream_object = r)])
+          labels = levels(x)[
+            fam_sample(
+              seq_along(levels(x)),
+              size = nlevels(x),
+              replace = FALSE,
+              rstream_object = r
+            )
+          ]
+        )
         
         # Set feature.
         data@data[, (new_feature_name) := y]
@@ -1095,7 +1162,7 @@ test_create_synthetic_correlated_data <- function(
         # For numerical features, introduce an offset and scaling. We scale
         # between 0.5 and 1.5 or -0.5 and -1.5 to avoid multiplying by 0. The
         # negative values are used for strong anti-correlation, which
-        if (jj %% 2 == 0 || !allow_anti_correlation) {
+        if (jj %% 2L == 0L || !allow_anti_correlation) {
           r_scale <- fam_runif(n = 1L, min = 0.5, max = 1.5, rstream_object = r)
         } else {
           r_scale <- fam_runif(n = 1L, min = -1.5, max = -0.5, rstream_object = r)
@@ -1115,7 +1182,9 @@ test_create_synthetic_correlated_data <- function(
     x = data@data, 
     neworder = c(
       get_non_feature_columns(data),
-      sort(get_feature_columns(data))))
+      sort(get_feature_columns(data))
+    )
+  )
 
   return(data)
 }
@@ -1124,19 +1193,22 @@ test_create_synthetic_correlated_data <- function(
 
 test_create_synthetic_correlated_one_feature_invariant_data <- function(
     ...,
-    cluster_size = c(1, 1, 1, 1)) {
+    cluster_size = c(1L, 1L, 1L, 1L)
+) {
   # Set the size of the second cluster to 1, always.
-  cluster_size[2] <- 1
+  cluster_size[2L] <- 1L
 
   # Create test data.
   data <- do.call(
     test_create_synthetic_correlated_data,
     args = c(
       list("cluster_size" = cluster_size),
-      list(...)))
+      list(...)
+    )
+  )
 
   # Select the first instance for feature 2.
-  data@data$feature_2 <- data@data$feature_2[1]
+  data@data$feature_2 <- data@data$feature_2[1L]
 
   return(data)
 }
@@ -1147,7 +1219,8 @@ test_create_synthetic_correlated_one_sample_data <- function(...) {
   # Create test data.
   data <- do.call(
     test_create_synthetic_correlated_data,
-    args = list(...))
+    args = list(...)
+  )
 
   # Select the first instance
   data@data <- head(data@data, n = 1L)
@@ -1159,21 +1232,24 @@ test_create_synthetic_correlated_one_sample_data <- function(...) {
 
 test_create_synthetic_correlated_one_outcome_data <- function(
     ...,
-    outcome_type) {
+    outcome_type
+) {
   
   # Create test data.
   data <- do.call(
     test_create_synthetic_correlated_data,
     args = c(
       list("outcome_type" = outcome_type),
-      list(...)))
+      list(...)
+    )
+  )
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
   } else if (outcome_type %in% c("continuous")) {
-    data@data[, "outcome" := 1]
+    data@data[, "outcome" := 1.0]
   } else if (outcome_type == "survival") {
-    data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1)]
+    data@data[, ":="("outcome_time" = 1.25, "outcome_event" = 1L)]
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
@@ -1185,20 +1261,23 @@ test_create_synthetic_correlated_one_outcome_data <- function(
 
 test_create_synthetic_correlated_bad_outcome_data <- function(
     ...,
-    outcome_type) {
+    outcome_type
+) {
   # Create test data.
   data <- do.call(
     test_create_synthetic_correlated_data,
     args = c(
       list("outcome_type" = outcome_type),
-      list(...)))
+      list(...)
+    )
+  )
 
   if (outcome_type %in% c("binomial", "multinomial")) {
     data@data[, "outcome" := "0"]
   } else if (outcome_type %in% c("continuous")) {
-    data@data[, "outcome" := 1]
+    data@data[, "outcome" := 1.0]
   } else if (outcome_type == "survival") {
-    data@data[, ":="("outcome_event" = 0)]
+    data@data[, ":="("outcome_event" = 0L)]
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }

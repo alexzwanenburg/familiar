@@ -10,7 +10,8 @@
     "borda",
     "enhanced_borda",
     "truncated_borda",
-    "enhanced_truncated_borda"))
+    "enhanced_truncated_borda"
+  ))
 }
 
 
@@ -24,8 +25,8 @@
   max_rank <- max(vimp_table$rank)
 
   # Check if there is only one feature or only one run
-  if (n_features == 1) return(1L)
-  if (n_runs == 1) return(max_rank)
+  if (n_features == 1L) return(1L)
+  if (n_runs == 1L) return(max_rank)
 
   # Set max threshold to either 50 or max_rank, if lower.
   max_threshold <- min(c(max_rank, 50L))
@@ -35,14 +36,17 @@
   threshold_var <- sapply(
     seq_len(max_threshold),
     function(threshold, n_runs, vimp_table) {
-      return(stats::var(.compute_feature_occurrence(
-        vimp_table = vimp_table, 
-        n_runs = n_runs, 
-        threshold = threshold
-      )$occurrence))
+      return(stats::var(
+        .compute_feature_occurrence(
+          vimp_table = vimp_table, 
+          n_runs = n_runs, 
+          threshold = threshold
+        )$occurrence
+      ))
     },
     vimp_table = vimp_table, 
-    n_runs = n_runs)
+    n_runs = n_runs
+  )
 
   # Return optimal threshold
   return(which.max(threshold_var))

@@ -15,7 +15,7 @@ setMethod(
   "is_empty",
   signature(x = "data.table"),
   function(x, ...) {
-    return(ncol(x) == 0 || nrow(x) == 0)
+    return(ncol(x) == 0L || nrow(x) == 0L)
   }
 )
 
@@ -23,7 +23,7 @@ setMethod(
   "is_empty",
   signature(x = "character"),
   function(x, ...) {
-    if (length(x) == 0) {
+    if (length(x) == 0L) {
       return(TRUE)
     } else if (all(x == "")) {
       return(TRUE)
@@ -43,7 +43,7 @@ setMethod(
     } else if (is.null(x@data)) {
       # Data is empty if it is NULL
       return(TRUE)
-    } else if (nrow(x@data) == 0) {
+    } else if (nrow(x@data) == 0L) {
       # Data is empty if the data table has no rows
       return(TRUE)
     } else if (!allow_no_features && !has_feature_data(x)) {
@@ -60,7 +60,7 @@ setMethod(
   "is_empty",
   signature(x = "list"),
   function(x, ...) {
-    return(length(x) == 0)
+    return(length(x) == 0L)
   }
 )
 
@@ -76,7 +76,7 @@ setMethod(
   "is_empty",
   signature(x = "vector"),
   function(x, ...) {
-    return(length(x) == 0)
+    return(length(x) == 0L)
   }
 )
 
@@ -98,7 +98,7 @@ setMethod(
     if (x@outcome_type %in% c("binomial", "multinomial")) {
       return(as.character(x@levels))
     } else {
-      return(character(0))
+      return(character(0L))
     }
   }
 )
@@ -129,7 +129,7 @@ setMethod("get_outcome_class_levels", signature(x = "dataObject"), function(x) {
 
 .get_outcome_class_levels <- function(data, outcome_type) {
   if (outcome_type %in% c("survival", "continuous", "competing_risk")) {
-    return(character(0))
+    return(character(0L))
     
   } else if (outcome_type %in% c("binomial", "multinomial")) {
     return(as.character(levels(data[[get_outcome_columns(x = outcome_type)]])))
@@ -196,6 +196,7 @@ setMethod(
       
       # Pass to the method for character strings.
       return(get_class_probability_name(x = class_levels))
+      
     } else {
       return(NULL)
     }
@@ -208,7 +209,8 @@ setMethod(
   function(x) {
     # Create column names
     class_probability_columns <- .replace_illegal_column_name(
-      column_name = paste0("predicted_class_probability_", x))
+      column_name = paste0("predicted_class_probability_", x)
+    )
     
     return(class_probability_columns)
   }
@@ -330,27 +332,37 @@ setMethod("get_non_feature_columns", signature(x = "familiarEnsemble"), function
 
 
 # get_feature_columns-----------------------------------------------------------
-setMethod("get_feature_columns", signature(x = "data.table"), function(x, outcome_type) {
-  return(.get_feature_columns(
-    column_names = colnames(x),
-    outcome_type = outcome_type))
-})
+setMethod(
+  "get_feature_columns",
+  signature(x = "data.table"),
+  function(x, outcome_type) {
+    return(.get_feature_columns(
+      column_names = colnames(x),
+      outcome_type = outcome_type
+    ))
+  }
+)
 
-setMethod("get_feature_columns", signature(x = "dataObject"), function(x) {
-  return(.get_feature_columns(
-    column_names = colnames(x@data),
-    outcome_type = x@outcome_type))
-})
+setMethod(
+  "get_feature_columns",
+  signature(x = "dataObject"),
+  function(x) {
+    return(.get_feature_columns(
+      column_names = colnames(x@data),
+      outcome_type = x@outcome_type
+    ))
+  }
+)
 
 # Internal function
 .get_feature_columns <- function(column_names, outcome_type) {
   if (is.null(column_names)) {
     # Return 0-length character in case column_names is NULL.
-    return(character(0))
+    return(character(0L))
     
-  } else if (length(column_names) == 0) {
+  } else if (length(column_names) == 0L) {
     # Return 0-length character in case column_names has no length.
-    return(character(0))
+    return(character(0L))
     
   } else {
     # Return all column names that are not related to identifiers and outcome.
@@ -371,11 +383,11 @@ setMethod("get_n_features", signature(x = "dataObject"), function(x) {
 
 # has_feature_data--------------------------------------------------------------
 setMethod("has_feature_data", signature(x = "data.table"), function(x, outcome_type) {
-  return(get_n_features(x = x, outcome_type = outcome_type) > 0)
+  return(get_n_features(x = x, outcome_type = outcome_type) > 0L)
 })
 
 setMethod("has_feature_data", signature(x = "dataObject"), function(x, outcome_type) {
-  return(get_n_features(x = x) > 0)
+  return(get_n_features(x = x) > 0L)
 })
 
 
@@ -390,17 +402,21 @@ setMethod(
     if (is.null(include_batch)) {
       # Determine if batch identifiers should be included, i.e. the same sample
       # identifiers appear in different batches.
-      include_batch <- any(unique(
-        x[, mget(get_id_columns(id_depth = "sample"))]
-      )[, list("n" = .N), by = mget(get_id_columns(single_column = "sample"))]$n > 1)
+      include_batch <- any(
+        unique(
+          x[, mget(get_id_columns(id_depth = "sample"))]
+        )[, list("n" = .N), by = mget(get_id_columns(single_column = "sample"))]$n > 1L
+      )
     }
     
     if (is.null(include_series)) {
       # Determine if series identifiers should be included, i.e. any unique
       # sample has multiple series.
-      include_series <- any(unique(
-        x[, mget(get_id_columns(id_depth = "series"))]
-      )[, list("n" = .N), by = mget(get_id_columns(id_depth = "sample"))]$n > 1)
+      include_series <- any(
+        unique(
+          x[, mget(get_id_columns(id_depth = "series"))]
+        )[, list("n" = .N), by = mget(get_id_columns(id_depth = "sample"))]$n > 1L
+      )
     }
     
     # Get sample names.
@@ -433,7 +449,8 @@ setMethod(
     return(get_unique_row_names(
       x = x@data,
       include_batch = include_batch,
-      include_series = include_series))
+      include_series = include_series
+    ))
   }
 )
 
@@ -473,13 +490,15 @@ setMethod(
   "encode_categorical_variables",
   signature(
     data = "dataObject",
-    object = "ANY"),
+    object = "ANY"
+  ),
   function(
     object = NULL,
     data,
     encoding_method = "effect", 
     drop_levels = TRUE,
-    feature_columns = NULL) {
+    feature_columns = NULL
+  ) {
     # Obtain feature columns if not provided.
     if (is.null(feature_columns)) feature_columns <- get_feature_columns(data)
     
@@ -489,14 +508,16 @@ setMethod(
       object = object,
       encoding_method = encoding_method,
       drop_levels = drop_levels,
-      feature_columns = feature_columns)
+      feature_columns = feature_columns
+    )
     
     # Update data
     data@data <- encoding_data$encoded_data
     
     return(list(
       "encoded_data" = data, 
-      "reference_table" = encoding_data$reference_table))
+      "reference_table" = encoding_data$reference_table
+    ))
   }
 )
 
@@ -505,49 +526,57 @@ setMethod(
   "encode_categorical_variables", 
   signature(
     data = "data.table",
-    object = "ANY"),
+    object = "ANY"
+  ),
   function(
     object = NULL,
     data, 
     encoding_method = "effect",
     drop_levels = TRUE,
     feature_columns = NULL, 
-    outcome_type = NULL) {
+    outcome_type = NULL
+  ) {
     # Determine columns with factors
     if (is.null(feature_columns) && !is.null(outcome_type)) {
       feature_columns <- get_feature_columns(
         x = data,
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
       
     } else if (is.null(feature_columns)) {
       feature_columns <- colnames(data)
     }
 
     # Return original if no variables are available.
-    if (length(feature_columns) == 0) {
+    if (length(feature_columns) == 0L) {
       return(list(
         "encoded_data" = data, 
-        "reference_table" = NULL))
+        "reference_table" = NULL
+      ))
     }
 
     # Find column classes
     column_class <- lapply(
       feature_columns, 
-      function(ii, data) (class(data[[ii]])), data = data)
+      function(ii, data) (class(data[[ii]])),
+      data = data
+    )
 
     # Identify categorical columns
     factor_columns <- sapply(
       column_class, 
       function(selected_column_class) {
         return(any(selected_column_class %in% c("logical", "character", "factor")))
-      })
+      }
+    )
     factor_columns <- feature_columns[factor_columns]
 
     # Return original if no categorical variables are available.
-    if (length(factor_columns) == 0) {
+    if (length(factor_columns) == 0L) {
       return(list(
         "encoded_data" = data,
-        "reference_table" = NULL))
+        "reference_table" = NULL
+      ))
     }
 
     # Initialise contrast list and reference list
@@ -574,29 +603,36 @@ setMethod(
         
       } else if (is.logical(x)) {
         level_names <- c(FALSE, TRUE)
-        level_count <- 2
+        level_count <- 2L
       }
 
       # Apply coding scheme
-      if (encoding_method == "effect" || level_count == 1) {
+      if (encoding_method == "effect" || level_count == 1L) {
         # Effect/one-hot encoding
         curr_contrast_list <- lapply(
           level_names,
-          function(ii, x) (as.numeric(x == ii)), x = x)
+          function(ii, x) (as.numeric(x == ii)),
+          x = x
+        )
 
         # Check level_names for inconsistencies (i.e. spaces etc)
         contrast_names <- .replace_illegal_column_name(
-          column_name = paste0(current_col, "_", level_names))
+          column_name = paste0(current_col, "_", level_names)
+        )
         names(curr_contrast_list) <- contrast_names
         
       } else if (encoding_method == "dummy") {
         # Dummy encoding. The first level is used as a reference (0).
         curr_contrast_list <- lapply(
-          level_names[2:level_count], function(ii, x) (as.numeric(x == ii)), x = x)
+          level_names[2L:level_count],
+          function(ii, x) (as.numeric(x == ii)),
+          x = x
+        )
 
         # Check level_names for inconsistencies (i.e. spaces etc)
         contrast_names <- .replace_illegal_column_name(
-          column_name = paste0(current_col, "_", level_names[2:level_count]))
+          column_name = paste0(current_col, "_", level_names[2L:level_count])
+        )
         names(curr_contrast_list) <- contrast_names
         
       } else if (encoding_method == "numeric") {
@@ -610,16 +646,18 @@ setMethod(
         
       } else {
         ..error_reached_unreachable_code(
-          "encode_categorical_variables: unknown encoding method encountered.")
+          "encode_categorical_variables: unknown encoding method encountered."
+        )
       }
 
       # Add list of generated contrast to contrast list
-      contrast_list <- append(contrast_list, curr_contrast_list)
+      contrast_list <- c(contrast_list, curr_contrast_list)
 
       # Add data table with reference and contrast names to the reference list
       reference_list[[ii]] <- data.table::data.table(
         "original_name" = current_col,
-        "reference_name" = contrast_names)
+        "reference_name" = contrast_names
+      )
     }
 
     # Check if the original data set contained any features other than
@@ -631,13 +669,15 @@ setMethod(
     } else {
       contrast_table <- cbind(
         data[, !factor_columns, with = FALSE],
-        data.table::as.data.table(contrast_list))
+        data.table::as.data.table(contrast_list)
+      )
     }
 
     # Return as list
     return(list(
       "encoded_data" = contrast_table,
-      "reference_table" = data.table::rbindlist(reference_list)))
+      "reference_table" = data.table::rbindlist(reference_list)
+    ))
   }
 )
 
@@ -654,13 +694,15 @@ setMethod(
       # Bootstrap the data element.
       data@data <- get_bootstrap_sample(
         data = data@data,
-        seed = seed)
+        seed = seed
+      )
       
-    } else if (length(data@sample_set_on_load) > 0) {
+    } else if (length(data@sample_set_on_load) > 0L) {
       if (data.table::is.data.table(data@sample_set_on_load)) {
         data@sample_set_on_load <- get_bootstrap_sample(
           data = data@sample_set_on_load,
-          seed = seed)
+          seed = seed
+        )
         
       } else {
         # Reshuffle the samples -- This is for backward compatibility.
@@ -668,12 +710,14 @@ setMethod(
           x = unique(data@sample_set_on_load),
           size = length(data@sample_set_on_load),
           replace = TRUE,
-          seed = seed)
+          seed = seed
+        )
       }
     } else {
       ..error_reached_unreachable_code(paste0(
         "get_boostrap_sample,dataObject: could not identify a suitable ",
-        "method for bootstrapping."))
+        "method for bootstrapping."
+      ))
     }
 
     return(data)
@@ -688,15 +732,17 @@ setMethod(
     # and series.
     id_columns <- intersect(
       get_id_columns(id_depth = "sample"),
-      colnames(data))
+      colnames(data)
+    )
 
-    if (length(id_columns) == 0) {
+    if (length(id_columns) == 0L) {
       # Sample rows.
       row_ids <- fam_sample(
         x = seq_len(nrow(data)),
         size = nrow(data),
         replace = TRUE,
-        seed = seed)
+        seed = seed
+      )
 
       # Create a subset.
       data <- data[row_ids, ]
@@ -710,7 +756,8 @@ setMethod(
         x = seq_len(nrow(id_table)),
         size = nrow(id_table),
         replace = TRUE,
-        seed = seed)
+        seed = seed
+      )
 
       # Create subsample.
       id_table <- id_table[row_ids, ]
@@ -722,7 +769,8 @@ setMethod(
         y = unique(data),
         by = id_columns,
         all = FALSE,
-        allow.cartesian = TRUE)
+        allow.cartesian = TRUE
+      )
     }
 
     return(data)
@@ -748,7 +796,8 @@ setMethod(
     seed = NULL, 
     size = NULL, 
     outcome_type = NULL,
-    ...) {
+    ...
+  ) {
     # This function randomly selects up to "size" samples from the data.
     # Set seed for reproducible results.
     if (!is.null(seed)) {
@@ -765,20 +814,23 @@ setMethod(
         data = data@data,
         size = size,
         outcome_type = outcome_type,
-        rstream_object = rstream_object)
+        rstream_object = rstream_object
+      )
       
-    } else if (length(data@sample_set_on_load) > 0) {
+    } else if (length(data@sample_set_on_load) > 0L) {
       # Subsample data.
       data@sample_set_on_load <- get_subsample(
         data = data@sample_set_on_load,
         size = size,
         outcome_type = outcome_type,
-        rstream_object = rstream_object)
+        rstream_object = rstream_object
+      )
       
     } else {
       ..error_reached_unreachable_code(paste0(
         "get_boostrap_sample,dataObject: could not identify a suitable ",
-        "method for bootstrapping."))
+        "method for bootstrapping."
+      ))
     }
 
     return(data)
@@ -795,7 +847,8 @@ setMethod(
     size = NULL,
     outcome_type = NULL,
     rstream_object = NULL,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     .NATURAL <- NULL
 
@@ -817,15 +870,17 @@ setMethod(
     # repetitions and series.
     id_columns <- intersect(
       get_id_columns(id_depth = "sample"),
-      colnames(data))
+      colnames(data)
+    )
 
-    if (length(id_columns) == 0) {
+    if (length(id_columns) == 0L) {
       # Sample rows.
       row_ids <- fam_sample(
         x = seq_len(nrow(data)),
         size = size,
         replace = FALSE,
-        rstream_object = rstream_object)
+        rstream_object = rstream_object
+      )
 
       # Create a subset.
       data <- data[row_ids, ]
@@ -836,7 +891,8 @@ setMethod(
         x = seq_len(nrow(data)),
         size = size,
         replace = FALSE,
-        rstream_object = rstream_object)
+        rstream_object = rstream_object
+      )
 
       # Create a subset.
       data <- data[row_ids, ]
@@ -847,10 +903,11 @@ setMethod(
         size = size,
         n_iter = 1L,
         outcome_type = outcome_type,
-        rstream_object = rstream_object)
+        rstream_object = rstream_object
+      )
 
       # Isolate identifier table.
-      id_table <- id_table$train_list[[1]]
+      id_table <- id_table$train_list[[1L]]
 
       # Select data.
       data <- data[id_table, on = .NATURAL]
@@ -881,7 +938,8 @@ setMethod(
     prob = NULL,
     seed = NULL, 
     rstream_object = NULL,
-    ...) {
+    ...
+  ) {
     # This function prevents the documented behaviour of the sample function,
     # where if x is positive, numeric and only has one element, it interprets x
     # as a series of x, i.e. x=seq_len(x). That's bad news if x is a sample
@@ -890,11 +948,11 @@ setMethod(
     # Set size if it is unset.
     if (is.null(size)) size <- length(x)
 
-    if (length(x) == 1) {
+    if (length(x) == 1L) {
       # Check that size is not greater than 1, if items are to be drawn
       # without replacement.
-      if (!replace & size > 1) {
-        stop("cannot take a sample larger than the population when 'replace = FALSE'")
+      if (!replace & size > 1L) {
+        ..error("cannot take a sample larger than the population when 'replace = FALSE'")
       }
 
       return(rep_len(x = x, length.out = size))
@@ -908,7 +966,8 @@ setMethod(
           x = x,
           size = size,
           replace = replace,
-          prob = prob))
+          prob = prob
+        ))
         
       } else {
         return(..fam_sample(
@@ -916,7 +975,8 @@ setMethod(
           size = size,
           replace = replace,
           seed = seed,
-          rstream_object = rstream_object))
+          rstream_object = rstream_object
+        ))
       }
     }
   }
@@ -932,7 +992,8 @@ setMethod(
     prob = NULL,
     seed = NULL,
     rstream_object = NULL, 
-    ...) {
+    ...
+  ) {
     # This function prevents the documented behaviour of the sample function,
     # where if x is positive, numeric and only has one element, it interprets x
     # as a series of x, i.e. x=seq_len(x). That's bad news if x is a sample
@@ -953,14 +1014,16 @@ setMethod(
     # Check that batch_id and sample_id columns are present.
     if (!all(id_columns %in% colnames(x))) {
       ..error_reached_unreachable_code(
-        "fam_sample,data.table: batch_id or sample_id columns are not present in x.")
+        "fam_sample,data.table: batch_id or sample_id columns are not present in x."
+      )
     }
 
     # Check that the prob column is present.
     if (is.logical(prob)) {
       if (prob && !"prob" %in% colnames(x)) {
         ..error_reached_unreachable_code(
-          "fam_sample,data.table: prob column is not present in x.")
+          "fam_sample,data.table: prob column is not present in x."
+        )
       }
 
       # Select unique samples.
@@ -982,7 +1045,8 @@ setMethod(
         
       } else {
         ..error_reached_unreachable_code(
-          "fam_sample,data.table: the length of prob does not equal the number of instances in x.")
+          "fam_sample,data.table: the length of prob does not equal the number of instances in x."
+        )
       }
     }
 
@@ -990,11 +1054,11 @@ setMethod(
     if (is.null(size)) size <- nrow(x)
 
     # Sample x.
-    if (nrow(x) == 1) {
+    if (nrow(x) == 1L) {
       # Check that size is not greater than 1, if items are to be drawn without
       # replacement.
-      if (!replace && size > 1) {
-        stop("cannot take a sample larger than the population when 'replace = FALSE'")
+      if (!replace && size > 1L) {
+        ..error("cannot take a sample larger than the population when 'replace = FALSE'")
       }
 
       # Get row-ids
@@ -1020,7 +1084,8 @@ setMethod(
           x = seq_len(nrow(x)),
           size = size,
           replace = replace,
-          prob = prob)
+          prob = prob
+        )
         
       } else {
         row_id <- ..fam_sample(
@@ -1028,7 +1093,8 @@ setMethod(
           size = size,
           replace = replace,
           seed = seed,
-          rstream_object = rstream_object)
+          rstream_object = rstream_object
+        )
       }
 
       # Create output table y.
@@ -1059,7 +1125,7 @@ setMethod("has_optimised_hyperparameters", signature(object = "familiarNoveltyDe
   default_parameters <- get_default_hyperparameters(object)
 
   # If there are no default hyperparameters, return TRUE.
-  if (length(default_parameters) == 0) return(TRUE)
+  if (length(default_parameters) == 0L) return(TRUE)
 
   # Check if any hyperparameters are present in the object.
   if (is_empty(object@hyperparameters)) return(FALSE)
