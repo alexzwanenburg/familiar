@@ -4,6 +4,8 @@
 
 - Computing distance matrices no longer produces an error due to applying `rownames` to `data.table`. The exact cause is unsure, but was either introduced by `data.table` version 1.15.0, `R` version 4.4.0, or both. 
 
+- Plotting margins are now correctly set in the default familiar plotting theme. This avoids errors with `ggplot2` version 3.5 and later.
+
 # Version 1.4.6 (Talented Toad)
 
 ## Bug fixes

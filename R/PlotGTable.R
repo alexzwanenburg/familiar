@@ -619,7 +619,7 @@
       if(is.list(grob_height)){
         
         grob_height <- lapply(grob_height, function(current_grob_height){
-          if(grid::unitType(current_grob_height) == "npc") current_grob_height <- grid::unit(as.numeric(current_grob_height), "null")
+          if("npc" %in% grid::unitType(current_grob_height)) current_grob_height <- grid::unit(as.numeric(current_grob_height), "null")
           return(current_grob_height)
         })
         
@@ -631,7 +631,7 @@
           grob_height <- sum(do.call(grid::unit.c, args=grob_height))
         }
         
-      } else if(grid::unitType(grob_height) == "npc"){
+      } else if("npc" %in% grid::unitType(grob_height)){
         grob_height <- grid::unit(as.numeric(grob_height), "null")
       }
     }
@@ -661,7 +661,7 @@
       if(is.list(grob_width)){
         
         grob_width <- lapply(grob_width, function(current_grob_width){
-          if(grid::unitType(current_grob_width) == "npc") current_grob_width <- grid::unit(as.numeric(current_grob_width), "null")
+          if("npc" %in% grid::unitType(current_grob_width)) current_grob_width <- grid::unit(as.numeric(current_grob_width), "null")
           return(current_grob_width)
         })
         
@@ -673,7 +673,7 @@
           grob_width <- sum(do.call(grid::unit.c, args=grob_width))
         }
         
-      } else if(grid::unitType(grob_width) == "npc"){
+      } else if("npc" %in% grid::unitType(grob_width)){
         grob_width <- grid::unit(as.numeric(grob_width), "null")
       } 
       
@@ -711,8 +711,8 @@
     
     # If the grob_heights are a mix of implicit and explicit heights, keep only
     # explicit.
-    explicit_grob_heights <- sapply(grob_heights, grid::unitType) != "null"
-    implicit_grob_heights <- sapply(grob_heights, grid::unitType) == "null"
+    explicit_grob_heights <- sapply(grob_heights, function(x) (!"null" %in% grid::unitType(x)))
+    implicit_grob_heights <- sapply(grob_heights, function(x) ("null" %in% grid::unitType(x)))
     if(any(implicit_grob_heights) & !all(implicit_grob_heights)){
       grob_heights <- grob_heights[explicit_grob_heights]
     }
@@ -760,8 +760,8 @@
     
     # If the grob_widths are a mix of implicit and explicit width, keep only
     # explicit.
-    explicit_grob_widths <- sapply(grob_widths, grid::unitType) != "null"
-    implicit_grob_widths <- sapply(grob_widths, grid::unitType) == "null"
+    explicit_grob_widths <- sapply(grob_widths, function(x) (!"null" %in% grid::unitType(x)))
+    implicit_grob_widths <- sapply(grob_widths, function(x) ("null" %in% grid::unitType(x)))
     if(any(implicit_grob_widths) & !all(implicit_grob_widths)){
       grob_widths <- grob_widths[explicit_grob_widths]
     }
