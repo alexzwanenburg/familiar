@@ -8,6 +8,8 @@
 
   - Plot margins are now correctly set in the default familiar plotting theme.
   - Plot elements of composite plots are now correctly set.
+  
+- Fixed an incorrect data.table merge when computing survival probabilities from random forests.
 
 # Version 1.4.6 (Talented Toad)
 
