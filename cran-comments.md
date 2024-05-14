@@ -1,4 +1,4 @@
-Update familiar to version 1.4.6
+Update familiar to version 1.4.7
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
