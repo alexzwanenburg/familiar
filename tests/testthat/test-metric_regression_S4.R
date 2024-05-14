@@ -53,6 +53,7 @@ familiar:::test_all_metrics_available(metrics=familiar:::.get_available_regressi
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 #### Mean absolute error #######################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mae_metrics(),

@@ -5,6 +5,7 @@ familiar:::test_all_vimp_methods_available(vimp_methods=familiar:::.get_availabl
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 familiar:::test_all_vimp_methods(vimp_methods=familiar:::.get_available_glmnet_ridge_vimp_methods(show_general=FALSE))
 

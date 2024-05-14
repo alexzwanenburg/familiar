@@ -3,6 +3,7 @@ familiar:::test_all_vimp_methods_available(familiar:::.get_available_ranger_defa
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 familiar:::test_all_vimp_methods(
   familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),

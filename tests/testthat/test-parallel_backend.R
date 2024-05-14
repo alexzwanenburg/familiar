@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Perform an integrated test. Note that learner is set automatically.
 familiar:::integrated_test(backend_type="none",

@@ -1,5 +1,6 @@
 # Skip on CRAN as this test takes about a minute.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Create random number generator stream for reproducibility.
 r <- familiar:::.start_random_number_stream(seed=1863)

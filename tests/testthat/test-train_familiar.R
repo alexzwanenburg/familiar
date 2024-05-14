@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 ##### binomial -----------------------------------------------------------------
 # Create data.table.

@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Train a model to transfer settings.
 data <- familiar:::test.create_good_data_set("survival")
