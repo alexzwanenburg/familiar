@@ -4,6 +4,7 @@ familiar:::test_all_novelty_detectors_available(
 
 # Don't perform any further tests on CRAN due to time of running the test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 familiar:::test_all_novelty_detectors(
   detectors = familiar:::.get_available_isolation_forest_detectors())

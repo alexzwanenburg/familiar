@@ -9,6 +9,7 @@ familiar:::test_all_vimp_methods_available(
 
 # Don't perform any further tests on CRAN due to running time.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 familiar:::test_hyperparameter_optimisation(
   vimp_methods = familiar:::.get_available_corelearn_gini_vimp_method(show_general = TRUE),

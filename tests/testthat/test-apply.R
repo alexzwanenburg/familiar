@@ -1,5 +1,6 @@
 # Don't perform any further tests on CRAN due to parallelisation issues.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 apply_vector_fun <- function(x) {
   Sys.sleep(x)

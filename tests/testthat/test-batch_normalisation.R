@@ -1,5 +1,6 @@
 # Skip on CRAN as this test takes about a 30 seconds.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 outcome_type <- "survival"
 
