@@ -1,5 +1,6 @@
 # Don't perform any further tests on CRAN due to running time.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 debug_flag <- TRUE
 

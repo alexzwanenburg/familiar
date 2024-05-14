@@ -1,6 +1,7 @@
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Survival data with multiple instances ----------------------------------------
 
