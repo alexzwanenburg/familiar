@@ -866,12 +866,12 @@ setMethod(
       neworder = c(element_names[1L], as.character(distance_table[[element_names[1L]]]))
     )
     
-    # Add rownames into the distance table -- I know. Blasphemy. Otherwise
-    # as.dist doesn't function.
-    rownames(distance_table) <- distance_table[[element_names[1L]]]
-    distance_table[, (element_names[1L]) := NULL]
-    
-    # Create dissimilarity matrix
+    # Convert to dissimilarity matrix by first getting the labels
+    # corresponding to each sample / feature, and then completing the
+    # converted distance table.
+    element_labels <- as.character(distance_table[[element_names[1L]]])
+    distance_table <- as.matrix(distance_table[, mget(element_labels)])
+    rownames(distance_table) <- element_labels
     distance_matrix <- stats::as.dist(distance_table)
     
     return(distance_matrix)

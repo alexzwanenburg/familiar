@@ -918,7 +918,7 @@ setMethod(
   event_table <- merge(
     x = event_table, 
     y = conversion_table, 
-    on = "time_variable"
+    by = "time_variable"
   )
   
   # Drop the time_variable column

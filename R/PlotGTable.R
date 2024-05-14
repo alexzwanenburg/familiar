@@ -765,210 +765,110 @@
 
 .gtable_update_layout <- function(g) {
   
-  ..get_height <- function(grob_id, g) {
-    # Identify the height of the grob.
-    if (grid::is.unit(g$grobs[[grob_id]]$heights)) {
-      grob_height <- g$grobs[[grob_id]]$heights
-    } else if (grid::is.unit(g$grobs[[grob_id]]$height)) {
-      grob_height <- g$grobs[[grob_id]]$height
-    } else {
-      grob_height <- NULL
-    }
-
-    if (grid::is.unit(grob_height)) {
-      if (is.list(grob_height)) {
-        grob_height <- lapply(
-          grob_height,
-          function(current_grob_height) {
-            if (grid::unitType(current_grob_height) == "npc") {
-              current_grob_height <- grid::unit(as.numeric(current_grob_height), "null")
-            }
-            return(current_grob_height)
-          }
-        )
-        
-        # Sum the heights.
-        if (length(grob_height) == 1L) {
-          grob_height <- grob_height[[1L]]
-        } else {
-          grob_height <- sum(do.call(grid::unit.c, args = grob_height))
-        }
-        
-      } else if (grid::unitType(grob_height) == "npc") {
-        grob_height <- grid::unit(as.numeric(grob_height), "null")
-      }
-    }
-
-    return(grob_height)
-  }
-
-
-  ..get_width <- function(grob_id, g) {
-    # Identify the width of the grob.
-    if (grid::is.unit(g$grobs[[grob_id]]$widths)) {
-      grob_width <- g$grobs[[grob_id]]$widths
-    } else if (grid::is.unit(g$grobs[[grob_id]]$width)) {
-      grob_width <- g$grobs[[grob_id]]$width
-    } else {
-      grob_width <- NULL
-    }
-
-    if (grid::is.unit(grob_width)) {
-      if (is.list(grob_width)) {
-        grob_width <- lapply(
-          grob_width,
-          function(current_grob_width) {
-            if (grid::unitType(current_grob_width) == "npc") {
-              current_grob_width <- grid::unit(as.numeric(current_grob_width), "null")
-            }
-            return(current_grob_width)
-          }
-        )
-        
-        # Sum the widths.
-        if (length(grob_width) == 1L) {
-          grob_width <- grob_width[[1L]]
-        } else {
-          grob_width <- sum(do.call(grid::unit.c, args = grob_width))
-        }
-      } else if (grid::unitType(grob_width) == "npc") {
-        grob_width <- grid::unit(as.numeric(grob_width), "null")
-      }
-    }
-
-    return(grob_width)
-  }
-
-  # Update heights
-  new_heights <- replicate(grid::unit(0.0, "cm"), n = nrow(g), simplify = FALSE)
-  new_heights <- do.call(grid::unit.c, args = new_heights)
-  new_heights[1L] <- grid::unit(1.0, "points")
-  new_heights[nrow(g)] <- grid::unit(1.0, "points")
-
-  for (ii in seq_len(nrow(g))) {
-    # Select candidates.
-    candidates <- which(g$layout$t == ii & g$layout$b == ii)
-
-    # Skip if there are no candidates.
-    if (length(candidates) == 0L) next
-
-    # Identify the height of the grobs.
-    grob_heights <- lapply(
-      candidates,
-      ..get_height,
-      g = g
-    )
-
-    # Remove all empty heights.
-    grob_heights <- grob_heights[sapply(
-      grob_heights, 
-      grid::is.unit
-    )]
+  
+  ..filter_aspect_sizes <- function(x) {
+    if (length(x) == 0L) return(NULL)
     
-    if (length(grob_heights) == 0L) next
-
-    # Remove all heights equal to 0.0.
-    grob_heights <- grob_heights[sapply(
-      grob_heights,
-      function(grob_height) (as.numeric(grob_height) != 0.0)
-      )]
+    # Filter items that have no dimension.
+    grob_zero <- as.numeric(x) == 0.0
+    x <- x[!grob_zero]
+    if (length(x) == 0L) return(grid::unit(0.0, "points"))
     
-    if (length(grob_heights) == 0L) next
-
-    # Select unique heights.
-    grob_heights <- unique(grob_heights)
-
-    # If the grob_heights are a mix of implicit and explicit heights, keep only
-    # explicit.
-    explicit_grob_heights <- sapply(grob_heights, grid::unitType) != "null"
-    implicit_grob_heights <- sapply(grob_heights, grid::unitType) == "null"
-    if (any(implicit_grob_heights) && !all(implicit_grob_heights)) {
-      grob_heights <- grob_heights[explicit_grob_heights]
-    }
-
-    if (length(grob_heights) == 1L) {
-      # Set the grob height.
-      new_heights[ii] <- grob_heights[[1L]]
+    # npc is only relevant if there are no other grobs with more specific unit
+    # types.
+    grob_npc <- grid::unitType(x) == "npc"
+    if (any(grob_npc) && !all(grob_npc)) x <- x[!grob_npc]
+    
+    return(x)
+  }
+  
+  
+  ..get_aspect <- function(grob_id, g, aspect = "width") {
+    
+    if (aspect == "width") {
+      aspect_names <- c("widths", "width")
       
-    } else if (length(grob_heights) > 1L) {
-      # Take the max height of the row.
-      grob_heights <- do.call(grid::unit.c, args = grob_heights)
-      grob_heights <- max(grob_heights)
-
-      # Set the grob height.
-      new_heights[ii] <- grob_heights
-    }
-  }
-
-  # Update heights
-  new_widths <- replicate(
-    grid::unit(0.0, "cm"),
-    n = ncol(g),
-    simplify = FALSE
-  )
-  new_widths <- do.call(grid::unit.c, args = new_widths)
-  new_widths[1L] <- grid::unit(1.0, "points")
-  new_widths[ncol(g)] <- grid::unit(1.0, "points")
-
-  for (ii in seq_len(ncol(g))) {
-    # Select candidates.
-    candidates <- which(g$layout$l == ii & g$layout$r == ii)
-
-    # Skip if there are no candidates.
-    if (length(candidates) == 0L) next
-
-    # Identify the width of the grobs.
-    grob_widths <- lapply(
-      candidates,
-      ..get_width,
-      g = g
-    )
-
-    # Remove all empty widths.
-    grob_widths <- grob_widths[sapply(
-      grob_widths,
-      grid::is.unit
-    )]
-    
-    if (length(grob_widths) == 0L) next
-
-    # Remove all heights equal to 0.0.
-    grob_widths <- grob_widths[sapply(
-      grob_widths,
-      function(grob_width) (as.numeric(grob_width) != 0.0)
-    )]
-    
-    if (length(grob_widths) == 0L) next
-
-    # Select unique widths.
-    grob_widths <- unique(grob_widths)
-
-    # If the grob_widths are a mix of implicit and explicit width, keep only
-    # explicit.
-    explicit_grob_widths <- sapply(grob_widths, grid::unitType) != "null"
-    implicit_grob_widths <- sapply(grob_widths, grid::unitType) == "null"
-    
-    if (any(implicit_grob_widths) && !all(implicit_grob_widths)) {
-      grob_widths <- grob_widths[explicit_grob_widths]
-    }
-
-    if (length(grob_widths) == 1L) {
-      # Set the grob width.
-      new_widths[ii] <- grob_widths[[1L]]
+    } else if (aspect == "height") {
+      aspect_names <- c("heights", "height")
       
-    } else if (length(grob_widths) > 1L) {
-      # Take the max width of the column.
-      grob_widths <- do.call(grid::unit.c, args = grob_widths)
-      grob_widths <- max(grob_widths)
-
-      # Set the grob width
-      new_widths[ii] <- grob_widths
+    } else {
+      ..error_reached_unreachable_code("aspect was not height or width")
     }
+    
+    if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[1L]]])) {
+      grob_size <- g$grobs[[grob_id]][[aspect_names[1L]]]
+      grob_size <- ..filter_aspect_sizes(grob_size)
+      if (length(grob_size) > 1L) grob_size <- sum(grob_size)
+      
+    } else if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[2L]]])) {
+      grob_size <- g$grobs[[grob_id]][[aspect_names[2L]]]
+      
+    } else {
+      grob_size <- NULL
+    }
+    
+    return(grob_size)
   }
-
+  
+  
+  ..get_updated_aspect <- function(g, aspect = "width") {
+    
+    if (aspect == "width") {
+      new_sizes <- g$widths
+      aspect_length <- ncol(g)
+      
+    } else if (aspect == "height") {
+      new_sizes <- g$heights
+      aspect_length <- nrow(g)
+      
+    } else {
+      ..error_reached_unreachable_code("aspect was not height or width")
+    }
+    
+    for (ii in seq_len(aspect_length)) {
+      # Do not update "null" elements.
+      if (any(unlist(grid::unitType(new_sizes[ii], recurse = TRUE)) == "null")) next
+      
+      # Select candidates.
+      if (aspect == "width") {
+        candidates <- which(g$layout$l == ii & g$layout$r == ii)
+      } else {
+        candidates <- which(g$layout$t == ii & g$layout$b == ii)
+      }
+      
+      # Skip if there are no candidates.
+      if(length(candidates) == 0L) {
+        new_sizes[ii] <- grid::unit(0.0, "points")
+        next
+      } 
+      
+      # Identify the aspect size of the grobs.
+      grob_sizes <- lapply(candidates, ..get_aspect, g = g, aspect = aspect)
+      grob_sizes <- grob_sizes[sapply(grob_sizes, grid::is.unit)]
+      
+      # Skip if there are no valid aspect sizes.
+      if (length(grob_sizes) == 0L) {
+        new_sizes[ii] <- grid::unit(0.0, "points")
+        next
+      }
+      
+      # Set grob sizes.
+      grob_sizes <- do.call(grid::unit.c, grob_sizes)
+      grob_sizes <- ..filter_aspect_sizes(grob_sizes)
+      
+      if (length(grob_sizes) > 1L) grob_sizes <- max(grob_sizes)
+      new_sizes[ii] <- grob_sizes
+    }
+    
+    return(new_sizes)
+  }
+  
+  new_heights <- ..get_updated_aspect(g = g, aspect = "height")
+  new_widths <- ..get_updated_aspect(g = g, aspect = "width")
+  
   # Update heights and widths in the table.
   g$heights <- new_heights
   g$widths <- new_widths
-
+  
   return(g)
 }
