@@ -31,10 +31,13 @@ jobs:
             any::rcmdcheck
             any::roxygen2
           needs: check
-      - name: Document
+      - name: Create documentation
         run: roxygen2::roxygenise()
+        shell: Rscript {0}
+      - name: Set NOT_CRAN to false
+        run: Sys.setenv(NOT_CRAN = "false")
         shell: Rscript {0}
       - uses: r-lib/actions/check-r-package@v2
         with:
-          upload-snapshots: true
-          build_args: 'c("--no-manual","--as-cran")'
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"error"'
