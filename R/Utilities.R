@@ -948,7 +948,7 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
                                              "event_time"=event_times)
   
   # Add in event times
-  event_table <- merge(x=event_table, y=conversion_table, on="time_variable")
+  event_table <- merge(x=event_table, y=conversion_table, by="time_variable")
   
   # Drop the time_variable column
   event_table[, "time_variable":=NULL]
