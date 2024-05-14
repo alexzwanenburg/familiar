@@ -46,7 +46,7 @@ theme_familiar <- function(
   ggtheme$legend.key <- ggplot2::element_blank()
   ggtheme$legend.key.size <- grid::unit(base_size * 1.1, "pt")
   ggtheme$legend.justification <- c("left", "center")
-  ggtheme$legend.margin <- grid::unit(c(0.0, 0.0, 0.0, 0.0), "pt")
+  ggtheme$legend.margin <- ggplot2::margin(0.0, 0.0, 0.0, 0.0, "pt")
 
   # Panel does not have a background, grid, or border.
   ggtheme$panel.background <- ggplot2::element_blank()
@@ -58,7 +58,7 @@ theme_familiar <- function(
   ggtheme["panel.grid.minor"] <- list(NULL)
 
   # Minimal plot margins
-  ggtheme$plot.margin <- grid::unit(c(1.0, 1.0, 1.0, 1.0), "pt")
+  ggtheme$plot.margin <- ggplot2::margin(1.0, 1.0, 1.0, 1.0, "pt")
 
   # The plot does not have a background
   ggtheme$plot.background <- ggplot2::element_blank()

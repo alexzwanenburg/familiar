@@ -10,6 +10,19 @@
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
+# Version 1.4.7 (Uncertain Unicorn)
+
+## Bug fixes
+
+- Computing distance matrices no longer produces an error due to applying `rownames` to `data.table`. The exact cause is unsure, but was either introduced by `data.table` version 1.15.0, `R` version 4.4.0, or both. 
+
+- Several fixes related to changes introduced in `ggplot2` version 3.5 were made:
+
+  - Plot margins are now correctly set in the default familiar plotting theme.
+  - Plot elements of composite plots are now correctly set.
+  
+- Fixed an incorrect data.table merge when computing survival predictions from random forests.
+
 # Version 1.4.6 (Talented Toad)
 
 ## Bug fixes
