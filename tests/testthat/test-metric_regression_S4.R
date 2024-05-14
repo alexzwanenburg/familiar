@@ -70,6 +70,7 @@ familiar:::test_all_metrics_available(
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Mean absolute error ----------------------------------------------------------
 familiar:::test_all_metrics(

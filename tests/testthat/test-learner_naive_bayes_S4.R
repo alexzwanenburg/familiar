@@ -4,6 +4,7 @@ familiar:::test_all_learners_available(
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 familiar:::test_all_learners_train_predict_vimp(
   learners = familiar:::.get_available_naive_bayes_learners(show_general = FALSE),

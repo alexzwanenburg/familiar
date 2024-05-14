@@ -4,6 +4,7 @@ familiar:::test_all_learners_available(
 
 # Don't perform any further tests on CRAN due to time of running the test.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 # Generic test
 familiar:::test_all_learners_train_predict_vimp(

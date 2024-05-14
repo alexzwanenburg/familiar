@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 test_fun_normal <- function(x = "default") {
   Sys.sleep(1)

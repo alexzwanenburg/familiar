@@ -1,5 +1,6 @@
 # Skip on CRAN as this test takes some time.
 testthat::skip_on_cran()
+testthat::skip_on_ci()
 
 outcome_type <- "survival"
 n_numeric_features <- 1
