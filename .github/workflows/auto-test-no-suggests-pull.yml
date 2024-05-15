@@ -6,7 +6,7 @@
 # See https://github.com/r-lib/actions/tree/master/examples#readme for
 # additional example workflows available for the R community.
 
-name: Run R CMD check for no 
+name: Run R CMD check for strong dependencies only (nosuggests)
 
 on: [pull_request, workflow_dispatch]
 
@@ -39,6 +39,7 @@ jobs:
             any::knitr
             any::rmarkdown
             any::ggplot2
+            any::roxygen2
           needs: check
           
       - name: Create documentation
