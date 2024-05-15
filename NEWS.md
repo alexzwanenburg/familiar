@@ -1,3 +1,9 @@
+# Version 1.4.8 (Valorous Viper)
+
+## Bug fixes
+
+- Adapted tests to work when packages are missing.
+
 # Version 1.4.7 (Uncertain Unicorn)
 
 ## Bug fixes

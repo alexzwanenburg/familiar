@@ -1,4 +1,4 @@
-Update familiar to version 1.4.7
+Update familiar to version 1.4.8
 
 Vignettes are pre-compiled to avoid long compilation times on build (several minutes).
 
@@ -8,7 +8,7 @@ Longer tests and tests involving parallel processing are not performed on CRAN, 
 
 ## R CMD check results
 
-R CMD check was run on GitHub against R-release using r-lib/actions/check-r-package:
+R CMD check was run on GitHub using https://github.com/alexzwanenburg/familiar/actions/workflows/auto-test-package_pull.yml
 
 ----------------------------------
 window-latest:
@@ -28,7 +28,20 @@ macos-latest
 ubuntu-latest:
 0 errors | 0 warnings | 0 notes
 
+## R CMD check for strong dependencies only
 
+R CMD check was run on GitHub using https://github.com/alexzwanenburg/familiar/actions/workflows/auto-test-no-suggests-pull.yml
+
+----------------------------------
+ubuntu-latest:
+0 errors | 0 warnings | 1 note
+
+* checking package dependencies ... NOTE
+Packages suggested but not available for checking:
+  'BART', 'CORElearn', 'coro', 'dynamicTreeCut', 'e1071', 'Ecdat',
+  'fastcluster', 'fastglm', 'glmnet', 'harmonicmeanp', 'isotree',
+  'laGP', 'maxstat', 'mboost', 'microbenchmark', 'partykit', 'praznik',
+  'proxy', 'qvalue', 'randomForestSRC', 'ranger', 'VGAM', 'xgboost'
 
 ## Downstream dependencies
 

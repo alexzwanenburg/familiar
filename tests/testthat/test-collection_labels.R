@@ -2,6 +2,8 @@ outcome_type <- "multinomial"
 
 for(outcome_type in c("continuous", "multinomial",  "survival")){
   
+  if (!familiar:::test_data_package_installed(outcome_type)) next
+  
   # Get data.
   data <- familiar:::test.create_good_data_set(outcome_type = outcome_type)
   
@@ -17,15 +19,20 @@ for(outcome_type in c("continuous", "multinomial",  "survival")){
   skip_data_elements <- c("ice_data", "permutation_vimp")
   
   # Create experiment data.
-  experiment_data <- familiar::summon_familiar(
-    data=data,
-    experimental_design="fs+mb",
-    fs_method="mim",
-    imputation_method="simple",
-    learner=learner,
-    estimation_type="point",
-    skip_evaluation_elements=skip_data_elements,
-    parallel=FALSE)
+  experiment_data <- familiar:::do.call_with_handlers(
+    familiar::summon_familiar,
+    args = list(data=data,
+                experimental_design="fs+mb",
+                fs_method="mim",
+                imputation_method="simple",
+                learner=learner,
+                estimation_type="point",
+                skip_evaluation_elements=skip_data_elements,
+                parallel=FALSE)
+  )
+  
+  if (!test_object_package_installed(experiment_data)) next
+  experiment_data <- experiment_data$value
   
   # Test both familiarCollection and familiarModel objects.
   familiar_collection_list <- list(
