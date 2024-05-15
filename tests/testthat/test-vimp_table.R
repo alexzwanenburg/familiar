@@ -4,17 +4,22 @@ data <- familiar:::test_create_synthetic_correlated_data(outcome_type="continuou
                                                          n_numeric=2,
                                                          cluster_size=c(1, 1, 2, 3))
 
-vimp_object <- familiar:::prepare_vimp_object(data=data,
-                                              vimp_method="pearson",
-                                              outcome_type="continuous",
-                                              transformation_method="none",
-                                              normalisation_method="none",
-                                              cluster_method="hclust",
-                                              cluster_cut_method="fixed_cut",
-                                              cluster_similarity_metric="mcfadden_r2",
-                                              cluster_similarity_threshold=0.99,
-                                              imputation_method="simple")
-
+vimp_object <- familiar:::do.call_with_handlers(
+  familiar:::prepare_vimp_object,
+  args = list(data=data,
+              vimp_method="pearson",
+              outcome_type="continuous",
+              transformation_method="none",
+              normalisation_method="none",
+              cluster_method="hclust",
+              cluster_cut_method="fixed_cut",
+              cluster_similarity_metric="mcfadden_r2",
+              cluster_similarity_threshold=0.99,
+              imputation_method="simple")
+)
+if (!test_object_package_installed(vimp_object)) testthat::skip()
+vimp_object <- vimp_object$value
+  
 vimp_table_object <- suppressWarnings(familiar:::.vimp(vimp_object, data))
 
 
