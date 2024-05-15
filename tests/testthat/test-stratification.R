@@ -9,13 +9,19 @@ for(stratification_method in stratification_methods){
   data <- familiar:::test.create_good_data_set("survival")
   
   # Train a simple linear GLM using the good dataset.
-  fam_model <- familiar:::test_train(data=data,
-                                     cluster_method="none",
-                                     imputation_method="simple",
-                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                                     learner="cox",
-                                     stratification_method=stratification_method,
-                                     create_novelty_detector=FALSE)
+  fam_model <- familiar:::do.call_with_handlers(
+    familiar:::test_train,
+    args = list(data=data,
+                cluster_method="none",
+                imputation_method="simple",
+                hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                learner="cox",
+                stratification_method=stratification_method,
+                create_novelty_detector=FALSE)
+  )
+  
+  if (!test_object_package_installed(fam_model)) testthat::skip()
+  fam_model <- fam_model$value
   
   # Risk stratification.
   predictions_risk <- familiar::predict(object=fam_model,
