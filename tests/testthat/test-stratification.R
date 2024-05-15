@@ -1,6 +1,8 @@
 # Find available stratification methods.
 stratification_methods <- familiar:::.get_available_stratification_methods()
 
+if (!familiar:::test_data_package_installed("survival")) testthat::skip()
+
 # Test for good dataset.
 for(stratification_method in stratification_methods){
   # Create a dataset using the good dataset.

@@ -1,3 +1,26 @@
+test_object_package_installed <- function(x) {
+  run_test <- TRUE
+  if (!is.null(x$error)) {
+    if (any(grepl("following package has to be installed", x$error, fixed = TRUE))) {
+      run_test <- FALSE
+    } else if (any(grepl("following packages have to be installed", x$error, fixed = TRUE))) {
+      run_test <- FALSE
+    } else {
+      stop(x$error)
+    }
+  }
+  
+  if (!run_test) {
+    rlang::inform(
+      message = x$error,
+      class = "familiar_message_inform_no_test"
+    )
+  }
+  
+  return(run_test)
+}
+
+
 test_all_learners_available <- function(learners){
   
   # Create placeholder flags.
@@ -56,6 +79,8 @@ test_all_learners_train_predict_vimp <- function(
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    if (!test_data_package_installed(outcome_type)) next
     
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
@@ -1048,6 +1073,8 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     
@@ -1210,6 +1237,8 @@ test_all_novelty_detectors <- function(detectors,
   
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
+  
+  if (!test_data_package_installed(outcome_type)) return()
   
   # Obtain data.
   full_data <- test.create_good_data_set(outcome_type)
@@ -1418,6 +1447,8 @@ test_all_novelty_detectors_parallel <- function(detectors,
   # Outcome type is not important, but set to get suitable datasets.
   outcome_type <- "continuous"
   
+  if (!test_data_package_installed(outcome_type)) return()
+  
   # Obtain data.
   full_data <- test.create_good_data_set(outcome_type)
   
@@ -1530,6 +1561,8 @@ test_all_vimp_methods <- function(vimp_methods,
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    if (!test_data_package_installed(outcome_type)) next
     
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
@@ -1858,6 +1891,8 @@ test_all_vimp_methods_parallel <- function(vimp_methods,
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     
@@ -1984,6 +2019,8 @@ test_all_metrics <- function(metrics,
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
+    if (!test_data_package_installed(outcome_type)) next
+
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -2911,6 +2948,8 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
   # Iterate over the outcome type.
   for(outcome_type in outcome_type_available){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Multi-feature data sets.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -3481,6 +3520,8 @@ test_plots <- function(plot_function,
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "survival", "binomial", "multinomial")){
+    
+    if (!test_data_package_installed(outcome_type)) next
     
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
@@ -5171,6 +5212,8 @@ test_export_specific <- function(export_function,
   # Iterate over the outcome type.
   for(outcome_type in outcome_type_available){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Obtain data.
     main_data <- test.create_good_data_set(outcome_type)
     
@@ -5282,6 +5325,8 @@ integrated_test <- function(...,
   learner_unset <- is.null(learner)
   
   for(outcome_type in outcome_type_available){
+    
+    if (!test_data_package_installed(outcome_type)) next
     
     .warning_good <- warning_good
     if(is.list(warning_good)) .warning_good <- warning_good[[outcome_type]]

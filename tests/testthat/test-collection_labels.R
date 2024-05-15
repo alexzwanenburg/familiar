@@ -2,6 +2,8 @@ outcome_type <- "multinomial"
 
 for(outcome_type in c("continuous", "multinomial",  "survival")){
   
+  if (!familiar:::test_data_package_installed(outcome_type)) next
+  
   # Get data.
   data <- familiar:::test.create_good_data_set(outcome_type = outcome_type)
   
