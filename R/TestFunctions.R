@@ -127,13 +127,18 @@ test_all_learners_train_predict_vimp <- function(
       #### Full dataset --------------------------------------------------------
       
       # Train the model.
-      model <- suppressWarnings(test_train(data=full_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters,
-                                           learner=learner,
-                                           time_max=1832,
-                                           trim_model=FALSE))
+      model <- do.call_with_handlers(
+        test_train,
+        args = list(data=full_data,
+                    cluster_method="none",
+                    imputation_method="simple",
+                    hyperparameter_list=hyperparameters,
+                    learner=learner,
+                    time_max=1832,
+                    trim_model=FALSE)
+      )
+      if (!test_object_package_installed(model)) next
+      model <- model$value
       
       # Create a trimmed model -- this is the only instance were we do that
       # without setting the time-out to infinite to test whether the timeout
@@ -1266,11 +1271,15 @@ test_all_novelty_detectors <- function(detectors,
     #####Full dataset#########################################################
     
     # Train the novelty detector.
-    model <- suppressWarnings(test_train_novelty_detector(data=full_data,
-                                                          cluster_method="none",
-                                                          imputation_method="simple",
-                                                          hyperparameter_list=hyperparameter_list,
-                                                          detector=detector))
+    model <- do.call_with_handlers(
+      test_train_novelty_detector,
+      args = list(data=full_data,
+                  cluster_method="none",
+                  imputation_method="simple",
+                  hyperparameter_list=hyperparameter_list,
+                  detector=detector))
+    if (!test_object_package_installed(model)) next
+    model <- model$value
     
     # Create a trimmed detector.
     trimmed_model <- trim_model(model, timeout=Inf)
@@ -2080,12 +2089,17 @@ test_all_metrics <- function(metrics,
       #####Full dataset#########################################################
       
       # Train the model.
-      model <- suppressWarnings(test_train(data=full_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="glm",
-                                           time_max=1832))
+      model <- do.call_with_handlers(
+        test_train,
+        args = list(data=full_data,
+                    cluster_method="none",
+                    imputation_method="simple",
+                    hyperparameter_list=hyperparameters,
+                    learner="glm",
+                    time_max=1832))
+      
+      if (!test_object_package_installed(model)) next
+      model <- model$value
       
       # Create metric object
       metric_object <- as_metric(metric=metric,
@@ -3578,15 +3592,20 @@ test_plots <- function(plot_function,
     #####Full data set########################################################
     
     # Train the model.
-    model_full_1 <- suppressWarnings(test_train(cl=cl,
-                                                data=full_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                fs_method="mim",
-                                                hyperparameter_list=hyperparameters,
-                                                learner="lasso",
-                                                time_max=1832,
-                                                create_novelty_detector=create_novelty_detector))
+    model_full_1 <- do.call_with_handlers(
+      test_train,
+      args = list(cl=cl,
+                  data=full_data,
+                  cluster_method="none",
+                  imputation_method="simple",
+                  fs_method="mim",
+                  hyperparameter_list=hyperparameters,
+                  learner="lasso",
+                  time_max=1832,
+                  create_novelty_detector=create_novelty_detector))
+    
+    if (!test_object_package_installed(model_full_1)) next
+    model_full_1 <- model_full_1$value
     
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
@@ -4254,6 +4273,8 @@ test_plot_ordering <- function(
   # Iterate over the outcome type.
   for(outcome_type in outcome_type_available){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
@@ -4271,8 +4292,9 @@ test_plot_ordering <- function(
         "survival"="cox"))
     
     # Train the lasso model.
-    model_full_lasso_1 <- suppressWarnings(
-      do.call(
+    
+    
+    model_full_lasso_1 <- do.call_with_handlers(
         test_train,
         args=c(
           list(
@@ -4280,7 +4302,10 @@ test_plot_ordering <- function(
             "hyperparameter_list"=hyperparameters_lasso,
             "learner"="lasso",
             "create_novelty_detector"=create_novelty_detector),
-          experiment_args)))
+          experiment_args))
+    
+    if (!test_object_package_installed(model_full_lasso_1)) next
+    model_full_lasso_1 <- model_full_lasso_1$value
     
     model_full_lasso_2 <- model_full_lasso_1
     model_full_lasso_2@fs_method <- "mifs"
@@ -4445,6 +4470,8 @@ test_export <- function(export_function,
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
+    if (!test_data_package_installed(outcome_type)) next
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -4499,15 +4526,20 @@ test_export <- function(export_function,
     
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(test_train(cl=cl,
-                                                  data=full_data,
-                                                  cluster_method="none",
-                                                  imputation_method="simple",
-                                                  fs_method="mim",
-                                                  hyperparameter_list=hyperparameters,
-                                                  learner="lasso",
-                                                  time_max=1832,
-                                                  create_novelty_detector=create_novelty_detector))
+      model_full_1 <- do.call_with_handlers(
+        test_train,
+        args = list(cl=cl,
+                    data=full_data,
+                    cluster_method="none",
+                    imputation_method="simple",
+                    fs_method="mim",
+                    hyperparameter_list=hyperparameters,
+                    learner="lasso",
+                    time_max=1832,
+                    create_novelty_detector=create_novelty_detector))
+      
+      if (!test_object_package_installed(model_full_1)) next
+      model_full_1 <- model_full_1$value
       
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
@@ -5233,14 +5265,19 @@ test_export_specific <- function(export_function,
     
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(test_train(data=main_data,
-                                                  cluster_method="none",
-                                                  imputation_method="simple",
-                                                  fs_method="mim",
-                                                  hyperparameter_list=hyperparameters,
-                                                  learner="lasso",
-                                                  time_max=1832,
-                                                  create_novelty_detector=create_novelty_detector))
+      model_full_1 <- do.call_with_handlers(
+        test_train,
+        args = list(data=main_data,
+                    cluster_method="none",
+                    imputation_method="simple",
+                    fs_method="mim",
+                    hyperparameter_list=hyperparameters,
+                    learner="lasso",
+                    time_max=1832,
+                    create_novelty_detector=create_novelty_detector))
+      
+      if (!test_object_package_installed(model_full_1)) next
+      model_full_1 <- model_full_1$value
       
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
@@ -5251,15 +5288,20 @@ test_export_specific <- function(export_function,
       model_full_2 <- list()
       
       for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(test_train(data=main_data,
-                                                    cluster_method="none",
-                                                    imputation_method="simple",
-                                                    fs_method="mim",
-                                                    hyperparameter_list=hyperparameters,
-                                                    learner="lasso",
-                                                    time_max=1832,
-                                                    create_bootstrap=TRUE,
-                                                    create_novelty_detector=create_novelty_detector))
+        temp_model_1 <- do.call_with_handlers(
+          test_train,
+          args = list(data=main_data,
+                      cluster_method="none",
+                      imputation_method="simple",
+                      fs_method="mim",
+                      hyperparameter_list=hyperparameters,
+                      learner="lasso",
+                      time_max=1832,
+                      create_bootstrap=TRUE,
+                      create_novelty_detector=create_novelty_detector))
+        
+        if (!test_object_package_installed(temp_model_1)) next
+        temp_model_1 <- temp_model_1$value
         
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
