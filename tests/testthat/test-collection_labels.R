@@ -3,6 +3,9 @@ testthat::skip_on_cran()
 testthat::skip_on_ci()
 
 for (outcome_type in c("continuous", "multinomial", "survival")) {
+  
+  if (!familiar:::test_data_package_installed(outcome_type)) next
+  
   # Get data.
   data <- familiar:::test_create_good_data(outcome_type = outcome_type)
 

@@ -1,3 +1,30 @@
+test_data_package_installed <- function(outcome_type) {
+  run_test <- TRUE
+  
+  data_packages <- list(
+    "survival" = "survival",
+    "multinomial" = "datasets",
+    "binomial" = "MASS",
+    "continuous" = "Ecdat",
+    "count" = "MASS"
+  )
+  
+  if (!is_package_installed(data_packages[[outcome_type]])) run_test <- FALSE
+  
+  if (!run_test) {
+    rlang::inform(
+      message = paste0(
+        "Cannot run test because the ", 
+        data_packages[[outcome_type]], 
+        " package is not installed."),
+      class = "familiar_message_inform_no_test"
+    )
+  }
+  
+  return(run_test)
+}
+
+
 test_create_good_data <- function(outcome_type, to_data_object = TRUE) {
   # Suppress NOTES due to non-standard evaluation in data.table
   etype <- median_house_value <- NULL
