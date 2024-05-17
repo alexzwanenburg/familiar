@@ -36,16 +36,8 @@ jobs:
           extra-packages: |
             any::rcmdcheck
             any::testthat
-            any::knitr
-            any::rmarkdown
-            any::ggplot2
-            any::roxygen2
           needs: check
-          
-      - name: Create documentation
-        run: roxygen2::roxygenise()
-        shell: Rscript {0}
-        
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
