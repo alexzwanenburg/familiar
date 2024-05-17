@@ -33,12 +33,7 @@ jobs:
         with:
           extra-packages: |
             any::rcmdcheck
-            any::roxygen2
           needs: check
-          
-      - name: Create documentation
-        run: roxygen2::roxygenise()
-        shell: Rscript {0}
         
       - uses: r-lib/actions/check-r-package@v2
         with:
