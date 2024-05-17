@@ -1,3 +1,5 @@
+testthat::skip_if_not_installed("xml2")
+
 # Find path to configuration file in package.
 config <- system.file("config.xml", package = "familiar")
 

@@ -1,3 +1,5 @@
+if (!familiar:::test_data_package_installed("binomial")) testthat::skip()
+
 # Create test dataset.
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 
