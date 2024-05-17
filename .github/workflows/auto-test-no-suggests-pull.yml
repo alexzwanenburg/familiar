@@ -44,7 +44,8 @@ jobs:
           required_packages <- c("familiar", "rcmdcheck", "testthat")
           required_packages <- union(required_packages, unlist(tools::package_dependencies(required_packages, recursive = TRUE), use.names=FALSE))
           required_packages <- union(required_packages, installed_packages[Priority == "base"]$Package)
-          remove.packages(setdiff(installed_packages$Package, required_packages))
+          non_critical_packages <- setdiff(installed_packages$Package, required_packages)
+          for (package in non_critical_packages) {utils::remove.packages(installed_packages[Package == package]$Package, installed_packages[Package == package]$LibPath)}
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
