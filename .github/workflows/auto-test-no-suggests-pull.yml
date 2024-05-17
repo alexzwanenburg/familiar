@@ -38,6 +38,14 @@ jobs:
             any::testthat
           needs: check
 
+      - name: Identify and remove all non-critical packages
+        run: |
+          installed_packages <- data.table::data.table(utils::installed.packages())
+          required_packages <- unique(unlist(tools::package_dependencies(c("familiar", "rcmdcheck", "testthat"), recursive = TRUE), use.names=FALSE))
+          required_packages <- union(required_packages, installed_packages[Priority == "base"]$Package)
+          remove.packages(setdiff(installed_packages$Package, required_packages))
+        shell: Rscript {0}
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
