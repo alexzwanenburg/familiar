@@ -10,6 +10,14 @@
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
+# Version 1.4.8 (Valorous Viper)
+
+## Bug fixes
+
+- Adapted tests to work when packages are missing.
+
+- Fixed an issue that prevented hyperparameter optimisation of `xgboost` models for survival tasks.
+
 # Version 1.4.7 (Uncertain Unicorn)
 
 ## Bug fixes
