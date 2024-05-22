@@ -1139,7 +1139,7 @@ setMethod(
     data.table::setnames(object@prediction_data, new = "group")
     
     # Check that prediction data contains the groups, or set groups if absent.
-    if (!any(object@groups)) {
+    if (!anyNA(object@groups)) {
       group_labels <- unique_na(object@prediction_data$group)
       
       if (!all(group_labels %in% object@groups)) {
