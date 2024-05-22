@@ -3925,6 +3925,10 @@ test_hyperparameter_optimisation <- function(
         )
       )
       
+      # Go to next outcome type if only a specific configuration needs to be
+      # tested.
+      if (test_specific_config) next
+      
       # Test that hyperparameters were set.
       test_fun(
         paste0(
