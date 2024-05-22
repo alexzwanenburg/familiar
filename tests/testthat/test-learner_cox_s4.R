@@ -57,6 +57,15 @@ testthat::test_that("Cox model has variable importance", {
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
 })
 
+
+familiar:::test_hyperparameter_optimisation(
+  learners = "cox",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 # Test hyperparameters

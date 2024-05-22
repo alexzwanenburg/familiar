@@ -309,6 +309,14 @@ testthat::test_that("Extreme gradient boosting tree model has variable importanc
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "xgboost_tree",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

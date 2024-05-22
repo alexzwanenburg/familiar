@@ -3897,6 +3897,10 @@ test_hyperparameter_optimisation <- function(
         }
       )
       
+      # Go to next outcome type if only a specific configuration needs to be
+      # tested.
+      if (test_specific_config) next
+      
       if (verbose) {
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
@@ -3924,10 +3928,6 @@ test_hyperparameter_optimisation <- function(
           dots
         )
       )
-      
-      # Go to next outcome type if only a specific configuration needs to be
-      # tested.
-      if (test_specific_config) next
       
       # Test that hyperparameters were set.
       test_fun(

@@ -261,6 +261,14 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "xgboost_lm",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

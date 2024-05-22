@@ -46,6 +46,27 @@ familiar:::test_all_vimp_methods_parallel(
   )
 )
 
+
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = "ridge",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = "lasso",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = "elastic_net",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

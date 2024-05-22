@@ -221,6 +221,28 @@ testthat::test_that("Regularised regression model has variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "ridge",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+familiar:::test_hyperparameter_optimisation(
+  learners = "lasso",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+familiar:::test_hyperparameter_optimisation(
+  learners = "elastic_net",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

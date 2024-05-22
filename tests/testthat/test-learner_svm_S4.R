@@ -263,6 +263,28 @@ testthat::test_that("SVM model has no variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "svm_c_radial",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+familiar:::test_hyperparameter_optimisation(
+  learners = "svm_nu_radial",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+familiar:::test_hyperparameter_optimisation(
+  learners = "svm_eps_radial",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

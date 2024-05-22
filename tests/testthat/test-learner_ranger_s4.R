@@ -287,6 +287,14 @@ testthat::test_that("Ranger random forest model has variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "random_forest_ranger",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

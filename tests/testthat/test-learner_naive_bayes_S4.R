@@ -100,6 +100,14 @@ testthat::test_that("Naive Bayes model has no variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "naive_bayes",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

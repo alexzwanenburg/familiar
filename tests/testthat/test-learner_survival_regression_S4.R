@@ -58,6 +58,14 @@ testthat::test_that("Survival regression model has variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "survival_regr",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

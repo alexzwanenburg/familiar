@@ -144,6 +144,14 @@ testthat::test_that("k-nearest neighbour model has no variable importance", {
 })
 
 
+familiar:::test_hyperparameter_optimisation(
+  learners = "knn",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(

@@ -500,6 +500,16 @@ testthat::test_that(
   }
 )
 
+
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = "random_forest_ranger_impurity",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
+
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(
