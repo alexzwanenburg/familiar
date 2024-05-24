@@ -365,9 +365,7 @@ setMethod("get_prediction_type", signature(object="familiarXGBoost"),
             
             # The prediction type is a bit more complicated for xgboost methods.
             if(type == "default"){
-              if(as.character(object@hyperparameters$learn_objective %in% c("cox"))){
-                return("hazard_ratio")
-              }
+              return("hazard_ratio")
               
             } else if(type == "survival_probability"){
               return("survival_probability")
