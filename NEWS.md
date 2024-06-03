@@ -1,3 +1,9 @@
+# Version 1.4.9 (Wayward Wasp)
+
+## Bug fixes
+
+- Presence of features with integer values no longer lead to rare errors during evaluation.
+
 # Version 1.4.8 (Valorous Viper)
 
 ## Bug fixes
