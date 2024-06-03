@@ -34,6 +34,20 @@
 
 - Fixed errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`, which are reserved names in `R`.
 
+# Version 1.4.9 (Wayward Wasp)
+
+## Bug fixes
+
+- Presence of features with integer values no longer lead to rare errors during evaluation.
+
+# Version 1.4.8 (Valorous Viper)
+
+## Bug fixes
+
+- Adapted tests to work when suggested packages are missing (addresses CRAN noSuggests check).
+
+- Fixed an issue that prevented hyperparameter optimisation of `xgboost` models for survival tasks.
+
 # Version 1.4.7 (Uncertain Unicorn)
 
 ## Bug fixes

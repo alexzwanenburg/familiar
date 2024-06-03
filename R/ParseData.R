@@ -732,6 +732,58 @@
     reference_method = reference_method
   )
 
+  # Convert integer data to double. This prevents rare errors later e.g., 
+  # when aggregating data by computing a median value (that is not guaranteed to
+  # be an integer).
+  data <- .parse_integer_features(
+    data = data,
+    outcome_type = outcome_type
+  )
+  
+  return(data)
+}
+
+
+
+#' Internal function for converting integer features
+#'
+#' @param data data.table with feature data
+#' @param outcome_type character, indicating the type of outcome
+#'
+#' @details This function parses columns containing integer feature data to
+#'   features to double. This prevents, e.g., errors when the result of an
+#'   operation on the feature data yields a non-integer (i.e. floating point)
+#'   result.
+#'
+#' @return data.table with integer features converted to double.
+#'
+#' @md
+#' @keywords internal
+.parse_integer_features <- function(data, outcome_type) {
+  # Replace columns types so that only numeric and categorical features remain
+  
+  # Check presence of feature columns
+  if (!has_feature_data(x = data, outcome_type = outcome_type)) ..error_data_set_has_no_features()
+  
+  # Get feature columns
+  feature_columns <- get_feature_columns(x = data, outcome_type = outcome_type)
+  
+  # Identify features that consist of integer values.
+  integer_features <- sapply(
+    feature_columns,
+    function(feature, data) (is.integer(data[[feature]])),
+    data = data
+  )
+  integer_features <- feature_columns[integer_features]
+  
+  # Do not update data if there are no columns with integer features.
+  if (length(integer_features) == 0L) return(data)
+  
+  # Update to integer features to double.
+  for (feature in integer_features) {
+    data.table::set(data, j = feature, value = as.double(data[[feature]]))
+  }
+  
   return(data)
 }
 
