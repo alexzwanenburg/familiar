@@ -1,4 +1,4 @@
-# Version 1.5.0 (Development)
+# Version 1.5.0 (Whole Whale)
 
 ## Major changes
 
@@ -6,13 +6,15 @@
 
 - Power transformation is now handled by the `power.transform` package. This package replaces the internal routines that were previously used.
 
+## Future deprecation
+
+- Functionality reliant on the `mboost`, `VGAM` or `qvalue` packages will be deprecated in version 2.0.0.
+
+- `count` outcome types will be deprecated by merging into `continuous` outcome type, starting version 2.0.0.
+
 ## Bug fixes
 
 - Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
-
-# Version 1.4.9 (Wayward Wasp)
-
-## Bug fixes
 
 - Presence of features with integer values no longer lead to rare errors during evaluation.
 
