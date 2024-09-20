@@ -18,6 +18,8 @@
 
 - Presence of features with integer values no longer lead to rare errors during evaluation.
 
+- Fixed an issue with the main plot element being of fixed weight for composite plots (e.g. calibration plots, Kaplan-Meier curves).
+
 # Version 1.4.8 (Valorous Viper)
 
 ## Bug fixes
