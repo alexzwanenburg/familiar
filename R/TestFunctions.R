@@ -4321,6 +4321,7 @@ test_plots <- function(
     test_specific_config = FALSE,
     create_novelty_detector = FALSE,
     debug = FALSE,
+    debug_outcome_type = NULL,
     parallel = waiver()) {
   
   if (debug) {
@@ -4351,8 +4352,13 @@ test_plots <- function(
     cl <- NULL
   }
 
+  all_outcome_types <- c("count", "continuous", "survival", "binomial", "multinomial")
+  if (debug && !is.null(debug_outcome_type)) {
+    all_outcome_types <- debug_outcome_type
+  }
+  
   # Iterate over the outcome type.
-  for (outcome_type in c("count", "continuous", "survival", "binomial", "multinomial")) {
+  for (outcome_type in all_outcome_types) {
     
     if (!test_data_package_installed(outcome_type)) next
     
@@ -4745,7 +4751,7 @@ test_plots <- function(
         time_max = 60,
         parallel = FALSE,
         verbose = FALSE))
-
+    
     # Replace fs_method attribute
     naive_model@fs_method <- "none"
 
