@@ -540,29 +540,6 @@
     new_position[["b"]] <- extent[["b"]]
   }
 
-  # Update width (for inserted rows) or height (for inserted height).
-  if (where %in% c("top", "bottom")) {
-    # Rows are inserted, and we need to update column width for new elements
-    # that span a single column.
-    if (new_position[["l"]] == new_position[["r"]]) {
-      if (!is.null(g_new$grobs[[1]]$width) && update_dimensions) {
-        g$widths[new_position[["l"]]] <- max(grid::unit.c(
-          g$widths[new_position[["l"]]], 
-          g_new$grobs[[1]]$width))
-      }
-    }
-  } else {
-    # Columns are inserted, and we need to update row heights for new elements
-    # that span a single row.
-    if (new_position[["t"]] == new_position[["b"]]) {
-      if (!is.null(g_new$grobs[[1]]$height) && update_dimensions) {
-        g$heights[new_position[["t"]]] <- max(grid::unit.c(
-          g$heights[new_position[["t"]]],
-          g_new$grobs[[1]]$height))
-      }
-    }
-  }
-
   # Add element to g.
   g <- gtable::gtable_add_grob(g,
     grobs = g_new$grobs[[1]],
@@ -573,6 +550,9 @@
     name = element_name,
     clip = g_new$layout$clip[1]
   )
+  
+  # Update widths and heights.
+  g <- .gtable_update_layout(g = g)
 
   return(g)
 }
@@ -801,7 +781,7 @@
     
     return(new_sizes)
   }
-  
+
   new_heights <- ..get_updated_aspect(g = g, aspect = "height")
   new_widths <- ..get_updated_aspect(g = g, aspect = "width")
   
