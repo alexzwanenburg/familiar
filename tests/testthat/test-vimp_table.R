@@ -1,3 +1,5 @@
+testthat::skip_on_cran()
+
 # Basic tests ------------------------------------------------------------------
 
 data <- familiar:::test_create_synthetic_correlated_data(

@@ -1,3 +1,12 @@
+familiar:::test_all_metrics_available(
+  metrics = familiar:::.get_available_regression_metrics())
+
+# Don't perform any further tests on CRAN due to time of running the complete
+# test.
+testthat::skip_on_cran()
+testthat::skip_on_ci()
+
+
 regr_metric_test <- function(
     metric,
     data_list, 
@@ -63,14 +72,6 @@ data_list <- list(
   "no_slope" = list("data" = no_slope_data),
   "bias_offset" = list("data" = bias_offset_data)
 )
-
-familiar:::test_all_metrics_available(
-  metrics = familiar:::.get_available_regression_metrics())
-
-# Don't perform any further tests on CRAN due to time of running the complete
-# test.
-testthat::skip_on_cran()
-testthat::skip_on_ci()
 
 # Mean absolute error ----------------------------------------------------------
 familiar:::test_all_metrics(

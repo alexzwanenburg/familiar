@@ -18,7 +18,7 @@
 
 - Presence of features with integer values no longer lead to rare errors during evaluation.
 
-- Fixed an issue with the main plot element being of fixed weight for composite plots (e.g. calibration plots, Kaplan-Meier curves).
+- The main panel for composite plots (e.g. calibration plots, Kaplan-Meier curves) is no longer of fixed width when title or subtitles are present.
 
 # Version 1.4.8 (Valorous Viper)
 

@@ -1,3 +1,14 @@
+familiar:::test_all_metrics_available(metrics = familiar:::.get_available_auc_roc_metrics())
+
+# Skip remainder on CRAN due to runtimes.
+testthat::skip_on_cran()
+
+familiar:::test_all_metrics(
+  metrics = familiar:::.get_available_auc_roc_metrics(),
+  not_available_single_sample = TRUE,
+  not_available_all_samples_identical = TRUE
+)
+
 data_good_binomial <- data.table::data.table(
   "outcome" = factor(c("a", "a", "a", "a", "a", "b", "b", "b", "b", "b"), levels = c("a", "b")),
   "predicted_class" = factor(c("a", "a", "a", "a", "a", "b", "b", "b", "b", "b"), levels = c("a", "b")),
@@ -68,13 +79,6 @@ data_list <- list(
   "bad_multinomial" = list("data" = data_bad_multinomial, "outcome_type" = "multinomial"),
   "ok_multinomial" = list("data" = data_ok_multinomial, "outcome_type" = "multinomial"),
   "inv_multinomial" = list("data" = data_inv_multinomial, "outcome_type" = "multinomial")
-)
-
-familiar:::test_all_metrics_available(metrics = familiar:::.get_available_auc_roc_metrics())
-familiar:::test_all_metrics(
-  metrics = familiar:::.get_available_auc_roc_metrics(),
-  not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE
 )
 
 # Area under the curve ---------------------------------------------------------

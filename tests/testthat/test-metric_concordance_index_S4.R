@@ -1,3 +1,14 @@
+familiar:::test_all_metrics_available(metrics = familiar:::.get_available_concordance_index_metrics())
+
+# Skip remainder on CRAN due to runtimes.
+testthat::skip_on_cran()
+
+familiar:::test_all_metrics(
+  metrics = familiar:::.get_available_concordance_index_metrics(),
+  not_available_single_sample = TRUE,
+  not_available_all_samples_identical = TRUE)
+
+
 data_good_no_censoring_risk <- data.table::data.table(
   "outcome_time" = c(1, 2, 3, 4, 5),
   "outcome_event" = c(1, 1, 1, 1, 1),
@@ -119,13 +130,6 @@ data_list <- list(
   "moderate_mid_censoring_risk" = list("data" = data_moderate_mid_censoring_risk),
   "all_censoring_risk" = list("data" = data_all_censoring_risk)
 )
-
-
-familiar:::test_all_metrics_available(metrics = familiar:::.get_available_concordance_index_metrics())
-familiar:::test_all_metrics(
-  metrics = familiar:::.get_available_concordance_index_metrics(),
-  not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE)
 
 # Test for risk-like predictions -----------------------------------------------
 testthat::test_that("Concordance index for risk-like predictions is correct", {
