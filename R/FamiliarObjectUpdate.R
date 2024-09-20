@@ -277,6 +277,19 @@ setMethod(
         })
     }
     
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Update feature_expressions slot by iterating over its contents. This is
+      # to account for changes in transformation objects, introduced with 1.5.0.
+      object@feature_expressions <- lapply(
+        object@feature_expressions,
+        function(x) {
+          x@feature_info <- update_object(x@feature_info)
+          
+          return(x)
+        }
+      )
+    }
+    
     if (!methods::validObject(object)) {
       stop("Could not update the familiarData object to the most recent definition.")
     }
@@ -375,6 +388,19 @@ setMethod(
           
           return(x)
         })
+    }
+    
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Update feature_expressions slot by iterating over its contents. This is
+      # to account for changes in transformation objects, introduced with 1.5.0.
+      object@feature_expressions <- lapply(
+        object@feature_expressions,
+        function(x) {
+          x@feature_info <- update_object(x@feature_info)
+          
+          return(x)
+        }
+      )
     }
     
     if (!methods::validObject(object)) {
