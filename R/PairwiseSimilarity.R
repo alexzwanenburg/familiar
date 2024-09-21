@@ -1202,7 +1202,7 @@ get_similarity_range <- function(similarity_metric, as_distance = FALSE) {
   value_range <- object@range
   
   if (as_distance) {
-    value_range <- .distance_to_similarity(
+    value_range <- .similarity_to_distance(
       object = object,
       x = value_range)
     
