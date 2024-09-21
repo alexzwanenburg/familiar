@@ -20,6 +20,8 @@
 
 - The main panel for composite plots (e.g. calibration plots, Kaplan-Meier curves) is no longer of fixed width when title or subtitles are present.
 
+- Thresholds for clustering with correlation-based metrics are now computed correctly.
+
 # Version 1.4.8 (Valorous Viper)
 
 ## Bug fixes

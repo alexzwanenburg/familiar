@@ -1209,7 +1209,7 @@ get_similarity_range <- function(similarity_metric, as_distance = FALSE) {
     value_range <- sort(unique(value_range))
   }
   
-  return(object@range)
+  return(value_range)
 }
 
 
