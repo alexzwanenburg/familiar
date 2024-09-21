@@ -1,5 +1,6 @@
 testthat::skip_on_cran()
-if (!rlang::is_installed("nnet")) testthat::skip()
+# power.transform is also required for transformatio_method = "none".
+if (!rlang::is_installed("power.transform")) testthat::skip()
 
 # Basic tests ------------------------------------------------------------------
 
