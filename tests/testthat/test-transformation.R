@@ -1,3 +1,5 @@
+if (!rlang::is_installed("power.transform")) testthat::skip()
+
 # Generic test -----------------------------------------------------------------
 outcome_type <- "survival"
 
