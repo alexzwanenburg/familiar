@@ -3,7 +3,7 @@ testthat::skip_on_cran()
 # Find available stratification methods.
 stratification_methods <- familiar:::.get_available_stratification_methods()
 
-if (!familiar::test_data_package_installed("survival")) testthat::skip()
+if (!familiar:::test_data_package_installed("survival")) testthat::skip()
 if (!rlang::is_installed("power.transform")) testthat::skip()
 
 # Test for good dataset.
