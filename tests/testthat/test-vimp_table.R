@@ -1,5 +1,5 @@
 testthat::skip_on_cran()
-# power.transform is also required for transformatio_method = "none".
+# power.transform is also required for transformation_method = "none".
 if (!rlang::is_installed("power.transform")) testthat::skip()
 
 # Basic tests ------------------------------------------------------------------
