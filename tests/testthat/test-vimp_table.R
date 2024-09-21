@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+if (!rlang::is_installed("power.transform")) testthat::skip()
 
 # Basic tests ------------------------------------------------------------------
 
