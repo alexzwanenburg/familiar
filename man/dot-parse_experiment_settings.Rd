@@ -2,7 +2,7 @@
 % Please edit documentation in R/ParseSettings.R
 \name{.parse_experiment_settings}
 \alias{.parse_experiment_settings}
-\title{Internal function for parsing settings related to the computational setup}
+\title{Internal function for parsing settings related to the experimental setup}
 \usage{
 .parse_experiment_settings(
   config = NULL,
@@ -248,6 +248,6 @@ classes are formed by default.}
 List of parameters related to data parsing and the experiment.
 }
 \description{
-Internal function for parsing settings related to the computational setup
+Internal function for parsing settings related to the experimental setup
 }
 \keyword{internal}

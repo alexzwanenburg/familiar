@@ -193,8 +193,7 @@ computation and extraction of various data elements.}
 \item{...}{Unused arguments.}
 }
 \value{
-A data.table containing predicted and observed outcome data together
-with a co-occurence count.
+A data.table containing individual conditional expectation plot data.
 }
 \description{
 Computes data for individual conditional expectation plots and

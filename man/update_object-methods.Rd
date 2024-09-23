@@ -9,6 +9,7 @@
 \alias{update_object,vimpTable-method}
 \alias{update_object,familiarNoveltyDetector-method}
 \alias{update_object,featureInfo-method}
+\alias{update_object,featureInfoParametersTransformationPowerTransform-method}
 \alias{update_object,experimentData-method}
 \alias{update_object,list-method}
 \alias{update_object,ANY-method}
@@ -30,6 +31,8 @@ update_object(object, ...)
 
 \S4method{update_object}{featureInfo}(object, ...)
 
+\S4method{update_object}{featureInfoParametersTransformationPowerTransform}(object, ...)
+
 \S4method{update_object}{experimentData}(object, ...)
 
 \S4method{update_object}{list}(object, ...)
@@ -48,6 +51,6 @@ An up-to-date version of the respective S4 object.
 \description{
 Provides backward compatibility for familiar objects exported to
 a file. This mitigates compatibility issues when working with files that
-become outdated as new versions of familiar are released, e.g. because slots
-have been removed.
+become outdated as new versions of familiar are released, e.g. because
+slots have been removed.
 }

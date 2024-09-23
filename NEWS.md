@@ -1,3 +1,27 @@
+# Version 1.5.0 (Whole Whale)
+
+## Major changes
+
+- The source code now uses the `tidyverse` code style.
+
+- Power transformation is now handled by the `power.transform` package. This package replaces the internal routines that were previously used.
+
+## Future deprecation
+
+- Functionality reliant on the `mboost`, `VGAM` or `qvalue` packages will be deprecated in version 2.0.0.
+
+- `count` outcome types will be deprecated by merging into `continuous` outcome type, starting version 2.0.0.
+
+## Bug fixes
+
+- Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
+
+- Presence of features with integer values no longer lead to rare errors during evaluation.
+
+- The main panel for composite plots (e.g. calibration plots, Kaplan-Meier curves) is no longer of fixed width when title or subtitles are present.
+
+- Thresholds for clustering with correlation-based metrics are now computed correctly.
+
 # Version 1.4.8 (Valorous Viper)
 
 ## Bug fixes
@@ -30,6 +54,8 @@
 ## Bug fixes
 
 - Creating data objects (`as_data_object`) using naive learners now works and no longer throws an error.
+
+- `filename`, `path` and `plot` arguments are not passed to `ggplot2::ggsave` for saving, and are now no longer present in the documentation of plot functions.
 
 # Version 1.4.4 (Quixotic Quail)
 

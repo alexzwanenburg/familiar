@@ -1,4 +1,7 @@
 library(testthat)
 library(familiar)
 
-test_check("familiar")
+suppressWarnings(
+  testthat::test_check("familiar"),
+  classes = c("deprecation_warning")
+)

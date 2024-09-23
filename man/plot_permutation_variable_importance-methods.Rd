@@ -92,16 +92,16 @@ plot_permutation_variable_importance(
 }
 \arguments{
 \item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
+objects, that will be internally converted to a \code{familiarCollection}
+object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
 prior to export. Paths to such files can also be provided.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
 \item{dir_path}{(\emph{optional}) Path to the directory where created figures are
-saved to. Output is saved in the \code{variable_importance} subdirectory. If NULL
-no figures are saved, but are returned instead.}
+saved to. Output is saved in the \code{variable_importance} subdirectory. If
+NULL no figures are saved, but are returned instead.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -164,28 +164,24 @@ and 1.0 (fully opaque) are allowed.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_permutation_vimp]{extract_permutation_vimp}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}

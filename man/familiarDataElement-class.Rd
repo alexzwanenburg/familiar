@@ -27,16 +27,16 @@ bootstraps and computing the model performance of the ensemble model for
 each bootstrap.
 \item \code{hybrid} (default): Results are computed at the level of models in an
 ensemble. This means that, for example, bias-corrected estimates of model
-performance are directly computed using the models in the ensemble. If there
-are at least 20 trained models in the ensemble, performance is computed for
-each model, in contrast to \code{ensemble} where performance is computed for the
-ensemble of models. If there are less than 20 trained models in the
-ensemble, bootstraps are created so that at least 20 point estimates can be
-made.
+performance are directly computed using the models in the ensemble. If
+there are at least 20 trained models in the ensemble, performance is
+computed for each model, in contrast to \code{ensemble} where performance is
+computed for the ensemble of models. If there are less than 20 trained
+models in the ensemble, bootstraps are created so that at least 20 point
+estimates can be made.
 \item \code{model}: Results are computed at the model level. This means that, for
 example, bias-corrected estimates of model performance are assessed by
-creating (at least) 20 bootstraps and computing the performance of the model
-for each bootstrap.
+creating (at least) 20 bootstraps and computing the performance of the
+model for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -71,9 +71,9 @@ Some child classes do not use this parameter.}
 
 \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
-determine the confidence intervals bootstrap estimation, \code{familiar} uses the
-rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
-bootstraps.}
+determine the confidence intervals bootstrap estimation, \code{familiar} uses
+the rule of thumb \eqn{n = 20 / ci.level} to determine the number of
+required bootstraps.}
 
 \item{\code{bootstrap_ci_method}}{Method used to determine bootstrap confidence
 intervals (Efron and Hastie, 2016). The following methods are implemented:

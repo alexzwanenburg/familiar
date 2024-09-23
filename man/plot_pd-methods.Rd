@@ -83,8 +83,8 @@ plot_pd(
 }
 \arguments{
 \item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
+objects, that will be internally converted to a \code{familiarCollection}
+object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
 prior to export. Paths to such files can also be provided.}
 
@@ -126,8 +126,7 @@ colour the raster in 2D individual conditional expectation or partial
 dependence plots. This argument is not used for 1D plots.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
-gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}.
-By default, values are determined from the data, dependent on the
+gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}. By default, values are determined from the data, dependent on the
 \code{value_scales} parameter. This parameter is ignored for 1D plots.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
@@ -167,8 +166,9 @@ is unset.}
 \item{novelty_range}{(\emph{optional}) Numerical range used to span the range of
 novelty values. This determines the size of the bubbles in 2D, and
 transparency of lines in 1D. This should be a range of two values, e.g.
-\code{c(0, 1)}. By default, values are determined from the data, dependent on the
-\code{value_scales} parameter. This parameter is ignored if \code{show_novelty=FALSE}.}
+\code{c(0, 1)}. By default, values are determined from the data, dependent on
+the \code{value_scales} parameter. This parameter is ignored if
+\code{show_novelty=FALSE}.}
 
 \item{value_scales}{(\emph{optional}) Sets scaling of predicted values. This
 parameter has several options:
@@ -213,10 +213,11 @@ features.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
@@ -225,15 +226,10 @@ the number of features and the number of facets.}
   \describe{
     \item{\code{aggregate_results}}{Flag that signifies whether results should be
 aggregated for export.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -378,27 +374,27 @@ accelerated (BCa) method is not implemented yet.}
 \code{NULL} or list of plot objects, if \code{dir_path} is \code{NULL}.
 }
 \description{
-This method creates partial dependence plots
-based on data in a familiarCollection object.
+This method creates partial dependence plots based on data in a
+familiarCollection object.
 }
 \details{
-This function generates partial dependence plots.
-These plots come in two varieties, namely 1D and 2D. 1D plots show the
-predicted value as function of a single feature, whereas 2D plots show the
-predicted value as a function of two features.
+This function generates partial dependence plots. These plots come
+in two varieties, namely 1D and 2D. 1D plots show the predicted value as
+function of a single feature, whereas 2D plots show the predicted value as
+a function of two features.
 
 Available splitting variables are: \code{feature_x}, \code{feature_y} (2D only),
 \code{fs_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
 outcomes) or \code{evaluation_time} (survival outcomes). By default, for 1D ICE
 plots the data are split by \code{feature_x}, \code{fs_method} and \code{learner}, with
 faceting by \code{data_set}, \code{positive_class} or \code{evaluation_time}. If only
-partial dependence is shown, \code{positive_class} and \code{evaluation_time} are used
-to set colours instead. For 2D plots, by default the data are split by
+partial dependence is shown, \code{positive_class} and \code{evaluation_time} are
+used to set colours instead. For 2D plots, by default the data are split by
 \code{feature_x}, \code{fs_method} and \code{learner}, with faceting by \code{data_set},
 \code{positive_class} or \code{evaluation_time}. The \code{color_by} argument cannot be
 used with 2D plots, and attempting to do so causes an error. Attempting to
-specify \code{feature_x} or \code{feature_y} for \code{color_by} will likewise result in an
-error, as multiple features cannot be shown in the same facet.
+specify \code{feature_x} or \code{feature_y} for \code{color_by} will likewise result in
+an error, as multiple features cannot be shown in the same facet.
 
 The splitting variables indicated by \code{color_by} are coloured according to
 the \code{discrete_palette} parameter. This parameter is therefore only used for
@@ -407,9 +403,9 @@ are those listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
 \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
 \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
 palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your own
-palette by using colour names listed by \code{grDevices::colors()} or through
-hexadecimal RGB strings.
+palette based on palettes in Tableau are used. You may also specify your
+own palette by using colour names listed by \code{grDevices::colors()} or
+through hexadecimal RGB strings.
 
 Bootstrap confidence intervals of the partial dependence plots can be shown
 using various styles set by \code{conf_int_style}:

@@ -38,8 +38,8 @@ reproduction, i.e. with imputation.}
 \item{\code{model_features}}{The combined set of features that is used to train the
 models in the ensemble,}
 
-\item{\code{novelty_features}}{The combined set of features that is used to train
-all novelty detectors in the ensemble.}
+\item{\code{novelty_features}}{The combined set of features that is used to train all
+novelty detectors in the ensemble.}
 
 \item{\code{run_table}}{Run table for the data used to train the ensemble. Used
 internally.}
@@ -57,8 +57,8 @@ from the model after use, or not. Used internally.}
 model creation. These are used as default parameters when evaluating the
 ensemble to create a familiarData object.}
 
-\item{\code{project_id}}{Identifier of the project that generated the
-underlying familiarModel object(s).}
+\item{\code{project_id}}{Identifier of the project that generated the underlying
+familiarModel object(s).}
 
 \item{\code{familiar_version}}{Version of the familiar package.}
 }}

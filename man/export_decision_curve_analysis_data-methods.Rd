@@ -40,8 +40,8 @@ aggregated for export.}
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

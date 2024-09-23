@@ -154,8 +154,8 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

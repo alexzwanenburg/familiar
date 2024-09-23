@@ -362,36 +362,46 @@ change the distribution of the data to be more normal-like. The following
 methods are available:
 \itemize{
 \item \code{none}: This disables transformation of features.
-\item \code{yeo_johnson} (default): Transformation using the Yeo-Johnson
-transformation (Yeo and Johnson, 2000). The algorithm tests various lambda
-values and selects the lambda that maximises the log-likelihood.
-\item \code{yeo_johnson_trim}: As \code{yeo_johnson}, but based on the set of feature
-values where the 5\% lowest and 5\% highest values are discarded. This
-reduces the effect of outliers.
-\item \code{yeo_johnson_winsor}: As \code{yeo_johnson}, but based on the set of feature
-values where the 5\% lowest and 5\% highest values are winsorised. This
-reduces the effect of outliers.
-\item \code{yeo_johnson_robust}: A robust version of \code{yeo_johnson} after Raymaekers
-and Rousseeuw (2021). This method is less sensitive to outliers.
-\item \code{box_cox}: Transformation using the Box-Cox transformation (Box and Cox,
-1964). Unlike the Yeo-Johnson transformation, the Box-Cox transformation
-requires that all data are positive. Features that contain zero or negative
-values cannot be transformed using this transformation. The algorithm tests
-various lambda values and selects the lambda that maximises the
-log-likelihood.
-\item \code{box_cox_trim}: As \code{box_cox}, but based on the set of feature values
-where the 5\% lowest and 5\% highest values are discarded. This reduces the
-effect of outliers.
-\item \code{box_cox_winsor}: As \code{box_cox}, but based on the set of feature values
-where the 5\% lowest and 5\% highest values are winsorised. This reduces the
-effect of outliers.
-\item \code{box_cox_robust}: A robust verson of \code{box_cox} after Raymaekers and
-Rousseew (2021). This method is less sensitive to outliers.
+\item \code{yeo_johnson}: Transformation using the location and scale invariant
+version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
+Zwanenburg and Löck, 2023).
+\item \code{yeo_johnson_robust} (default): A robust version of \code{yeo_johnson}.
+This method is less sensitive to outliers.
+\item \code{yeo_johnson_conventional}: As \code{yeo_johnson}, but without optimisation of
+location and scale parameters. This method is equivalent to the original
+transformation proposed by Yeo and Johnson (2001).
+\item \code{box_cox}: Transformation using the location and scale invariant version
+of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
+2023).
+\item \code{box_cox_robust}: A robust version of \code{yeo_johnson}. This method is less
+sensitive to outliers.
+\item \code{box_cox_conventional}: As \code{box_cox}, but without optimisation of
+location and scale parameters. This method is equivalent to the original
+transformation proposed by Box and Cox (1964). This method requires
+strictly positive feature values.
 }
 
-Only features that contain numerical data are transformed. Transformation
-parameters obtained in development data are stored within \code{featureInfo}
-objects for later use with validation data sets.}
+Transformation requires the \code{power.transform} package. Only features that
+contain numerical data are transformed. Transformation parameters obtained
+in development data are stored within \code{featureInfo} objects for later use
+with validation data sets.}
+    \item{\code{transformation_optimisation_criterion}}{(\emph{optional}) Transformation
+parameters are optimised using a criterion, conventionally
+maximum-likelihood-estimation. \code{power.transform} implements multiple
+optimisation criteria, of which the following are available:
+\itemize{
+\item \code{mle} (default): Optimisation using maximum likelihood estimation.
+\item \code{cramer_von_mises}: Optimisation using the Cramér-von Mises
+criterion. Zwanenburg and Löck (2023) found that this criterion was
+relatively robust against outliers.
+}}
+    \item{\code{transformation_gof_test_p_value}}{(\emph{optional}) Not all transformations
+will lead to features that are roughly normally distributed. Zwanenburg and
+Löck (2023) established a empirical goodness-of-fit test for central
+normality. This parameter sets the significance for rejecting the
+null-hypothesis that a feature distribution is centrally normal. When the
+null-hypothesis is rejected, no transformation is performed. The default
+value is \code{NULL}, which disables the test.}
     \item{\code{normalisation_method}}{(\emph{optional}) The normalisation method used to
 improve the comparability between numerical features that may have very
 different scales. The following normalisation methods can be chosen:

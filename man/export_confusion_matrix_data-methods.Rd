@@ -102,8 +102,8 @@ elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
 \code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

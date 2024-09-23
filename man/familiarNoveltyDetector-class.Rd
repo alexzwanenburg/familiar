@@ -9,6 +9,10 @@ A familiarNoveltyDetector object is a self-contained model that can be
 applied to generate out-of-distribution predictions for instances in a
 dataset.
 }
+\details{
+Note that these objects do not contain any data concerning outcome,
+as this not relevant for (prospective) out-of-distribution detection.
+}
 \section{Slots}{
 
 \describe{
@@ -54,9 +58,6 @@ familiarNoveltyDetector object.}
 e.g. \code{isotree}.}
 
 \item{\code{package_version}}{Version of the packages mentioned in the \code{package}
-attribute.
-
-Note that these objects do not contain any data concerning outcome, as this
-not relevant for (prospective) out-of-distribution detection.}
+attribute.}
 }}
 

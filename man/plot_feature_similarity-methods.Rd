@@ -236,9 +236,9 @@ is unset.}
 controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
 explicitly.}
 
-\item{show_dendrogram}{(\emph{optional}) Show dendrogram around the main panel. Can
-be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top}, \code{bottom}, \code{left} and
-\code{right}. Up to two positions may be provided, but only as long as the
+\item{show_dendrogram}{(\emph{optional}) Show dendrogram around the main panel.
+Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top}, \code{bottom}, \code{left}
+and \code{right}. Up to two positions may be provided, but only as long as the
 dendrograms are not on opposite sides of the heatmap: \code{top} and \code{bottom},
 and \code{left} and \code{right} cannot be used together.
 
@@ -255,28 +255,24 @@ which also allows for specifying relative heights.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_similarity]{extract_feature_similarity}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}

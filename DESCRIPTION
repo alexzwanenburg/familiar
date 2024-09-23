@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.4.8
+Version: 1.5.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
@@ -30,7 +30,7 @@ Depends: R (>= 4.0.0)
 License: EUPL
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Imports:
@@ -64,6 +64,7 @@ Suggests:
     microbenchmark,
     nnet,
     partykit,
+    power.transform,
     praznik,
     proxy,
     qvalue,
@@ -123,14 +124,11 @@ Collate:
     'FamiliarDataComputationVimp.R'
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
-    'HyperparameterS4Ranger.R'
-    'HyperparameterS4RandomSearch.R'
-    'HyperparameterS4GaussianProcess.R'
-    'HyperparameterS4BayesianAdditiveRegressionTrees.R'
     'FamiliarHyperparameterLearner.R'
     'FamiliarModel.R'
     'FamiliarNoveltyDetector.R'
     'FamiliarObjectConversion.R'
+    'Transformation.R'
     'FamiliarObjectUpdate.R'
     'FamiliarSharedS4Methods.R'
     'FamiliarVimpMethod.R'
@@ -141,30 +139,34 @@ Collate:
     'HyperparameterOptimisation.R'
     'HyperparameterOptimisationMetaLearners.R'
     'HyperparameterOptimisationUtilities.R'
+    'HyperparameterS4BayesianAdditiveRegressionTrees.R'
+    'HyperparameterS4GaussianProcess.R'
+    'HyperparameterS4RandomSearch.R'
+    'HyperparameterS4Ranger.R'
     'Imputation.R'
     'Iterations.R'
-    'LearnerS4XGBoost.R'
-    'LearnerS4SurvivalRegression.R'
-    'LearnerS4SVM.R'
-    'LearnerS4RFSRC.R'
-    'LearnerS4Ranger.R'
-    'LearnerS4MBoost.R'
-    'LearnerS4NaiveBayes.R'
-    'LearnerS4KNN.R'
-    'LearnerS4GLMnet.R'
-    'LearnerS4GLM.R'
-    'LearnerS4Cox.R'
     'LearnerMain.R'
     'LearnerRecalibration.R'
+    'LearnerS4Cox.R'
+    'LearnerS4GLM.R'
+    'LearnerS4GLMnet.R'
+    'LearnerS4KNN.R'
+    'LearnerS4MBoost.R'
+    'LearnerS4NaiveBayes.R'
+    'LearnerS4RFSRC.R'
+    'LearnerS4Ranger.R'
+    'LearnerS4SVM.R'
+    'LearnerS4SurvivalRegression.R'
+    'LearnerS4XGBoost.R'
     'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
     'Logger.R'
-    'MetricS4Regression.R'
-    'MetricS4ConfusionMatrixMetrics.R'
-    'MetricS4Brier.R'
-    'MetricS4AUC.R'
     'MetricS4.R'
+    'MetricS4AUC.R'
+    'MetricS4Brier.R'
     'MetricS4ConcordanceIndex.R'
+    'MetricS4ConfusionMatrixMetrics.R'
+    'MetricS4Regression.R'
     'ModelBuilding.R'
     'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
@@ -192,7 +194,7 @@ Collate:
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'
     'PredictS4Methods.R'
-    'ProcessTimeUtilites.R'
+    'ProcessTimeUtilities.R'
     'Random.R'
     'RandomGrouping.R'
     'RankBordaAggregation.R'
@@ -204,17 +206,16 @@ Collate:
     'TestDataCreators.R'
     'TestFunctions.R'
     'TrainS4Methods.R'
-    'Transformation.R'
     'TrimUtilities.R'
     'Utilities.R'
     'UtilitiesS4.R'
-    'VimpS4Regression.R'
-    'VimpS4OtherMethods.R'
-    'VimpS4MutualInformation.R'
-    'VimpS4Correlation.R'
-    'VimpS4Concordance.R'
     'VimpMain.R'
+    'VimpS4Concordance.R'
     'VimpS4CoreLearn.R'
+    'VimpS4Correlation.R'
+    'VimpS4MutualInformation.R'
+    'VimpS4OtherMethods.R'
+    'VimpS4Regression.R'
     'VimpTable.R'
     'aaa.R'
 Config/testthat/parallel: true

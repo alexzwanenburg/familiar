@@ -14,10 +14,13 @@
 An ordered array of learner name labels.
 }
 \description{
-Learners in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
+Learners in familiarCollection objects can have custom names for
+export and plotting. This function retrieves the currently assigned names.
 }
 \details{
-Labels convert internal naming of learners to the requested label at export or when plotting. Labels can be changed using the \code{set_learner_names} method.
+Labels convert internal naming of learners to the requested label at
+export or when plotting. Labels can be changed using the
+\code{set_learner_names} method.
 }
 \seealso{
 \itemize{

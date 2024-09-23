@@ -4,10 +4,10 @@
 \alias{.get_default_sign_size}
 \title{Internal function for obtaining a default signature size parameter}
 \usage{
-.get_default_sign_size(data_obj, restrict_samples = FALSE)
+.get_default_sign_size(data, restrict_samples = FALSE)
 }
 \arguments{
-\item{data_obj}{dataObject class object which contains the data on which the
+\item{data}{dataObject class object which contains the data on which the
 preset parameters are determined.}
 
 \item{restrict_samples}{Logical indicating whether the signature size should

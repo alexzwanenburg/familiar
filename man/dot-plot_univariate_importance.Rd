@@ -49,9 +49,9 @@ non-singular variable was provided to the \code{color_by} argument.}
 
 \item{gradient_palette}{(\emph{optional}) Palette to use for filling the bars in
 case the \code{color_by} argument is not set. The bars are then coloured
-according to their importance. By default, no gradient is used, and the bars
-are not filled according to importance. Use \code{NULL} to fill the bars using
-the default palette in \code{familiar}.}
+according to their importance. By default, no gradient is used, and the
+bars are not filled according to importance. Use \code{NULL} to fill the bars
+using the default palette in \code{familiar}.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}

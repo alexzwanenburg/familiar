@@ -2,8 +2,8 @@
 % Please edit documentation in R/ParseSettings.R
 \name{.parse_initial_settings}
 \alias{.parse_initial_settings}
-\title{Internal function for parsing settings required to parse the input data
-and define the experiment}
+\title{Internal function for parsing settings required to parse the input data and
+define the experiment}
 \usage{
 .parse_initial_settings(config = NULL, ...)
 }

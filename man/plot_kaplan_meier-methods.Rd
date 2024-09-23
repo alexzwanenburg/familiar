@@ -128,16 +128,16 @@ plot_kaplan_meier(
 }
 \arguments{
 \item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
+objects, that will be internally converted to a \code{familiarCollection}
+object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
 prior to export. Paths to such files can also be provided.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
 \item{dir_path}{(\emph{optional}) Path to the directory where created figures are
-saved to. Output is saved in the \code{stratification} subdirectory. If \code{NULL} no
-figures are saved, but are returned instead.}
+saved to. Output is saved in the \code{stratification} subdirectory. If \code{NULL}
+no figures are saved, but are returned instead.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -240,47 +240,43 @@ confidence intervals or, alternatively, other plot elements with which the
 confidence interval overlaps. Only values between 0.0 (fully transparent)
 and 1.0 (fully opaque) are allowed.}
 
-\item{censoring}{(\emph{optional}) Flag to indicate whether censored samples should
-be indicated on the survival curve.}
+\item{censoring}{(\emph{optional}) Flag to indicate whether censored samples
+should be indicated on the survival curve.}
 
 \item{censor_shape}{(\emph{optional}) Shape used to indicate censored samples on
 the survival curve. Available shapes are documented in the \code{ggplot2}
 vignette \emph{Aesthetic specifications}. By default a plus shape is used.}
 
 \item{show_logrank}{(\emph{optional}) Specifies whether the results of a logrank
-test to assess differences between the risk strata is annotated in the plot.
-A log-rank test can only be shown when \code{color_by} and \code{linestyle_by} are
-either unset, or only contain \code{risk_group}.}
+test to assess differences between the risk strata is annotated in the
+plot. A log-rank test can only be shown when \code{color_by} and \code{linestyle_by}
+are either unset, or only contain \code{risk_group}.}
 
 \item{show_survival_table}{(\emph{optional}) Specifies whether a survival table is
-shown below the Kaplan-Meier survival curves. Survival in the risk strata is
-assessed for each of the breaks in \code{x_breaks}.}
+shown below the Kaplan-Meier survival curves. Survival in the risk strata
+is assessed for each of the breaks in \code{x_breaks}.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-number of facets and the inclusion of survival tables.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from number of facets and the inclusion of survival tables.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -376,7 +372,8 @@ survival the y-axis represents. It is therefore recommended to provide
 Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
 \code{risk_group} and \code{stratification_method}. By default, separate figures are
 created for each combination of \code{fs_method} and \code{learner}, with faceting by
-\code{data_set}, colouring of the strata in each individual plot by \code{risk_group}.
+\code{data_set}, colouring of the strata in each individual plot by
+\code{risk_group}.
 
 Available palettes for \code{discrete_palette} are those listed by
 \code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
@@ -398,7 +395,7 @@ the point estimate of the Kaplan-Meier curve.
 curve is shown as usual.
 }
 
-Labelling methods such as \code{set_risk_group_names} or \code{set_data_set_names} can
-be applied to the \code{familiarCollection} object to update labels, and order
-the output in the figure.
+Labelling methods such as \code{set_risk_group_names} or \code{set_data_set_names}
+can be applied to the \code{familiarCollection} object to update labels, and
+order the output in the figure.
 }

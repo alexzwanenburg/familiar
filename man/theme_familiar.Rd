@@ -5,7 +5,7 @@
 \title{Familiar ggplot2 theme}
 \usage{
 theme_familiar(
-  base_size = 11,
+  base_size = 10,
   base_family = "",
   base_line_size = 0.5,
   base_rect_size = 0.5

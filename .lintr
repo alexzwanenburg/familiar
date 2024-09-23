@@ -1,6 +1,7 @@
 linters: linters_with_defaults(
     line_length_linter(120),
     object_length_linter = NULL,
-    trailing_whitespace_linter = NULL
+    trailing_whitespace_linter = NULL,
+    cyclocomp_linter = NULL
   )
 encoding: "UTF-8"

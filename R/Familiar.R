@@ -89,71 +89,79 @@
 #'
 #' @export
 #' @md
-summon_familiar <- function(formula=NULL,
-                            data=NULL,
-                            experiment_data=NULL,
-                            cl=NULL,
-                            config=NULL,
-                            config_id=1,
-                            verbose=TRUE,
-                            .stop_after="evaluation",
-                            ...){
+summon_familiar <- function(
+    formula = NULL,
+    data = NULL,
+    experiment_data = NULL,
+    cl = NULL,
+    config = NULL,
+    config_id = 1L,
+    verbose = TRUE,
+    .stop_after = "evaluation",
+    ...) {
   
   # Set options.
   # Disable randomForestSRC OpenMP core use.
-  options(rf.cores=as.integer(1))
-  on.exit(options(rf.cores=-1L), add=TRUE)
+  options(rf.cores = as.integer(1))
+  on.exit(options(rf.cores = -1L), add = TRUE)
   
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
-  on.exit(data.table::setDTthreads(0L), add=TRUE)
+  on.exit(data.table::setDTthreads(0L), add = TRUE)
   
   # Check .stop_after
-  .check_parameter_value_is_valid(x=.stop_after,
-                                  var_name=".stop_after",
-                                  values = c("setup", "preprocessing", "vimp", "training", "evaluation"))
+  .check_parameter_value_is_valid(
+    x = .stop_after,
+    var_name = ".stop_after",
+    values = c("setup", "preprocessing", "vimp", "training", "evaluation"))
   
   
-  ##### Load configuration file ------------------------------------------------
-  config <- .load_configuration_file(config=config,
-                                     config_id=config_id)
+  # Load configuration file ----------------------------------------------------
+  config <- .load_configuration_file(
+    config = config,
+    config_id = config_id)
   
   
-  ##### Test arguments provided by ... and config ------------------------------
-  .check_dots_is_parameter(dots=names(list(...)))
-  .check_configuration_tag_is_parameter(config=config)
+  # Test arguments provided by ... and config ----------------------------------
+  .check_dots_is_parameter(dots = names(list(...)))
+  .check_configuration_tag_is_parameter(config = config)
   
   
-  ##### File paths -------------------------------------------------------------
+  # File paths -----------------------------------------------------------------
   # Parse file paths
-  file_paths  <- do.call(.parse_file_paths,
-                         args=c(list("config"=config,
-                                     "verbose"=verbose),
-                                list(...)))
+  file_paths  <- do.call(
+    .parse_file_paths,
+    args = c(
+      list("config" = config, "verbose" = verbose),
+      list(...)))
   
   # Set paths to data
-  if(!is.null(file_paths$data) & is.null(data)){
+  if (!is.null(file_paths$data) && is.null(data)) {
     data <- file_paths$data
-  }
+  } 
   
   # Make sure to remove the directory if it is on the temporary path.
-  if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
+  if (file_paths$is_temporary) {
+    on.exit(
+      unlink(file_paths$experiment_dir, recursive = TRUE),
+      add = TRUE)
+  } 
   
-  ##### Load data --------------------------------------------------------------
+  # Load data ------------------------------------------------------------------
   dots <- list(...)
   
   # Add placeholder for experimental_design in case experiment_data is set.
-  if(is.null(dots$experimental_design) & !is.null(experiment_data)){
+  if (is.null(dots$experimental_design) && !is.null(experiment_data)) {
     dots$experimental_design <- "fs+mb"
   }
   
   # Parse experiment and data settings
-  settings <- do.call(.parse_initial_settings,
-                      args=c(list("config"=config),
-                             dots))
+  settings <- do.call(
+    .parse_initial_settings,
+    args = c(list("config" = config), dots))
   
-  if(is(data, "dataObject")){
+  if (is(data, "dataObject")) {
     # Reconstitute settings from the data.
     new_settings <- extract_settings_from_data(data)
     
@@ -165,14 +173,15 @@ summon_familiar <- function(formula=NULL,
     
   } else {
     # Load data.
-    data <- do.call(.load_data,
-                    args=c(list("data"=data),
-                           settings$data))
+    data <- do.call(
+      .load_data,
+      args = c(list("data" = data), settings$data))
     
     # Update settings
-    settings <- .update_initial_settings(formula=formula,
-                                         data=data,
-                                         settings=settings)
+    settings <- .update_initial_settings(
+      formula = formula,
+      data = data,
+      settings = settings)
   }
   
   # Parse data
@@ -185,73 +194,79 @@ summon_familiar <- function(formula=NULL,
     outcome_type = settings$data$outcome_type,
     include_features = settings$data$include_features,
     class_levels = settings$data$class_levels,
-    censoring_indicator=settings$data$censoring_indicator,
-    event_indicator=settings$data$event_indicator,
-    competing_risk_indicator=settings$data$competing_risk_indicator,
-    reference_method = settings$data$reference_method
-  )
+    censoring_indicator = settings$data$censoring_indicator,
+    event_indicator = settings$data$event_indicator,
+    competing_risk_indicator = settings$data$competing_risk_indicator,
+    reference_method = settings$data$reference_method)
   
   
-  #### Load experiment data ----------------------------------------------------
-  if(!is.null(experiment_data)){
+  # Load experiment data -------------------------------------------------------
+  if (!is.null(experiment_data)) {
     
     # Write experiment data to the file system
-    experiment_data <- load_experiment_data(experiment_data,
-                                            file_paths=file_paths)
+    experiment_data <- load_experiment_data(
+      experiment_data,
+      file_paths = file_paths)
     
     # Force the use of existing experiment data.
-    settings$data$exp_design <- .get_iteration_file_name(project_id=experiment_data@project_id,
-                                                         file_paths=file_paths)
+    settings$data$exp_design <- .get_iteration_file_name(
+      project_id = experiment_data@project_id,
+      file_paths = file_paths)
   }
   
   rm(experiment_data)
   
-  ##### Experimental setup and settings ----------------------------------------
+  # Experimental setup and settings --------------------------------------------
   
   # Derive experimental design
-  experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
-                                                 file_dir=file_paths$iterations_dir,
-                                                 verbose=verbose)
+  experiment_setup <- extract_experimental_setup(
+    experimental_design = settings$data$exp_design,
+    file_dir = file_paths$iterations_dir,
+    verbose = verbose)
   
   # Check experiment settings
-  settings <- .update_experimental_design_settings(section_table=experiment_setup,
-                                                   data=data,
-                                                   settings=settings)
+  settings <- .update_experimental_design_settings(
+    section_table = experiment_setup,
+    data = data,
+    settings = settings)
   
   # Import remaining settings
-  settings <- .parse_general_settings(config=config,
-                                      data=data,
-                                      settings=settings,
-                                      ...)
+  settings <- .parse_general_settings(
+    config = config,
+    data = data,
+    settings = settings,
+    ...)
   
   # Create a generic outcome object
-  outcome_info <- create_outcome_info(settings=settings)
+  outcome_info <- create_outcome_info(settings = settings)
   
   # Define iterations etc.
-  project_info <- .get_iteration_data(file_paths=file_paths,
-                                      data=data,
-                                      experiment_setup=experiment_setup,
-                                      settings=settings,
-                                      verbose=verbose)
+  project_info <- .get_iteration_data(
+    file_paths = file_paths,
+    data = data,
+    experiment_setup = experiment_setup,
+    settings = settings,
+    verbose = verbose)
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data
   # set.
-  if(is.waive(experiment_setup)){
+  if (is.waive(experiment_setup)) {
     # Replace experiment_setup with the setup that was loaded from the
     # iterations file.
     experiment_setup <- project_info$experiment_setup
     
     # Check experiment settings for the current dataset.
-    settings <- .update_experimental_design_settings(section_table=experiment_setup,
-                                                     data=data,
-                                                     settings=settings)
+    settings <- .update_experimental_design_settings(
+      section_table = experiment_setup,
+      data = data,
+      settings = settings)
   }
   
-  ##### Backend and parallellisation -------------------------------------------
+  # Backend and parallellisation -----------------------------------------------
   
   # Identify if an external cluster is provided, and required.
-  if(settings$run$parallel){
+  if (settings$run$parallel) {
     is_external_cluster <- inherits(cl, "cluster")
     
   } else {
@@ -261,127 +276,141 @@ summon_familiar <- function(formula=NULL,
   # Assign objects that should be accessible everywhere to the familiar global
   # environment. Note that .assign_data_to_backend will also start backend
   # server processes.
-  .assign_settings_to_global(settings=settings)
-  .assign_file_paths_to_global(file_paths=file_paths)
-  .assign_project_info_to_global(project_info=project_info)
-  .assign_outcome_info_to_global(outcome_info=outcome_info)
-  .assign_backend_options_to_global(backend_type=settings$run$backend_type,
-                                    server_port=settings$run$server_port)
-  .assign_data_to_backend(data=data,
-                          backend_type=settings$run$backend_type,
-                          server_port=settings$run$server_port)
+  .assign_settings_to_global(settings = settings)
+  .assign_file_paths_to_global(file_paths = file_paths)
+  .assign_project_info_to_global(project_info = project_info)
+  .assign_outcome_info_to_global(outcome_info = outcome_info)
+  .assign_backend_options_to_global(
+    backend_type = settings$run$backend_type,
+    server_port = settings$run$server_port)
+  .assign_data_to_backend(
+    data = data,
+    backend_type = settings$run$backend_type,
+    server_port = settings$run$server_port)
 
-  .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
-                                     restart_cluster=settings$run$restart_cluster,
-                                     n_cores=settings$run$parallel_nr_cores,
-                                     cluster_type=settings$run$cluster_type)
+  .assign_parallel_options_to_global(
+    is_external_cluster = is_external_cluster,
+    restart_cluster = settings$run$restart_cluster,
+    n_cores = settings$run$parallel_nr_cores,
+    cluster_type = settings$run$cluster_type)
   
   # Make sure that backend server will close after the process finishes.
-  on.exit(shutdown_backend_server(backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port),
-          add=TRUE)
+  on.exit(
+    shutdown_backend_server(
+      backend_type = settings$run$backend_type,
+      server_port = settings$run$server_port),
+    add = TRUE)
   
-  if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
+  if (settings$run$parallel &&
+      !settings$run$restart_cluster &&
+      !is_external_cluster) {
     # Start local cluster in the overall process.
-    cl <- .restart_cluster(cl=NULL, assign="all")
-    on.exit(.terminate_cluster(cl), add=TRUE)
+    cl <- .restart_cluster(cl = NULL, assign = "all")
+    on.exit(.terminate_cluster(cl), add = TRUE)
     
-  } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
+  } else if (settings$run$parallel &&
+             settings$run$restart_cluster &&
+             !is_external_cluster) {
     # Start processes locally.
     cl <- waiver()
     
-  } else if(settings$run$parallel & is_external_cluster){
+  } else if (settings$run$parallel && is_external_cluster) {
     # Make sure that everything is present on the external cluster.
-    cl <- .update_cluster(cl=cl, assign="all")
+    cl <- .update_cluster(cl = cl, assign = "all")
     
-  } else if(!settings$run$parallel){
+  } else if (!settings$run$parallel) {
     # No cluster is created when 
     cl <- NULL
   }
   
   # Clean familiar environment on exit. This is run last to avoid cleaning up
   # the familiar environment prior to shutting down the socket server process.
-  on.exit(.clean_familiar_environment(), add=TRUE)
+  on.exit(.clean_familiar_environment(), add = TRUE)
   
-  if(.stop_after %in% c("setup")){
-    return(create_experiment_data(project_id=project_info$project_id,
-                                  experiment_setup=experiment_setup,
-                                  iteration_list=project_info$iter_list))
+  if (.stop_after %in% c("setup")) {
+    return(create_experiment_data(
+      project_id = project_info$project_id,
+      experiment_setup = experiment_setup,
+      iteration_list = project_info$iter_list))
   }
   
-  ##### Pre-processing ---------------------------------------------------------
+  # Pre-processing -------------------------------------------------------------
   feature_info <- NULL
   
   # Start pre-processing
-  run_preprocessing(cl=cl,
-                    feature_info_list=feature_info,
-                    project_info=project_info,
-                    settings=settings,
-                    file_paths=file_paths,
-                    verbose=verbose)
+  run_preprocessing(
+    cl = cl,
+    feature_info_list = feature_info,
+    project_info = project_info,
+    settings = settings,
+    file_paths = file_paths,
+    verbose = verbose)
   
   # Check if the process should be stopped at this point.
-  if(.stop_after %in% c("preprocessing")){
-    return(create_experiment_data(project_id=project_info$project_id,
-                                  experiment_setup=experiment_setup,
-                                  iteration_list=project_info$iter_list,
-                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
-                                                                             run_id=waiver())))
-  
+  if (.stop_after %in% c("preprocessing")) {
+    return(create_experiment_data(
+      project_id = project_info$project_id,
+      experiment_setup = experiment_setup,
+      iteration_list = project_info$iter_list,
+      feature_info = get_feature_info_from_backend(
+        data_id = waiver(),
+        run_id = waiver())))
   }
   
-  
-  
-  ##### Variable importance ----------------------------------------------------
+  # Variable importance --------------------------------------------------------
   
   # Start feature selection
-  run_feature_selection(cl=cl,
-                        project_list=project_info,
-                        settings=settings,
-                        file_paths=file_paths,
-                        verbose=verbose)
+  run_feature_selection(
+    cl = cl,
+    project_list = project_info,
+    settings = settings,
+    file_paths = file_paths,
+    verbose = verbose)
   
   # Check if the process should be stopped at this point.
-  if(.stop_after %in% c("vimp")){
-    return(create_experiment_data(project_id=project_info$project_id,
-                                  experiment_setup=experiment_setup,
-                                  iteration_list=project_info$iter_list,
-                                  feature_info=get_feature_info_from_backend(data_id=waiver(),
-                                                                             run_id=waiver()),
-                                  vimp_table_list=.retrieve_feature_selection_data(fs_method=settings$fs$fs_method,
-                                                                                   project_list=project_info,
-                                                                                   file_paths=file_paths)))
+  if (.stop_after %in% c("vimp")) {
+    return(create_experiment_data(
+      project_id = project_info$project_id,
+      experiment_setup = experiment_setup,
+      iteration_list = project_info$iter_list,
+      feature_info = get_feature_info_from_backend(
+        data_id = waiver(),
+        run_id = waiver()),
+      vimp_table_list = .retrieve_feature_selection_data(
+        fs_method = settings$fs$fs_method,
+        project_list = project_info,
+        file_paths = file_paths)))
   }
   
-  
-  ##### Training ---------------------------------------------------------------
+  # Training -------------------------------------------------------------------
   
   # Start model building
-  run_model_development(cl=cl,
-                        project_list=project_info,
-                        settings=settings,
-                        file_paths=file_paths,
-                        verbose=verbose)
+  run_model_development(
+    cl = cl,
+    project_list = project_info,
+    settings = settings,
+    file_paths = file_paths,
+    verbose = verbose)
   
   # Check if the process should be stopped at this point.
-  if(.stop_after %in% c("training")){
-    return(.import_all_familiar_objects(file_paths=file_paths)$familiarModel)
+  if (.stop_after %in% c("training")) {
+    return(.import_all_familiar_objects(file_paths = file_paths)$familiarModel)
   }
   
-  
-  ##### Explanation and evaluation ---------------------------------------------
+  # Explanation and evaluation -------------------------------------------------
   
   # Start evaluation
-  run_evaluation(cl=cl,
-                 proj_list=project_info,
-                 settings=settings,
-                 file_paths=file_paths,
-                 verbose=verbose)
+  run_evaluation(
+    cl = cl,
+    project_list = project_info,
+    settings = settings,
+    file_paths = file_paths,
+    verbose = verbose)
   
-  if(file_paths$is_temporary){
+  if (file_paths$is_temporary) {
     # Collect all familiarModels, familiarEnsemble, familiarData and
     # familiarCollection objects.
-    familiar_list <- .import_all_familiar_objects(file_paths=file_paths)
+    familiar_list <- .import_all_familiar_objects(file_paths = file_paths)
     
     # Return list with objects
     return(familiar_list)
@@ -464,13 +493,14 @@ summon_familiar <- function(formula=NULL,
 #' @return An `experimentData` object.
 #'
 #' @export
-precompute_data_assignment <- function(formula=NULL,
-                                       data=NULL,
-                                       experiment_data=NULL,
-                                       cl=NULL,
-                                       experimental_design="fs+mb",
-                                       verbose=TRUE,
-                                       ...){
+precompute_data_assignment <- function(
+    formula = NULL,
+    data = NULL,
+    experiment_data = NULL,
+    cl = NULL,
+    experimental_design = "fs+mb",
+    verbose = TRUE,
+    ...) {
   
   # Isolate dots.
   dots <- list(...)
@@ -481,23 +511,25 @@ precompute_data_assignment <- function(formula=NULL,
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
-  experiment_data <- do.call(summon_familiar,
-                             args=(c(list("formula"=formula,
-                                          "data"=data,
-                                          "experiment_data"=experiment_data,
-                                          "cl"=cl,
-                                          "experimental_design"=experimental_design,
-                                          "fs_method"="none",
-                                          "learner"="glm",
-                                          "skip_evaluation_elements"="all",
-                                          "verbose"=verbose,
-                                          ".stop_after"="setup"),
-                                     dots)))
+  experiment_data <- do.call(
+    summon_familiar,
+    args = c(
+      list(
+        "formula" = formula,
+        "data" = data,
+        "experiment_data" = experiment_data,
+        "cl" = cl,
+        "experimental_design" = experimental_design,
+        "fs_method" = "none",
+        "learner" = "glm",
+        "skip_evaluation_elements" = "all",
+        "verbose" = verbose,
+        ".stop_after" = "setup"),
+      dots))
   
   # Extract familiar models.
   return(experiment_data)
 }
-
 
 
 
@@ -575,13 +607,14 @@ precompute_data_assignment <- function(formula=NULL,
 #' @return An `experimentData` object.
 #'
 #' @export
-precompute_feature_info <- function(formula=NULL,
-                                    data=NULL,
-                                    experiment_data=NULL,
-                                    cl=NULL,
-                                    experimental_design="fs+mb",
-                                    verbose=TRUE,
-                                    ...){
+precompute_feature_info <- function(
+    formula = NULL,
+    data = NULL,
+    experiment_data = NULL,
+    cl = NULL,
+    experimental_design = "fs+mb",
+    verbose = TRUE,
+    ...) {
   
   # Isolate dots.
   dots <- list(...)
@@ -592,22 +625,26 @@ precompute_feature_info <- function(formula=NULL,
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
-  experiment_data <- do.call(summon_familiar,
-                             args=(c(list("formula"=formula,
-                                          "data"=data,
-                                          "experiment_data"=experiment_data,
-                                          "cl"=cl,
-                                          "experimental_design"=experimental_design,
-                                          "fs_method"="none",
-                                          "learner"="glm",
-                                          "skip_evaluation_elements"="all",
-                                          "verbose"=verbose,
-                                          ".stop_after"="preprocessing"),
-                                     dots)))
+  experiment_data <- do.call(
+    summon_familiar,
+    args = c(
+      list(
+        "formula" = formula,
+        "data" = data,
+        "experiment_data" = experiment_data,
+        "cl" = cl,
+        "experimental_design" = experimental_design,
+        "fs_method" = "none",
+        "learner" = "glm",
+        "skip_evaluation_elements" = "all",
+        "verbose" = verbose,
+        ".stop_after" = "preprocessing"),
+      dots))
   
   # Extract familiar models.
   return(experiment_data)
 }
+
 
 
 #' Pre-compute variable importance
@@ -685,34 +722,37 @@ precompute_feature_info <- function(formula=NULL,
 #' @seealso \code{\link{get_vimp_table}}, \code{\link{aggregate_vimp_table}}
 #'
 #' @export
-precompute_vimp <- function(formula=NULL,
-                            data=NULL,
-                            experiment_data=NULL,
-                            cl=NULL,
-                            experimental_design="fs+mb",
-                            fs_method=NULL,
-                            fs_method_parameter=NULL,
-                            verbose=TRUE,
-                          ...){
+precompute_vimp <- function(
+    formula = NULL,
+    data = NULL,
+    experiment_data = NULL,
+    cl = NULL,
+    experimental_design = "fs+mb",
+    fs_method = NULL,
+    fs_method_parameter = NULL,
+    verbose = TRUE,
+    ...) {
   
   # Check that a single learner is present.
-  fs_method <- .parse_arg(x_config=NULL,
-                          x_var=fs_method,
-                          var_name="fs_method",
-                          type="character_list",
-                          optional=FALSE)
+  fs_method <- .parse_arg(
+    x_config = NULL,
+    x_var = fs_method,
+    var_name = "fs_method",
+    type = "character_list",
+    optional = FALSE)
   
   # Hyperparameters may be interpreted as belonging to the specified learner.
-  fs_method_parameter <- .parse_arg(x_config=NULL,
-                                    x_var=fs_method_parameter,
-                                    var_name="fs_method_parameter",
-                                    type="list",
-                                    optional=TRUE,
-                                    default=list())
+  fs_method_parameter <- .parse_arg(
+    x_config = NULL,
+    x_var = fs_method_parameter,
+    var_name = "fs_method_parameter",
+    type = "list",
+    optional = TRUE,
+    default = list())
   
   # Encode hyperparameter as expected by parsing it to a nested list.
-  if(length(fs_method_parameter) > 0 & length(fs_method) == 1){
-    if(is.null(fs_method_parameter[[fs_method]])){
+  if (length(fs_method_parameter) > 0 && length(fs_method) == 1) {
+    if (is.null(fs_method_parameter[[fs_method]])) {
       fs_method_parameter_list <- list()
       fs_method_parameter_list[[fs_method]] <- fs_method_parameter
       fs_method_parameter <- fs_method_parameter_list
@@ -727,19 +767,22 @@ precompute_vimp <- function(formula=NULL,
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
-  experiment_data <- do.call(summon_familiar,
-                             args=(c(list("formula"=formula,
-                                          "data"=data,
-                                          "experiment_data"=experiment_data,
-                                          "cl"=cl,
-                                          "experimental_design"=experimental_design,
-                                          "fs_method"=fs_method,
-                                          "fs_method_parameter"=fs_method_parameter,
-                                          "learner"="glm",
-                                          "skip_evaluation_elements"="all",
-                                          "verbose"=verbose,
-                                          ".stop_after"="vimp"),
-                                     dots)))
+  experiment_data <- do.call(
+    summon_familiar,
+    args = c(
+      list(
+        "formula" = formula,
+        "data" = data,
+        "experiment_data" = experiment_data,
+        "cl" = cl,
+        "experimental_design" = experimental_design,
+        "fs_method" = fs_method,
+        "fs_method_parameter" = fs_method_parameter,
+        "learner" = "glm",
+        "skip_evaluation_elements" = "all",
+        "verbose" = verbose,
+        ".stop_after" = "vimp"),
+      dots))
   
   # Extract familiar models.
   return(experiment_data)
@@ -834,33 +877,36 @@ precompute_vimp <- function(formula=NULL,
 #' @return One or more familiarModel objects.
 #'   
 #' @export
-train_familiar <- function(formula=NULL,
-                           data=NULL,
-                           experiment_data=NULL,
-                           cl=NULL,
-                           experimental_design="fs+mb",
-                           learner=NULL,
-                           hyperparameter=NULL,
-                           verbose=TRUE,
-                           ...){
+train_familiar <- function(
+    formula = NULL,
+    data = NULL,
+    experiment_data = NULL,
+    cl = NULL,
+    experimental_design = "fs+mb",
+    learner = NULL,
+    hyperparameter = NULL,
+    verbose = TRUE,
+    ...) {
   
   # Check that a single learner is present.
-  learner <- .parse_arg(x_config=NULL,
-                        x_var=learner,
-                        var_name="learner",
-                        type="character",
-                        optional=FALSE)
+  learner <- .parse_arg(
+    x_config = NULL,
+    x_var = learner,
+    var_name = "learner",
+    type = "character",
+    optional = FALSE)
   
   # Hyperparameters may be interpreted as belonging to the specified learner.
-  hyperparameter <- .parse_arg(x_config=NULL,
-                               x_var=hyperparameter,
-                               var_name="hyperparameter",
-                               type="list",
-                               optional=TRUE,
-                               default=list())
+  hyperparameter <- .parse_arg(
+    x_config = NULL,
+    x_var = hyperparameter,
+    var_name = "hyperparameter",
+    type = "list",
+    optional = TRUE,
+    default = list())
   
   # Encode hyperparameter as expected by parsing it to a nested list.
-  if(length(hyperparameter) > 0 & is.null(hyperparameter[[learner]])){
+  if (length(hyperparameter) > 0 && is.null(hyperparameter[[learner]])) {
     hyperparameter_list <- list()
     hyperparameter_list[[learner]] <- hyperparameter
     hyperparameter <- hyperparameter_list
@@ -875,20 +921,23 @@ train_familiar <- function(formula=NULL,
   dots$experiment_dir <- NULL
   
   # Summon a familiar.
-  familiar_models <- do.call(summon_familiar,
-                             args=(c(list("formula"=formula,
-                                          "data"=data,
-                                          "experiment_data"=experiment_data,
-                                          "cl"=cl,
-                                          "experimental_design"=experimental_design,
-                                          "learner"=learner,
-                                          "hyperparameter"=hyperparameter,
-                                          "experiment_dir"=NULL,
-                                          "project_dir"=NULL,
-                                          "skip_evaluation_elements"="all",
-                                          "verbose"=verbose,
-                                          ".stop_after"="training"),
-                                     dots)))
+  familiar_models <- do.call(
+    summon_familiar,
+    args = (c(
+      list(
+        "formula" = formula,
+        "data" = data,
+        "experiment_data" = experiment_data,
+        "cl" = cl,
+        "experimental_design" = experimental_design,
+        "learner" = learner,
+        "hyperparameter" = hyperparameter,
+        "experiment_dir" = NULL,
+        "project_dir" = NULL,
+        "skip_evaluation_elements" = "all",
+        "verbose" = verbose,
+        ".stop_after" = "training"),
+      dots)))
   
   # Extract familiar models.
   return(familiar_models)
@@ -896,20 +945,22 @@ train_familiar <- function(formula=NULL,
 
 
 
-.is_absolute_path <- function(x){
-  return(dir.exists(paste0(unlist(strsplit(x, split=.Platform$file.sep))[1], .Platform$file.sep)))
+.is_absolute_path <- function(x) {
+  return(dir.exists(paste0(
+    unlist(strsplit(x, split = .Platform$file.sep))[1],
+    .Platform$file.sep)))
 }
 
 
 
-.load_configuration_file <- function(config, config_id=1){
-  if(!is.null(config)){
-    
-    # Load as file path
-    if(is.character(config)){
-      if(length(config) > 1){
-        stop(paste("Configuration: the path to the configuration file is expected",
-                   "to be a single character string. Multiple strings were found."))
+.load_configuration_file <- function(config, config_id = 1) {
+  
+  if (!is.null(config)) {
+    if (is.character(config)) {
+      if (length(config) > 1) {
+        stop(paste0(
+          "Configuration: the path to the configuration file is expected ",
+          "to be a single character string. Multiple strings were found."))
       }
       
       # Normalise file paths
@@ -920,10 +971,10 @@ train_familiar <- function(formula=NULL,
       
       # Read xml file, parse to list and remove comments
       config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
-      config <- .clean_configuration_comments(config=config)
+      config <- .clean_configuration_comments(config = config)
       
     } else {
-      if(!is.list(config) || !is.recursive(config)){
+      if (!is.list(config) || !is.recursive(config)) {
         stop("Configuration: the input configuration data is not a list of lists.")
       }
     }
@@ -936,16 +987,16 @@ train_familiar <- function(formula=NULL,
 
 
 
-.clean_configuration_comments <- function(config){
+.clean_configuration_comments <- function(config) {
   
-  cleaning_cycle <- function(conf_list){
+  cleaning_cycle <- function(conf_list) {
     # Nested function for iterating through configuration list
     
     # If the current position is no longer a list, skip the following steps
-    if(is.list(conf_list)){
+    if (is.list(conf_list)) {
       
       # Retain only those list entries that are not comments "[ comment ]".
-      conf_list <- Filter(Negate(function(x) ((is.character(x[1]) & x[1]=="[ comment ]"))), conf_list)
+      conf_list <- Filter(Negate(function(x) ((is.character(x[1]) & x[1] == "[ comment ]"))), conf_list)
       
       # Go one level deeper by applying this function to the list entries of the current list
       conf_list <- lapply(conf_list, cleaning_cycle)
@@ -955,10 +1006,11 @@ train_familiar <- function(formula=NULL,
   }
   
   # Remove comments by running the iterative cleaningCycle script
-  config_new <- cleaning_cycle(conf_list=config)
+  config_new <- cleaning_cycle(conf_list = config)
   
   return(config_new)
 }
+
 
 
 #' Create an empty xml configuration file
@@ -982,130 +1034,179 @@ train_familiar <- function(formula=NULL,
 #' }
 #' @md
 #' @keywords IO
-get_xml_config <- function(dir_path){
+get_xml_config <- function(dir_path) {
   
-  file.copy(from=system.file("config.xml", package="familiar"), to=dir_path,
-            overwrite=FALSE)
-  invisible()
+  file.copy(
+    from = system.file("config.xml", package = "familiar"),
+    to = dir_path,
+    overwrite = FALSE)
+  
+  return(invisible(TRUE))
 }
 
 
 
-.assign_settings_to_global <- function(settings){
+.assign_settings_to_global <- function(settings) {
   # Assign settings into the familiar global, environment
-  assign("settings", settings, envir=familiar_global_env)
+  assign(
+    x = "settings",
+    value = settings,
+    envir = familiar_global_env)
+  
+  return(invisible(TRUE))
 }
 
 
 
-get_settings <- function(){
+get_settings <- function() {
   
   # Retrieve settings from the backend
-  if(exists("familiar_global_env")){
-    if(exists("settings", where=familiar_global_env)){
+  if (exists("familiar_global_env")) {
+    if (exists("settings", where = familiar_global_env)) {
       data_env <- familiar_global_env
-    } else if (exists("settings", where=.GlobalEnv)){
+      
+    } else if (exists("settings", where = .GlobalEnv)) {
       data_env <- .GlobalEnv
+      
     } else {
       stop("Settings not found in backend.")
     }
-  } else if (exists("settings", where=.GlobalEnv)){
+    
+  } else if (exists("settings", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
+    
   } else {
     stop("Settings not found in backend.")
   }
   
-  return(get("settings", envir=data_env))
+  return(get("settings", envir = data_env))
 }
 
 
 
-.assign_file_paths_to_global <- function(file_paths){
+.assign_file_paths_to_global <- function(file_paths) {
   # Put file_paths into the familiar environment
-  assign("file_paths", file_paths, envir=familiar_global_env)
+  assign(
+    x = "file_paths",
+    value = file_paths,
+    envir = familiar_global_env)
+  
+  return(invisible(TRUE))
 }
 
 
 
-get_file_paths <- function(){
+get_file_paths <- function() {
   
   # Retrieve the paths to files and directories
-  if(exists("familiar_global_env")){
-    if(exists("file_paths", where=familiar_global_env)){
+  if (exists("familiar_global_env")) {
+    if (exists("file_paths", where = familiar_global_env)) {
       data_env <- familiar_global_env
-    } else if (exists("file_paths", where=.GlobalEnv)){
+      
+    } else if (exists("file_paths", where = .GlobalEnv)) {
       data_env <- .GlobalEnv
+      
     } else {
       stop("File paths were not found in backend.")
     }
-  } else if (exists("file_paths", where=.GlobalEnv)){
+    
+  } else if (exists("file_paths", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
+    
   } else {
     stop("File paths were not found in backend.")
   }
   
-  return(get("file_paths", envir=data_env))
+  return(get("file_paths", envir = data_env))
 }
 
 
 
-.assign_project_info_to_global <- function(project_info){
+.assign_project_info_to_global <- function(project_info) {
   # Put project_info_list into the familiar environment
-  assign("project_info_list", project_info, envir=familiar_global_env)
+  assign(
+    x = "project_info_list",
+    value = project_info,
+    envir = familiar_global_env)
+  
+  return(invisible(TRUE))
 }
 
 
 
-get_project_list <- function(){
+get_project_list <- function() {
   
   # Retrieve the project list
-  if(exists("familiar_global_env")){
-    if(exists("project_info_list", where=familiar_global_env)){
+  if (exists("familiar_global_env")) {
+    if (exists("project_info_list", where = familiar_global_env)) {
       data_env <- familiar_global_env
-    } else if (exists("project_info_list", where=.GlobalEnv)){
+      
+    } else if (exists("project_info_list", where = .GlobalEnv)) {
       data_env <- .GlobalEnv
+      
     } else {
       stop("Project list not found in backend.")
     }
-  } else if (exists("project_info_list", where=.GlobalEnv)){
+  } else if (exists("project_info_list", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
+    
   } else {
     stop("Project list not found in backend.")
   }
   
-  return(get("project_info_list", envir=data_env))
+  return(get("project_info_list", envir = data_env))
 }
 
 
-.import_all_familiar_objects <- function(file_paths){
+.import_all_familiar_objects <- function(file_paths) {
   familiar_list <- list()
   
   # Find familiarModel files
-  model_files <- list.files(path=file_paths$mb_dir, pattern="model.RDS", recursive=TRUE)
-  model_files <- sapply(model_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
+  model_files <- list.files(
+    path = file_paths$mb_dir,
+    pattern = "model.RDS",
+    recursive = TRUE)
+  model_files <- sapply(
+    model_files,
+    function(x, dir_path) (file.path(dir_path, x)),
+    dir_path = file_paths$mb_dir)
   
   # Load familiarModel files and add to list
   familiar_list$familiarModel <- load_familiar_object(model_files)
   
-  
   # Find familiarEnsemble files
-  ensemble_files <- list.files(path=file_paths$mb_dir, pattern="ensemble.RDS", recursive=TRUE)
-  ensemble_files <- sapply(ensemble_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
+  ensemble_files <- list.files(
+    path = file_paths$mb_dir,
+    pattern = "ensemble.RDS",
+    recursive = TRUE)
+  ensemble_files <- sapply(
+    ensemble_files,
+    function(x, dir_path) (file.path(dir_path, x)),
+    dir_path = file_paths$mb_dir)
   
   # Load familiarEnsemble files and add to list
   familiar_list$familiarEnsemble <- load_familiar_object(ensemble_files)
   
-  
   # Find familiarData files
-  data_files <- list.files(path=file_paths$fam_data_dir, pattern="data.RDS")
-  data_files <- sapply(data_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_data_dir)
+  data_files <- list.files(
+    path = file_paths$fam_data_dir,
+    pattern = "data.RDS")
+  data_files <- sapply(
+    data_files,
+    function(x, dir_path) (file.path(dir_path, x)),
+    dir_path = file_paths$fam_data_dir)
   
   # Load familiarData files and add to list
   familiar_list$familiarData <- load_familiar_object(data_files)
   
   # Find familiarCollection files
-  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="ensemble_data_|pooled_data.RDS")
-  coll_files <- sapply(coll_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_coll_dir)
+  coll_files <- list.files(
+    path = file_paths$fam_coll_dir,
+    pattern = "ensemble_data_|pooled_data.RDS")
+  coll_files <- sapply(
+    coll_files,
+    function(x, dir_path) (file.path(dir_path, x)),
+    dir_path = file_paths$fam_coll_dir)
   
   # Load familiarCollection files and add to list
   familiar_list$familiarCollection <- load_familiar_object(coll_files)
@@ -1114,9 +1215,14 @@ get_project_list <- function(){
 }
 
 
-.clean_familiar_environment <- function(){
+
+.clean_familiar_environment <- function() {
   # Cleans all objects assigned to the familiar global environment.
-  if(exists("familiar_global_env")){
-    rm(list=ls(envir=familiar_global_env), envir=familiar_global_env)
+  if (exists("familiar_global_env")) {
+    rm(
+      list = ls(envir = familiar_global_env),
+      envir = familiar_global_env)
   }
+  
+  return(invisible(TRUE))
 }

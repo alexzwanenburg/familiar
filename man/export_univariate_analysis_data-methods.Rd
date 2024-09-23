@@ -38,9 +38,9 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 will allow export as a structured list of data.tables.}
 
 \item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
-shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
-\code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
-and q-values. q-values may not be available.}
+shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
+\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
+p-values and q-values. q-values may not be available.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
@@ -103,8 +103,8 @@ creation of the underlying \code{familiarModel} objects.}
 computation and extraction of various data elements.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

@@ -8,8 +8,8 @@
 \alias{plot_feature_selection_variable_importance}
 \alias{plot_model_signature_occurrence}
 \alias{plot_model_signature_variable_importance}
-\title{Plot variable importance scores of features during feature selection or
-after training a model.}
+\title{Plot variable importance scores of features during feature selection
+or after training a model.}
 \usage{
 plot_variable_importance(
   object,
@@ -241,8 +241,8 @@ during feature selection.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use for coloring bar plots, in
-case a non-singular variable was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette to use for coloring bar plots,
+in case a non-singular variable was provided to the \code{color_by} argument.}
 
 \item{gradient_palette}{(\emph{optional}) Palette to use for filling the bars in
 case the \code{color_by} argument is not set. The bars are then coloured
@@ -284,29 +284,25 @@ is unset.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets and the number of features.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-number of facets, and the length of the longest feature name (if
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from number of facets, and the length of the longest feature name (if
 \code{rotate_x_tick_labels} is \code{TRUE}).}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_fs_vimp]{extract_fs_vimp}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -346,11 +342,11 @@ listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
 \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
 \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
 palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your own
-palette by using colour names listed by \code{grDevices::colors()} or through
-hexadecimal RGB strings.
+palette based on palettes in Tableau are used. You may also specify your
+own palette by using colour names listed by \code{grDevices::colors()} or
+through hexadecimal RGB strings.
 
-Labeling methods such as \code{set_feature_names} or \code{set_fs_method_names} can be
-applied to the \code{familiarCollection} object to update labels, and order the
-output in the figure.
+Labeling methods such as \code{set_feature_names} or \code{set_fs_method_names} can
+be applied to the \code{familiarCollection} object to update labels, and order
+the output in the figure.
 }

@@ -37,14 +37,14 @@ can be returned with the following states:
 filled. The returned variable importance table shows the raw, un-processed
 data.
 \item \code{decoded}: depending on the variable importance method, the initial
-variable importance table may contain the scores of individual contrasts for
-categorical variables. When decoded, scores from all contrasts are
+variable importance table may contain the scores of individual contrasts
+for categorical variables. When decoded, scores from all contrasts are
 aggregated to a single score for each feature.
 \item \code{declustered}: variable importance is determined from fully processed
-features, which includes clustering. This means that a single feature in the
-variable importance table may represent multiple original features. When a
-variable importance table has been declustered, all clusters have been
-turned into their constituent features.
+features, which includes clustering. This means that a single feature in
+the variable importance table may represent multiple original features.
+When a variable importance table has been declustered, all clusters have
+been turned into their constituent features.
 \item \code{ranked} (default): The scores have been used to create ranks, with lower
 ranks indicating better features.
 }

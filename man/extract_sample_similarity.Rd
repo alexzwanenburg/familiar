@@ -92,7 +92,8 @@ triangular is mirrored.
 }
 \description{
 Computes and extracts the sample distance table for samples
-analysed using a \code{familiarEnsemble} object to form a \code{familiarData} object. This table can be used to cluster
-samples, and is exported directly by \code{extract_feature_expression}.
+analysed using a \code{familiarEnsemble} object to form a \code{familiarData} object.
+This table can be used to cluster samples, and is exported directly by
+\code{extract_feature_expression}.
 }
 \keyword{internal}

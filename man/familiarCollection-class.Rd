@@ -107,10 +107,10 @@ used to create the collection. See \code{get_fs_method_names} and
 \item{\code{familiar_version}}{Version of the familiar package.
 
 familiarCollection objects collect data from one or more familiarData
-objects. This objects are important, as all plotting and export functions use
-it. The fact that one can supply familiarModel, familiarEnsemble and
+objects. This objects are important, as all plotting and export functions
+use it. The fact that one can supply familiarModel, familiarEnsemble and
 familiarData objects as arguments for these methods, is because familiar
-internally converts these into familiarCollection objects prior to executing
-the method.}
+internally converts these into familiarCollection objects prior to
+executing the method.}
 }}
 

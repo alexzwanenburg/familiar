@@ -22,9 +22,9 @@ as_familiar_ensemble(object, ...)
 \S4method{as_familiar_ensemble}{ANY}(object, ...)
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, or one or more
-\code{familiarModel} objects that will be internally converted to a
-\code{familiarEnsemble} object. Paths to such objects can also be provided.}
+\item{object}{A \code{familiarEnsemble} object, or one or more \code{familiarModel}
+objects that will be internally converted to a \code{familiarEnsemble} object.
+Paths to such objects can also be provided.}
 
 \item{...}{Unused arguments.}
 }
@@ -32,5 +32,6 @@ as_familiar_ensemble(object, ...)
 A \code{familiarEnsemble} object.
 }
 \description{
-Creates \code{familiarEnsemble} a object from \code{familiarModel} objects.
+Creates \code{familiarEnsemble} a object from \code{familiarModel}
+objects.
 }

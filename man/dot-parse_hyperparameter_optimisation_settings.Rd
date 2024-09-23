@@ -2,8 +2,7 @@
 % Please edit documentation in R/ParseSettings.R
 \name{.parse_hyperparameter_optimisation_settings}
 \alias{.parse_hyperparameter_optimisation_settings}
-\title{Internal function for parsing settings related to model hyperparameter
-optimisation}
+\title{Internal function for parsing settings related to hyperparameter optimisation}
 \usage{
 .parse_hyperparameter_optimisation_settings(
   config = NULL,
@@ -155,8 +154,8 @@ The default value is \code{0.05}.}
 to quantify the performance of a hyperparameter set. Model performance is
 assessed using the metric(s) specified by \code{optimisation_metric} on the
 in-bag (IB) and out-of-bag (OOB) samples of a bootstrap. These values are
-converted to objective scores with a standardised interval of \eqn{[-1.0,
-  1.0]}. Each pair of objective is subsequently used to compute an
+converted to objective scores with a standardised interval of
+\eqn{[-1.0, 1.0]}. Each pair of objective is subsequently used to compute an
 optimisation score. The optimisation score across different bootstraps is
 than aggregated to a summary score. This summary score is used to rank
 hyperparameter sets, and select the optimal set.
@@ -297,8 +296,7 @@ over learners, data subsamples, etc.
 List of parameters related to model hyperparameter optimisation.
 }
 \description{
-Internal function for parsing settings related to model hyperparameter
-optimisation
+Internal function for parsing settings related to hyperparameter optimisation
 }
 \references{
 \enumerate{

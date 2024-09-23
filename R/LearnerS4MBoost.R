@@ -94,11 +94,13 @@ setMethod("is_available", signature(object="familiarMBoostLM"),
                                                            "boosted_glm_loglog", "boosted_glm_weibull",
                                                            "boosted_glm_lognormal", "boosted_glm_gehan",
                                                            "boosted_glm_cindex")){
+              ..deprecation_mboost()
               return(TRUE)
               
             } else if(outcome_type == "continuous" & learner %in% c("boosted_glm", "boosted_glm_gaussian",
                                                                     "boosted_glm_huber", "boosted_glm_laplace",
                                                                     "boosted_glm_poisson")){
+              ..deprecation_mboost()
               return(TRUE)
               
             # } else if(outcome_type == "multinomial" & learner %in% c("boosted_glm", "boosted_glm_multinomial")){
@@ -108,9 +110,11 @@ setMethod("is_available", signature(object="familiarMBoostLM"),
                                                                   "boosted_glm_probit", "boosted_glm_loglog",
                                                                   "boosted_glm_cauchy", "boosted_glm_log",
                                                                   "boosted_glm_auc")){
+              ..deprecation_mboost()
               return(TRUE)
               
             } else if(outcome_type == "count" & learner %in% c("boosted_glm", "boosted_glm_poisson")) {
+              ..deprecation_mboost()
               return(TRUE)
               
             } else {
@@ -178,7 +182,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             
             
             ##### Signature size ###############################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
+            param$sign_size <- .get_default_sign_size(data=data)
             
             
             ##### Model family #####
@@ -671,7 +675,7 @@ setMethod("..predict_survival_probability", signature(object="familiarMBoost", d
             # Check that required packages are loaded and installed.
             require_package(object, "predict")
             
-            return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
+            return(.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
 
@@ -822,7 +826,7 @@ setMethod("..set_recalibration_model", signature(object="familiarMBoost", data="
             if(object@outcome_type %in% c("survival") & as.character(object@hyperparameters$family) %in% c("gehan", "cindex")){
               
               # Calibrate the models.
-              object@calibration_model <- learner.recalibrate_model(object=object, data=data, time=time)
+              object@calibration_model <- .set_recalibration(object=object, data=data, time=time)
               
               # Return object.
               return(object)
@@ -830,7 +834,7 @@ setMethod("..set_recalibration_model", signature(object="familiarMBoost", data="
             } else if(object@outcome_type %in% c("binomial") & as.character(object@hyperparameters$family) %in% c("auc")){
               
               # Calibrate the models.
-              object@calibration_model <- learner.recalibrate_model(object=object, data=data)
+              object@calibration_model <- .set_recalibration(object=object, data=data)
               
               # Return object.
               return(object)

@@ -253,8 +253,8 @@ outcomes) or qualitative (other outcome types) palette used to show outcome
 values. This argument is ignored if the outcome is not shown.}
 
 \item{outcome_palette_range}{(\emph{optional}) Numerical range used to span the
-gradient of numeric (\code{continuous}, \code{count}) outcome values. This argument is
-ignored for other outcome types or if the outcome is not shown.}
+gradient of numeric (\code{continuous}, \code{count}) outcome values. This argument
+is ignored for other outcome types or if the outcome is not shown.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -288,9 +288,9 @@ ticks themselves) is removed for all but the left-most facet plot(s).
 legend will not have a name.}
 
 \item{outcome_legend_label}{(\emph{optional}) Label to provide to the legend for
-outcome data. If NULL, the legend will not have a name. By default, \code{class},
-\code{value} and \code{event} are used for \code{binomial} and \code{multinomial}, \code{continuous}
-and \code{count}, and \code{survival} outcome types, respectively.}
+outcome data. If NULL, the legend will not have a name. By default,
+\code{class}, \code{value} and \code{event} are used for \code{binomial} and \code{multinomial},
+\code{continuous} and \code{count}, and \code{survival} outcome types, respectively.}
 
 \item{plot_title}{(\emph{optional}) Label to provide as figure title. If NULL, no
 title is shown.}
@@ -322,19 +322,19 @@ is unset.}
 controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
 explicitly.}
 
-\item{show_feature_dendrogram}{(\emph{optional}) Show feature dendrogram around the
-main panel. Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top},
+\item{show_feature_dendrogram}{(\emph{optional}) Show feature dendrogram around
+the main panel. Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top},
 \code{bottom}, \code{left} and \code{right}.
 
 If a position is specified, it should be appropriate with regard to the
 \code{x_axis_by} or \code{y_axis_by} argument. If \code{x_axis_by} is \code{sample} (default),
-the only valid positions are \code{top} (default) and \code{bottom}. Alternatively, if
-\code{y_axis_by} is \code{feature}, the only valid positions are \code{right} (default) and
-\code{left}.
+the only valid positions are \code{top} (default) and \code{bottom}. Alternatively,
+if \code{y_axis_by} is \code{feature}, the only valid positions are \code{right} (default)
+and \code{left}.
 
-A dendrogram can only be drawn from cluster methods that produce dendograms,
-such as \code{hclust}. A dendogram can for example not be constructed using the
-partioning around medioids method (\code{pam}).}
+A dendrogram can only be drawn from cluster methods that produce
+dendograms, such as \code{hclust}. A dendogram can for example not be
+constructed using the partioning around medioids method (\code{pam}).}
 
 \item{show_sample_dendrogram}{(\emph{optional}) Show sample dendrogram around the
 main panel. Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top},
@@ -342,17 +342,17 @@ main panel. Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \
 
 If a position is specified, it should be appropriate with regard to the
 \code{x_axis_by} or \code{y_axis_by} argument. If \code{y_axis_by} is \code{sample} (default),
-the only valid positions are \code{right} (default) and \code{left}. Alternatively, if
-\code{x_axis_by} is \code{sample}, the only valid positions are \code{top} (default) and
-\code{bottom}.
+the only valid positions are \code{right} (default) and \code{left}. Alternatively,
+if \code{x_axis_by} is \code{sample}, the only valid positions are \code{top} (default)
+and \code{bottom}.
 
-A dendrogram can only be drawn from cluster methods that produce dendograms,
-such as \code{hclust}. A dendogram can for example not be constructed using the
-partioning around medioids method (\code{pam}).}
+A dendrogram can only be drawn from cluster methods that produce
+dendograms, such as \code{hclust}. A dendogram can for example not be
+constructed using the partioning around medioids method (\code{pam}).}
 
-\item{show_normalised_data}{(\emph{optional}) Flag that determines whether the data
-shown in the main heatmap is normalised using the same settings as within
-the analysis (\code{fixed}; default), using a standardisation method
+\item{show_normalised_data}{(\emph{optional}) Flag that determines whether the
+data shown in the main heatmap is normalised using the same settings as
+within the analysis (\code{fixed}; default), using a standardisation method
 (\code{set_normalisation}) that is applied separately to each dataset, or not at
 all (\code{none}), which shows the data at the original scale, albeit with
 batch-corrections.
@@ -368,9 +368,9 @@ graph. Can be \code{TRUE}, \code{FALSE}, \code{NULL} or a poistion, i.e. \code{t
 
 If a position is specified, it should be appropriate with regard to the
 \code{x_axis_by} or \code{y_axis_by} argument. If \code{y_axis_by} is \code{sample} (default),
-the only valid positions are \code{left} (default) and \code{right}. Alternatively, if
-\code{x_axis_by} is \code{sample}, the only valid positions are \code{top} (default) and
-\code{bottom}.
+the only valid positions are \code{left} (default) and \code{right}. Alternatively,
+if \code{x_axis_by} is \code{sample}, the only valid positions are \code{top} (default)
+and \code{bottom}.
 
 The outcome data will be drawn between the main panel and the sample
 dendrogram (if any).}
@@ -381,8 +381,8 @@ which also allows for specifying relative heights.}
 
 \item{outcome_height}{(\emph{optional}) Height of an outcome data column/row. The
 height is 0.3 cm by default. Height is expected to be a grid unit (see
-\code{grid::unit}), which also allows for specifying relative heights. In case of
-\code{survival} outcome data with multipe \code{evaluation_times}, this height is
+\code{grid::unit}), which also allows for specifying relative heights. In case
+of \code{survival} outcome data with multipe \code{evaluation_times}, this height is
 multiplied by the number of time points.}
 
 \item{evaluation_times}{(\emph{optional}) Times at which the event status of
@@ -393,10 +393,11 @@ outcome. If not specified, the values used when creating the underlying
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
@@ -406,18 +407,13 @@ plotting.}
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_expression]{extract_feature_expression}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}

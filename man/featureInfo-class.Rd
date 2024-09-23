@@ -59,8 +59,8 @@ pre-processing because the variance was too low. Requires applying
 \code{low_variance} as a \code{filter_method}.}
 
 \item{\code{removed_low_robustness}}{Specifies whether the feature was removed during
-pre-processing because it lacks robustness. Requires applying
-\code{robustness} as a \code{filter_method}, as well as repeated measurement.}
+pre-processing because it lacks robustness. Requires applying \code{robustness}
+as a \code{filter_method}, as well as repeated measurement.}
 
 \item{\code{removed_low_importance}}{Specifies whether the feature was removed during
 pre-processing because it lacks relevance. Requires applying
@@ -70,19 +70,26 @@ pre-processing because it lacks relevance. Requires applying
 
 \item{\code{robustness}}{Specifies robustness of the feature, if measured.}
 
-\item{\code{univariate_importance}}{Specifies the univariate p-value of the feature, if measured.}
+\item{\code{univariate_importance}}{Specifies the univariate p-value of the feature,
+if measured.}
 
-\item{\code{transformation_parameters}}{Details parameters for power transformation of numeric features.}
+\item{\code{transformation_parameters}}{Details parameters for power transformation
+of numeric features.}
 
-\item{\code{normalisation_parameters}}{Details parameters for (global) normalisation of numeric features.}
+\item{\code{normalisation_parameters}}{Details parameters for (global) normalisation
+of numeric features.}
 
-\item{\code{batch_normalisation_parameters}}{Details parameters for batch normalisation of numeric features.}
+\item{\code{batch_normalisation_parameters}}{Details parameters for batch
+normalisation of numeric features.}
 
-\item{\code{imputation_parameters}}{Details parameters or models for imputation of missing values.}
+\item{\code{imputation_parameters}}{Details parameters or models for imputation of
+missing values.}
 
-\item{\code{cluster_parameters}}{Details parameters for forming clusters with other features.}
+\item{\code{cluster_parameters}}{Details parameters for forming clusters with other
+features.}
 
-\item{\code{required_features}}{Details features required for clustering or imputation.}
+\item{\code{required_features}}{Details features required for clustering or
+imputation.}
 
 \item{\code{familiar_version}}{Version of the familiar package.}
 }}

@@ -14,10 +14,14 @@
 An ordered array of class labels.
 }
 \description{
-Outcome classes in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
+Outcome classes in familiarCollection objects can have custom
+names for export and plotting. This function retrieves the currently
+assigned names.
 }
 \details{
-Labels convert internal class names to the requested label at export or when plotting. Labels can be changed using the \code{set_class_names} method.
+Labels convert internal class names to the requested label at export
+or when plotting. Labels can be changed using the \code{set_class_names}
+method.
 }
 \seealso{
 \itemize{

@@ -1,42 +1,53 @@
-.get_available_bootstrap_confidence_interval_methods <- function(){
+.get_available_bootstrap_confidence_interval_methods <- function() {
   return(c("bc", "percentile"))
 }
 
 
 
-
-..bootstrap_ci <- function(x, x_0=NULL, confidence_level=NULL, percentiles=NULL, bootstrap_ci_method="percentile", ...){
+..bootstrap_ci <- function(
+    x,
+    x_0 = NULL,
+    confidence_level = NULL,
+    percentiles = NULL,
+    bootstrap_ci_method = "percentile",
+    ...) {
   
   # Test confidence level
-  if(!is.null(confidence_level)){
-    if(confidence_level >= 1.0){
+  if (!is.null(confidence_level)) {
+    if (confidence_level >= 1.0) {
       stop("A 100% confidence interval does not exist.")
-    } else if(confidence_level <= 0.0){
+      
+    } else if (confidence_level <= 0.0) {
       stop("The confidence interval cannot be smaller than 0.")
     }
     
     # Compute percentiles from confidence level, and add the median.
-    percentiles <- c(0.5,
-                     (1.0 - confidence_level) / 2.0,
-                     1.0 - (1.0 - confidence_level) / 2.0)
+    percentiles <- c(
+      0.5,
+      (1.0 - confidence_level) / 2.0,
+      1.0 - (1.0 - confidence_level) / 2.0)
   }
   
-  if(!is.null(percentiles)){
-    if(any(percentiles > 1.0)){
+  if (!is.null(percentiles)) {
+    if (any(percentiles > 1.0)) {
       stop("Percentiles cannot be greater than 1.")
-    } else if(any(percentiles < 0.0)){
+      
+    } else if (any(percentiles < 0.0)) {
       stop("Percentiles cannot be smaller than 0.")
     }
   }
   
-  if(is.null(confidence_level) & is.null(percentiles)) ..error_reached_unreachable_code("..bootstrap_ic: confidence_interval and percentiles arguments cannot both be NULL.")
+  if (is.null(confidence_level) && is.null(percentiles)) {
+    ..error_reached_unreachable_code(
+      "..bootstrap_ic: confidence_interval and percentiles arguments cannot both be NULL.")
+  }
   
   # For values that are not numeric, return mode. Note that the name "median" is
   # used for compatibility purposes.
-  if(!is.numeric(x)) return(list("median"=get_mode(x)))
+  if (!is.numeric(x)) return(list("median" = get_mode(x)))
   
   # Set up percentile names.
-  if(!is.null(confidence_level)){
+  if (!is.null(confidence_level)) {
     # When a confidence level is provided, use standard naming.
     percentile_names <- c("median", "ci_low", "ci_up")
     
@@ -52,7 +63,8 @@
     
     # Set percentile names by passing them through the column name
     # checker.
-    percentile_names <- check_column_name(paste0("q_", format(percentiles, nsmall=percentile_names_digits)))
+    percentile_names <- .replace_illegal_column_name(
+      paste0("q_", format(percentiles, nsmall = percentile_names_digits)))
   }
   
   # Create an empty list.
@@ -62,58 +74,62 @@
   # Select finite values.
   x <- x[is.finite(x)]
   
-  if(length(x) == 0) return(empty_list)
+  if (length(x) == 0) return(empty_list)
   
   # If no x_0 is provided, the percentile method should be used.
-  if(length(x_0) == 0) bootstrap_ci_method <- "percentile"
+  if (length(x_0) == 0) bootstrap_ci_method <- "percentile"
   
-  if(bootstrap_ci_method == "percentile"){
+  if (bootstrap_ci_method == "percentile") {
     # Follows the percentile method of Efron, B. & Hastie, T. Computer Age
     # Statistical Inference. (Cambridge University Press, 2016).
    
     # Compute percentiles within the data set
-    percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
+    percentile_values <- stats::quantile(
+      x,
+      probs = percentiles,
+      names = FALSE)
     
     # Generate a summary list
     summary_list <- as.list(percentile_values)
     names(summary_list) <- percentile_names
     
-  } else if(bootstrap_ci_method == "bc"){
+  } else if (bootstrap_ci_method == "bc") {
     # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
     # Age Statistical Inference. (Cambridge University Press, 2016).
-    if(length(x_0) > 1){
+    if (length(x_0) > 1) {
       stop(paste0("The full-data estimate should have length 1. Found: length ", length(x_0), "."))
     } 
     
-    if(!is.finite(x_0)) return(empty_list)
+    if (!is.finite(x_0)) return(empty_list)
     
     # Compute the bias-correction value. In absence of bias, z_0 equals 0.
     z_0 <- stats::qnorm(sum(x <= x_0) / length(x))
     
-    if(!is.finite(z_0)){
+    if (!is.finite(z_0)) {
       # This means that we are dealing with an edge case where sum(x <= x_0) is
       # either 0 or the length of x. In that case we determine the confidence
       # interval with the percentile method.
-      summary_list <- ..bootstrap_ci(x=x,
-                                     x_0=x_0,
-                                     confidence_level=confidence_level,
-                                     percentiles=percentiles,
-                                     bootstrap_ci_method="percentile")
+      summary_list <- ..bootstrap_ci(
+        x = x,
+        x_0 = x_0,
+        confidence_level = confidence_level,
+        percentiles = percentiles,
+        bootstrap_ci_method = "percentile")
       
       return(summary_list)
     }
-    
-    # Add median in case its missing
-    if(!is.null(confidence_level))
     
     # Define the z-statistic for bounds of the confidence interval.
     z_alpha <- stats::qnorm(percentiles)
     
     # Define bias-corrected percentiles.
-    bc_percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
+    bc_percentiles <- stats::pnorm(2.0 * z_0 + z_alpha)
     
     # Compute percentiles within the data set
-    percentile_values <- stats::quantile(x, probs=bc_percentiles, names=FALSE)
+    percentile_values <- stats::quantile(
+      x,
+      probs = bc_percentiles,
+      names = FALSE)
     
     # Generate a summary list
     summary_list <- as.list(percentile_values)
@@ -124,21 +140,21 @@
 }
 
 
-..bootstrap_bias_correction <- function(x){
+..bootstrap_bias_correction <- function(x) {
   
   # Define empty summary list.
-  empty_list <- list("median"=NA_real_)
+  empty_list <- list("median" = NA_real_)
   
   # Select finite values.
   x <- x[is.finite(x)]
   
-  if(length(x) == 0) return(empty_list)
+  if (length(x) == 0) return(empty_list)
   
   # Compute the median value over the bootstraps.
-  if(is.numeric(x)){
+  if (is.numeric(x)) {
     summary_list <- list("median" = stats::median(x))
     
-  } else if(is.ordered(x)){
+  } else if (is.ordered(x)) {
     # Determine the mean average risk group. This requires discretisation
     # as rounding toward the nearest group would overinflate center groups.
     x_levels <- levels(x)
@@ -146,13 +162,16 @@
     
     # Discretise bins floor((mu - 1) / ((n-1) / n)) + 1. See fixed bin size
     # discretisation.
-    x_num <- floor(n * (mean(as.numeric(x), na.rm=TRUE) - 1) / (n - 1)) + 1
+    x_num <- floor(n * (mean(as.numeric(x), na.rm = TRUE) - 1) / (n - 1)) + 1
     
     # Check if the x_num still falls within the range.
     x_num <- ifelse(x_num > n, n, x_num)
     
     # Re-encode and add to list.
-    summary_list <- list("median" = factor(x_levels[x_num], levels=x_levels, ordered=TRUE))
+    summary_list <- list("median" = factor(
+      x_levels[x_num],
+      levels = x_levels,
+      ordered = TRUE))
     
   } else {
     summary_list <- list("median" = get_mode(x))

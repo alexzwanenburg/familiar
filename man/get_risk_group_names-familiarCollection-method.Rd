@@ -14,10 +14,14 @@
 An ordered array of risk group labels.
 }
 \description{
-Risk groups in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
+Risk groups in familiarCollection objects can have custom names
+for export and plotting. This function retrieves the currently assigned
+names.
 }
 \details{
-Labels convert internal naming of risk groups to the requested label at export or when plotting. Labels can be changed using the \code{set_risk_group_names} method.
+Labels convert internal naming of risk groups to the requested label
+at export or when plotting. Labels can be changed using the
+\code{set_risk_group_names} method.
 }
 \seealso{
 \itemize{

@@ -14,10 +14,13 @@
 An ordered array of dataset name labels.
 }
 \description{
-Datasets in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
+Datasets in familiarCollection objects can have custom names for
+export and plotting. This function retrieves the currently assigned names.
 }
 \details{
-Labels convert internal naming of data sets to the requested label at export or when plotting. Labels can be changed using the \code{set_data_set_names} method.
+Labels convert internal naming of data sets to the requested label
+at export or when plotting. Labels can be changed using the
+\code{set_data_set_names} method.
 }
 \seealso{
 \itemize{

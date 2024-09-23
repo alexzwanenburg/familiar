@@ -63,6 +63,7 @@ setClass(
     "model" = NULL))
 
 
+
 create_imputation_parameter_skeleton <- function(
     feature_info_list,
     feature_names = NULL,
@@ -111,7 +112,10 @@ create_imputation_parameter_skeleton <- function(
     .override_existing = FALSE) {
   # Check if imputation data was already completed, and does not require being
   # determined anew.
-  if (feature_info_complete(feature_info@imputation_parameters) && !.override_existing) return(feature_info)
+  if (feature_info_complete(feature_info@imputation_parameters)
+      && !.override_existing) {
+    return(feature_info)
+  }
   
   # Pass to underlying function that constructs the skeleton.
   object <- ..create_imputation_parameter_skeleton(
@@ -185,8 +189,9 @@ add_imputation_info <- function(
   
   # Sanity check.
   if (!(setequal(feature_names, get_available_features(feature_info_list = feature_info_list)))) {
-    ..error_reached_unreachable_code(
-      "add_imputation_info: features in data and the feature info list are expect to be the same, but were not.")
+    ..error_reached_unreachable_code(paste0(
+      "add_imputation_info: features in data and the feature info list ",
+      "are expect to be the same, but were not."))
   }
   
   # Iterate over features and train univariate imputation.
@@ -317,7 +322,9 @@ add_imputation_info <- function(
     type = feature_info@imputation_parameters@type)
   
   # Return data as is, if there is no censored data.
-  if (all(uncensored_data)) return(data@data[[feature_info@imputation_parameters@name]])
+  if (all(uncensored_data)) {
+    return(data@data[[feature_info@imputation_parameters@name]])
+  }
   
   # Infer missing values.
   y <- apply_feature_info_parameters(
@@ -353,7 +360,9 @@ setMethod(
 # add_feature_info_parameters (generic imputation, ANY) ------------------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object = "featureInfoParametersImputation", data = "ANY"),
+  signature(
+    object = "featureInfoParametersImputation",
+    data = "ANY"),
   function(
     object,
     data,
@@ -404,7 +413,9 @@ setMethod(
 # add_feature_info_parameters (simple imputation, data object) -----------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationSimple", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationSimple",
+    data = "dataObject"),
   function(
     object,
     data,
@@ -457,7 +468,9 @@ setMethod(
 # add_feature_info_parameters (lasso imputation, data object) ------------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationLasso", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationLasso",
+    data = "dataObject"),
   function(
     object, 
     data,
@@ -662,7 +675,9 @@ setMethod(
 # apply_feature_info_parameters (none, data object) ----------------------------
 setMethod(
   "apply_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationNone", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationNone",
+    data = "dataObject"),
   function(
     object, 
     data,
@@ -677,7 +692,9 @@ setMethod(
 # apply_feature_info_parameters (simple, data object) --------------------------
 setMethod(
   "apply_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationSimple", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationSimple",
+    data = "dataObject"),
   function(
     object, 
     data,
@@ -707,7 +724,9 @@ setMethod(
 # apply_feature_info_parameters (none, data object) ----------------------------
 setMethod(
   "apply_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationLasso", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationLasso",
+    data = "dataObject"),
   function(
     object, 
     data,
@@ -786,7 +805,9 @@ setMethod(
 # apply_feature_info_parameters (container, data object) -----------------------
 setMethod(
   "apply_feature_info_parameters",
-  signature(object = "featureInfoParametersImputationContainer", data = "dataObject"),
+  signature(
+    object = "featureInfoParametersImputationContainer",
+    data = "dataObject"),
   function(
     object, 
     data,
@@ -829,9 +850,10 @@ setMethod(
     imputed_values <- data.table::as.data.table(imputed_values)
     
     # Aggregate by row.
-    imputed_values <- imputed_values[, list("value" = aggregation_function(do.call(c, .SD))),
-                                     .SDcols = colnames(imputed_values),
-                                     by = seq_len(nrow(imputed_values))]
+    imputed_values <- imputed_values[, list(
+      "value" = aggregation_function(do.call(c, .SD))),
+      .SDcols = colnames(imputed_values),
+      by = seq_len(nrow(imputed_values))]
     
     # Replace censored values in y.
     y[!uncensored_data] <- imputed_values$value

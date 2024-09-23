@@ -122,8 +122,8 @@ rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
 bootstraps.
 
 The default value is \code{0.95}.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

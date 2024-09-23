@@ -12,7 +12,7 @@ vcov(object, ...)
 \arguments{
 \item{object}{a familiarModel object}
 
-\item{...}{additional arguments passed to \code{vcob} methods for the underlying
+\item{...}{additional arguments passed to \code{vcov} methods for the underlying
 model, when available.}
 }
 \value{

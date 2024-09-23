@@ -156,13 +156,13 @@ creation of the underlying \code{familiarModel} objects.}
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
 \item{dir_path}{(\emph{optional}) Path to the directory where created figures are
-saved to. Output is saved in the \code{variable_importance} subdirectory. If NULL
-no figures are saved, but are returned instead.}
+saved to. Output is saved in the \code{variable_importance} subdirectory. If
+NULL no figures are saved, but are returned instead.}
 
 \item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
-shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
-\code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
-and q-values. q-values may not be available.}
+shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
+\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
+p-values and q-values. q-values may not be available.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -192,9 +192,9 @@ non-singular variable was provided to the \code{color_by} argument.}
 
 \item{gradient_palette}{(\emph{optional}) Palette to use for filling the bars in
 case the \code{color_by} argument is not set. The bars are then coloured
-according to their importance. By default, no gradient is used, and the bars
-are not filled according to importance. Use \code{NULL} to fill the bars using
-the default palette in \code{familiar}.}
+according to their importance. By default, no gradient is used, and the
+bars are not filled according to importance. Use \code{NULL} to fill the bars
+using the default palette in \code{familiar}.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -228,10 +228,11 @@ a significance level, e.g. 0.05. Can be NULL to not draw anything.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided for the
 plotting.}
@@ -241,18 +242,13 @@ plotting.}
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}
   \describe{
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -311,20 +307,20 @@ and \code{facet_by}:
 \item \code{data_set}: data sets
 }
 
-Unlike for plots of feature ranking in feature selection and after modelling
-(as assessed by model-specific routines), clusters of features are now found
-during creation of underlying \code{familiarData} objects, instead of through
-consensus clustering. Hence, clustering results may differ due to
-differences in the underlying datasets.
+Unlike for plots of feature ranking in feature selection and after
+modelling (as assessed by model-specific routines), clusters of features
+are now found during creation of underlying \code{familiarData} objects, instead
+of through consensus clustering. Hence, clustering results may differ due
+to differences in the underlying datasets.
 
 Available palettes for \code{discrete_palette} and \code{gradient_palette} are those
 listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
 \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
 \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
 palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your own
-palette by using colour names listed by \code{grDevices::colors()} or through
-hexadecimal RGB strings.
+palette based on palettes in Tableau are used. You may also specify your
+own palette by using colour names listed by \code{grDevices::colors()} or
+through hexadecimal RGB strings.
 
 Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
 be applied to the \code{familiarCollection} object to update labels, and order

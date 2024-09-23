@@ -107,8 +107,8 @@ plot_model_performance(
 }
 \arguments{
 \item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
+objects, that will be internally converted to a \code{familiarCollection}
+object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
 prior to export. Paths to such files can also be provided.}
 
@@ -151,8 +151,8 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{plot_type}{(\emph{optional}) Type of plot to draw. This is one of \code{heatmap}
 (draws a heatmap), \code{barplot} (draws a barplot with confidence intervals),
-\code{boxplot} (draws a boxplot) and \code{violinplot} (draws a violin plot). Defaults
-to \code{violinplot}.
+\code{boxplot} (draws a boxplot) and \code{violinplot} (draws a violin plot).
+Defaults to \code{violinplot}.
 
 The choice for \code{plot_type} affects several other arguments, e.g. \code{color_by}
 is not used for \code{heatmap} and \code{y_axis_by} is only used by \code{heatmap}.}
@@ -206,14 +206,15 @@ is unset.}
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
 
-\item{height}{(\emph{optional}) Height of the plot. A default value is derived from
-the number of features and the number of facets.}
+\item{height}{(\emph{optional}) Height of the plot. A default value is derived
+from the number of features and the number of facets.}
 
-\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+\item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or
+\verb{in}.}
 
 \item{annotate_performance}{(\emph{optional}) Indicates whether performance in
-heatmaps should be annotated with text. Can be \code{none}, \code{value} (default), or
-\code{value_ci} (median value plus 95\% credibility intervals).}
+heatmaps should be annotated with text. Can be \code{none}, \code{value} (default),
+or \code{value_ci} (median value plus 95\% credibility intervals).}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
@@ -345,18 +346,13 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
-    \item{\code{filename}}{File name to create on disk.}
-    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
 (e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only). If
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
-    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
-are combined to create the fully qualified file name. Defaults to the
-working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -386,12 +382,12 @@ using various plot representations.
 Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
 \code{evaluation_time} (survival outcome only) and \code{metric}. The default for
 \code{heatmap} is to split by \code{metric}, facet by \code{data_set} and
-\code{evaluation_time}, position \code{learner} along the x-axis and \code{fs_method} along
-the y-axis. The \code{color_by} argument is not used. The only valid options for
-\code{x_axis_by} and \code{y_axis_by} are \code{learner} and \code{fs_method}.
+\code{evaluation_time}, position \code{learner} along the x-axis and \code{fs_method}
+along the y-axis. The \code{color_by} argument is not used. The only valid
+options for \code{x_axis_by} and \code{y_axis_by} are \code{learner} and \code{fs_method}.
 
-For other plot types (\code{barplot}, \code{boxplot} and \code{violinplot}), depends on the
-number of learners and feature selection methods:
+For other plot types (\code{barplot}, \code{boxplot} and \code{violinplot}), depends on
+the number of learners and feature selection methods:
 \itemize{
 \item \emph{one feature selection method and one learner}: the default is to split by
 \code{metric}, and have \code{data_set} along the x-axis.
@@ -412,9 +408,9 @@ listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
 \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
 \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
 palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your own
-palette by using colour names listed by \code{grDevices::colors()} or through
-hexadecimal RGB strings.
+palette based on palettes in Tableau are used. You may also specify your
+own palette by using colour names listed by \code{grDevices::colors()} or
+through hexadecimal RGB strings.
 
 Labeling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order

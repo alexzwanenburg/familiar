@@ -287,8 +287,8 @@ increased disk or network IO. Models can only be dynamically loaded if they
 are found at an accessible disk or network location. Setting this parameter
 to \code{TRUE} may help if parallel processing causes out-of-memory issues during
 evaluation.}
-    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+    \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
 }

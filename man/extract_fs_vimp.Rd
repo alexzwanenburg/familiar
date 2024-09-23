@@ -51,6 +51,7 @@ A list containing feature selection variable importance information.
 }
 \description{
 Aggregate variable importance obtained during feature selection.
-This information can only be obtained as part of the main \code{summon_familiar} process.
+This information can only be obtained as part of the main \code{summon_familiar}
+process.
 }
 \keyword{internal}

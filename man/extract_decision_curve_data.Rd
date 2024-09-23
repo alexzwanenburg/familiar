@@ -165,12 +165,12 @@ A list with data.tables containing calibration test information for
 the ensemble model.
 }
 \description{
-Computes decision curve analysis data from a \code{familiarEnsemble} object.
-Calibration tests are performed based on expected (predicted) and observed
-outcomes. For all outcomes, calibration-at-the-large and calibration slopes
-are determined. Furthermore, for all but survival outcomes, a repeated,
-randomised grouping Hosmer-Lemeshow test is performed. For survival
-outcomes, the Nam-D'Agostino and Greenwood-Nam-D'Agostino tests are
-performed.
+Computes decision curve analysis data from a \code{familiarEnsemble}
+object. Calibration tests are performed based on expected (predicted) and
+observed outcomes. For all outcomes, calibration-at-the-large and
+calibration slopes are determined. Furthermore, for all but survival
+outcomes, a repeated, randomised grouping Hosmer-Lemeshow test is performed.
+For survival outcomes, the Nam-D'Agostino and Greenwood-Nam-D'Agostino tests
+are performed.
 }
 \keyword{internal}

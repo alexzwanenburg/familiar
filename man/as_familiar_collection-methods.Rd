@@ -69,13 +69,13 @@ as_familiar_collection(
 }
 \arguments{
 \item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
+objects, that will be internally converted to a \code{familiarCollection}
+object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
 prior to export. Paths to such files can also be provided.}
 
-\item{familiar_data_names}{Names of the dataset(s). Only used if the \code{object} parameter
-is one or more \code{familiarData} objects.}
+\item{familiar_data_names}{Names of the dataset(s). Only used if the \code{object}
+parameter is one or more \code{familiarData} objects.}
 
 \item{collection_name}{Name of the collection.}
 

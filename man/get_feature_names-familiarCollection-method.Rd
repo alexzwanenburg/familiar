@@ -14,10 +14,13 @@
 An ordered array of feature labels.
 }
 \description{
-Features in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
+Features in familiarCollection objects can have custom names for
+export and plotting. This function retrieves the currently assigned names.
 }
 \details{
-Labels convert internal naming of features to the requested label at export or when plotting. Labels can be changed using the \code{set_feature_names} method.
+Labels convert internal naming of features to the requested label at
+export or when plotting. Labels can be changed using the
+\code{set_feature_names} method.
 }
 \seealso{
 \itemize{

@@ -67,26 +67,28 @@ predict(object, ...)
 }
 \arguments{
 \item{object}{A familiar model or ensemble of models that should be used for
-prediction. This can also be a path to the ensemble model, one or more paths
-to models, or a list of models.}
+prediction. This can also be a path to the ensemble model, one or more
+paths to models, or a list of models.}
 
 \item{...}{to be documented.}
 
-\item{newdata}{Data to which the models are fitted. \code{familiar} performs checks
-on the data to ensure that all features required for fitting the model are
-present, and no additional levels are present in categorical features.
-Unlike other \code{predict} methods, \code{newdata} cannot be missing in \code{familiar},
-as training data are not stored with the models.}
+\item{newdata}{Data to which the models are fitted. \code{familiar} performs
+checks on the data to ensure that all features required for fitting the
+model are present, and no additional levels are present in categorical
+features. Unlike other \code{predict} methods, \code{newdata} cannot be missing in
+\code{familiar}, as training data are not stored with the models.}
 
 \item{type}{Type of prediction made. The following values are directly
 supported:
 \itemize{
 \item \code{default}: Default prediction, i.e. value estimates for \code{count} and
 \code{continuous} outcomes, predicted class probabilities and class for
-\code{binomial} and \code{multinomial} and the model response for \code{survival} outcomes.
+\code{binomial} and \code{multinomial} and the model response for \code{survival}
+outcomes.
 \item \code{survival_probability}: Predicts survival probabilities at the time
-specified by \code{time}. Only applicable to \code{survival} outcomes. Some models may
-not allow for predicting survival probabilities based on their response.
+specified by \code{time}. Only applicable to \code{survival} outcomes. Some models
+may not allow for predicting survival probabilities based on their
+response.
 \item \code{novelty}: Predicts novelty of each sample, which can be used for
 out-of-distribution detection.
 \item \code{risk_stratification}: Predicts the strata to which the data belongs. Only
@@ -103,8 +105,8 @@ prediction types may fail to return results if the model has been trimmed.}
 models have a response that does not depend on \code{time}, e.g. \code{cox}, whereas
 others do, e.g. \code{random_forest}.}
 
-\item{dir_path}{Path to the folder containing the models. Ensemble objects are
-stored with the models detached. In case the models were moved since
+\item{dir_path}{Path to the folder containing the models. Ensemble objects
+are stored with the models detached. In case the models were moved since
 creation, \code{dir_path} can be used to specify the current folder.
 Alternatively the \code{update_model_dir_path} method can be used to update the
 path.}
@@ -124,9 +126,10 @@ instances into risk groups. If this parameter is specified,
 are ignored, and \code{stratification_threshold} is used instead.}
 
 \item{stratification_method}{Selects the stratification method from which the
-threshold values should be selected. If the model or ensemble of models does
-not contain thresholds for the indicated method, an error is returned. In
-addition this argument is ignored if a \code{stratification_threshold} is set.}
+threshold values should be selected. If the model or ensemble of models
+does not contain thresholds for the indicated method, an error is returned.
+In addition this argument is ignored if a \code{stratification_threshold} is
+set.}
 
 \item{percentiles}{Currently unused.}
 }
