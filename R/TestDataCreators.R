@@ -10,6 +10,7 @@ test_data_package_installed <- function(outcome_type) {
   )
   
   if (!is_package_installed(data_packages[[outcome_type]])) run_test <- FALSE
+  if (!rlang::is_installed(data_packages[[outcome_type]])) run_test <- FALSE
   
   if (!run_test) {
     rlang::inform(
