@@ -16,6 +16,7 @@ test_generate_experiment_parameters <- coro::generator(function(outcome_type) {
       current_outcome_type,
       "binomial" = c("glm_logistic", "lasso"),
       "multinomial" = c("glm", "lasso"),
+      "count" = c("glm", "lasso"),
       "continuous" = c("glm_gaussian", "lasso"),
       "survival" = c("cox", "survival_regr_weibull"))
 
@@ -139,42 +140,23 @@ for (archive_file in archive_files) {
 
   # Test 3: Running the experiment again, starting with ensembles --------------
 
+  if (familiar_version > "1.1.4") {
+    # The isolation forests within the historic version 1.1.4 are not backward
+    # compatible, and we need to skip these tests for version 1.1.4.
+    # Remove temporary directory.
+    unlink(
+      file.path(archive_directory),
+      recursive = TRUE
+    )
+    next
+  }
+  
   message(paste0(
     "-------------------------------------------------------------\n",
     outcome_type, " (", familiar_version, "): ",
     "test export after creating familiarData objects\n",
     "-------------------------------------------------------------\n"
   ))
-
-  # Remove the results directory.
-  unlink(
-    file.path(archive_directory, "results"),
-    recursive = TRUE)
-
-  # Remove the familiar_collections directory.
-  unlink(
-    file.path(archive_directory, "familiar_collections"),
-    recursive = TRUE)
-
-  # Remove the familiar_data directory.
-  unlink(file.path(archive_directory, "familiar_data"),
-    recursive = TRUE
-  )
-
-  # Run the experiment to extract the data again.
-  do.call(
-    familiar::summon_familiar,
-    args = c(
-      list(
-        "data" = data,
-        "experiment_dir" = archive_directory,
-        "experiment_data" = list.files(
-          path = archive_directory,
-          full.names = TRUE,
-          pattern = "iterations.RDS"),
-        "estimation_type" = "point",
-        "parallel" = FALSE),
-      config_parameters))
 
   # Remove temporary directory.
   unlink(

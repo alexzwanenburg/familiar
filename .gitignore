@@ -5,10 +5,7 @@
 doc
 Meta
 tests/testthat/Rplots.pdf
-inst/doc
 /doc/
 /Meta/
-/man/
-*.Rd
 tests/old_experiments/_experiment
 Rplots.pdf

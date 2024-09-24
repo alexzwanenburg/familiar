@@ -22,7 +22,7 @@
 
 - Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.
 
-# Version 1.5.0 (Development)
+# Version 1.5.0 (Whole Whale)
 
 ## Major changes
 
@@ -30,15 +30,21 @@
 
 - Power transformation is now handled by the `power.transform` package. This package replaces the internal routines that were previously used.
 
+## Future deprecation
+
+- Functionality reliant on the `mboost`, `VGAM` or `qvalue` packages will be deprecated in version 2.0.0.
+
+- `count` outcome types will be deprecated by merging into `continuous` outcome type, starting version 2.0.0.
+
 ## Bug fixes
 
-- Fixed errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`, which are reserved names in `R`.
-
-# Version 1.4.9 (Wayward Wasp)
-
-## Bug fixes
+- Prevent errors due to parsing columns called `else`, `for`, `function`, `if`, `in`, or `while`.
 
 - Presence of features with integer values no longer lead to rare errors during evaluation.
+
+- The main panel for composite plots (e.g. calibration plots, Kaplan-Meier curves) is no longer of fixed width when title or subtitles are present.
+
+- Thresholds for clustering with correlation-based metrics are now computed correctly.
 
 # Version 1.4.8 (Valorous Viper)
 
