@@ -169,9 +169,15 @@ is to be shared by multiple aesthetics, such as those specified by
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-risk strata in case a non-singular variable was provided to the \code{color_by}
-argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -374,14 +380,6 @@ Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_
 created for each combination of \code{fs_method} and \code{learner}, with faceting by
 \code{data_set}, colouring of the strata in each individual plot by
 \code{group}.
-
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
 
 Greenwood confidence intervals of the Kaplan-Meier curve can be shown using
 various styles set by \code{conf_int_style}:

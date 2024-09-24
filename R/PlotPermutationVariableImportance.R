@@ -16,8 +16,6 @@ NULL
 #'   saved to. Output is saved in the `variable_importance` subdirectory. If
 #'   NULL no figures are saved, but are returned instead.
 #' @param ggtheme (*optional*) `ggplot` theme to use for plotting.
-#' @param discrete_palette (*optional*) Palette used to fill the bars in case a
-#'   non-singular variable was provided to the `color_by` argument.
 #' @param height (*optional*) Height of the plot. A default value is derived
 #'   from the number of features and the number of facets.
 #' @param width (*optional*) Width of the plot. A default value is derived from
@@ -56,14 +54,6 @@ NULL
 #'   By default, the data is split by `fs_method`, `learner` and `metric`,
 #'   faceted by `data_set` and `evaluation_time`, and coloured by
 #'   `similarity_threshold`.
-#'
-#'   Available palettes for `discrete_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
 #'
 #'   Labelling methods such as `set_fs_method_names` or `set_feature_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order

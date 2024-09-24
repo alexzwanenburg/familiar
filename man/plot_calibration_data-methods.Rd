@@ -151,9 +151,15 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-data points and fit lines in case a non-singular variable was provided to
-the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -441,15 +447,7 @@ Greenwood-Nam-D'Agostino (GND) tests are shown. Note that this information
 is only annotated when \code{color_by} is not used as a splitting variable (i.e.
 one calibration plot per facet).
 
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
-
-Labeling methods such as \code{set_risk_group_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_risk_group_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

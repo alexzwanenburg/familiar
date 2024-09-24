@@ -20,8 +20,15 @@ NULL
 #'   p-values and q-values. q-values may not be available.
 #' @param show_cluster (*optional*) Show which features were clustered together.
 #' @param ggtheme (*optional*) `ggplot` theme to use for plotting.
-#' @param discrete_palette (*optional*) Palette used to fill the bars in case a
-#'   non-singular variable was provided to the `color_by` argument.
+#' @param discrete_palette (*optional*) Palette for colouring the plot elements
+#'   according to the groupings indicated by the `color_by` argument (if any).
+#'   `familiar` has a default palette. Other palettes are supported by
+#'   `paletteer`, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Palette to use for filling the bars in
 #'   case the `color_by` argument is not set. The bars are then coloured
 #'   according to their importance. By default, no gradient is used, and the
@@ -69,15 +76,6 @@ NULL
 #'   are now found during creation of underlying `familiarData` objects, instead
 #'   of through consensus clustering. Hence, clustering results may differ due
 #'   to differences in the underlying datasets.
-#'
-#'   Available palettes for `discrete_palette` and `gradient_palette` are those
-#'   listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
 #'
 #'   Labelling methods such as `set_fs_method_names` or `set_feature_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order

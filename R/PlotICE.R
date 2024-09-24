@@ -15,10 +15,17 @@ NULL
 #'   conditional expectation plots are saved to. Output is saved in the
 #'   `explanation` subdirectory. If `NULL`, figures are written to the folder,
 #'   but are returned instead.
-#' @param discrete_palette (*optional*) Palette to use to colour the different
-#'   plot elements in case a value was provided to the `color_by` argument. For
-#'   2D individual conditional expectation plots without novelty, the initial
-#'   colour determines the colour of the points indicating sample values.
+#' @param discrete_palette (*optional*) Palette for colouring plot elements
+#'   indicated by the `color_by` argument (if any). For 2D individual
+#'   conditional expectation plots without novelty, the initial colour
+#'   determines the colour of the points indicating sample values. `familiar`
+#'   has a default palette. Other palettes are supported by the `paletteer`
+#'   package, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
 #'   colour the raster in 2D individual conditional expectation or partial
 #'   dependence plots. This argument is not used for 1D plots.
@@ -103,17 +110,6 @@ NULL
 #'   used with 2D plots, and attempting to do so causes an error. Attempting to
 #'   specify `feature_x` or `feature_y` for `color_by` will likewise result in
 #'   an error, as multiple features cannot be shown in the same facet.
-#'
-#'   The splitting variables indicated by `color_by` are coloured according to
-#'   the `discrete_palette` parameter. This parameter is therefore only used for
-#'   1D plots. Available palettes for `discrete_palette` and `gradient_palette`
-#'   are those listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
 #'
 #'   Bootstrap confidence intervals of the partial dependence plots can be shown
 #'   using various styles set by `conf_int_style`:

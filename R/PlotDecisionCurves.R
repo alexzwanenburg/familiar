@@ -15,8 +15,6 @@ NULL
 #'   curve plots are saved to. Output is saved in the `decision_curve_analysis`
 #'   subdirectory. If `NULL`, figures are written to the folder, but are
 #'   returned instead.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'   plot elements in case a value was provided to the `color_by` argument.
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
@@ -33,14 +31,6 @@ NULL
 #'   outcomes). By default, the data is split by `fs_method` and `learner`, with
 #'   faceting by `data_set` and colouring by `positive_class` or
 #'   `evaluation_time`.
-#'
-#'   Available palettes for `discrete_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
 #'
 #'   Bootstrap confidence intervals of the decision curve (if present) can be
 #'   shown using various styles set by `conf_int_style`:

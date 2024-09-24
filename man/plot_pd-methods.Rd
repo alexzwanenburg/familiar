@@ -116,10 +116,17 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to colour the different
-plot elements in case a value was provided to the \code{color_by} argument. For
-2D individual conditional expectation plots without novelty, the initial
-colour determines the colour of the points indicating sample values.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
+indicated by the \code{color_by} argument (if any). For 2D individual
+conditional expectation plots without novelty, the initial colour
+determines the colour of the points indicating sample values. \code{familiar}
+has a default palette. Other palettes are supported by the \code{paletteer}
+package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 colour the raster in 2D individual conditional expectation or partial

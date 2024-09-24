@@ -20,8 +20,6 @@ NULL
 #' @param show_cluster (*optional*) Show which features were clustered together.
 #'   Currently not available in combination with variable importance obtained
 #'   during feature selection.
-#' @param discrete_palette (*optional*) Palette to use for coloring bar plots,
-#'   in case a non-singular variable was provided to the `color_by` argument.
 #' @param gradient_palette (*optional*) Palette to use for filling the bars in
 #'   case the `color_by` argument is not set. The bars are then coloured
 #'   according to the occurrence of features. By default, no gradient is used,
@@ -47,15 +45,6 @@ NULL
 #'   The only allowed values for `split_by`, `color_by` or `facet_by` are
 #'   `fs_method` and `learner`, but note that `learner` has no effect when
 #'   plotting variable importance of features acquired during feature selection.
-#'
-#'   Available palettes for `discrete_palette` and `gradient_palette` are those
-#'   listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
 #'
 #'   Labeling methods such as `set_feature_names` or `set_fs_method_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order

@@ -13,9 +13,16 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created confusion
 #'   matrixes are saved to. Output is saved in the `performance` subdirectory.
 #'   If `NULL` no figures are saved, but are returned instead.
-#' @param discrete_palette (*optional*) Palette used to colour the confusion
-#'   matrix. The colour depends on whether each cell of the confusion matrix is
-#'   on the diagonal (observed outcome matched expected outcome) or not.
+#' @param discrete_palette (*optional*) Palette Palette for colouring the cells
+#'   of the confusion matrix. The colour depends on whether each cell of the
+#'   confusion matrix is on the diagonal (observed outcome matched expected
+#'   outcome) or not. `familiar` has a default palette. Other palettes are
+#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
+#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
+#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
+#'   correspond to the palettes of the same name in `grDevices`. You may also
+#'   specify your own palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param show_alpha (*optional*) Interpreting confusion matrices is made easier
 #'   by setting the opacity of the cells. `show_alpha` takes the following
 #'   values:
@@ -52,15 +59,7 @@ NULL
 #'   By default, the data is split by `fs_method` and `learner`, with facetting
 #'   by `data_set`.
 #'
-#'   Available palettes for `discrete_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'
-#'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'

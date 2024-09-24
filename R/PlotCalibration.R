@@ -16,9 +16,6 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created calibration
 #'  plots are saved to. Output is saved in the `calibration` subdirectory. If
 #'  `NULL` no figures are saved, but are returned instead.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'  data points and fit lines in case a non-singular variable was provided to
-#'  the `color_by` argument.
 #' @param show_density (*optional*) Show point density in top margin of the
 #'  figure. If `color_by` is set, this information will not be shown.
 #' @param show_calibration_fit (*optional*) Specifies whether the calibration in
@@ -79,15 +76,7 @@ NULL
 #'  is only annotated when `color_by` is not used as a splitting variable (i.e.
 #'  one calibration plot per facet).
 #'
-#'  Available palettes for `discrete_palette` are those listed by
-#'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'  (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'  `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'  name in `grDevices`. If not specified, a default palette based on palettes
-#'  in Tableau are used. You may also specify your own palette by using colour
-#'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'
-#'  Labeling methods such as `set_risk_group_names` or `set_data_set_names` can
+#'  Labelling methods such as `set_risk_group_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
 #'

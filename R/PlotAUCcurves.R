@@ -7,14 +7,12 @@ NULL
 #' @title Plot the receiver operating characteristic curve.
 #'
 #' @description This method creates receiver operating characteristic curves
-#'  based on data in a familiarCollection object.
+#'   based on data in a familiarCollection object.
 #'
-#' @param dir_path (*optional*) Path to the directory where the plots of receiver
-#'  operating characteristic curves are saved to. Output is saved in the
-#'  `performance` subdirectory. If `NULL` no figures are saved, but are returned
-#'  instead.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'  plot elements in case a value was provided to the `color_by` argument.
+#' @param dir_path (*optional*) Path to the directory where the plots of
+#'   receiver operating characteristic curves are saved to. Output is saved in
+#'   the `performance` subdirectory. If `NULL` no figures are saved, but are
+#'   returned instead.
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
@@ -26,33 +24,25 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `positive_class`. By default, the data is split by `fs_method` and `learner`,
-#'  with faceting by `data_set` and colouring by `positive_class`.
+#'   Available splitting variables are: `fs_method`, `learner`, `data_set` and
+#'   `positive_class`. By default, the data is split by `fs_method` and
+#'   `learner`, with faceting by `data_set` and colouring by `positive_class`.
 #'
-#'  Available palettes for `discrete_palette` are those listed by
-#'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'  (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'  `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'  name in `grDevices`. If not specified, a default palette based on palettes
-#'  in Tableau are used. You may also specify your own palette by using colour
-#'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'
-#'  Bootstrap confidence intervals of the ROC curve (if present) can be shown
-#'  using various styles set by `conf_int_style`:
+#'   Bootstrap confidence intervals of the ROC curve (if present) can be shown
+#'   using various styles set by `conf_int_style`:
 #'
 #'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
-#'  opacity of `conf_int_alpha` around the point estimate of the ROC curve.
+#'   opacity of `conf_int_alpha` around the point estimate of the ROC curve.
 #'
 #'  * `step` (default): confidence intervals are shown as a step function around
-#'  the point estimate of the ROC curve.
+#'   the point estimate of the ROC curve.
 #'
 #'  * `none`: confidence intervals are not shown. The point estimate of the ROC
-#'  curve is shown as usual.
+#'   curve is shown as usual.
 #'
-#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
-#'  be applied to the `familiarCollection` object to update labels, and order
-#'  the output in the figure.
+#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   be applied to the `familiarCollection` object to update labels, and order
+#'   the output in the figure.
 #'
 #' @return `NULL` or list of plot objects, if `dir_path` is `NULL`.
 #'

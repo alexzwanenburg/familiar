@@ -102,10 +102,10 @@ prior to export. Paths to such files can also be provided.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
-\item{dir_path}{(\emph{optional}) Path to the directory where the plots of receiver
-operating characteristic curves are saved to. Output is saved in the
-\code{performance} subdirectory. If \code{NULL} no figures are saved, but are returned
-instead.}
+\item{dir_path}{(\emph{optional}) Path to the directory where the plots of
+receiver operating characteristic curves are saved to. Output is saved in
+the \code{performance} subdirectory. If \code{NULL} no figures are saved, but are
+returned instead.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -128,8 +128,15 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-plot elements in case a value was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
