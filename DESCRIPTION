@@ -60,6 +60,7 @@ Suggests:
     maxstat,
     microbenchmark,
     nnet,
+    paletteer,
     power.transform,
     praznik,
     proxy,

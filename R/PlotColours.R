@@ -1,11 +1,12 @@
 .get_palette <- function(
     x = NULL,
     palette_type,
-    n = 5L, 
+    n = NULL, 
     invert = FALSE,
     use_alternative = FALSE,
     diverge_to_white = FALSE
 ) {
+  
   # Check whether the provided palette is known, a set of colours, or a default.
   if (is.null(x)) {
     colours <- .get_default_palette(
@@ -34,8 +35,20 @@
       colours <- x
       
     } else if (length(x) == 1L) {
+      if (palette_type %in% c("divergent", "sequential") && is.null(n)) {
+        # Set n if unspecified.
+        n <- 31L
+        
+      } else if (palette_type == "qualitative" && is.null(n)) {
+        # In case of qualitative palettes, n should be set explicitly by familiar.
+        ..error_reached_unreachable_code("Qualitative palettes requires the number of discrete cases n.")
+      }
+      
       # Obtain colours from a predefined palette.
-      colours <- .palette_to_colour(x = x, n = n)
+      colours <- .palette_to_colour(
+        x = x,
+        n = n
+      )
     }
     
   } else {
@@ -60,18 +73,55 @@
 
 
 
-.palette_to_colour <- function(x, n = 5L) {
+.palette_to_colour <- function(x, n) {
   # Determine if the string ends with _, _r or _rev.
   invert_colours <- grepl(pattern = "_$|_r$|_rev$", x, ignore.case = TRUE)
 
   # Strip from x
   x <- gsub(pattern = "_$|_r$|_rev$", replacement = "", x)
 
+  colours <- NULL
+  # Try paletteer.
+  if (rlang::is_installed("paletteer")) {
+    # Continuous palette
+    colours <- tryCatch(
+      paletteer::paletteer_c(
+        palette = x,
+        n = n
+      ),
+      error = function(err) (NULL)
+    )
+    
+    # Dynamic palette
+    if (is.null(colours)) {
+      colours <- tryCatch(
+        paletteer::paletteer_dynamic(
+          palette = x,
+          n = n
+        ),
+        error = function(err) (NULL)
+      )
+    }
+    
+    # Discrete palette
+    if (is.null(colours)) {
+      colours <- tryCatch(
+        paletteer::paletteer_d(
+          palette = x,
+          n = n
+        ),
+        error = function(err) (NULL)
+      )
+    }
+  }
+  
   # Try grDevices::palette (requires R version >= 4.0.0)
-  colours <- tryCatch(
-    grDevices::palette.colors(n = n, palette = x),
-    error = function(err) (NULL)
-  )
+  if (is.null(colours)) {
+    colours <- tryCatch(
+      grDevices::palette.colors(n = n, palette = x),
+      error = function(err) (NULL)
+    )
+  }
 
   # Try grDevices::hcl.colors (requires R version >= 3.6.0)
   if (is.null(colours)) {
@@ -80,7 +130,8 @@
       error = function(err) (NULL)
     )
   }
-
+  
+  
   # Palettes that are always available.
   if (is.null(colours)) {
     if (x == "default") {
@@ -106,9 +157,7 @@
     ))
   }
 
-  if (invert_colours) {
-    colours <- rev(colours)
-  }
+  if (invert_colours) colours <- rev(colours)
 
   return(colours)
 }
