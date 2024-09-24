@@ -285,6 +285,19 @@ setMethod(
       )
     }
     
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Update feature_expressions slot by iterating over its contents. This is
+      # to account for changes in transformation objects, introduced with 1.5.0.
+      object@feature_expressions <- lapply(
+        object@feature_expressions,
+        function(x) {
+          x@feature_info <- update_object(x@feature_info)
+          
+          return(x)
+        }
+      )
+    }
+    
     if (!methods::validObject(object)) {
       ..error("Could not update the familiarData object to the most recent definition.")
     }
@@ -392,6 +405,19 @@ setMethod(
       )
     }
     
+    if (tail(object@familiar_version, n = 1L) < "1.5.0") {
+      # Update feature_expressions slot by iterating over its contents. This is
+      # to account for changes in transformation objects, introduced with 1.5.0.
+      object@feature_expressions <- lapply(
+        object@feature_expressions,
+        function(x) {
+          x@feature_info <- update_object(x@feature_info)
+          
+          return(x)
+        }
+      )
+    }
+    
     if (!methods::validObject(object)) {
       ..error("Could not update the familiarCollection object to the most recent definition.")
     }
@@ -472,7 +498,7 @@ setMethod(
       # Only set attributes if a proper
       if (!is_unset) {
         ### Transformation -----------------------------------------------------
-
+        
         # Upgrade transformation parameters to a proper S4 object.
         if (!is.null(object@transformation_parameters)) {
           object@transformation_parameters <- ..create_transformation_parameter_skeleton(
@@ -491,6 +517,13 @@ setMethod(
             method = "none"
           )
         }
+        
+        # Revise familiar version, because these now correspond basically to
+        # version 1.4.8 and earlier. Version 1.5.0 introduces transformers from
+        # power.transform.
+        object@transformation_parameters@familiar_version[
+          length(object@transformation_parameters@familiar_version)
+        ] <- package_version("1.4.8")
 
         ### Normalisation ------------------------------------------------------
 
@@ -719,14 +752,23 @@ setMethod(
     
     if (tail(object@familiar_version, n = 1L) < "1.5.0") {
       # Transformation objects are now implemented using power.transform.
-      
       if (is(object, "featureInfoParametersTransformationNone")) {
         transformer <- power.transform::create_transformer_skeleton(method = "none")
+        object <- methods::new(
+          "featureInfoParametersTransformationPowerTransform",
+          name = object@name,
+          familiar_version = object@familiar_version
+        )
         
       } else if (is(object, "featureInfoParametersTransformationBoxCox")) {
         transformer <- power.transform::create_transformer_skeleton(
           method = "box_cox",
           lambda = object@lambda
+        )
+        object <- methods::new(
+          "featureInfoParametersTransformationPowerTransform",
+          name = object@name,
+          familiar_version = object@familiar_version
         )
         
       } else if (is(object, "featureInfoParametersTransformationYeoJohnson")) {
@@ -734,18 +776,27 @@ setMethod(
           method = "yeo_johnson",
           lambda = object@lambda
         )
+        object <- methods::new(
+          "featureInfoParametersTransformationPowerTransform",
+          name = object@name,
+          familiar_version = object@familiar_version
+        )
+        
+      } else {
+        # Without explicit class (original object pre v1.2.0).
+        transformer <- power.transform::create_transformer_skeleton(
+          method = object@fitting_parameters$method,
+          lambda = object@fitting_parameters$lambda
+        )
       }
       
-      object <- methods::new(
-        "featureInfoParametersTransformationPowerTransform",
-        transformer = transformer,
-        complete = TRUE,
-        familiar_version = as.package_version("1.5.0")
-      )
+      object@complete <- TRUE
+      object@transformer <- transformer
+      object@method <- power.transform::get_transformation_method(transformer)
     }
     
     if (!methods::validObject(object)) {
-      ..error(paste0(
+      rlang::abort(paste0(
         "Could not update the featureInfoParametersTransformationPowerTransform ",
         "object to the most recent definition."
       ))
@@ -788,7 +839,9 @@ setMethod(
     }
 
     if (!methods::validObject(object)) {
-      stop("Could not update the experimentData object to the most recent definition.")
+      rlang::abort(
+        "Could not update the experimentData object to the most recent definition."
+      )
     }
 
     # Update package version.
