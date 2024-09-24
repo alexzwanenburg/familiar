@@ -33,7 +33,13 @@ NULL
 #'   case the `color_by` argument is not set. The bars are then coloured
 #'   according to their importance. By default, no gradient is used, and the
 #'   bars are not filled according to importance. Use `NULL` to fill the bars
-#'   using the default palette in `familiar`.
+#'   using the default palette in `familiar`. Other palettes are supported by
+#'   the `paletteer` package, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param significance_level_shown Position(s) to draw vertical lines indicating
 #'   a significance level, e.g. 0.05. Can be NULL to not draw anything.
 #' @param height (*optional*) Height of the plot. A default value is derived

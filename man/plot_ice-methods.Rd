@@ -181,7 +181,14 @@ palette by providing a vector of colour names listed by
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 colour the raster in 2D individual conditional expectation or partial
-dependence plots. This argument is not used for 1D plots.}
+dependence plots. This argument is not used for 1D plots. \code{familiar} has a
+default palette. Other palettes are supported by the \code{paletteer} package,
+\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
+(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
+\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
+name in \code{grDevices}. You may also specify your own palette by providing a
+vector of colour names listed by \code{grDevices::colors()} or through
+hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}. By default, values are determined from the data, dependent on the

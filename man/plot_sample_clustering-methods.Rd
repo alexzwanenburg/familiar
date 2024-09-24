@@ -241,7 +241,14 @@ wrapping. If NULL, a facet grid is produced instead.}
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
-colour the similarity or distance between features in a heatmap.}
+colour the similarity or distance between features in a heatmap. \code{familiar}
+has a default palette. Other palettes are supported by the \code{paletteer}
+package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient. This should be a range of two values, e.g. \code{c(0, 1)}. Lower or
@@ -253,8 +260,8 @@ qualitative (other outcome types) palette used to show outcome values. This
 argument is ignored if the outcome is not shown.}
 
 \item{outcome_palette_range}{(\emph{optional}) Numerical range used to span the
-gradient of numeric (\code{continuous}) outcome values. This argument
-is ignored for other outcome types or if the outcome is not shown.}
+gradient of numeric (\code{continuous}) outcome values. This argument is ignored
+for other outcome types or if the outcome is not shown.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -483,14 +490,6 @@ x-axis and samples along the y-axis.
 Note that similarity is determined based on the underlying data. Hence the
 ordering of features may differ between facets, and tick labels are
 maintained for each panel.
-
-Available palettes for \code{gradient_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
 
 Labeling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order

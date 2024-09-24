@@ -14,7 +14,14 @@ NULL
 #'   plots are saved to. Output is saved in the `feature_similarity`
 #'   subdirectory. If `NULL` no figures are saved, but are returned instead.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
-#'   colour the similarity or distance between features in a heatmap.
+#'   colour the similarity or distance between features in a heatmap. 
+#'   `familiar` has a default palette. Other palettes are supported by the
+#'   `paletteer` package, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette_range (*optional*) Numerical range used to span the
 #'   gradient. This should be a range of two values, e.g. `c(0, 1)`. Lower or
 #'   upper boundary can be unset by using `NA`. If not set, the full
@@ -51,14 +58,6 @@ NULL
 #'   Note that similarity is determined based on the underlying data. Hence the
 #'   ordering of features may differ between facets, and tick labels are
 #'   maintained for each panel.
-#'
-#'   Available palettes for `gradient_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
 #'
 #'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order

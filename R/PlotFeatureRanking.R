@@ -20,11 +20,17 @@ NULL
 #' @param show_cluster (*optional*) Show which features were clustered together.
 #'   Currently not available in combination with variable importance obtained
 #'   during feature selection.
-#' @param gradient_palette (*optional*) Palette to use for filling the bars in
-#'   case the `color_by` argument is not set. The bars are then coloured
-#'   according to the occurrence of features. By default, no gradient is used,
-#'   and the bars are not filled according to occurrence. Use `NULL` to fill the
-#'   bars using the default palette in `familiar`.
+#' @param gradient_palette (*optional*) Palette for filling bars if the
+#'   `color_by` argument is not set. By default, bars are not coloured. If
+#'   `gradient_palette` is set, the palette will colour bars according to
+#'   feature importance. Use `NULL` to fill the bars using the `familiar`
+#'   default palette. Other palettes are supported by the `paletteer` package,
+#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
+#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
+#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
+#'   name in `grDevices`. You may also specify your own palette by providing a
+#'   vector of colour names listed by `grDevices::colors()` or through
+#'   hexadecimal RGB strings.
 #' @param height (*optional*) Height of the plot. A default value is derived
 #'   from number of facets, and the length of the longest feature name (if
 #'   `rotate_x_tick_labels` is `TRUE`).

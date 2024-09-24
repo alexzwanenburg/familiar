@@ -28,7 +28,14 @@ NULL
 #'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
 #'   colour the raster in 2D individual conditional expectation or partial
-#'   dependence plots. This argument is not used for 1D plots.
+#'   dependence plots. This argument is not used for 1D plots. `familiar` has a
+#'   default palette. Other palettes are supported by the `paletteer` package,
+#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
+#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
+#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
+#'   name in `grDevices`. You may also specify your own palette by providing a
+#'   vector of colour names listed by `grDevices::colors()` or through
+#'   hexadecimal RGB strings.
 #' @param gradient_palette_range (*optional*) Numerical range used to span the
 #'   gradient for 2D plots. This should be a range of two values, e.g. `c(0,
 #'   1)`. By default, values are determined from the data, dependent on the
