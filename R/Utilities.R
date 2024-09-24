@@ -1378,7 +1378,7 @@ huber_estimate <- function(x, k = 1.28, tol = 1E-4) {
     
   } else {
     # Fallback option based on winsorised distributions.
-    x <- winsor(x, fraction = 0.90)
+    x <- winsor(x, fraction = 0.10)
     x <- x[is.finite(x)]
     
     if (length(x) <= 1L) {
