@@ -1,5 +1,9 @@
+testthat::skip_on_cran()
+
 # Find available stratification methods.
 stratification_methods <- familiar:::.get_available_stratification_methods()
+
+if (!rlang::is_installed("power.transform")) testthat::skip()
 
 # Test for good dataset.
 for (stratification_method in stratification_methods) {

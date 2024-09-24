@@ -1,3 +1,5 @@
+testthat::skip_on_cran()
+
 normalisation_test <- function(
     data_list,
     norm_method,
