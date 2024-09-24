@@ -4,7 +4,7 @@
 
 - Some functionality was deprecated because of redundancy and stability issues:
 
-  - The `count` outcome type has been deprecated. `count` is a subset of `continuous` outcomes. Its previous implementation did not provide any benefits over   `continuous`.
+  - The `count` outcome type has been deprecated. `count` is a subset of `continuous` outcomes. Its previous implementation did not provide any benefits over `continuous`.
 
   - Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
 
