@@ -14,6 +14,8 @@
 
   - The variable hunting feature selection method for random forests was removed due to stability issues in unit tests.
 
+- Many evaluation steps that only require model predictions can now be called externally by providing a `familiarDataElementPredictionTable` object that contains model prediction data. Such objects can be created using the `as_prediction_table` table.
+
 ## Minor changes
 
 - The `evaluation_elements` configuration parameter was added to allow for specifying which evaluation steps should be performed.
