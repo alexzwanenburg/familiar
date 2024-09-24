@@ -18,6 +18,8 @@
 
 - The `evaluation_elements` configuration parameter was added to allow for specifying which evaluation steps should be performed.
 
+- Palettes from the `paletteer` package can now be used to customise plots.
+
 ## Bug fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.
