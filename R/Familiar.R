@@ -209,7 +209,12 @@ summon_familiar <- function(
     reference_method = settings$data$reference_method
   )
   
-  
+  # Check data plausibility.
+  .check_data_plausibility(
+    data = data,
+    settings = settings
+  )
+  browser()
   # Load experiment data -------------------------------------------------------
   if (!is.null(experiment_data)) {
     

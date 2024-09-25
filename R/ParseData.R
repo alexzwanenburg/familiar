@@ -745,6 +745,65 @@
 
 
 
+.check_data_plausibility <- function(
+    data,
+    settings
+) {
+  
+  feature_cols <- get_feature_columns(data, outcome_type = settings$data$outcome_type)
+  outcome_cols <- get_outcome_columns(settings$data$outcome_type)
+  
+  # Plausibility checks: duplicate rows.
+  if (anyDuplicated(data[, mget(c(feature_cols, outcome_cols))]) > 0L) {
+    ..warning(paste0(
+      "Ignoring identifiers, one or more rows in the dataset may contain duplicated data. ",
+      "This means the same combination of feature values and outcome appears multiple times."
+    ))
+  }
+  
+  # Plausibility checks: 
+  
+  # Plausibility checks: one-to-one predictors
+  browser()
+  # Convert to dataObject. We pretend that the data are preprocessed up to
+  # clustering.
+  data <- methods::new(
+    "dataObject",
+    data = data,
+    preprocessing_level = "clustering",
+    outcome_type = settings$data$outcome_type,
+    outcome_info = create_outcome_info(settings = settings),
+    data_column_info = create_data_column_info(settings = settings)
+  )
+  
+  # Set up vimp object and promote to concordance.
+  vimp_object <- promote_vimp_method(methods::new(
+    "familiarVimpMethod",
+    outcome_type = data@outcome_type,
+    outcome_info = data@outcome_info,
+    feature_info = .get_feature_info_data(
+      data = data@data,
+      file_paths = NULL,
+      project_id = character(),
+      outcome_type = settings$data$outcome_type
+    )[["generic"]],
+    vimp_method = "concordance"
+  ))
+  
+  # Compute concordance.
+  vimp_table <- suppressWarnings(get_vimp_table(.vimp(
+    object = vimp_object,
+    data = data
+  )))
+  browser()
+  # Identify features with perfect concordance (1.0) or discordance (-1.0), and
+  # warn.
+  
+  return(invisible(TRUE))
+}
+
+
+
 #' Internal function for converting integer features
 #'
 #' @param data data.table with feature data
