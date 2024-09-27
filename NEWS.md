@@ -28,6 +28,8 @@
 
 - Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.
 
+- The `sample_similarity` evaluation element is now mentioned in the documentation.
+
 # Version 1.5.0 (Whole Whale)
 
 ## Major changes

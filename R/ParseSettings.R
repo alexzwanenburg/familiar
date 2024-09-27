@@ -3418,7 +3418,9 @@
 #'
 #'  * `risk_stratification_info`: data for assessing stratification into risk
 #'  groups are computed.
-#'
+#'  
+#'  * `sample_similarity`: data for assessing sample similarity are computed.
+#'  
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature
 #'  importance are computed.
 #'  

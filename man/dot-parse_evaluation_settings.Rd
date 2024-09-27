@@ -139,6 +139,7 @@ permutation variable importance are computed.
 survival curves are collected.
 \item \code{risk_stratification_info}: data for assessing stratification into risk
 groups are computed.
+\item \code{sample_similarity}: data for assessing sample similarity are computed.
 \item \code{univariate_analysis}: data for assessing and plotting univariate feature
 importance are computed.
 }
