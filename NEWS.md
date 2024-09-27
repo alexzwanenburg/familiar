@@ -20,6 +20,8 @@
 
 - The `evaluation_elements` configuration parameter was added to allow for specifying which evaluation steps should be performed.
 
+- Concordance variable importance for categorical outcomes now relies on the internal implementation for the area under the receiver operating characteristic curve instead of the Gini measure from the `corelearn` package.
+
 - Palettes from the `paletteer` package can now be used to customise plots.
 
 ## Bug fixes

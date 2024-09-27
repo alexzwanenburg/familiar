@@ -156,9 +156,10 @@ event are considered.
 ## Concordance methods
 
 Concordance methods assess how well the ordering of feature values corresponds
-to the ordering of the outcome. The method internally refers to the `gini`
-method for binomial and multinomial outcomes and to the `kendall` method for
-continuous outcomes. For survival outcomes, concordance is measured
+to the ordering of the outcome. The method internally refers to the `kendall`
+method for continuous outcomes. For categorical outcomes, i.e. `binomial` and
+`multinomial`, concordance is assessed using the area under the receiver
+operating characteristic curve. For survival outcomes, concordance is measured
 using the `concordance_index`.
 
 ## CORElearn methods

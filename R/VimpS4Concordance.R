@@ -53,18 +53,46 @@ setMethod(
     # - Gini index for binomial and multinomial outcomes
     # - Kendall's Tau for continuous and counts outcomes
     # - Concordance index for survival features
-
+    
     if (object@outcome_type %in% c("binomial", "multinomial")) {
       # Compute gini index for categorical outcomes.
-
-      # Create a new vimp object, and replace the vimp_method slot.
-      new_vimp_object <- methods::new("familiarCoreLearnGiniVimp", object)
-      new_vimp_object@vimp_method <- "gini"
-
-      return(..vimp(
-        object = new_vimp_object,
-        data = data
-      ))
+      
+      # Use effect coding to convert categorical data into encoded data - this
+      # is required to deal with factors with missing/new levels between
+      # training and test data sets.
+      encoded_data <- encode_categorical_variables(
+        data = data,
+        object = object,
+        encoding_method = "dummy",
+        drop_levels = FALSE
+      )
+      
+      # Find feature columns in the data.
+      feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
+      
+      # Compute auc-roc
+      auc_roc <- sapply(
+        encoded_data$encoded_data@data[, mget(feature_columns)],
+        .compute_auc_roc,
+        y_obs = encoded_data$encoded_data@data$outcome
+      )
+      
+      # Map to [0, 1] range.
+      score <- abs(auc_roc - 0.5) * 2.0
+      
+      # Create variable importance object.
+      vimp_object <- methods::new(
+        "vimpTable",
+        vimp_table = data.table::data.table(
+          "score" = score,
+          "name" = feature_columns
+        ),
+        encoding_table = encoded_data$reference_table,
+        score_aggregation = "max",
+        invert = TRUE
+      )
+      
+      return(vimp_object)
       
     } else if (object@outcome_type %in% c("continuous")) {
       # For continuous outcomes use kendall's tau.
@@ -102,10 +130,13 @@ setMethod(
         event = encoded_data$encoded_data@data$outcome_event
       )
 
+      # Map to [0, 1] range.
+      score <- abs(c_index - 0.5) * 2.0
+      
       # Create variable importance object.
       vimp_object <- methods::new("vimpTable",
         vimp_table = data.table::data.table(
-          "score" = abs(c_index - 0.5),
+          "score" = score,
           "name" = feature_columns
         ),
         encoding_table = encoded_data$reference_table,
