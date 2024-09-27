@@ -749,6 +749,8 @@
     data,
     settings
 ) {
+  # Avoid CRAN NOTE due to non-standard evaluation in data.table.
+  score <- NULL
   
   feature_cols <- get_feature_columns(data, outcome_type = settings$data$outcome_type)
   outcome_cols <- get_outcome_columns(settings$data$outcome_type)
@@ -761,10 +763,12 @@
     ))
   }
   
-  # Plausibility checks: 
+  # Plausibility checks: invariant features.
+  
+  
   
   # Plausibility checks: one-to-one predictors
-  browser()
+  
   # Convert to dataObject. We pretend that the data are preprocessed up to
   # clustering.
   data <- methods::new(
@@ -795,9 +799,16 @@
     object = vimp_object,
     data = data
   )))
-  browser()
-  # Identify features with perfect concordance (1.0) or discordance (-1.0), and
-  # warn.
+  
+  # Identify features with perfect concordance (1.0) or discordance (also 1.0),
+  # and warn.
+  if (any(vimp_table$score == 1.0)) {
+    ..warning(paste0(
+      "The following features are perfect predictors for the outcome: ",
+      paste_s(vimp_table[score == 1.0]$name),
+      " Please ensure that there are no outcome data included as features."
+    ))
+  }
   
   return(invisible(TRUE))
 }
