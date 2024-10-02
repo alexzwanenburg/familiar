@@ -747,7 +747,8 @@
 
 .check_data_plausibility <- function(
     data,
-    settings
+    settings,
+    cl = NULL
 ) {
   # Avoid CRAN NOTE due to non-standard evaluation in data.table.
   score <- NULL
@@ -757,14 +758,30 @@
   
   # Plausibility checks: duplicate rows.
   if (anyDuplicated(data[, mget(c(feature_cols, outcome_cols))]) > 0L) {
-    ..warning(paste0(
+    logger_warning(paste0(
       "Ignoring identifiers, one or more rows in the dataset may contain duplicated data. ",
       "This means the same combination of feature values and outcome appears multiple times."
     ))
   }
   
-  # Plausibility checks: invariant features.
   
+  # Plausibility checks: invariant features.
+  invariant_features <- fam_sapply(
+    cl = cl,
+    assign = NULL,
+    X = data[, mget(feature_cols)],
+    FUN = is_singular_data,
+    progress_bar = FALSE,
+    chopchop = TRUE
+  )
+  
+  invariant_features <- feature_cols[invariant_features]
+  if (length(invariant_features) > 0L) {
+    logger_warning(paste0(
+      "The following features are invariant: ",
+      paste_s(invariant_features)
+    ))
+  }
   
   
   # Plausibility checks: one-to-one predictors
@@ -803,7 +820,7 @@
   # Identify features with perfect concordance (1.0) or discordance (also 1.0),
   # and warn.
   if (any(vimp_table$score == 1.0)) {
-    ..warning(paste0(
+    logger_warning(paste0(
       "The following features are perfect predictors for the outcome: ",
       paste_s(vimp_table[score == 1.0]$name),
       " Please ensure that there are no outcome data included as features."
