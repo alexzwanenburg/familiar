@@ -608,6 +608,12 @@ determine_preprocessing_parameters <- function(
     verbose = verbose && settings$prep$batch_normalisation_method != "none"
   )
   
+  # Check that assumptions for batch normalisation are fulfilled.
+  .check_batch_normalisation_assumptions(
+    data = data,
+    normalisation_method = settings$prep$batch_normalisation_method
+  )
+  
   # Add batch normalisation skeletons.
   feature_info_list <- create_batch_normalisation_parameter_skeleton(
     feature_info_list = feature_info_list,

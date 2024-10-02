@@ -588,3 +588,79 @@ setMethod(
     "instance_mask" = instance_mask
   ))
 }
+
+
+
+.check_batch_normalisation_assumptions <- function(
+  data,
+  normalisation_method
+) {
+  # Check that batches do not differ in outcome data. We can use the following
+  # tests: 
+  #
+  # * Continuous: Kruskal-Wallis-test.
+  # * Binomial / multinomial: Chi-squared test.
+  # * Survival: Log-rank test.
+  
+  if (all(normalisation_method == "none")) return(invisible(TRUE))
+  
+  x <- data@data[, mget(get_outcome_columns(data))]
+  g <- data@data[[get_id_columns("batch", single_column = TRUE)]]
+  
+  # Determine the number of batches.
+  n_groups <- data.table::uniqueN(g)
+  # Check that 2 (or more groups) are present.
+  if (n_groups < 2L) return(invisible(TRUE))
+  
+  if (data@outcome_type == "continuous") {
+    h <- tryCatch(
+      stats::kruskal.test(x = x, g = g, na.action = "na.omit"),
+      error = identity
+    )
+    
+    # Check if the test statistic could be computed.
+    if (inherits(h, "error")) return(invisible(TRUE))
+    p_value <- h$p.value
+    
+  } else if (data@outcome_type %in% c("binomial", "multinomial")) {
+    h <- tryCatch(
+      stats::chisq.test(x = x, y = g),
+      error = identity
+    )
+    
+    # Check if the test statistic could be computed.
+    if (inherits(h, "error")) return(invisible(TRUE))
+    p_value <- h$p.value
+    
+  } else if (data@outcome_type == "survival") {
+    
+    # Determine chi-square of log-rank test
+    chi_sq <- tryCatch(
+      survival::survdiff(
+        survival::Surv(time = outcome_time, event = outcome_event) ~ group,
+        data = data.table::data.table(),
+        subset = NULL,
+        na.action = "na.omit"
+      )$chisq,
+      error = identity
+    )
+    
+    # Check if the test statistic could be computed. Causes could be lack of
+    # events, no events beyond the first time point, etc.
+    if (inherits(chi_sq, "error")) return(invisible(TRUE))
+    
+    # Derive  p-value
+    p_value  <- stats::pchisq(
+      q = chi_sq,
+      df = n_groups - 1L,
+      lower.tail = FALSE
+    )
+    
+    
+  } else {
+    ..error_outcome_type_not_implemented(data@outcome_type)
+  }
+  
+  
+  return(invisible(TRUE))
+}
