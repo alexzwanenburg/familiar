@@ -24,6 +24,16 @@
 
 - Palettes from the `paletteer` package can now be used to customise plots.
 
+- Plausibility of datasets is now checked more thoroughly to detect common issues:
+
+  - The presence of duplicate rows with the same feature values and outcome.
+  
+  - The presence of one-to-one predictors of the outcome. This might be outcome-related columns that have been left in the data accidentally.
+  
+  - The presence of invariant predictors.
+  
+- Statistical tests now assess differences between batches if batch normalisation is performed, and warns if the outcome in any batch is significantly different from others.
+
 ## Bug fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.

@@ -614,7 +614,11 @@ setMethod(
   
   if (data@outcome_type == "continuous") {
     h <- tryCatch(
-      stats::kruskal.test(x = x, g = g, na.action = "na.omit"),
+      stats::kruskal.test(
+        x = x[[1L]],
+        g = g, 
+        na.action = "na.omit"
+      ),
       error = identity
     )
     
@@ -638,7 +642,11 @@ setMethod(
     chi_sq <- tryCatch(
       survival::survdiff(
         survival::Surv(time = outcome_time, event = outcome_event) ~ group,
-        data = data.table::data.table(),
+        data = data.table::data.table(
+          outcome_time = x$outcome_time,
+          outcome_event = x$outcome_event,
+          group = g
+        ),
         subset = NULL,
         na.action = "na.omit"
       )$chisq,
@@ -656,9 +664,21 @@ setMethod(
       lower.tail = FALSE
     )
     
-    
   } else {
     ..error_outcome_type_not_implemented(data@outcome_type)
+  }
+  
+  if (p_value < 0.05) {
+    logger_warning(
+      paste0(
+        "One or more batches have a statistically significant (p < 0.05) different outcome ",
+        "compared to other batches. Note: a statistically significant outcome does ",
+        "not mean that the difference is actually relevant. However, please assert ",
+        "that batch normalisation does not remove important differences between batches."
+      ),
+      warn_class = "familiar_batch_outcome_difference"
+    )
+    return(invisible(FALSE))
   }
   
   

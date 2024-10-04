@@ -214,7 +214,7 @@ summon_familiar <- function(
     data = data,
     settings = settings
   )
-  browser()
+  
   # Load experiment data -------------------------------------------------------
   if (!is.null(experiment_data)) {
     
