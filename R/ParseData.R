@@ -758,10 +758,13 @@
   
   # Plausibility checks: duplicate rows.
   if (anyDuplicated(data[, mget(c(feature_cols, outcome_cols))]) > 0L) {
-    logger_warning(paste0(
-      "Ignoring identifiers, one or more rows in the dataset may contain duplicated data. ",
-      "This means the same combination of feature values and outcome appears multiple times."
-    ))
+    logger_warning(
+      paste0(
+        "Ignoring identifiers, one or more rows in the dataset may contain duplicated data. ",
+        "This means the same combination of feature values and outcome appears multiple times."
+      ),
+      warn_class = "familiar_data_check"
+    )
   }
   
   
@@ -777,10 +780,14 @@
   
   invariant_features <- feature_cols[invariant_features]
   if (length(invariant_features) > 0L) {
-    logger_warning(paste0(
-      "The following features are invariant: ",
-      paste_s(invariant_features)
-    ))
+    logger_warning(
+      paste0(
+        "The following features are invariant: ",
+        paste_s(invariant_features),
+        "."
+      ),
+      warn_class = "familiar_data_check"
+    )
   }
   
   
@@ -820,11 +827,14 @@
   # Identify features with perfect concordance (1.0) or discordance (also 1.0),
   # and warn.
   if (any(vimp_table$score == 1.0)) {
-    logger_warning(paste0(
-      "The following features are perfect predictors for the outcome: ",
-      paste_s(vimp_table[score == 1.0]$name),
-      " Please ensure that there are no outcome data included as features."
-    ))
+    logger_warning(
+      paste0(
+        "The following features are perfect predictors for the outcome: ",
+        paste_s(vimp_table[score == 1.0]$name),
+        ". Please ensure that there are no outcome data included as features."
+      ),
+      warn_class = "familiar_data_check"
+    )
   }
   
   return(invisible(TRUE))
