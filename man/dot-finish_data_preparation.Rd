@@ -52,7 +52,7 @@ the same series of the same sample in the same batch that share the same
 outcome are encountered.
 }}
 
-\item{series_id_column}{(\strong{optional}) Name of the column containing series
+\item{series_id_column}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -74,7 +74,6 @@ Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -84,7 +83,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
 
 \item{include_features}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot

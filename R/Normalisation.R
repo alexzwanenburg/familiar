@@ -9,11 +9,14 @@ setClass(
   slots = list(
     "method" = "character",
     "batch" = "ANY",
-    "reason" = "ANY"),
+    "reason" = "ANY"
+  ),
   prototype = list(
     "method" = "none",
     "batch" = NULL,
-    "reason" = NULL))
+    "reason" = NULL
+  )
+)
 
 
 
@@ -24,11 +27,14 @@ setClass(
   slots = list(
     "batch" = "ANY",
     "shift" = "numeric",
-    "scale" = "numeric"),
+    "scale" = "numeric"
+  ),
   prototype = list(
     "batch" = NULL,
     "shift" = NA_real_,
-    "scale" = NA_real_))
+    "scale" = NA_real_
+  )
+)
 
 
 
@@ -38,10 +44,13 @@ setClass(
   contains = "featureInfoParameters",
   slots = list(
     "batch" = "ANY",
-    "shift" = "numeric"),
+    "shift" = "numeric"
+  ),
   prototype = list(
     "batch" = NULL,
-    "shift" = NA_real_))
+    "shift" = NA_real_
+  )
+)
 
 
 
@@ -50,7 +59,8 @@ setClass(
   "featureInfoParametersNormalisationStandardisation",
   contains = "featureInfoParametersNormalisationShiftScale",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 
 
@@ -59,7 +69,8 @@ setClass(
   "featureInfoParametersNormalisationQuantile",
   contains = "featureInfoParametersNormalisationShiftScale",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 
 
@@ -68,7 +79,8 @@ setClass(
   "featureInfoParametersNormalisationNormalisation",
   contains = "featureInfoParametersNormalisationShiftScale",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 
 
@@ -77,7 +89,8 @@ setClass(
   "featureInfoParametersNormalisationMeanCentering",
   contains = "featureInfoParametersNormalisationShift",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 
 
@@ -86,8 +99,10 @@ setClass(
 }
 
 .get_available_standardisation_normalisation_methods <- function() {
-  return(c("standardisation", "standardisation_trim",
-           "standardisation_winsor", "standardisation_robust"))
+  return(c(
+    "standardisation", "standardisation_trim",
+    "standardisation_winsor", "standardisation_robust"
+  ))
 }
 
 .get_available_quantile_normalisation_methods <- function() {
@@ -108,31 +123,36 @@ setClass(
   if (type %in% c("none", "all")) {
     available_normalisation_method <- c(
       available_normalisation_method,
-      .get_available_none_normalisation_methods())
+      .get_available_none_normalisation_methods()
+    )
   }
 
   if (type %in% c("all", "standardisation")) {
     available_normalisation_method <- c(
       available_normalisation_method,
-      .get_available_standardisation_normalisation_methods())
+      .get_available_standardisation_normalisation_methods()
+    )
   }
 
   if (type %in% c("all", "quantile")) {
     available_normalisation_method <- c(
       available_normalisation_method,
-      .get_available_quantile_normalisation_methods())
+      .get_available_quantile_normalisation_methods()
+    )
   }
 
   if (type %in% c("all", "mean_centering")) {
     available_normalisation_method <- c(
       available_normalisation_method,
-      .get_available_mean_centering_normalisation_methods())
+      .get_available_mean_centering_normalisation_methods()
+    )
   }
 
   if (type %in% c("all", "normalisation")) {
     available_normalisation_method <- c(
       available_normalisation_method,
-      .get_available_normalisation_normalisation_methods())
+      .get_available_normalisation_normalisation_methods()
+    )
   }
 
   return(available_normalisation_method)
@@ -147,7 +167,8 @@ create_normalisation_parameter_skeleton <- function(
     normalisation_method,
     normalisation_shift = NULL,
     normalisation_scale = NULL,
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Creates a skeleton for the provided normalisation method. If
   # normalisation_shift and / or normalisation_scale are provided (typically
   # not), these values are updated as well.
@@ -165,14 +186,16 @@ create_normalisation_parameter_skeleton <- function(
   .check_parameter_value_is_valid(
     x = normalisation_method,
     var_name = "normalisation_method",
-    values = .get_available_normalisation_methods())
+    values = .get_available_normalisation_methods()
+  )
 
   # Check that normalisation_shift is numeric.
   if (!is.null(normalisation_shift)) {
     .check_number_in_valid_range(
       x = normalisation_shift,
       var_name = "normalisation_shift",
-      range = c(-Inf, Inf))
+      range = c(-Inf, Inf)
+    )
   }
 
   # Check that normalisation_scale is numeric.
@@ -180,7 +203,8 @@ create_normalisation_parameter_skeleton <- function(
     .check_number_in_valid_range(
       x = normalisation_scale,
       var_name = "normalisation_scale",
-      range = c(-Inf, Inf))
+      range = c(-Inf, Inf)
+    )
   }
 
   # Update familiar info objects with a feature normalisation skeleton.
@@ -191,7 +215,8 @@ create_normalisation_parameter_skeleton <- function(
     batch = batch,
     shift = normalisation_shift,
     scale = normalisation_scale,
-    .override_existing = .override_existing)
+    .override_existing = .override_existing
+  )
 
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -210,7 +235,8 @@ create_normalisation_parameter_skeleton <- function(
     batch = NULL,
     shift = NULL,
     scale = NULL,
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Check if normalisation data was already completed, and does not require
   # being determined anew.
   if (feature_info_complete(feature_info@normalisation_parameters) && !.override_existing) {
@@ -225,7 +251,8 @@ create_normalisation_parameter_skeleton <- function(
     method = method,
     batch = batch,
     shift = shift,
-    scale = scale)
+    scale = scale
+  )
 
   # Update normalisation_parameters slot.
   feature_info@normalisation_parameters <- object
@@ -242,7 +269,8 @@ create_normalisation_parameter_skeleton <- function(
     method,
     batch = NULL,
     shift = NULL,
-    scale = NULL) {
+    scale = NULL
+) {
   # This is the lowest level function for creating normalisation parameter
   # skeletons.
 
@@ -250,12 +278,14 @@ create_normalisation_parameter_skeleton <- function(
   if (feature_type != "numeric") {
     object <- methods::new(
       "featureInfoParametersNormalisationNone",
-      reason = "not a numeric feature")
+      reason = "not a numeric feature"
+    )
     
   } else if (!available) {
     object <- methods::new(
       "featureInfoParametersNormalisationNone",
-      reason = "feature was omitted prior to transformation")
+      reason = "feature was omitted prior to transformation"
+    )
     
   } else if (method %in% .get_available_none_normalisation_methods()) {
     object <- methods::new("featureInfoParametersNormalisationNone")
@@ -265,35 +295,42 @@ create_normalisation_parameter_skeleton <- function(
       "featureInfoParametersNormalisationStandardisation",
       "method" = method
     )
+    
   } else if (method %in% .get_available_quantile_normalisation_methods()) {
     object <- methods::new(
       "featureInfoParametersNormalisationQuantile",
       "method" = method
     )
+    
   } else if (method %in% .get_available_normalisation_normalisation_methods()) {
     object <- methods::new(
       "featureInfoParametersNormalisationNormalisation",
       "method" = method
     )
+    
   } else if (method %in% .get_available_mean_centering_normalisation_methods()) {
     object <- methods::new(
       "featureInfoParametersNormalisationMeanCentering",
       "method" = method
     )
+    
   } else if (method %in% .get_available_combat_parametric_normalisation_methods()) {
     object <- methods::new(
       "featureInfoParametersNormalisationParametricCombat",
       "method" = method
     )
+    
   } else if (method %in% .get_available_combat_non_parametric_normalisation_methods()) {
     object <- methods::new(
       "featureInfoParametersNormalisationNonParametricCombat",
       "method" = method
     )
+    
   } else {
     ..error_reached_unreachable_code(paste0(
       "..create_normalisation_parameter_skeleton: encountered an unknown ",
-      "normalisation method: ", paste_s(method)))
+      "normalisation method: ", paste_s(method)
+    ))
   }
 
   # Set the name of the object.
@@ -304,11 +341,13 @@ create_normalisation_parameter_skeleton <- function(
 
   # Add shift and/or scale, when provided.
   if (!is.null(shift) || !is.null(scale)) {
-    object <- add_feature_info_parameters(object,
+    object <- add_feature_info_parameters(
+      object,
       data = NULL,
       batch = batch,
       shift = shift,
-      scale = scale)
+      scale = scale
+    )
   }
 
   # Update the familiar version.
@@ -323,7 +362,8 @@ add_normalisation_parameters <- function(
     cl = NULL,
     feature_info_list,
     data,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   # Determine normalisation parameters and add them to the feature_info_list.
 
   # Find feature columns.
@@ -333,7 +373,8 @@ add_normalisation_parameters <- function(
   if (!(setequal(feature_names, get_available_features(feature_info_list = feature_info_list)))) {
     ..error_reached_unreachable_code(paste0(
       "add_normalisation_parameters: features in data and the feature info list ",
-      "are expect to be the same, but were not."))
+      "are expect to be the same, but were not."
+    ))
   }
 
   # Iterate over features.
@@ -343,7 +384,8 @@ add_normalisation_parameters <- function(
     feature_info = feature_info_list[feature_names],
     data = data@data[, mget(feature_names)],
     progress_bar = verbose,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -358,11 +400,13 @@ add_normalisation_parameters <- function(
 
 .add_normalisation_parameters <- function(
     feature_info,
-    data) {
+    data
+) {
   # Pass to underlying function that adds the feature info.
   object <- add_feature_info_parameters(
     object = feature_info@normalisation_parameters,
-    data = data)
+    data = data
+  )
 
   # Update normalisation_parameters slot.
   feature_info@normalisation_parameters <- object
@@ -395,12 +439,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationNone",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(
     object,
     data,
     batch = NULL,
-    ...) {
+    ...
+  ) {
     
     if (!is.null(batch)) object@batch <- batch
 
@@ -415,13 +461,15 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShift",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(
     object,
     data,
     batch = NULL,
     shift = NULL,
-    ...) {
+    ...
+  ) {
     
     if (!is.null(batch)) {
       object@batch <- batch
@@ -446,7 +494,8 @@ setMethod(
         object <- ..create_normalisation_parameter_skeleton(
           feature_name = object@name,
           batch = batch,
-          method = "none")
+          method = "none"
+        )
 
         object@reason <- "shift was NA or infinite"
 
@@ -459,7 +508,8 @@ setMethod(
       object <- ..create_normalisation_parameter_skeleton(
         feature_name = object@name,
         batch = batch,
-        method = "none")
+        method = "none"
+      )
 
       object@reason <- "insufficient data to determine shift"
 
@@ -473,7 +523,8 @@ setMethod(
       object <- ..create_normalisation_parameter_skeleton(
         feature_name = object@name,
         batch = batch,
-        method = "none")
+        method = "none"
+      )
 
       object@reason <- "shift was NA"
 
@@ -484,7 +535,8 @@ setMethod(
     object <- ..create_normalisation_parameter_skeleton(
       feature_name = object@name,
       batch = batch,
-      method = "none")
+      method = "none"
+    )
 
     object@reason <- "shift could not be determined for an unknown reason"
 
@@ -499,11 +551,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShift",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # This method is targeted when directly determining the normalisation
     # parameters. It is usually called from the child functions.
 
@@ -526,13 +580,13 @@ setMethod(
     }
 
     # Check that at least three unique values are present.
-    if (length(unique(data)) <= 3) {
+    if (length(unique(data)) <= 3L) {
       return(add_feature_info_parameters(object = object, data = NULL))
     }
 
     # For batch normalisation, check that at least five instances are present.
     if (!is.null(object@batch)) {
-      if (length(data) < 5) {
+      if (length(data) < 5L) {
         return(add_feature_info_parameters(object = object, data = NULL))
       }
     }
@@ -548,14 +602,16 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShiftScale",
-    data = "NULL"),
+    data = "NULL"
+  ),
   function(
     object,
     data,
     batch = NULL,
     shift = NULL,
     scale = NULL,
-    ...) {
+    ...
+  ) {
     if (!is.null(batch)) {
       object@batch <- batch
     } else if (!is.null(object@batch)) {
@@ -581,7 +637,8 @@ setMethod(
         object <- ..create_normalisation_parameter_skeleton(
           feature_name = object@name,
           batch = batch,
-          method = "none")
+          method = "none"
+        )
 
         object@reason <- "shift or scale were NA or infinite"
 
@@ -595,7 +652,8 @@ setMethod(
       object <- ..create_normalisation_parameter_skeleton(
         feature_name = object@name,
         batch = batch,
-        method = "none")
+        method = "none"
+      )
 
       object@reason <- "insufficient data to determine shift and scale"
 
@@ -609,7 +667,8 @@ setMethod(
       object <- ..create_normalisation_parameter_skeleton(
         feature_name = object@name,
         batch = batch,
-        method = "none")
+        method = "none"
+      )
 
       object@reason <- "shift or scale were NA"
 
@@ -636,11 +695,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShiftScale",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # This method is targeted when directly determining the normalisation
     # parameters. It is usually called from the child functions.
 
@@ -663,13 +724,13 @@ setMethod(
     }
 
     # Check that at least three unique values are present.
-    if (length(unique(data)) <= 3) {
+    if (length(unique(data)) <= 3L) {
       return(add_feature_info_parameters(object = object, data = NULL))
     }
 
     # For batch normalisation, check that at least five instances are present.
     if (!is.null(object@batch)) {
-      if (length(data) < 5) {
+      if (length(data) < 5L) {
         return(add_feature_info_parameters(object = object, data = NULL))
       }
     }
@@ -685,16 +746,19 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationStandardisation",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to non-data.table method.
     return(add_feature_info_parameters(
       object = object,
       data = data[[object@name]],
-      ...))
+      ...
+    ))
   }
 )
 
@@ -705,11 +769,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationStandardisation",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
 
@@ -736,6 +802,7 @@ setMethod(
     # Trimming and winsoring of input data.
     if (object@method %in% c("standardisation_trim")) {
       data <- trim(data, fraction = 0.05)
+      
     } else if (object@method %in% c("standardisation_winsor")) {
       data <- winsor(data, fraction = 0.05)
     }
@@ -747,10 +814,11 @@ setMethod(
 
       shift <- robust_estimates$mu
       scale <- robust_estimates$sigma
+      
     } else {
       # Using conventional estimators.
       shift <- mean(data)
-      scale <- sqrt(sum((data - shift)^2) / length(data))
+      scale <- sqrt(sum((data - shift)^2.0) / length(data))
     }
 
     # Check for scales which are close to 0, or could not be computed.
@@ -773,16 +841,19 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationQuantile",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to non-data.table method.
     return(add_feature_info_parameters(
       object = object,
       data = data[[object@name]],
-      ...))
+      ...
+    ))
   }
 )
 
@@ -793,11 +864,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationQuantile",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
     
@@ -844,16 +917,19 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationNormalisation", 
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to non-data.table method.
     return(add_feature_info_parameters(
       object = object,
       data = data[[object@name]],
-      ...))
+      ...
+    ))
   }
 )
 
@@ -864,11 +940,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationNormalisation",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
     
@@ -895,6 +973,7 @@ setMethod(
     # Trimming and winsoring of input data.
     if (object@method %in% c("normalisation_trim")) {
       data <- trim(data, fraction = 0.05)
+      
     } else if (object@method %in% c("normalisation_winsor")) {
       data <- winsor(data, fraction = 0.05)
     }
@@ -926,16 +1005,19 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationMeanCentering",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to non-data.table method.
     return(add_feature_info_parameters(
       object = object,
       data = data[[object@name]],
-      ...))
+      ...
+    ))
   }
 )
 
@@ -946,11 +1028,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationMeanCentering",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
     
@@ -993,11 +1077,13 @@ setMethod(
   "apply_feature_info_parameters", 
   signature(
     object = "featureInfoParametersNormalisationShiftScale",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to method with signature data="ANY" to perform the normalisation.
     y <- apply_feature_info_parameters(object = object, data[[object@name]], ...)
     
@@ -1018,12 +1104,14 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShiftScale",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     invert = FALSE,
-    ...) {
+    ...
+  ) {
     if (invert) {
       # Invert normalisation by multiplying input x by the scale and adding the
       # shift.
@@ -1044,11 +1132,13 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShift",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Pass to method with signature data="ANY" to perform the normalisation.
     y <- apply_feature_info_parameters(object = object, data[[object@name]], ...)
     
@@ -1069,12 +1159,14 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationShift",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     invert = FALSE,
-    ...) {
+    ...
+  ) {
     if (invert) {
       # Invert normalisation by adding the shift.
       return(data + object@shift)
@@ -1112,8 +1204,8 @@ setMethod(
 
   # Output to certain range (if provided).
   if (!is.null(range)) {
-    y[y < range[1]] <- range[1]
-    y[y > range[2]] <- range[2]
+    y[y < range[1L]] <- range[1L]
+    y[y > range[2L]] <- range[2L]
   }
 
   return(y)
@@ -1125,20 +1217,30 @@ setMethod(
   # Find a default range for normalised values during plotting.
   if (norm_method == "none") {
     return(c(NA, NA))
+    
   } else if (norm_method == "mean_centering") {
     return(c(NA, NA))
+    
   } else if (norm_method == "quantile") {
     return(c(-1.5, 0.0, 1.5))
-  } else if (norm_method %in% c(
-    "standardisation", "standardisation_trim", "standardisation_winsor", "standardisation_robust")) {
+    
+  } else if (
+    norm_method %in% c(
+      "standardisation", "standardisation_trim",
+      "standardisation_winsor", "standardisation_robust"
+    )
+  ) {
     return(c(-3.0, 0.0, 3.0))
-  } else if (norm_method %in% c(
-    "normalisation", "normalisation_trim", "normalisation_winsor")) {
+  } else if (
+    norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")
+  ) {
     return(c(0.0, 1.0))
+    
   } else {
     ..error_reached_unreachable_code(paste0(
       ".get_default_normalisation_range_for_plotting: unknown ",
-      "normalisation method: ", norm_method))
+      "normalisation method: ", norm_method
+    ))
   }
 }
 
@@ -1147,16 +1249,19 @@ setMethod(
 ..collect_and_aggregate_normalisation_info <- function(
     feature_info_list,
     instance_mask,
-    feature_name) {
+    feature_name
+) {
   # Aggregate normalisation parameters. This function exists so that it can be
   # tested as part of a unit test.
 
   return(...collect_and_aggregate_normalisation_info(
     object_list = lapply(
       feature_info_list,
-      function(x) (x@normalisation_parameters)),
+      function(x) (x@normalisation_parameters)
+    ),
     instance_mask = instance_mask,
-    feature_name = feature_name))
+    feature_name = feature_name
+  ))
 }
 
 
@@ -1164,7 +1269,8 @@ setMethod(
 ...collect_and_aggregate_normalisation_info <- function(
     object_list,
     instance_mask,
-    feature_name) {
+    feature_name
+) {
   # This is used to collect from a list of objects. It serves both to aggregate
   # data for the ensemble and when creating replacement data for batch
   # normalisation.
@@ -1176,33 +1282,39 @@ setMethod(
     return(list(
       "parameters" = ..create_normalisation_parameter_skeleton(
         feature_name = feature_name,
-        method = "none"),
-      "instance_mask" = instance_mask))
+        method = "none"
+      ),
+      "instance_mask" = instance_mask
+    ))
   }
 
   # Check the class of the transformation objects.
-  object_class <- sapply(object_list, function(x) (class(x)[1]))
+  object_class <- sapply(object_list, function(x) (class(x)[1L]))
 
   # Determine if there are any objects that are not NULL or
   # featureInfoParametersNormalisationNone.
-  if (all(object_class[instance_mask] %in% 
-          c("NULL", "featureInfoParametersNormalisationNone"))) {
+  if (
+    all(object_class[instance_mask] %in% c("NULL", "featureInfoParametersNormalisationNone"))
+  ) {
     return(list(
       "parameters" = ..create_normalisation_parameter_skeleton(
         feature_name = feature_name,
-        method = "none"),
-      "instance_mask" = instance_mask))
+        method = "none"
+      ),
+      "instance_mask" = instance_mask
+    ))
   }
 
   # For the remaining objects, check which class occurs most.
   class_table <- data.table::data.table(
-    "class" = object_class[instance_mask])[, list("n" = .N), by = "class"]
+    "class" = object_class[instance_mask]
+  )[, list("n" = .N), by = "class"]
 
   # Drop NULL and none transformations.
   class_table <- class_table[!class %in% c("NULL", "featureInfoParametersNormalisationNone")]
 
   # Select the object that occurs most often.
-  most_common_class <- class_table[n == max(class_table$n), ]$class[1]
+  most_common_class <- class_table[n == max(class_table$n), ]$class[1L]
 
   # Update the instance mask.
   instance_mask <- instance_mask & object_class == most_common_class
@@ -1223,7 +1335,7 @@ setMethod(
     selected_scale <- stats::median(all_scale)
 
     # Identify the first method -- its not that crucial.
-    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1]
+    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1L]
     
   } else if (most_common_class %in% c("featureInfoParametersNormalisationMeanCentering")) {
     # Aggregate shift values, and select median value.
@@ -1231,12 +1343,13 @@ setMethod(
     selected_shift <- stats::median(all_shift)
 
     # Identify the first method -- its not that crucial.
-    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1]
+    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1L]
     
   } else {
     ..error_reached_unreachable_code(paste0(
       "..collect_and_aggregate_normalisation_info: encountered ",
-      "an unknown class of objects: ", paste_s(most_common_class)))
+      "an unknown class of objects: ", paste_s(most_common_class)
+    ))
   }
 
   return(list(
@@ -1244,6 +1357,8 @@ setMethod(
       feature_name = feature_name,
       method = unname(selected_method),
       shift = unname(selected_shift),
-      scale = unname(selected_scale)),
-    "instance_mask" = instance_mask))
+      scale = unname(selected_scale)
+    ),
+    "instance_mask" = instance_mask
+  ))
 }

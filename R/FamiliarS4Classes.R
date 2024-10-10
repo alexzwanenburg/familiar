@@ -109,9 +109,10 @@ setClass("familiarModel",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
@@ -136,7 +137,8 @@ setClass("familiarModel",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -226,9 +228,10 @@ setClass("familiarEnsemble",
     # Project identifier for consistency tracking.
     project_id = "ANY",
     # Package version for backward compatibility checks.
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model_list = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
@@ -245,7 +248,14 @@ setClass("familiarEnsemble",
     auto_detach = FALSE,
     settings = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+setClassUnion(
+  "familiarModelUnion",
+  members = c("familiarModel", "familiarEnsemble")
 )
 
 
@@ -384,9 +394,10 @@ setClass("familiarData",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -414,9 +425,10 @@ setClass("familiarData",
     sample_similarity = NULL,
     ice_data = NULL,
     is_validation = FALSE,
-    generating_ensemble = character(0),
+    generating_ensemble = character(0L),
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 # familiarCollection object ----------------------------------------------------
@@ -568,10 +580,11 @@ setClass("familiarCollection",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
-    data_sets = character(0),
+    name = character(0L),
+    data_sets = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -604,7 +617,8 @@ setClass("familiarCollection",
     km_group_labels = NULL,
     class_labels = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -622,6 +636,8 @@ setClass("familiarCollection",
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted.
 #' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
 #' @slot data_column_info Object containing column information.
 #' @slot delay_loading logical. Allows delayed loading data, which enables data
 #'   parsing downstream without additional workflow complexity or memory
@@ -659,7 +675,8 @@ setClass("dataObject",
     # Flag for aggregation after loading and pre-processing
     aggregate_on_load = "logical",
     # Samples to be loaded
-    sample_set_on_load = "ANY"),
+    sample_set_on_load = "ANY"
+  ),
   prototype = list(
     data = NULL,
     preprocessing_level = "none",
@@ -669,7 +686,8 @@ setClass("dataObject",
     perturb_level = NA_integer_,
     load_validation = TRUE,
     aggregate_on_load = FALSE,
-    sample_set_on_load = NULL)
+    sample_set_on_load = NULL
+  )
 )
 
 
@@ -767,7 +785,8 @@ setClass("featureInfo",
     imputation_parameters = "ANY",
     cluster_parameters = "ANY",
     required_features = "ANY",
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     set_descriptor = NA_character_,
@@ -795,7 +814,8 @@ setClass("featureInfo",
     imputation_parameters = NULL,
     cluster_parameters = NULL,
     required_features = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -822,11 +842,13 @@ setClass("featureInfoParameters",
   slots = list(
     name = "character",
     complete = "logical",
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     complete = FALSE,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -920,7 +942,8 @@ setClass("vimpTable",
     # Version of familiar used to create the object.
     familiar_version = "ANY",
     # State of the object.
-    state = "character"),
+    state = "character"
+  ),
   prototype = list(
     vimp_table = NULL,
     vimp_method = NA_character_,
@@ -931,7 +954,8 @@ setClass("vimpTable",
     invert = FALSE,
     project_id = NULL,
     familiar_version = NULL,
-    state = "initial")
+    state = "initial"
+  )
 )
 
 
@@ -998,7 +1022,8 @@ setClass("outcomeInfo",
     # Transformation parameters for the outcome data.
     transformation_parameters = "ANY",
     # Normalisation parameters for the outcome data.
-    normalisation_parameters = "ANY"),
+    normalisation_parameters = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     outcome_type = NA_character_,
@@ -1014,7 +1039,8 @@ setClass("outcomeInfo",
     data_id = NA_integer_,
     run_id = NA_integer_,
     transformation_parameters = NULL,
-    normalisation_parameters = NULL)
+    normalisation_parameters = NULL
+  )
 )
 
 
@@ -1070,7 +1096,8 @@ setClass("familiarVimpMethod",
     # Run table for the current vimp method
     run_table = "ANY",
     # Project identifier for consistency tracking
-    project_id = "ANY"),
+    project_id = "ANY"
+  ),
   prototype = list(
     outcome_type = NA_character_,
     hyperparameters = NULL,
@@ -1081,7 +1108,8 @@ setClass("familiarVimpMethod",
     required_features = NULL,
     package = NULL,
     run_table = NULL,
-    project_id = NULL)
+    project_id = NULL
+  )
 )
 
 
@@ -1163,9 +1191,10 @@ setClass("familiarNoveltyDetector",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     learner = NA_character_,
     model = NULL,
     data_column_info = NULL,
@@ -1180,7 +1209,8 @@ setClass("familiarNoveltyDetector",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1247,9 +1277,10 @@ setClass("familiarHyperparameterLearner",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     learner = NA_character_,
     target_learner = NA_character_,
     target_outcome_type = NA_character_,
@@ -1260,7 +1291,8 @@ setClass("familiarHyperparameterLearner",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1284,7 +1316,8 @@ setClass("familiarHyperparameterLearner",
 #'
 #' @export
 
-setClass("familiarMetric",
+setClass(
+  "familiarMetric",
   slots = list(
     # The metric itself.
     metric = "character",
@@ -1298,14 +1331,16 @@ setClass("familiarMetric",
     # function from.
     baseline_value = "ANY",
     # Flag that sets whether higher values denote better performance.
-    higher_better = "logical"),
+    higher_better = "logical"
+  ),
   prototype = list(
     metric = NA_character_,
     outcome_type = NA_character_,
     name = NA_character_,
     value_range = c(NA_real_, NA_real_),
     baseline_value = NULL,
-    higher_better = TRUE)
+    higher_better = TRUE
+  )
 )
 
 
@@ -1403,7 +1438,8 @@ setClass("familiarMetric",
 #'
 #' @export
 
-setClass("familiarDataElement",
+setClass(
+  "familiarDataElement",
   slots = list(
     # The primary results.
     data = "ANY",
@@ -1428,7 +1464,8 @@ setClass("familiarDataElement",
     grouping_column = "ANY",
     # Flag that signals whether the data is aggregated, e.g. by computing
     # confidence intervals and a bias-corrected value.
-    is_aggregated = "logical"),
+    is_aggregated = "logical"
+  ),
   prototype = list(
     data = NULL,
     identifiers = NULL,
@@ -1438,7 +1475,8 @@ setClass("familiarDataElement",
     bootstrap_ci_method = NA_character_,
     value_column = NA_character_,
     grouping_column = NULL,
-    is_aggregated = FALSE)
+    is_aggregated = FALSE
+  )
 )
 
 
@@ -1474,7 +1512,8 @@ setClass("familiarDataElement",
 #'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
 #' @export
 
-setClass("experimentData",
+setClass(
+  "experimentData",
   slots = list(
     # Experimental design.
     experiment_setup = "ANY",
@@ -1487,12 +1526,43 @@ setClass("experimentData",
     # Project identifier for consistency tracking
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     experiment_setup = NULL,
     iteration_list = NULL,
     feature_info = NULL,
     vimp_table_list = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+
+# familiarDataElementPredictionTable object ------------------------------------
+setClass(
+  "familiarDataElementPredictionTable",
+  contains = "familiarDataElement",
+  slots = list(
+    "learner" = "character",
+    "fs_method" = "character",
+    "ensemble_method" = "character",
+    "percentiles" = "ANY",
+    "outcome_type" = "ANY",
+    "identifier_data" = "ANY",
+    "reference_data" = "ANY",
+    "prediction_data" = "ANY"
+  ),
+  prototype = methods::prototype(
+    bootstrap_ci_method = "percentile",
+    learner = "custom_learner",
+    fs_method = "custom_vimp_method",
+    ensemble_method = "median",
+    percentiles = NULL,
+    outcome_type = NULL,
+    identifier_data = NULL,
+    reference_data = NULL, 
+    prediction_data = NULL
+  )
 )

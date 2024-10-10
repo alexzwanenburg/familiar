@@ -5,7 +5,8 @@ NULL
 .get_available_imputation_methods <- function() {
   return(c(
     .get_available_simple_imputation_methods(),
-    .get_available_lasso_imputation_methods()))
+    .get_available_lasso_imputation_methods()
+  ))
 }
 
 .get_available_simple_imputation_methods <- function() {
@@ -22,33 +23,41 @@ setClass(
   slots = list(
     "method" = "character",
     "type" = "character",
-    "required_features" = "ANY"),
+    "required_features" = "ANY"
+  ),
   prototype = list(
     "method" = NA_character_,
     "type" = NA_character_,
-    "required_features" = NULL))
+    "required_features" = NULL
+  )
+)
 
 setClass(
   "featureInfoParametersImputationNone",
   contains = "featureInfoParametersImputation",
   slots = list("reason" = "ANY"),
-  prototype = list("reason" = NULL))
+  prototype = list("reason" = NULL)
+)
 
 setClass(
   "featureInfoParametersImputationSimple",
   contains = "featureInfoParametersImputation",
   slots = list("model" = "ANY"),
-  prototype = list("model" = NULL))
+  prototype = list("model" = NULL)
+)
 
 setClass(
   "featureInfoParametersImputationLasso",
   contains = "featureInfoParametersImputation",
   slots = list(
     "simple" = "ANY",
-    "model" = "ANY"),
+    "model" = "ANY"
+  ),
   prototype = list(
     "simple" = NULL,
-    "model" = NULL))
+    "model" = NULL
+  )
+)
 
 setClass(
   "featureInfoParametersImputationContainer",
@@ -56,11 +65,14 @@ setClass(
   slots = list(
     "type" = "character",
     "required_features" = "ANY",
-    "model" = "ANY"),
+    "model" = "ANY"
+  ),
   prototype = list(
     "type" = NA_character_,
     "required_features" = NULL,
-    "model" = NULL))
+    "model" = NULL
+  )
+)
 
 
 
@@ -68,7 +80,8 @@ create_imputation_parameter_skeleton <- function(
     feature_info_list,
     feature_names = NULL,
     imputation_method,
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Creates a skeleton for the provided imputation method.
   
   # Determine feature names from the feature info list, if provided.
@@ -77,7 +90,8 @@ create_imputation_parameter_skeleton <- function(
   # Select only features that appear in the feature info list.
   feature_names <- intersect(
     names(feature_info_list),
-    feature_names)
+    feature_names
+  )
   
   # Skip step if no feature info objects are updated.
   if (is_empty(feature_names)) return(feature_info_list)
@@ -86,14 +100,16 @@ create_imputation_parameter_skeleton <- function(
   .check_parameter_value_is_valid(
     x = imputation_method,
     var_name = "imputation_method",
-    values = .get_available_imputation_methods())
+    values = .get_available_imputation_methods()
+  )
   
   # Update familiar info objects with a feature normalisation skeleton.
   updated_feature_info <- fam_lapply(
     X = feature_info_list[feature_names],
     FUN = .create_imputation_parameter_skeleton,
     method = imputation_method,
-    .override_existing = .override_existing)
+    .override_existing = .override_existing
+  )
   
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -109,11 +125,14 @@ create_imputation_parameter_skeleton <- function(
 .create_imputation_parameter_skeleton <- function(
     feature_info,
     method,
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Check if imputation data was already completed, and does not require being
   # determined anew.
-  if (feature_info_complete(feature_info@imputation_parameters)
-      && !.override_existing) {
+  if (
+    feature_info_complete(feature_info@imputation_parameters)
+    && !.override_existing
+  ) {
     return(feature_info)
   }
   
@@ -122,7 +141,8 @@ create_imputation_parameter_skeleton <- function(
     feature_name = feature_info@name,
     feature_type = feature_info@feature_type,
     available = is_available(feature_info),
-    method = method)
+    method = method
+  )
   
   # Update imputation_parameters slot.
   feature_info@imputation_parameters <- object
@@ -136,7 +156,8 @@ create_imputation_parameter_skeleton <- function(
     feature_name,
     feature_type = "numeric",
     available = TRUE,
-    method) {
+    method
+) {
   # This is the lowest level function for creating imputation parameter
   # skeletons.
   
@@ -144,17 +165,20 @@ create_imputation_parameter_skeleton <- function(
   if (!available || method == "none") {
     object <- methods::new(
       "featureInfoParametersImputationNone",
-      reason = "feature was omitted prior to transformation")
+      reason = "feature was omitted prior to transformation"
+    )
     
   } else if (method %in% .get_available_simple_imputation_methods()) {
     object <- methods::new(
       "featureInfoParametersImputationSimple",
-      "method" = method)
+      "method" = method
+    )
     
   } else if (method %in% .get_available_lasso_imputation_methods()) {
     object <- methods::new(
       "featureInfoParametersImputationLasso",
-      "method" = method)
+      "method" = method
+    )
     
   } else if (method == "container") {
     object <- methods::new("featureInfoParametersImputationContainer")
@@ -162,7 +186,8 @@ create_imputation_parameter_skeleton <- function(
   } else {
     ..error_reached_unreachable_code(paste0(
       "..create_imputation_parameter_skeleton: encountered an unknown imputation method: ",
-      paste_s(method)))
+      paste_s(method)
+    ))
   }
   
   # Set the name and type of the object.
@@ -181,7 +206,8 @@ add_imputation_info <- function(
     cl = NULL,
     feature_info_list,
     data,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   # Determine normalisation parameters and add them to the feature_info_list.
   
   # Find feature columns.
@@ -191,7 +217,8 @@ add_imputation_info <- function(
   if (!(setequal(feature_names, get_available_features(feature_info_list = feature_info_list)))) {
     ..error_reached_unreachable_code(paste0(
       "add_imputation_info: features in data and the feature info list ",
-      "are expect to be the same, but were not."))
+      "are expect to be the same, but were not."
+    ))
   }
   
   # Iterate over features and train univariate imputation.
@@ -202,7 +229,8 @@ add_imputation_info <- function(
     mask_data = data@data[, mget(feature_names)],
     MoreArgs = list("data" = data),
     progress_bar = verbose,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -214,16 +242,18 @@ add_imputation_info <- function(
   imputed_data <- .impute_features(
     data = data,
     feature_info_list = feature_info_list,
-    initial_imputation = TRUE)
+    initial_imputation = TRUE
+  )
   
   # Check if there are any features that lack imputation (are of the
   # featureInfoParametersImputationNone class). These are subsequently skipped
   # to avoid having to rely on potentially missing data to infer other features.
   feature_names <- unname(feature_names[!sapply(
     feature_info_list[feature_names],
-    function(x) (is(x@imputation_parameters, "featureInfoParametersImputationNone")))])
+    function(x) (is(x@imputation_parameters, "featureInfoParametersImputationNone"))
+  )])
   
-  if (length(feature_names) > 0) {
+  if (length(feature_names) > 0L) {
     # Iterate over features again to train multivariate imputation models.
     updated_feature_info <- fam_mapply(
       cl = cl,
@@ -232,7 +262,8 @@ add_imputation_info <- function(
       mask_data = data@data[, mget(feature_names)],
       MoreArgs = list("data" = imputed_data),
       progress_bar = verbose,
-      chopchop = TRUE)
+      chopchop = TRUE
+    )
     
     # Provide names for the updated feature info objects.
     names(updated_feature_info) <- feature_names
@@ -249,13 +280,15 @@ add_imputation_info <- function(
 .add_imputation_info <- function(
     feature_info,
     data,
-    mask_data) {
+    mask_data
+) {
   
   # Pass to underlying function that adds the feature info.
   object <- add_feature_info_parameters(
     object = feature_info@imputation_parameters,
     data = data,
-    mask_data = mask_data)
+    mask_data = mask_data
+  )
   
   # Update normalisation_parameters slot.
   feature_info@imputation_parameters <- object
@@ -271,7 +304,8 @@ add_imputation_info <- function(
     feature_info_list,
     initial_imputation,
     mask_data = NULL,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   # Check if data is empty
   if (is_empty(data)) return(data)
@@ -293,9 +327,11 @@ add_imputation_info <- function(
     mask_data = mask_data@data[, mget(feature_names)],
     MoreArgs = list(
       "data" = data,
-      "initial_imputation" = initial_imputation),
+      "initial_imputation" = initial_imputation
+    ),
     progress_bar = verbose,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Update name of data in columns.
   names(imputation_list) <- feature_names
@@ -303,7 +339,8 @@ add_imputation_info <- function(
   # Update with replacement in the data object.
   data <- update_with_replacement(
     data = data,
-    replacement_list = imputation_list)
+    replacement_list = imputation_list
+  )
   
   return(data)
 }
@@ -314,12 +351,14 @@ add_imputation_info <- function(
     feature_info,
     data,
     mask_data,
-    initial_imputation) {
+    initial_imputation
+) {
   
   # Find uncensored data.
   uncensored_data <- .mask_data_to_mask(
     mask_data = mask_data,
-    type = feature_info@imputation_parameters@type)
+    type = feature_info@imputation_parameters@type
+  )
   
   # Return data as is, if there is no censored data.
   if (all(uncensored_data)) {
@@ -331,7 +370,8 @@ add_imputation_info <- function(
     object = feature_info@imputation_parameters,
     data = data,
     mask_data = mask_data,
-    initial_imputation = initial_imputation)
+    initial_imputation = initial_imputation
+  )
   
   return(y)
 }
@@ -362,12 +402,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputation",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     mask_data,
-    ...) {
+    ...
+  ) {
     
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
@@ -378,7 +420,8 @@ setMethod(
       object <- ..create_imputation_parameter_skeleton(
         feature_name = object@name,
         feature_type = object@type,
-        method = "none")
+        method = "none"
+      )
       
       object@reason <- "insufficient data to infer imputation parameters"
       
@@ -388,7 +431,8 @@ setMethod(
     # Find uncensored data.
     mask_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # If there are no uncensored data, we cannot determine imputation
     # parameters.
@@ -397,7 +441,8 @@ setMethod(
       object <- ..create_imputation_parameter_skeleton(
         feature_name = object@name,
         feature_type = object@type,
-        method = "none")
+        method = "none"
+      )
       
       object@reason <- "insufficient data to infer imputation parameters"
       
@@ -415,12 +460,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationSimple",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object,
     data,
     mask_data,
-    ...) {
+    ...
+  ) {
     
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
@@ -435,10 +482,11 @@ setMethod(
     # Find uncensored data.
     mask_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # Select data.
-    y <- data@data[mask_data, mget(object@name)][[1]]
+    y <- data@data[mask_data, mget(object@name)][[1L]]
     
     # Select value.
     if (object@type == "numeric") {
@@ -470,12 +518,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationLasso",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data,
     mask_data,
-    ...) {
+    ...
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     name <- NULL
@@ -498,19 +548,21 @@ setMethod(
       object@simple <- ..create_imputation_parameter_skeleton(
         feature_name = object@name,
         feature_type = object@type,
-        method = "simple")
+        method = "simple"
+      )
       
       # Determine parameters.
       object@simple <- add_feature_info_parameters(
         object = object@simple,
         data = data,
-        mask_data = mask_data)
+        mask_data = mask_data
+      )
       
       return(object)
     }
     
     # Determine if more than one feature is present.
-    if (get_n_features(data) == 1) {
+    if (get_n_features(data) == 1L) {
       # Switch to simple  univariate inference only, in case only one feature is
       # present.
       return(object@simple)
@@ -519,7 +571,8 @@ setMethod(
     # Find uncensored data.
     mask_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # Select finite data.
     distribution <- ifelse(object@type == "numeric", "gaussian", "multinomial")
@@ -527,7 +580,8 @@ setMethod(
     # Check that the glmnet package is installed.
     require_package(
       x = "glmnet",
-      purpose = "to impute data using lasso regression")
+      purpose = "to impute data using lasso regression"
+    )
     
     # Select known data as response variable.
     y <- data@data[[object@name]][mask_data]
@@ -541,7 +595,8 @@ setMethod(
       data = x,
       object = NULL,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
     
     # Extract data table with contrasts.
     x <- encoded_data$encoded_data
@@ -554,11 +609,13 @@ setMethod(
         x = as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
         y = y,
         family = distribution,
-        alpha = 1,
+        alpha = 1L,
         standardize = FALSE,
-        nfolds = min(sum(mask_data), 20),
-        parallel = FALSE),
-      error = identity))
+        nfolds = min(sum(mask_data), 20L),
+        parallel = FALSE
+      ),
+      error = identity
+    ))
     
     if (inherits(lasso_model, "error")) return(object@simple)
     
@@ -572,22 +629,24 @@ setMethod(
       # Read coefficient lists
       coef_list <- tryCatch(
         coef(lasso_model, s = "lambda.1se"),
-        error = identity)
+        error = identity
+      )
       
       if (inherits(coef_list, "error")) return(object@simple)
       
       # Parse into matrix and retrieve row names
       coef_mat <- sapply(coef_list, as.matrix)
-      rownames(coef_mat) <- dimnames(coef_list[[1]])[[1]]
+      rownames(coef_mat) <- dimnames(coef_list[[1L]])[[1L]]
       
       # Calculate score
-      score <- apply(abs(coef_mat), 1, max)
+      score <- apply(abs(coef_mat), 1L, max)
       
     } else {
       # Read coefficient lists
       coef_list <- tryCatch(
         coef(lasso_model, s = "lambda.1se"),
-        error = identity)
+        error = identity
+      )
       
       if (inherits(coef_list, "error")) return(object@simple)
       
@@ -595,13 +654,14 @@ setMethod(
       coef_mat <- as.matrix(coef_list)
       
       # Calculate score
-      score <- abs(coef_mat)[, 1]
+      score <- abs(coef_mat)[, 1L]
     }
     
     # Parse score to data.table
     vimp_table <- data.table::data.table(
       "score" = score,
-      "name" = names(score))
+      "name" = names(score)
+    )
     
     # Throw out the intercept and elements with 0.0 coefficients
     vimp_table <- vimp_table[name != "(Intercept)" & score != 0.0]
@@ -612,7 +672,8 @@ setMethod(
       vimp_table = vimp_table,
       encoding_table = encoded_data$reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
     
     # Find the original names
     vimp_table <- get_vimp_table(vimp_object, "decoded")
@@ -632,14 +693,18 @@ setMethod(
       data = x,
       object = NULL,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
     
     # Extract data table with contrasts.
-    x <- encoded_data$encoded_data@data[mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
+    x <- encoded_data$encoded_data@data[
+      mask_data,
+      mget(get_feature_columns(encoded_data$encoded_data))
+    ]
     
     # Check the number of columns in train_data. glmnet wants at least two
     # columns.
-    if (ncol(x) == 1) x[, "bogus__variable__" := 0.0]
+    if (ncol(x) == 1L) x[, "bogus__variable__" := 0.0]
     
     # Force x locally, otherwise an error may occur.
     x <- as.matrix(x)
@@ -651,8 +716,10 @@ setMethod(
         y = y,
         family = distribution,
         lambda = lasso_model$lambda.1se,
-        standardize = FALSE),
-      error = identity))
+        standardize = FALSE
+      ),
+      error = identity
+    ))
     
     if (inherits(coef_list, "error")) return(object@simple)
     
@@ -677,13 +744,14 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationNone",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data,
     mask_data,
-    ...) {
-    
+    ...
+  ) {
     return(data@data[[object@name]])
   }
 )
@@ -694,17 +762,20 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationSimple",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data,
     mask_data,
-    ...) {
+    ...
+  ) {
     
     # Find uncensored data.
     mask_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # Return data as is, if there is no censored data.
     if (all(mask_data)) return(data@data[[object@name]])
@@ -726,13 +797,15 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationLasso",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data,
     mask_data,
     initial_imputation,
-    ...) {
+    ...
+  ) {
     
     # For initial imputation use univariate imputer.
     if (initial_imputation) {
@@ -740,13 +813,15 @@ setMethod(
         object = object@simple,
         data = data,
         mask_data = mask_data,
-        initial_imputation = initial_imputation))
+        initial_imputation = initial_imputation
+      ))
     }
     
     # Find uncensored data.
     mask_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # Return data as is, if there is no censored data.
     if (all(mask_data)) return(data@data[[object@name]])
@@ -757,13 +832,15 @@ setMethod(
         object = object@simple,
         data = data,
         mask_data = mask_data,
-        initial_imputation = initial_imputation))
+        initial_imputation = initial_imputation
+      ))
     }
     
     # Check that the glmnet package is installed.
     require_package(
       x = "glmnet",
-      purpose = "to impute data using lasso regression")
+      purpose = "to impute data using lasso regression"
+    )
     
     # Get intended data.
     y <- data@data[[object@name]]
@@ -776,13 +853,17 @@ setMethod(
       data = x,
       object = NULL,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
     
     # Extract data table with contrasts.
-    x <- encoded_data$encoded_data@data[!mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
+    x <- encoded_data$encoded_data@data[
+      !mask_data,
+      mget(get_feature_columns(encoded_data$encoded_data))
+    ]
     
     # Check if the validation data has two or more columns
-    if (ncol(x) == 1) x[, "bogus__variable__" := 0.0]
+    if (ncol(x) == 1L) x[, "bogus__variable__" := 0.0]
     
     # Force x locally, otherwise an error may occur.
     x <- as.matrix(x)
@@ -794,7 +875,8 @@ setMethod(
     y[!mask_data] <- drop(predict(
       object = object@model,
       newx = x,
-      type = response_type))
+      type = response_type
+    ))
     
     return(y)
   }
@@ -807,18 +889,21 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersImputationContainer",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(
     object, 
     data,
     mask_data,
     initial_imputation,
-    ...) {
+    ...
+  ) {
     
     # Find uncensored data.
     uncensored_data <- .mask_data_to_mask(
       mask_data = mask_data,
-      type = object@type)
+      type = object@type
+    )
     
     # Return data as is, if there is no censored data.
     if (all(uncensored_data)) return(data@data[[object@name]])
@@ -844,16 +929,19 @@ setMethod(
       apply_feature_info_parameters,
       data = censored_data,
       mask_data = mask_data[!uncensored_data],
-      initial_imputation = initial_imputation)
+      initial_imputation = initial_imputation
+    )
     
     # Set as data.table.
     imputed_values <- data.table::as.data.table(imputed_values)
     
     # Aggregate by row.
-    imputed_values <- imputed_values[, list(
-      "value" = aggregation_function(do.call(c, .SD))),
+    imputed_values <- imputed_values[
+      ,
+      list("value" = aggregation_function(do.call(c, .SD))),
       .SDcols = colnames(imputed_values),
-      by = seq_len(nrow(imputed_values))]
+      by = seq_len(nrow(imputed_values))
+    ]
     
     # Replace censored values in y.
     y[!uncensored_data] <- imputed_values$value
@@ -883,7 +971,8 @@ setMethod(
 ..collect_and_aggregate_imputation_info <- function(
     feature_info_list,
     feature_name,
-    feature_type) {
+    feature_type
+) {
   # Aggregate transformation parameters. This function exists so that it can be
   # tested as part of a unit test.
   
@@ -891,7 +980,8 @@ setMethod(
   container_object <- ..create_imputation_parameter_skeleton(
     feature_name = feature_name,
     feature_type = feature_type,
-    method = "container")
+    method = "container"
+  )
   
   # Extract and store imputation objects.
   container_object@model <- lapply(
@@ -902,20 +992,24 @@ setMethod(
       if (is(x@imputation_parameters, "featureInfoParametersImputationNone")) return(NULL)
       
       return(x@imputation_parameters)
-    })
+    }
+  )
   
   if (is_empty(container_object@model)) {
     container_object@model <- list(
       ..create_imputation_parameter_skeleton(
         feature_name = feature_name,
         feature_type = feature_type,
-        method = "none"))
+        method = "none"
+      )
+    )
   }
   
   # Set required parameters.
   container_object@required_features <- unique(unlist(lapply(
     container_object@model,
-    function(x) (x@required_features))))
+    function(x) (x@required_features)
+  )))
   
   # Mark as complete.
   container_object@complete <- TRUE

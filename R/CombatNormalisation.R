@@ -10,14 +10,16 @@ setClass(
   "featureInfoParametersNormalisationParametricCombat",
   contains = "featureInfoParametersNormalisationShiftScale",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 # Non-parametric ComBat object -------------------------------------------------
 setClass(
   "featureInfoParametersNormalisationNonParametricCombat",
   contains = "featureInfoParametersNormalisationShiftScale",
   slots = list("method" = "character"),
-  prototype = list("method" = NA_character_))
+  prototype = list("method" = NA_character_)
+)
 
 
 # Only included in .get_available_batch_normalisation_methods
@@ -37,12 +39,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationParametricCombat",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object, 
     data,
     batch_parameter_data,
-    ...) {
+    ...
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     feature <- batch_id <- NULL
@@ -55,7 +59,8 @@ setMethod(
     replacement_object <- ..create_normalisation_parameter_skeleton(
       feature_name = object@name,
       method = "standardisation",
-      batch = object@batch)
+      batch = object@batch
+    )
     
     # Select the current feature and batch from batch_parameter_data.
     batch_parameter_data <- batch_parameter_data[feature == object@name & batch_id == object@batch, ]
@@ -65,7 +70,8 @@ setMethod(
     if (is_empty(batch_parameter_data)) {
       return(add_feature_info_parameters(
         object = replacement_object,
-        data = data))
+        data = data
+      ))
     }
     
     # If shift and scale parameters are not finite, attempt to use univariate
@@ -73,7 +79,8 @@ setMethod(
     if (!is.finite(batch_parameter_data$norm_shift) || !is.finite(batch_parameter_data$norm_scale)) {
       return(add_feature_info_parameters(
         object = replacement_object,
-        data = data))
+        data = data
+      ))
     }
     
     # Set shift and scale parameters.
@@ -97,12 +104,14 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationNonParametricCombat",
-    data = "data.table"),
+    data = "data.table"
+  ),
   function(
     object, 
     data,
     batch_parameter_data,
-    ...) {
+    ...
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     feature <- batch_id <- NULL
@@ -115,7 +124,8 @@ setMethod(
     replacement_object <- ..create_normalisation_parameter_skeleton(
       feature_name = object@name,
       method = "standardisation",
-      batch = object@batch)
+      batch = object@batch
+    )
     
     # Select the current feature and batch from batch_parameter_data.
     batch_parameter_data <- batch_parameter_data[feature == object@name & batch_id == object@batch, ]
@@ -125,7 +135,8 @@ setMethod(
     if (is_empty(batch_parameter_data)) {
       return(add_feature_info_parameters(
         object = replacement_object,
-        data = data))
+        data = data
+      ))
     }
     
     # If shift and scale parameters are not finite, attempt to use
@@ -133,7 +144,8 @@ setMethod(
     if (!is.finite(batch_parameter_data$norm_shift) || !is.finite(batch_parameter_data$norm_scale)) {
       return(add_feature_info_parameters(
         object = replacement_object,
-        data = data))
+        data = data
+      ))
     }
     
     # Set shift and scale parameters.
@@ -162,22 +174,27 @@ setMethod(
   batch_id_column <- get_id_columns(single_column = "batch")
   
   # Set a minimum threshold for valid sample sizes
-  min_valid_samples <- 10
-  min_valid_features <- 3
+  min_valid_samples <- 10L
+  min_valid_features <- 3L
   
   # Convert the table from wide to long format
   x <- data.table::melt(
     data[, mget(c(batch_id_column, feature_names))],
     id.vars = batch_id_column,
     variable.name = "feature",
-    value.name = "value")
+    value.name = "value"
+  )
   
   # Sum the number of instances with a valid value, and determine whether all
   # values are singular.
-  aggregate_table <- x[, list(
-    "n" = sum(is.finite(value)),
-    "invariant" = is_singular_data(value)),
-    by = c(batch_id_column, "feature")]
+  aggregate_table <- x[
+    ,
+    list(
+      "n" = sum(is.finite(value)),
+      "invariant" = is_singular_data(value)
+    ),
+    by = c(batch_id_column, "feature")
+  ]
   
   # A feature/batch combination is valid if it is not invariant and has
   # sufficient instances with a finite value.
@@ -206,7 +223,7 @@ setMethod(
     z[, "gamma_hat" := mean(value), by = c(batch_id_column, "feature")]
     
     # Determine the variance (delta_hat_squared) of each feature in each batch.
-    z[, "delta_hat_squared" := 1 / n * sum((value - gamma_hat)^2.0), by = c(batch_id_column, "feature")]
+    z[, "delta_hat_squared" := 1.0 / n * sum((value - gamma_hat)^2.0), by = c(batch_id_column, "feature")]
     
   } else {
     z <- NULL
@@ -220,9 +237,10 @@ setMethod(
 .combat_iterative_parametric_bayes_solver <- function(
     z,
     tolerance = 0.0001,
-    max_iterations = 20,
+    max_iterations = 20L,
     cl = NULL,
-    progress_bar = FALSE) {
+    progress_bar = FALSE
+) {
   # In the empirical Bayes approach with parametric priors, the posterior
   # estimations of gamma and delta_squared are iteratively optimised.
   
@@ -263,7 +281,8 @@ setMethod(
     progress_bar = progress_bar,
     z_short = z_short,
     tolerance = tolerance,
-    max_iterations = max_iterations)
+    max_iterations = max_iterations
+  )
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -277,7 +296,8 @@ setMethod(
     z,
     z_short,
     tolerance,
-    max_iterations) {
+    max_iterations
+) {
   # Perform the actual parametric estimations within each batch. Called from the
   # .combat_iterative_parametric_bayes_solver function
   
@@ -290,17 +310,18 @@ setMethod(
   batch_id_column <- get_id_columns(single_column = "batch")
   
   # Limit z_short to the current batch.
-  current_batch_id <- z[[batch_id_column]][1]
+  current_batch_id <- z[[batch_id_column]][1L]
   z_short <- data.table::copy(z_short[batch_id == current_batch_id])
   
   # Initialise conditional posteriors. 1 value per feature per batch.
   z_short[, ":="(
     "gamma_star_old" = gamma_hat,
-    "delta_star_squared_old" = delta_hat_squared)]
+    "delta_star_squared_old" = delta_hat_squared
+  )]
   
   # Convergence update value.
   convergence_update <- 1.0
-  iteration_count <- 0
+  iteration_count <- 0L
   
   while (convergence_update > tolerance && iteration_count < max_iterations) {
 
@@ -310,45 +331,53 @@ setMethod(
       tau_bar_squared = tau_bar_squared,
       gamma_hat = gamma_hat,
       delta_star_squared = delta_star_squared_old,
-      gamma_bar = gamma_bar)]
+      gamma_bar = gamma_bar
+    )]
     
     # Merge z_short back into z prior to computing the sum squared error.
     z_new <- merge(
       x = z[, mget(c(batch_id_column, "feature", "value"))],
       y = z_short[, mget(c(batch_id_column, "feature", "gamma_star_new"))],
       by = c(batch_id_column, "feature"),
-      all = TRUE)
+      all = TRUE
+    )
     
     # Compute sum squared error in equation 3.1 for the delta_star_squared posterior.
-    z_new <- z_new[, list(
-      "sum_squared_error" = sum((value - gamma_star_new)^2)),
-      by = c(batch_id_column, "feature")]
+    z_new <- z_new[
+      ,
+      list("sum_squared_error" = sum((value - gamma_star_new)^2.0)),
+      by = c(batch_id_column, "feature")
+    ]
     
     z_short <- merge(
       x = z_short,
       y = z_new,
       by = c(batch_id_column, "feature"),
-      all = TRUE)
+      all = TRUE
+    )
     
     # Update the conditional delta_star_squared posterior.
     z_short[, "delta_star_squared_new" := ..combat_delta_squared_posterior(
       theta_bar = theta_bar,
       sum_squared_error = sum_squared_error,
       n = n,
-      lambda_bar = lambda_bar)]
+      lambda_bar = lambda_bar
+    )]
     
     # Update convergence
     convergence_update <- max(
       abs((z_short$gamma_star_new - z_short$gamma_star_old) / z_short$gamma_star_old),
-      abs((z_short$delta_star_squared_new - z_short$delta_star_squared_old) / z_short$delta_star_squared_old))
+      abs((z_short$delta_star_squared_new - z_short$delta_star_squared_old) / z_short$delta_star_squared_old)
+    )
     
     # Replace old posterior values
     z_short[, ":="(
       "gamma_star_old" = gamma_star_new,
       "delta_star_squared_old" = delta_star_squared_new,
-      "sum_squared_error" = NULL)]
+      "sum_squared_error" = NULL
+    )]
     
-    iteration_count <- iteration_count + 1
+    iteration_count <- iteration_count + 1L
   }
   
   # Store delta_star
@@ -358,7 +387,8 @@ setMethod(
   data.table::setnames(
     x = z_short,
     old = c("gamma_star_new", "delta_star"),
-    new = c("norm_shift", "norm_scale"))
+    new = c("norm_shift", "norm_scale")
+  )
 
   return(z_short[, mget(c(batch_id_column, "feature", "norm_shift", "norm_scale", "n"))])
 }
@@ -367,9 +397,10 @@ setMethod(
 
 .combat_non_parametric_bayes_solver <- function(
     z,
-    n_sample_features = 50,
+    n_sample_features = 50L,
     cl = NULL,
-    progress_bar = TRUE) {
+    progress_bar = TRUE
+) {
   # Computes batch parameters using non-parametric priors. Sadly, this seems to
   # be an O(2) problem because it compares each feature with every other
   # feature. Johnson et al. We may be able to cheat a bit by subsampling the
@@ -397,12 +428,14 @@ setMethod(
     X = split(
       z,
       by = c(get_id_columns(single_column = "batch"), "feature"),
-      drop = TRUE),
+      drop = TRUE
+    ),
     FUN = ..combat_non_parametric_bayes_solver,
     progress_bar = progress_bar,
     z_short = z_short,
     n_sample_features = n_sample_features,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -415,7 +448,8 @@ setMethod(
 ..combat_non_parametric_bayes_solver <- function(
     z,
     z_short,
-    n_sample_features) {
+    n_sample_features
+) {
 
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature <- NULL
@@ -424,12 +458,12 @@ setMethod(
   batch_id_column <- get_id_columns(single_column = "batch")
   
   # Limit z_short to the current batch.
-  current_batch_id <- z[[batch_id_column]][1]
+  current_batch_id <- z[[batch_id_column]][1L]
   
   # Select the current cohort from z_short. Note that like in sva and other
   # codes, we interpret the g"=1...G in the supplement of Johnson et al. to
   # indicate that the current feature is not directly considered.
-  z_short <- data.table::copy(z_short[batch_id == current_batch_id & feature != z$feature[1]])
+  z_short <- data.table::copy(z_short[batch_id == current_batch_id & feature != z$feature[1L]])
   
   # Find the number of features that are used to compute w_ig".
   features <- z_short$feature
@@ -441,7 +475,8 @@ setMethod(
   selected_features <- fam_sample(
     features,
     size = n_sample_features,
-    replace = FALSE)
+    replace = FALSE
+  )
   
   # Make selection
   z_short <- droplevels(z_short[feature %in% selected_features])
@@ -455,23 +490,25 @@ setMethod(
     function(prior_pair, x) {
       # Compute sum((x-gamma_hat)^2) term in the product of the probability
       # density functions of the normal distribution over x.
-      sum_squared_error <- sum((x - prior_pair$gamma_hat[1])^2)
+      sum_squared_error <- sum((x - prior_pair$gamma_hat[1L])^2.0)
       
       # Compute w_ig" = L(Z_ig | gamma_hat_ig", delta_hat_squared_ig")
       # for the current feature in g".
-      w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1])^(length(x) / 2) * 
-        exp(-sum_squared_error / (2 * prior_pair$delta_hat_squared[1]))
+      w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1L])^(length(x) / 2.0) * 
+        exp(-sum_squared_error / (2.0 * prior_pair$delta_hat_squared[1L]))
       
       # Replace NaNs and other problematic values.
       if (!is.finite(w_ig)) w_ig <- 0.0
       
       return(data.table::data.table(
-        "feature" = prior_pair$feature[1],
+        "feature" = prior_pair$feature[1L],
         "w" = w_ig,
-        "gamma_hat" = prior_pair$gamma_hat[1],
-        "delta_hat_squared" = prior_pair$delta_hat_squared[1]))
+        "gamma_hat" = prior_pair$gamma_hat[1L],
+        "delta_hat_squared" = prior_pair$delta_hat_squared[1L]
+      ))
     },
-    x = z$value)
+    x = z$value
+  )
   
   # Combine to data.table
   weight_data <- data.table::rbindlist(weight_data)
@@ -481,11 +518,12 @@ setMethod(
   delta_star_squared <- sum(weight_data$w * weight_data$delta_hat_squared) / sum(weight_data$w)
   
   return(data.table::data.table(
-    "batch_id" = z[[batch_id_column]][1],
-    "feature" = z$feature[1],
+    "batch_id" = z[[batch_id_column]][1L],
+    "feature" = z$feature[1L],
     "norm_shift" = gamma_star,
     "norm_scale" = sqrt(delta_star_squared),
-    "n" = nrow(z)))
+    "n" = nrow(z)
+  ))
 }
 
 
@@ -500,7 +538,7 @@ setMethod(
   v <- mean(delta_hat_squared)
   s_squared <- stats::var(x = delta_hat_squared)
   
-  return((v^2 / s_squared) + 2.0)
+  return((v^2.0 / s_squared) + 2.0)
 }
 
 
@@ -511,7 +549,7 @@ setMethod(
   v <- mean(delta_hat_squared)
   s_squared <- stats::var(x = delta_hat_squared)
   
-  return(v * (1 + (v^2 / s_squared)))
+  return(v * (1.0 + (v^2.0 / s_squared)))
 }
 
 

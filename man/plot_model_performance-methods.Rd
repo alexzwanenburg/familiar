@@ -29,7 +29,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -62,7 +62,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -95,7 +95,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -159,13 +159,25 @@ is not used for \code{heatmap} and \code{y_axis_by} is only used by \code{heatma
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-plot elements in case a value was provided to the \code{color_by} argument. Only
-used when \code{plot_type} is not \code{heatmap}.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
+indicated by the \code{color_by} argument (if any). Only used if \code{plot_type} is
+not \code{heatmap}. \code{familiar} has a default palette. Other palettes are
+supported by the \code{paletteer} package, \code{grDevices::palette.pals()} (requires
+R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow},
+\code{heat.colors}, \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which
+correspond to the palettes of the same name in \code{grDevices}. You may also
+specify your own palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 color the raster in \code{heatmap} plots. This argument is not used for other
-\code{plot_type} value.}
+\code{plot_type} value. \code{familiar} has a default palette. Other palettes are
+supported by the \code{paletteer} package, \code{grDevices::palette.pals()} (requires
+R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow},
+\code{heat.colors}, \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which
+correspond to the palettes of the same name in \code{grDevices}. You may also
+specify your own palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient. This should be a range of two values, e.g. \code{c(0, 1)}. Lower or
@@ -228,8 +240,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -402,15 +414,6 @@ along the x-axis.
 }
 
 If applicable, additional faceting is performed for \code{evaluation_time}.
-
-Available palettes for \code{discrete_palette} and \code{gradient_palette} are those
-listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
-\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
-palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your
-own palette by using colour names listed by \code{grDevices::colors()} or
-through hexadecimal RGB strings.
 
 Labeling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order

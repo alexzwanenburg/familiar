@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include PredictionTable.R
 NULL
 
 # familiarDataElementAUCCurve object definition --------------------------------
@@ -9,7 +10,9 @@ setClass(
   contains = "familiarDataElement",
   prototype = methods::prototype(
     value_column = "y",
-    grouping_column = "x"))
+    grouping_column = "x"
+  )
+)
 
 
 
@@ -19,7 +22,7 @@ setClass(
 #'
 #'@description Computes the ROC curve from a `familiarEnsemble`.
 #''
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@details This function also computes credibility intervals for the ROC curve
 #'  for the ensemble model, at the level of `confidence_level`. In the case of
@@ -47,14 +50,15 @@ setGeneric(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_auc_data")
   }
 )
 
 
 
-#extract_auc_data (familiarEnsemble) -------------------------------------------
+# extract_auc_data (familiarEnsemble) ------------------------------------------
 setMethod(
   "extract_auc_data",
   signature(object = "familiarEnsemble"),
@@ -71,7 +75,8 @@ setMethod(
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     # Extract data for plotting AUC curves.
     
     # AUC data can only be prepared for binomial and multinomial outcomes
@@ -81,62 +86,29 @@ setMethod(
     logger_message(
       paste0("Computing receiver-operating characteristic curves."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
-    # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-    
-    # Obtain confidence level from the settings file stored with the
-    # familiarEnsemble object.
     if (is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-    
-    # Check alpha
-    .check_number_in_valid_range(
-      x = confidence_level, 
-      var_name = "confidence_level",
-      range = c(0.0, 1.0),
-      closed = c(FALSE, FALSE))
-    
-    # Load the bootstrap method
-    if (is.waive(bootstrap_ci_method)) {
-      bootstrap_ci_method <- object@settings$bootstrap_ci_method
-    }
-    
-    .check_parameter_value_is_valid(
-      x = bootstrap_ci_method, 
-      var_name = "bootstrap_ci_method",
-      values = .get_available_bootstrap_confidence_interval_methods())
-    
-    # Check the level detail.
-    detail_level <- .parse_detail_level(
-      x = detail_level,
-      object = object,
-      default = "hybrid",
-      data_element = "auc_data")
-    
-    # Check the estimation type.
-    estimation_type <- .parse_estimation_type(
-      x = estimation_type,
-      object = object,
-      default = "bootstrap_confidence_interval",
-      data_element = "auc_data",
-      detail_level = detail_level,
-      has_internal_bootstrap = TRUE)
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
     
     # Check whether results should be aggregated.
     aggregate_results <- .parse_aggregate_results(
       x = aggregate_results,
       object = object,
       default = TRUE,
-      data_element = "auc_data")
+      data_element = "auc_data"
+    )
     
-    # Generate a prototype data element.
-    proto_data_element <- new(
-      "familiarDataElementAUCCurve",
+    proto_data_element <- .create_extract_auc_data_object(
+      object = object,
+      ensemble_method = ensemble_method,
       detail_level = detail_level,
       estimation_type = estimation_type,
       confidence_level = confidence_level,
-      bootstrap_ci_method = bootstrap_ci_method)
+      bootstrap_ci_method = bootstrap_ci_method
+    )
     
     # Determine whether a single curve is obtained for point estimates.
     # When more than one model exists, these may be averaged for hybrid
@@ -156,7 +128,8 @@ setMethod(
       aggregate_results = aggregate_results,
       is_single_curve = is_single_curve,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(roc_data)
   }
@@ -164,15 +137,168 @@ setMethod(
 
 
 
-.extract_roc_curve_data <- function(
+# extract_auc_data (prediction table) ------------------------------------------
+
+setMethod(
+  "extract_auc_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(
     object,
     data,
-    proto_data_element,
     cl = NULL,
+    ensemble_method = waiver(),
+    detail_level = waiver(),
+    estimation_type = waiver(),
+    aggregate_results = waiver(),
+    confidence_level = waiver(),
+    bootstrap_ci_method = waiver(),
+    is_pre_processed = FALSE,
+    message_indent = 0L,
+    verbose = FALSE,
+    ...
+  ) {
+    # Extract data for plotting AUC curves.
+    
+    # AUC data can only be prepared for binomial and multinomial outcomes
+    if (!is(object, "predictionTableClassification")) {
+      ..warning_no_data_extraction_from_prediction_table("AUC curve data")
+      
+      return(NULL)
+    }
+
+    # Message start of auc computations
+    logger_message(
+      paste0("Computing receiver-operating characteristic curves."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    if (is.waive(ensemble_method)) {
+      ensemble_method <- "median"
+      if (methods::.hasSlot(object, "ensemble_method")) ensemble_method <- object@ensemble_method
+    }
+    
+    # Default Values.
+    if (is.waive(detail_level)) detail_level <- "ensemble"
+    if (is.waive(estimation_type)) estimation_type <- "bootstrap_confidence_interval" 
+    if (is.waive(confidence_level)) confidence_level <- 0.95
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- "bc"
+    if (is.waive(aggregate_results)) aggregate_results <- TRUE
+    
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = TRUE,
+      data_element = "auc_data"
+    )
+    
+    # Copy object to prevent changing the provided object by reference.
+    object <- .copy(object)
+    
+    proto_data_element <- .create_extract_auc_data_object(
+      object = object,
+      ensemble_method = ensemble_method,
+      detail_level = detail_level,
+      estimation_type = estimation_type,
+      confidence_level = confidence_level,
+      bootstrap_ci_method = bootstrap_ci_method
+    )
+    
+    # Determine whether a single curve is obtained for point estimates.
+    is_single_curve <- TRUE
+    
+    # Generate elements to send to dispatch.
+    roc_data <- extract_dispatcher(
+      FUN = .extract_roc_curve_data,
+      has_internal_bootstrap = TRUE,
+      cl = cl,
+      object = object,
+      data = data,
+      proto_data_element = proto_data_element,
+      is_pre_processed = is_pre_processed,
+      ensemble_method = ensemble_method,
+      aggregate_results = aggregate_results,
+      is_single_curve = is_single_curve,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    return(roc_data)
+  }
+)
+
+
+
+.create_extract_auc_data_object <- function(
+    object,
     ensemble_method,
-    is_pre_processed,
+    detail_level,
+    estimation_type,
+    confidence_level,
+    bootstrap_ci_method
+) {
+  # Check confidence_level input argument.
+  .check_number_in_valid_range(
+    x = confidence_level, 
+    var_name = "confidence_level",
+    range = c(0.0, 1.0),
+    closed = c(FALSE, FALSE)
+  )
+  
+  # Check bootstrap_ci_method argument.
+  .check_parameter_value_is_valid(
+    x = bootstrap_ci_method, 
+    var_name = "bootstrap_ci_method",
+    values = .get_available_bootstrap_confidence_interval_methods()
+  )
+  
+  # Check ensemble_method argument.
+  .check_parameter_value_is_valid(
+    x = ensemble_method,
+    var_name = "ensemble_method",
+    values = .get_available_ensemble_prediction_methods()
+  )
+  
+  # Check the level detail.
+  detail_level <- .parse_detail_level(
+    x = detail_level,
+    object = object,
+    default = "hybrid",
+    data_element = "auc_data"
+  )
+  
+  # Check the estimation type.
+  estimation_type <- .parse_estimation_type(
+    x = estimation_type,
+    object = object,
+    default = "bootstrap_confidence_interval",
+    data_element = "auc_data",
+    detail_level = detail_level,
+    has_internal_bootstrap = TRUE
+  )
+  
+  # Generate a prototype data element.
+  proto_data_element <- new(
+    "familiarDataElementAUCCurve",
+    detail_level = detail_level,
+    estimation_type = estimation_type,
+    confidence_level = confidence_level,
+    bootstrap_ci_method = bootstrap_ci_method
+  )
+  
+  return(proto_data_element)
+}
+
+
+
+.extract_roc_curve_data <- function(
+    object,
+    proto_data_element,
     is_single_curve,
-    ...) {
+    cl = NULL,
+    ...
+) {
   
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
@@ -180,7 +306,8 @@ setMethod(
   # Add model name.
   proto_data_element <- add_model_name(
     proto_data_element,
-    object = object)
+    object = object
+  )
   
   # Update is_single_curve
   is_single_curve <- proto_data_element@estimation_type == "point" && is_single_curve
@@ -189,50 +316,111 @@ setMethod(
     ..error_outcome_type_not_implemented(object@outcome_type)
   }
   
-  # Predict class probabilities.
-  prediction_data <- .predict(
+  return(..extract_roc_curve_data(
     object = object,
-    data = data,
-    ensemble_method = ensemble_method,
-    is_pre_processed = is_pre_processed)
-  
-  # Check if any predictions are valid.
-  if (!all_predictions_valid(
-    prediction_data,
-    outcome_type = object@outcome_type)) {
-    return(NULL)
-  } 
-  
-  # Remove data with missing outcomes.
-  prediction_data <- remove_missing_outcomes(
-    data = prediction_data,
-    outcome_type = object@outcome_type)
-  
-  # Check that any prediction data remain.
-  if (is_empty(prediction_data)) return(NULL)
-  
-  # Determine class levels
-  outcome_class_levels <- get_outcome_class_levels(object)
-  
-  # Select only one outcome type for binomial outcomes.
-  if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
-  
-  # Add positive class as an identifier.
-  data_elements <- add_data_element_identifier(
-    x = proto_data_element,
-    positive_class = outcome_class_levels)
-  
-  # Compute ROC data.
-  roc_data <- lapply(
-    data_elements,
-    .compute_auc_data_categorical,
-    data = prediction_data,
-    cl = cl,
+    data_element = proto_data_element,
     is_single_curve = is_single_curve,
-    ...)
-  
-  return(roc_data)
+    cl = cl,
+    ...
+  ))
 }
+
+
+
+# ..extract_roc_curve_data (generic) -------------------------------------------
+setGeneric(
+  "..extract_roc_curve_data",
+  function(object, ...) standardGeneric("..extract_roc_curve_data")
+)
+
+
+
+# ..extract_roc_curve_data (model, ensemble) -----------------------------------
+setMethod(
+  "..extract_roc_curve_data",
+  signature(object = "familiarModelUnion"),
+  function(
+    object,
+    data,
+    ensemble_method,
+    is_pre_processed,
+    ...
+  ) {
+    
+    # Predict class probabilities.
+    prediction_data <- .predict(
+      object = object,
+      data = data,
+      ensemble_method = ensemble_method,
+      is_pre_processed = is_pre_processed
+    )
+    
+    return(..extract_roc_curve_data(
+      object = prediction_data,
+      ...
+    ))
+  }
+)
+
+
+
+# ..extract_roc_curve_data (classification) ------------------------------------
+setMethod(
+  "..extract_roc_curve_data",
+  signature(object = "predictionTableClassification"),
+  function(
+    object,
+    data_element,
+    cl,
+    is_single_curve,
+    ...
+  ) {
+    
+    # Check if any predictions are valid.
+    if (!all_predictions_valid(object)) return(NULL)
+    
+    # Remove data with missing outcomes.
+    object <- filter_missing_outcome(object)
+    
+    # Check that any prediction data remain.
+    if (is_empty(object)) return(NULL)
+    
+    # Determine class levels
+    outcome_class_levels <- get_outcome_class_levels(object)
+    
+    # Select only one outcome type for binomial outcomes.
+    if (object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2L]
+    
+    # Add positive class as an identifier.
+    data_elements <- add_data_element_identifier(
+      x = data_element,
+      positive_class = outcome_class_levels
+    )
+    
+    # Compute ROC data.
+    roc_data <- lapply(
+      data_elements,
+      .compute_auc_data_categorical,
+      data = object,
+      cl = cl,
+      is_single_curve = is_single_curve,
+      ...
+    )
+    
+    return(roc_data)
+  }
+)
+
+
+
+# ..extract_roc_curve_data (NULL) ----------------------------------------------
+setMethod(
+  "..extract_roc_curve_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(NULL)
+  }
+)
 
 
 
@@ -245,30 +433,35 @@ setMethod(
     progress_bar = FALSE,
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+) {
   
   # Check if the data has more than 1 row.
-  if (nrow(data) <= 1) return(NULL)
+  if (get_n_samples(data) <= 1L) return(NULL)
   
-  if (length(data_element@identifiers$positive_class) > 0 && progress_bar) {
+  if (length(data_element@identifiers$positive_class) > 0L && progress_bar) {
     logger_message(
       paste0(
         "Computing ROC and Precision-Recall curves for the \"",
-        data_element@identifiers$positive_class, "\" class."),
+        data_element@identifiers$positive_class, "\" class."
+      ),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   # Set test probabilities
   threshold_probabilities <- seq(
     from = 0.000,
     to = 1.000,
-    by = 0.005)
+    by = 0.005
+  )
   
   # Add bootstrap data.
   bootstrap_data <- add_data_element_bootstrap(
     x = data_element,
-    ...)
+    ...
+  )
   
   # Iterate over elements.
   data_elements <- fam_mapply(
@@ -281,9 +474,11 @@ setMethod(
     MoreArgs = list(
       "data" = data,
       "x" = threshold_probabilities,
-      "is_single_curve" = is_single_curve),
+      "is_single_curve" = is_single_curve
+    ),
     progress_bar = progress_bar,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)
@@ -300,7 +495,8 @@ setMethod(
     x,
     is_single_curve,
     bootstrap,
-    bootstrap_seed) {
+    bootstrap_seed
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- probability <- ppv <- tpr <- fpr <- is_positive <- NULL
@@ -313,15 +509,17 @@ setMethod(
   if (bootstrap) {
     data <- get_bootstrap_sample(
       data = data,
-      seed = bootstrap_seed)
+      seed = bootstrap_seed
+    )
   }
   
   # Make a local copy
-  data <- data.table::copy(data)
+  data <- data.table::copy(.as_data_table(data))
   data.table::setnames(
     x = data,
-    old = get_class_probability_name(positive_class),
-    new = "probability")
+    old = positive_class,
+    new = "probability"
+  )
   
   # Determine the number of positive and negative outcomes.
   n_positive <- sum(data$outcome == positive_class)
@@ -341,7 +539,8 @@ setMethod(
     "n_true_positive" = cumsum(is_positive),
     "n_false_positive" = cumsum(!is_positive),
     "n_true_negative" = n_negative - cumsum(!is_positive),
-    "n_false_negative" = n_positive - cumsum(is_positive))]
+    "n_false_negative" = n_positive - cumsum(is_positive)
+  )]
   
   # Insert initial values.
   data <- data.table::rbindlist(
@@ -350,20 +549,25 @@ setMethod(
         "n_true_positive" = 0L,
         "n_false_positive" = 0L,
         "n_true_negative" = n_negative,
-        "n_false_negative" = n_positive),
-      data),
+        "n_false_negative" = n_positive
+      ),
+      data
+    ),
     use.names = TRUE,
-    fill = TRUE)
+    fill = TRUE
+  )
   
   # Select unique data.
   data <- unique(
     data,
     by = c(
       "n_true_positive", "n_false_positive",
-      "n_true_negative", "n_false_negative"))
+      "n_true_negative", "n_false_negative"
+    )
+  )
   
   # Compute TPR / recall (sensitivity)
-  if (n_positive > 0) {
+  if (n_positive > 0L) {
     data[, "tpr" := n_true_positive / n_positive]
     
   } else {
@@ -371,7 +575,7 @@ setMethod(
   }
   
   # Compute FPR (1-specificity)
-  if (max(data$n_false_positive) > 0) {
+  if (max(data$n_false_positive) > 0L) {
     data[, "fpr" := n_false_positive / n_negative]
     
   } else {
@@ -379,11 +583,11 @@ setMethod(
   }
   
   # Compute precision / positive predictive value
-  if (max(data$n_true_positive + data$n_false_positive) > 0) {
+  if (max(data$n_true_positive + data$n_false_positive) > 0L) {
     data[, "ppv" := n_true_positive / (n_true_positive + n_false_positive)]
     
     # By convention, the initial value is 1.0.
-    data[n_true_positive + n_false_positive == 0, "ppv" := 1.0]
+    data[n_true_positive + n_false_positive == 0L, "ppv" := 1.0]
   } else {
     data[, "ppv" := 0.0]
   }
@@ -402,8 +606,10 @@ setMethod(
     list(
       data.table::data.table("tpr" = 0.0, "fpr" = 0.0),
       data_auc_roc,
-      data.table::data.table("tpr" = 1.0, "fpr" = 1.0)),
-    use.names = TRUE)
+      data.table::data.table("tpr" = 1.0, "fpr" = 1.0)
+    ),
+    use.names = TRUE
+  )
   
   # Select minimum and maximum sensitivity at each fpr.
   data_auc_roc <- unique(data_auc_roc[, list("tpr" = c(min(tpr), max(tpr))), by = "fpr"])
@@ -415,7 +621,8 @@ setMethod(
   data_auc_roc <- merge(
     x = data_auc_roc,
     y = data[, mget(c("tpr", "fpr", "sorting_index"))],
-    by = c("tpr", "fpr"))
+    by = c("tpr", "fpr")
+  )
   
   # Fill out potentially missing sorting indices.
   data_auc_roc[tpr == 0.0 & fpr == 0.0 & is.na(sorting_index), "sorting_index" := 0L]
@@ -444,18 +651,21 @@ setMethod(
       yleft = 0.0,
       yright = 1.0,
       method = "linear",
-      ties = "ordered")$y)
+      ties = "ordered"
+    )$y)
   }
   
   # Set ROC curve data.
   data_element_roc@data <- data.table::data.table(
     "x" = x,
-    "y" = y_auc_roc)
+    "y" = y_auc_roc
+  )
   
   # Add curve type as an identifier.
   data_element_roc <- add_data_element_identifier(
     data_element_roc,
-    curve_type = "roc")
+    curve_type = "roc"
+  )
   
   # Copy the data element as prototype for precisions-recall curve data.
   data_element_pr <- data_element
@@ -471,7 +681,8 @@ setMethod(
   data_auc_pr <- merge(
     x = data_auc_pr,
     y = data[, mget(c("tpr", "ppv", "sorting_index"))],
-    by = c("tpr", "ppv"))
+    by = c("tpr", "ppv")
+  )
   
   # Order data by sorting index.
   data_auc_pr <- data_auc_pr[order(sorting_index)]
@@ -493,22 +704,26 @@ setMethod(
       yleft = 1.0,
       yright = n_positive / (n_positive + n_negative),
       method = "linear",
-      ties = "ordered")$y)
+      ties = "ordered"
+    )$y)
   }
   
   # Set PR curve data.
   data_element_pr@data <- data.table::data.table(
     "x" = x,
-    "y" = y_auc_pr)
+    "y" = y_auc_pr
+  )
   
   # Add curve type as an identifier.
   data_element_pr <- add_data_element_identifier(
     data_element_pr,
-    curve_type = "pr")
+    curve_type = "pr"
+  )
   
   return(c(
     data_element_roc,
-    data_element_pr))
+    data_element_pr
+  ))
 }
 
 
@@ -553,7 +768,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_auc_data")
   }
 )
@@ -571,7 +787,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -583,7 +800,8 @@ setMethod(
       aggregate_results = aggregate_results,
       type = "performance",
       subtype = "auc_curves",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -598,7 +816,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -607,8 +826,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "auc_data",
-          "aggregate_results" = aggregate_results),
-        list(...)))
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_auc_data,
@@ -617,7 +839,10 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )

@@ -10,7 +10,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_sample_clustering,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   data_element = "feature_expressions",
   plot_args = list("verbose" = FALSE),
   debug = debug_flag
@@ -20,7 +20,7 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_sample_clustering,
   data_element = "feature_expressions",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list("verbose" = FALSE),
   debug = debug_flag
 )
@@ -29,7 +29,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_sample_clustering,
   data_element = "feature_expressions",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
     "verbose" = FALSE),
@@ -40,7 +40,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_sample_clustering,
   data_element = "feature_expressions",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
     "x_axis_by" = "sample",
@@ -53,7 +53,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_sample_clustering,
   data_element = "feature_expressions",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method", "data_set"),
     "x_axis_by" = "sample",

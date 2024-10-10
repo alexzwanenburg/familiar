@@ -12,25 +12,27 @@
 
   # Find the number of available cores.
   n_available_cores <- parallel::detectCores()
-  n_cores <- max(c(1, min(c(n_available_cores - 1, n_cores))))
+  n_cores <- max(c(1L, min(c(n_available_cores - 1L, n_cores))))
 
-  if (n_available_connections < 2 && n_cores > 2 && cluster_type %in% c("psock", "sock", "fork")) {
-    stop(paste0(
+  if (n_available_connections < 2L && n_cores > 2L && cluster_type %in% c("psock", "sock", "fork")) {
+    ..error(paste0(
       "R has insufficient available connections to perform parallel processing. ",
       "You may close connections using closeAllConnections() to free up connections. ",
-      "If this does not resolve the issue, disable parallelisation for familiar."))
+      "If this does not resolve the issue, disable parallelisation for familiar."
+    ))
     
-  } else if (n_cores > 2 && n_available_connections < n_cores) {
-    warning(paste0(
+  } else if (n_cores > 2L && n_available_connections < n_cores) {
+    ..warning(paste0(
       "R has insufficient available connections to use all available cores for parallel processing. ",
-      n_available_connections, " are used instead."))
+      n_available_connections, " are used instead."
+    ))
 
     # Update the number of cores.
     n_cores <- n_available_connections
   }
 
   # Return NULL if the number of cores is 1 or less.
-  if (n_cores <= 1) return(NULL)
+  if (n_cores <= 1L) return(NULL)
 
   # Start cluster.
   if (cluster_type == "psock") {
@@ -38,7 +40,7 @@
   } else if (cluster_type == "fork") {
     cl <- parallel::makeForkCluster(n_cores)
   } else if (cluster_type %in% c("mpi", "nws", "sock")) {
-    cl <- parallel::makeCluster(type = toupper(cluster_type), 2)
+    cl <- parallel::makeCluster(type = toupper(cluster_type), 2L)
   }
 
   return(cl)
@@ -65,12 +67,12 @@
 
   # The standard is that R allows 128 connections. 3 are in standard use by R.
   # Another socket is used by the default socket_server data backend.
-  R_available <- 124
+  R_available <- 124L
 
   # Find the number of currently available connections.
   n_available_connections <- R_available - nrow(showConnections())
 
-  if (n_available_connections < 0) n_available_connections <- 0
+  if (n_available_connections < 0L) n_available_connections <- 0L
 
   return(n_available_connections)
 }
@@ -81,17 +83,17 @@
   # Check if the provided cluster type is available.
 
   if (get_os() == "windows" && cluster_type == "fork") {
-    stop("FORK clusters are not available for windows OS.")
+    ..error("FORK clusters are not available for windows OS.")
   }
 
-  installed_libs <- utils::installed.packages()[, 1]
+  installed_libs <- utils::installed.packages()[, 1L]
 
   if (!"snow" %in% installed_libs && cluster_type %in% c("mpi", "nws", "sock")) {
-    stop("The parallel package requires the snow package to work with MPI, NWS or SOCK clusters.")
+    ..error("The parallel package requires the snow package to work with MPI, NWS or SOCK clusters.")
   }
 
   if (!"Rmpi" %in% installed_libs && cluster_type == "mpi") {
-    stop("The parallel packages requires the Rmpi package to work with MPI clusters.")
+    ..error("The parallel packages requires the Rmpi package to work with MPI clusters.")
   }
   
   return(invisible(TRUE))
@@ -103,7 +105,8 @@
     is_external_cluster = FALSE,
     restart_cluster = FALSE,
     n_cores = NULL,
-    cluster_type = NULL) {
+    cluster_type = NULL
+) {
   # We don't need a backend if the cluster is external.
   if (is.null(cluster_type) && !is_external_cluster) cluster_type <- "psock"
 
@@ -202,7 +205,7 @@
   parallel::clusterEvalQ(cl = cl, library(data.table))
 
   # Set options on each cluster node.
-  parallel::clusterEvalQ(cl = cl, options(rf.cores = as.integer(1)))
+  parallel::clusterEvalQ(cl = cl, options(rf.cores = 1L))
   parallel::clusterEvalQ(cl = cl, data.table::setDTthreads(1L))
 
   # Check if anything needs to be loaded
@@ -251,7 +254,8 @@
   if (any(c("all", "feature_info") %in% assign)) {
     if (
       backend_type == "none" && 
-      exists("master_feature_info_list", envir = familiar_global_env)) {
+      exists("master_feature_info_list", envir = familiar_global_env)
+    ) {
       parallel::clusterExport(cl = cl, varlist = "master_feature_info_list", envir = familiar_global_env)
     }
   }
@@ -274,12 +278,13 @@ fam_sapply <- function(
     chopchop = FALSE,
     overhead_time = NULL,
     process_time = NULL,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
   
   # Get the name of the initial argument.
-  initial_argument_name <- head(names(formals(FUN)), n = 1)
+  initial_argument_name <- head(names(formals(FUN)), n = 1L)
   
   # Upgrade X to a named list.
   X <- list(X)
@@ -324,12 +329,13 @@ fam_lapply <- function(
     chopchop = FALSE,
     overhead_time = NULL,
     process_time = NULL,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
 
   # Get the name of the initial argument.
-  initial_argument_name <- head(names(formals(FUN)), n = 1)
+  initial_argument_name <- head(names(formals(FUN)), n = 1L)
 
   # Upgrade X to a named list.
   X <- list(X)
@@ -374,7 +380,8 @@ fam_mapply <- function(
     chopchop = FALSE,
     overhead_time = NULL,
     process_time = NULL,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
   
@@ -414,12 +421,13 @@ fam_sapply_lb <- function(
     progress_bar = FALSE,
     SIMPLIFY = TRUE,
     USE.NAMES = TRUE,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
   
   # Get the name of the initial argument.
-  initial_argument_name <- head(names(formals(FUN)), n = 1)
+  initial_argument_name <- head(names(formals(FUN)), n = 1L)
 
   # Upgrade X to a named list.
   X <- list(X)
@@ -457,12 +465,13 @@ fam_lapply_lb <- function(
     ...,
     progress_bar = FALSE,
     SIMPLIFY = FALSE,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
   
   # Get the name of the initial argument.
-  initial_argument_name <- head(names(formals(FUN)), n = 1)
+  initial_argument_name <- head(names(formals(FUN)), n = 1L)
 
   # Upgrade X to a named list.
   X <- list(X)
@@ -499,7 +508,8 @@ fam_mapply_lb <- function(
     MoreArgs = NULL,
     SIMPLIFY = FALSE,
     USE.NAMES = TRUE,
-    MEASURE.TIME = FALSE) {
+    MEASURE.TIME = FALSE
+) {
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
   
@@ -540,7 +550,8 @@ fam_mapply_lb <- function(
     measure_time = FALSE,
     process_scheduling = "static",
     output_format = "list",
-    use_names = TRUE) {
+    use_names = TRUE
+) {
   .check_parameter_value_is_valid(
     x = process_scheduling,
     var_name = "process_scheduling",
@@ -555,18 +566,18 @@ fam_mapply_lb <- function(
   
   # Check the length of the dots argument.
   n_x <- .dots_arg_length(...)
-  if (n_x == 0) {
+  if (n_x == 0L) {
     return(list())
   }
 
   # Adapt cl to the iterable data in ...
   if (inherits(cl, "cluster")) {
-    if (n_x == 1) cl <- NULL
+    if (n_x == 1L) cl <- NULL
   }
 
   # Check that there is more than one node.
   if (inherits(cl, "cluster")) {
-    if (length(cl) == 1) cl <- NULL
+    if (length(cl) == 1L) cl <- NULL
   }
 
   if ((chopchop || measure_time) && inherits(cl, "cluster")) {
@@ -613,13 +624,13 @@ fam_mapply_lb <- function(
       # Setup initial cluster.
       if (.needs_cluster_restart() && !.is_external_cluster()) {
         cl_test <- .restart_cluster(
-          cl = cl[1],
+          cl = cl[1L],
           assign = assign,
           n_nodes = 1L
         )
       } else {
         cl_test <- .update_info_on_cluster(
-          cl = cl[1],
+          cl = cl[1L],
           assign = assign
         )
       }
@@ -650,17 +661,17 @@ fam_mapply_lb <- function(
 
       # Compute overhead and process times. Overhead time is computed from the
       # time passed minus the time of the longest subprocess.
-      overhead_time <- (overhead_end - overhead_start) / 1E9 - y$process_time_total
+      overhead_time <- (overhead_end - overhead_start) / 1.0E9 - y$process_time_total
 
       # Obtain initial
       y_initial <- y
 
       # Skip analysis of the first iterable element.
       skip_element <- 1L
-      n_x <- n_x - 1
+      n_x <- n_x - 1L
 
       # Update the first node that was used to run the test.
-      cl[1] <- cl_test
+      cl[1L] <- cl_test
       
     } else if (require_process_stacking) {
       # Determine how to optimally stack the processes.
@@ -684,28 +695,30 @@ fam_mapply_lb <- function(
       # derivative of the process time curve, and determining the optima. Here t
       # = f(n, m) = m * overhead_time + n / m * process_time, with n the number
       # of processes and m the number of available nodes.
-      n_nodes_optimal <- floor(sqrt(n_x * stats::median(c(process_time, y$process_time)) / overhead_time))
+      n_nodes_optimal <- as.integer(
+        floor(sqrt(n_x * stats::median(c(process_time, y$process_time)) / overhead_time))
+      )
     }
 
     # Select the required nodes.
-    if (n_nodes_optimal <= 1) {
+    if (n_nodes_optimal <= 1L) {
       cl <- NULL
     } else if (n_nodes_optimal < length(cl)) {
-      cl <- cl[1:n_nodes_optimal]
+      cl <- cl[1L:n_nodes_optimal]
     }
   }
 
   # Adapt cl based on the number of iterable elements.
   if (inherits(cl, "cluster")) {
-    if (n_x < length(cl)) cl <- cl[1:n_x]
+    if (n_x < length(cl)) cl <- cl[1L:n_x]
 
     if (measure_time) startup_overhead_start <- microbenchmark::get_nanotime()
 
     # Update and restart clusters.
     if (.needs_cluster_restart() && !.is_external_cluster()) {
       if (require_optimisation) {
-        cl[-1] <- .restart_cluster(
-          cl = cl[-1],
+        cl[-1L] <- .restart_cluster(
+          cl = cl[-1L],
           assign = assign
         )
       } else {
@@ -720,8 +733,8 @@ fam_mapply_lb <- function(
       
     } else {
       if (require_optimisation) {
-        cl[-1] <- .update_info_on_cluster(
-          cl = cl[-1],
+        cl[-1L] <- .update_info_on_cluster(
+          cl = cl[-1L],
           assign = assign
         )
       } else {
@@ -734,7 +747,8 @@ fam_mapply_lb <- function(
 
     if (measure_time) {
       startup_overhead_end <- microbenchmark::get_nanotime()
-      startup_overhead_time <- (startup_overhead_end - startup_overhead_start) / 1E9
+      startup_overhead_time <- (startup_overhead_end - startup_overhead_start) / 1.0E9
+      
     } else {
       startup_overhead_time <- 0.0
     }
@@ -748,7 +762,7 @@ fam_mapply_lb <- function(
 
   # Start progress bar.
   if (progress_bar && !inherits(cl, "cluster")) {
-    pb_conn <- utils::txtProgressBar(min = 0, max = n_x, style = 3)
+    pb_conn <- utils::txtProgressBar(min = 0L, max = n_x, style = 3L)
   } else {
     pb_conn <- NULL
   }
@@ -758,7 +772,7 @@ fam_mapply_lb <- function(
     # present initially. For simplicity, we recompute the first element, as the
     # lack of cluster indicates that the time spent by the process is
     # negligible.
-    if (require_optimisation) n_x <- n_x + 1
+    if (require_optimisation) n_x <- n_x + 1L
 
     # Perform the sequential apply as mapply.
     y <- do.call(
@@ -812,8 +826,10 @@ fam_mapply_lb <- function(
     if (measure_time) {
       # Compute overhead and process times. Overhead time is computed from the
       # time passed minus the time of the longest subprocess.
-      overhead_time <- (startup_overhead_time + (overhead_end - overhead_start) / 1E9 -
-                          sum(y$process_time) / length(cl)) / length(cl)
+      overhead_time <- (
+        startup_overhead_time + (overhead_end - overhead_start) / 1.0E9 - sum(y$process_time) / length(cl)
+      ) / length(cl)
+      
     }
   } else if (inherits(cl, "cluster") && chopchop) {
     # Send to a chunking function for chopping into a list with up to n_cl
@@ -864,8 +880,9 @@ fam_mapply_lb <- function(
     if (measure_time) {
       # Compute overhead and process times. Overhead time is computed from the
       # time passed minus the time of the longest subprocess.
-      overhead_time <- (startup_overhead_time + (overhead_end - overhead_start) /
-                          1E9 - max(y$process_time_total)) / length(cl)
+      overhead_time <- (
+        startup_overhead_time + (overhead_end - overhead_start) / 1.0E9 - max(y$process_time_total)
+      ) / length(cl)
     }
 
     # Add in initial list.
@@ -909,7 +926,13 @@ fam_mapply_lb <- function(
 
 
 
-.wrapper_fun <- function(FUN2, II = NULL, pb_conn = NULL, ..., MoreArgs = NULL) {
+.wrapper_fun <- function(
+    FUN2, 
+    II = NULL, 
+    pb_conn = NULL, 
+    ...,
+    MoreArgs = NULL
+) {
   # Execute function
   y <- do.call(FUN2, args = c(
     list(...),
@@ -921,7 +944,12 @@ fam_mapply_lb <- function(
 
 
 
-.wrapper_fun_time <- function(FUN2, II = NULL, pb_conn = NULL, ..., MoreArgs = NULL) {
+.wrapper_fun_time <- function(
+    FUN2, 
+    II = NULL, 
+    pb_conn = NULL, 
+    ..., 
+    MoreArgs = NULL) {
   # Get process start time.
   process_start <- microbenchmark::get_nanotime()
 
@@ -936,13 +964,19 @@ fam_mapply_lb <- function(
 
   return(list(
     "results" = y,
-    "process_time" = (process_end - process_start) / 1E9
+    "process_time" = (process_end - process_start) / 1.0E9
   ))
 }
 
 
 
-.wrapper_fun_progress <- function(FUN2, II = NULL, pb_conn = NULL, ..., MoreArgs = NULL) {
+.wrapper_fun_progress <- function(
+    FUN2, 
+    II = NULL, 
+    pb_conn = NULL, 
+    ...,
+    MoreArgs = NULL
+) {
   # Execute function
   y <- do.call(FUN2, args = c(
     list(...),
@@ -957,7 +991,13 @@ fam_mapply_lb <- function(
 
 
 
-.wrapper_fun_time_progress <- function(FUN2, II = NULL, pb_conn = NULL, ..., MoreArgs = NULL) {
+.wrapper_fun_time_progress <- function(
+    FUN2, 
+    II = NULL, 
+    pb_conn = NULL, 
+    ..., 
+    MoreArgs = NULL
+) {
   # Get process start time.
   process_start <- microbenchmark::get_nanotime()
 
@@ -975,18 +1015,20 @@ fam_mapply_lb <- function(
 
   return(list(
     "results" = y,
-    "process_time" = (process_end - process_start) / 1E9))
+    "process_time" = (process_end - process_start) / 1.0E9
+  ))
 }
 
 
 
 .dots_arg_length <- function(...) {
   # Get the length of the dots argument.
-  n_x <- unique(sapply(list(...), length))
+  n_x <- unique(lengths(list(...)))
 
-  if (length(n_x) != 1) {
+  if (length(n_x) != 1L) {
     ..error_reached_unreachable_code(
-      ".dots_arg_length: iterable arguments do not have the same length.")
+      ".dots_arg_length: iterable arguments do not have the same length."
+    )
   } 
 
   return(n_x)
@@ -999,7 +1041,8 @@ fam_mapply_lb <- function(
     FUN2,
     dots,
     additional_arguments = NULL,
-    measure_time = FALSE) {
+    measure_time = FALSE
+) {
   if (measure_time) process_total_start <- microbenchmark::get_nanotime()
 
   # Perform the sequential apply as mapply.
@@ -1022,7 +1065,7 @@ fam_mapply_lb <- function(
   if (measure_time) process_total_end <- microbenchmark::get_nanotime()
 
   # Set total process time (which may vary between nodes.)
-  if (measure_time) y[[1]]$process_time_total <- (process_total_end - process_total_start) / 1E9
+  if (measure_time) y[[1L]]$process_time_total <- (process_total_end - process_total_start) / 1.0E9
 
   return(y)
 }
@@ -1045,12 +1088,13 @@ fam_mapply_lb <- function(
     n_cl,
     n_x = NULL,
     skip_elements = NULL,
-    stacking_data = NULL) {
+    stacking_data = NULL
+) {
   # Determine n_x if not provided. n_x may be provided when we attempt to
   # determine process and overhead time.
-  if (is.null(n_x)) n_x <- unique(sapply(args, length))
+  if (is.null(n_x)) n_x <- unique(lengths(args))
 
-  if (length(n_x) != 1) ..error_reached_unreachable_code(".chop_args: arguments do not have the same length.")
+  if (length(n_x) != 1L) ..error_reached_unreachable_code(".chop_args: arguments do not have the same length.")
 
   # Set up the sequence of values.
   n_x <- seq_len(n_x)
@@ -1063,36 +1107,43 @@ fam_mapply_lb <- function(
   # only be up to the number of available elements.
   if (n_cl > length(n_x)) n_cl <- length(n_x)
 
-  if (length(n_x) == 0 || n_cl == 0) {
+  if (length(n_x) == 0L || n_cl == 0L) {
     index <- list()
     
-  } else if (length(n_x) == 1 || n_cl == 1) {
+  } else if (length(n_x) == 1L || n_cl == 1L) {
     index <- list(n_x)
     
   } else if (!is.null(stacking_data)) {
     index <- unname(lapply(
       split(stacking_data, by = "node_id", sorted = TRUE),
-      function(list_element) (list_element$original_index)))
+      function(list_element) (list_element$original_index)
+    ))
     
   } else {
     index <- structure(
       split(n_x, cut(n_x, n_cl)),
-      names = NULL)
+      names = NULL
+    )
   }
 
   # Split arguments internally.
   chopped_args <- lapply(
     index,
     function(ii, x) {
-      return(lapply(x, function(x, ii) {
-        if (data.table::is.data.table(x)) {
-          column_names <- colnames(x)[ii]
-          return(x[, mget(column_names)])
-        } else {
-          return(x[ii])
-        }
-      },
-      ii = ii))
+      return(
+        lapply(
+          x,
+          function(x, ii) {
+            if (data.table::is.data.table(x)) {
+              column_names <- colnames(x)[ii]
+              return(x[, mget(column_names)])
+            } else {
+              return(x[ii])
+            }
+          },
+          ii = ii
+        )
+      )
     },
     x = args
   )
@@ -1106,12 +1157,13 @@ fam_mapply_lb <- function(
     n_nodes,
     overhead_time,
     process_time,
-    min_decrease = 0.05) {
+    min_decrease = 0.05
+) {
   # Check if there are fewer processes than nodes.
   if (n_nodes > length(process_time)) n_nodes <- length(process_time)
 
   # Check if there is any reason to parallellise.
-  if (n_nodes < 2) return(NULL)
+  if (n_nodes < 2L) return(NULL)
 
   # Determine the baseline time.
   baseline_time <- sum(process_time)
@@ -1140,8 +1192,10 @@ fam_mapply_lb <- function(
     # Check that an increase in nodes does not negatively affect the time spent
     # processing. Also, ensure that the achieved decrease is at least
     # min_decrease with regard to the previous time.
-    if (previous_time <= current_stacking_data$node_time || 
-        previous_time - current_stacking_data$node_time < min_decrease) {
+    if (
+      previous_time <= current_stacking_data$node_time || 
+      previous_time - current_stacking_data$node_time < min_decrease
+    ) {
       break
     }
 
@@ -1189,5 +1243,6 @@ fam_mapply_lb <- function(
   # Return the maximum node time (which is of course)
   return(list(
     "node_time" = max(node_time) + overhead_time * n_nodes,
-    "process_data" = process_data))
+    "process_data" = process_data
+  ))
 }

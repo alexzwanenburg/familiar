@@ -3,7 +3,8 @@
     sample_id_column = NULL,
     batch_id_column = NULL, 
     series_id_column = NULL,
-    ...) {
+    ...
+) {
   # Parse the input sample_id_column
   if (!is.null(sample_id_column)) {
     sample_id_column <- .replace_illegal_column_name(sample_id_column)
@@ -32,11 +33,11 @@
 
     # Update column names using a fixed routine
     data.table::setnames(data, .replace_illegal_column_name(colnames(data)))
-  } else if (is.character(data) && length(data) == 1) {
+  } else if (is.character(data) && length(data) == 1L) {
     
     # Read from path
     if (!file.exists(data)) {
-      stop(paste0("The requested data file does not exist: ", data))
+      ..error(paste0("The requested data file does not exist: ", data))
     }
 
     # Load data based on file extension
@@ -49,20 +50,21 @@
     } else if (file_extension == "rds") {
       data <- .load_rds(data)
     } else {
-      stop(paste(
+      ..error(paste(
         "File extension", file_extension, "was not recognised as a loadable data type. Please load the",
-        "data manually."))
+        "data manually."
+      ))
     }
 
     # Update column names using a fixed routine
     data.table::setnames(data, .replace_illegal_column_name(colnames(data)))
     
-  } else if ((is.atomic(data) && length(data) > 1) || (is.list(data))) {
+  } else if ((is.atomic(data) && length(data) > 1L) || (is.list(data))) {
     
     # Read data to a list by calling the function recursively
     data_list <- lapply(data, .load_data)
 
-    if (length(data_list) > 1) {
+    if (length(data_list) > 1L) {
       new_data_list <- list()
       joined_id <- integer()
 
@@ -75,7 +77,7 @@
         current_data <- data_list[[ii]]
 
         # Iterate over remaining datasets
-        for (jj in seq(ii + 1, length(data_list))) {
+        for (jj in seq(ii + 1L, length(data_list))) {
           # Check that index jj does not access non-existing data
           if (jj > length(data_list)) break
 
@@ -110,62 +112,68 @@
               }
             },
             x = current_data,
-            y = data_list[[jj]])
+            y = data_list[[jj]]
+          )
           
           # Throw an error if any class is not consistent.
-          if (any(!matching_types)) {
-            stop(paste0(
+          if (!all(matching_types)) {
+            ..error(paste0(
               "Mismatching column classes were found between datasets ",
               ii, " and ", jj, ". Differences were found in columns:",
-              paste_s(overlap_cols[!matching_types])))
+              paste_s(overlap_cols[!matching_types])
+            ))
           }
 
           # Bind the datasets together
           current_data <- data.table::rbindlist(
             list(current_data, data_list[[jj]]),
             use.names = TRUE,
-            fill = TRUE)
+            fill = TRUE
+          )
 
           # Mark the dataset as joined to prevent double usage.
-          joined_id <- append(joined_id, jj)
+          joined_id <- c(joined_id, jj)
         }
 
         # Append new data list with current_data
-        new_data_list <- append(new_data_list, list(current_data))
+        new_data_list <- c(new_data_list, list(current_data))
       }
 
       # Replace data_list with new_data_list
       data_list <- new_data_list
 
       # Check if it makes sense to attempt to join datasets by index.
-      if (length(data_list) > 1) {
+      if (length(data_list) > 1L) {
         # Get the left-hand dataset for merging
         data < data_list[[ii]]
 
         # Iterate over remaining datasets
-        for (ii in seq(2, length(data_list))) {
+        for (ii in seq(2L, length(data_list))) {
           if (is.null(sample_id_column)) {
             # Attempt cbind if both datasets have the same number of rows and
             # non-overlapping column names
             if (nrow(data) != nrow(data_list[[ii]])) {
-              stop(paste(
+              ..error(paste(
                 "datasets could not be joined row-wise because the number of samples is different.",
-                "Please provide a sample id column or merge the datasets yourself prior to input."))
+                "Please provide a sample id column or merge the datasets yourself prior to input."
+              ))
             }
 
             # Check for column overlap
             overlap_cols <- intersect(colnames(data), colnames(data_list[[ii]]))
-            if (length(overlap_cols) > 0) {
-              stop(paste(
+            if (length(overlap_cols) > 0L) {
+              ..error(paste(
                 "datasets could not be joined row-wise as one or more columns with the same name",
-                "appear in both the left and right-hand datasets:", paste_s(overlap_cols)))
+                "appear in both the left and right-hand datasets:", paste_s(overlap_cols)
+              ))
             }
 
             # Throw a warning, as row-wise binding is dangerous
-            warning(paste(
+            ..warning(paste(
               "datasets could be joined row-wise. Integrity of the data could not be ensured.",
               "Please ensure that each sample occupies same row for consistency. Alternatively,",
-              "provide a sample id column or merge the datasets yourself prior to input."))
+              "provide a sample id column or merge the datasets yourself prior to input."
+            ))
 
             # Combine row-wise
             data <- cbind(data, data_list[[ii]])
@@ -173,46 +181,56 @@
           } else if (
             !is.null(sample_id_column) &&
             !is.null(batch_id_column) && 
-            is.null(series_id_column)) {
+            is.null(series_id_column)
+          ) {
             # Attempt full join on sample_id_column and batch_id_column,
             # provided that other column names are not overlapping, and all
             # sample_ids for a batch are unique.
 
             # Check if the sample identifier columns is presents in the data
-            if (!sample_id_column %in% colnames(data) ||
-              !sample_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+            if (
+              !sample_id_column %in% colnames(data) ||
+              !sample_id_column %in% colnames(data_list[[ii]])
+            ) {
+              ..error(paste(
                 "The specified column of sample identifiers", sample_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Check if the batch identifier column is present in the data
             if (!batch_id_column %in% colnames(data) ||
               !batch_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+              ..error(paste(
                 "The specified column of batch identifiers", batch_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Check uniqueness of identifiers
-            if (anyDuplicated(data[, mget(sample_id_column, batch_id_column)]) > 0 ||
-                anyDuplicated(data_list[[ii]][, mget(sample_id_column, batch_id_column)]) > 0) {
-              stop(paste(
+            if (
+              anyDuplicated(data[, mget(sample_id_column, batch_id_column)]) > 0L ||
+              anyDuplicated(data_list[[ii]][, mget(sample_id_column, batch_id_column)]) > 0L
+            ) {
+              ..error(paste(
                 "Sample identifiers were not uniquely specified within each batch.",
                 "In case this is intentional, i.e. for repeated measurements, please merge the",
-                "datasets yourself prior to input."))
+                "datasets yourself prior to input."
+              ))
             }
 
             # Check for column overlap
             overlap_cols <- setdiff(
               intersect(colnames(data), colnames(data_list[[ii]])),
-              c(sample_id_column, batch_id_column))
+              c(sample_id_column, batch_id_column)
+            )
 
-            if (length(overlap_cols) > 0) {
-              stop(paste(
+            if (length(overlap_cols) > 0L) {
+              ..error(paste(
                 "datasets could not be merged by sample and batch identifiers",
                 "as one or more columns with the same name appear in both the left and",
-                "right-hand datasets:", paste_s(overlap_cols)))
+                "right-hand datasets:", paste_s(overlap_cols)
+              ))
             }
 
             # Perform full join
@@ -220,59 +238,76 @@
               x = data,
               y = data_list[[ii]],
               on = c(sample_id_column, batch_id_column),
-              all = TRUE)
+              all = TRUE
+            )
             
-          } else if (!is.null(sample_id_column) &&
-                     !is.null(batch_id_column) &&
-                     !is.null(series_id_column)) {
+          } else if (
+            !is.null(sample_id_column) &&
+            !is.null(batch_id_column) &&
+            !is.null(series_id_column)
+          ) {
             # Attempt full join on sample_id_column, batch_id_column, and
             # series_id_column provided that other column names are not
             # overlapping, and all sample_ids and series_ids for a batch are
             # unique.
 
             # Check if the sample identifier columns is presents in the data.
-            if (!sample_id_column %in% colnames(data) ||
-              !sample_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+            if (
+              !sample_id_column %in% colnames(data) ||
+              !sample_id_column %in% colnames(data_list[[ii]])
+            ) {
+              ..error(paste(
                 "The specified column of sample identifiers", sample_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Check if the batch identifier column is present in the data.
-            if (!batch_id_column %in% colnames(data) ||
-              !batch_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+            if (
+              !batch_id_column %in% colnames(data) ||
+              !batch_id_column %in% colnames(data_list[[ii]])
+            ) {
+              ..error(paste(
                 "The specified column of batch identifiers", batch_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Check if the series identifier column is present in the data.
-            if (!series_id_column %in% colnames(data) ||
-              !series_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+            if (
+              !series_id_column %in% colnames(data) ||
+              !series_id_column %in% colnames(data_list[[ii]])
+            ) {
+              ..error(paste(
                 "The specified column of series identifiers", series_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Check uniqueness of identifiers
-            if (anyDuplicated(data[, mget(sample_id_column, batch_id_column, series_id_column)]) > 0 ||
-              anyDuplicated(data_list[[ii]][, mget(sample_id_column, batch_id_column, series_id_column)]) > 0) {
-              stop(paste(
+            if (
+              anyDuplicated(data[, mget(sample_id_column, batch_id_column, series_id_column)]) > 0L ||
+              anyDuplicated(data_list[[ii]][, mget(sample_id_column, batch_id_column, series_id_column)]) > 0L
+            ) {
+              ..error(paste(
                 "Sample identifiers were not uniquely specified within each batch.",
                 "In case this is intentional, i.e. for repeated measurements, please merge the",
-                "datasets yourself prior to input."))
+                "datasets yourself prior to input."
+              ))
             }
 
             # Check for column overlap
             overlap_cols <- setdiff(
               intersect(colnames(data), colnames(data_list[[ii]])),
-              c(sample_id_column, batch_id_column, series_id_column))
+              c(sample_id_column, batch_id_column, series_id_column)
+            )
 
-            if (length(overlap_cols) > 0) {
-              stop(paste(
+            if (length(overlap_cols) > 0L) {
+              ..error(paste(
                 "datasets could not be merged by sample, batch and series identifiers",
                 "as one or more columns with the same name appear in both the left and",
-                "right-hand datasets:", paste_s(overlap_cols)))
+                "right-hand datasets:", paste_s(overlap_cols)
+              ))
             }
 
             # Perform full join
@@ -280,38 +315,47 @@
               x = data,
               y = data_list[[ii]],
               on = c(sample_id_column, batch_id_column, series_id_column),
-              all = TRUE)
+              all = TRUE
+            )
             
           } else {
             # Attempt full join on sample_id_column, provided that other column
             # names do not overlap, and all sample ids are unique.
 
             # Check if the sample identifier columns is presents in the data
-            if (!sample_id_column %in% colnames(data) ||
-              !sample_id_column %in% colnames(data_list[[ii]])) {
-              stop(paste(
+            if (
+              !sample_id_column %in% colnames(data) ||
+              !sample_id_column %in% colnames(data_list[[ii]])
+            ) {
+              ..error(paste(
                 "The specified column of sample identifiers", sample_id_column,
-                "was not found in one or more of the datasets."))
+                "was not found in one or more of the datasets."
+              ))
             }
 
             # Determine if all sample identifiers are unique
-            if (anyDuplicated(data[, sample_id_column, with = FALSE]) > 0 ||
-              anyDuplicated(data_list[[ii]][, sample_id_column, with = FALSE]) > 0) {
-              stop(paste0(
+            if (
+              anyDuplicated(data[, mget(sample_id_column)]) > 0L ||
+              anyDuplicated(data_list[[ii]][, mget(sample_id_column)]) > 0L
+            ) {
+              ..error(paste0(
                 "Sample identifiers were not uniquely specified. In case this is intentional, ",
-                "i.e. for repeated measurements, please merge the datasets yourself prior to input."))
+                "i.e. for repeated measurements, please merge the datasets yourself prior to input."
+              ))
             }
 
             # Check for column overlap.
             overlap_cols <- setdiff(
               intersect(colnames(data), colnames(data_list[[ii]])),
-              sample_id_column)
+              sample_id_column
+            )
 
-            if (length(overlap_cols) > 0) {
-              stop(paste0(
+            if (length(overlap_cols) > 0L) {
+              ..error(paste0(
                 "Datasets could not be merged by sample identifiers as one or more ",
                 "columns with the same name appear in both the left and ",
-                "right-hand datasets: ", paste_s(overlap_cols)))
+                "right-hand datasets: ", paste_s(overlap_cols)
+              ))
             }
 
             # Perform full join.
@@ -319,17 +363,23 @@
               x = data,
               y = data_list[[ii]],
               on = sample_id_column,
-              all = TRUE)
+              all = TRUE
+            )
           }
         }
+        
       } else {
-        data <- data_list[[1]]
+        data <- data_list[[1L]]
       }
+      
     } else {
-      data <- data_list[[1]]
+      data <- data_list[[1L]]
     }
   } else {
-    stop("Data is expected to be a data.table, data.frame, a path towards a file or a vector or list of the above.")
+    ..error(paste0(
+      "Data is expected to be a data.table, data.frame, ",
+      "a path towards a file or a vector or list of the above."
+    ))
   }
 
   if (is_empty(data)) ..error_data_set_is_empty()
@@ -395,7 +445,8 @@
     event_indicator,
     competing_risk_indicator,
     check_stringency = "strict",
-    reference_method = "auto") {
+    reference_method = "auto"
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- batch_id <- n <- NULL
   
@@ -411,13 +462,15 @@
       id_column = sample_id_column,
       data = data,
       include_features = include_features,
-      col_type = "sample")
+      col_type = "sample"
+    )
 
     # Rename column
     data.table::setnames(
       x = data,
       old = sample_id_column,
-      new = "sample_id")
+      new = "sample_id"
+    )
     
   } else {
     # Create new column with sample ids.
@@ -438,7 +491,8 @@
     data.table::setnames(
       x = data,
       old = batch_id_column,
-      new = "batch_id")
+      new = "batch_id"
+    )
 
     # Check data type of the batch_id column and change to character. Cohort
     # names are parsed as characters, not integers.
@@ -459,7 +513,8 @@
       censoring_indicator = censoring_indicator,
       event_indicator = event_indicator,
       competing_risk_indicator = competing_risk_indicator,
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
 
     if (outcome_type %in% c("survival")) {
       # Add survival columns
@@ -472,7 +527,8 @@
           data = data,
           censoring_indicator = censoring_indicator,
           event_indicator = event_indicator,
-          competing_risk_indicator = competing_risk_indicator)
+          competing_risk_indicator = competing_risk_indicator
+        )
 
         # The plausibility already took care of consistency checking. This means
         # that there is one and only one event status column and the other
@@ -484,22 +540,24 @@
         # For other stringency levels, outcome columns are assumed to be
         # extracted from familiarModel or familiarEnsemble objects, which
         # already contain ordered values.
-        time_column <- outcome_column[1]
-        event_column <- outcome_column[2]
+        time_column <- outcome_column[1L]
+        event_column <- outcome_column[2L]
       }
 
       # Rename columns
       data.table::setnames(
         x = data,
         old = c(time_column, event_column),
-        new = get_outcome_columns(x = outcome_type))
+        new = get_outcome_columns(x = outcome_type)
+      )
       
     } else {
       # Rename outcome column
       data.table::setnames(
         x = data,
         old = outcome_column,
-        new = get_outcome_columns(x = outcome_type))
+        new = get_outcome_columns(x = outcome_type)
+      )
     }
     
   } else if (outcome_type %in% c("survival", "competing_risk")) {
@@ -520,7 +578,7 @@
     # Generate outcome column with NA values
     data[, (outcome_column) := NA_character_]
     
-  } else if (outcome_type %in% c("count", "continuous")) {
+  } else if (outcome_type %in% c("continuous")) {
     # Find outcome column names
     outcome_column <- get_outcome_columns(x = outcome_type)
 
@@ -544,43 +602,47 @@
         outcome_type = outcome_type,
         outcome_column = "outcome",
         class_levels = class_levels,
-        check_stringency = check_stringency)
+        check_stringency = check_stringency
+      )
 
       # Set class levels. This may involve reordering class levels in case the
       # outcome already was a factor.
       data$outcome <- factor(
         x = data$outcome,
         levels = class_levels,
-        exclude = NA)
+        exclude = NA
+      )
       
     } else if (!is.factor(data$outcome)) {
       # Convert to factors
       data$outcome <- factor(
         x = data$outcome,
         levels = unique(data$outcome),
-        exclude = c(NA, "NA", "NAN", "na", "nan", "NaN"))
+        exclude = c(NA, "NA", "NAN", "na", "nan", "NaN")
+      )
     }
   }
 
   # Check survival time for positivity.
   if (outcome_type %in% c("survival", "competing_risk")) {
-    time_column <- get_outcome_columns(x = outcome_type)[1]
+    time_column <- get_outcome_columns(x = outcome_type)[1L]
 
     .check_survival_time_plausibility(
       data = data,
       outcome_column = time_column,
       outcome_type = outcome_type,
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
 
     # Convert outcome_event to 0s and 1s.
     replacement_outcome_event <- numeric(length(data$outcome_event))
-    replacement_outcome_event[data$outcome_event %in% censoring_indicator] <- 0
-    replacement_outcome_event[data$outcome_event %in% event_indicator] <- 1
+    replacement_outcome_event[data$outcome_event %in% censoring_indicator] <- 0L
+    replacement_outcome_event[data$outcome_event %in% event_indicator] <- 1L
 
     # Update competing risk indicators.
-    if (length(competing_risk_indicator) > 0) {
+    if (length(competing_risk_indicator) > 0L) {
       for (ii in seq_along(competing_risk_indicator)) {
-        replacement_outcome_event[data$outcome_event %in% competing_risk_indicator[ii]] <- ii + 1
+        replacement_outcome_event[data$outcome_event %in% competing_risk_indicator[ii]] <- ii + 1L
       }
     }
 
@@ -598,13 +660,15 @@
       id_column = series_id_column,
       data = data,
       include_features = include_features,
-      col_type = "series")
+      col_type = "series"
+    )
 
     # Rename column
     data.table::setnames(
       x = data,
       old = series_id_column,
-      new = "series_id")
+      new = "series_id"
+    )
 
     # Check data type of the series_id column and change to character. Series
     # identifiers are parsed as characters, not integers.
@@ -619,24 +683,29 @@
     data <- merge(
       x = data,
       y = temp_data,
-      by = c("sample_id", "batch_id", outcome_cols))
+      by = c("sample_id", "batch_id", outcome_cols)
+    )
   }
 
   # Add repetition identifiers
-  data[, "repetition_id" := seq_len(.N),
-       by = c("sample_id", "batch_id", "series_id", outcome_cols)]
+  data[
+    ,
+    "repetition_id" := seq_len(.N),
+    by = c("sample_id", "batch_id", "series_id", outcome_cols)
+  ]
 
   # Check that there are all combinations of sample_id, batch_id and series_id
   # have the same outcome.
   single_outcome_samples <- unique(data, by = c("sample_id", "batch_id", "series_id", outcome_cols))
   single_outcome_samples <- single_outcome_samples[, list("n" = .N), by = c("sample_id", "batch_id", "series_id")]
-  if (any(single_outcome_samples$n > 1)) {
-    single_outcome_samples <- single_outcome_samples[n > 1]
+  if (any(single_outcome_samples$n > 1L)) {
+    single_outcome_samples <- single_outcome_samples[n > 1L]
     single_outcome_samples[, "descriptor" := paste0(sample_id, " (", batch_id, ")")]
     
-    stop(paste0(
+    ..error(paste0(
       "One or more samples with the same identifier do not have the same outcome value: ",
-      paste_s(single_outcome_samples$descriptor)))
+      paste_s(single_outcome_samples$descriptor)
+    ))
   }
 
   # Determine which columns to maintain
@@ -644,7 +713,8 @@
     # Check presence of features in include_features in the data
     .check_feature_availability(
       data = data, 
-      feature = include_features)
+      feature = include_features
+    )
 
     # Select only features marked for inclusion, as well as identifier and outcome columns
     data <- data[, mget(c(get_non_feature_columns(x = outcome_type), include_features))]
@@ -659,7 +729,8 @@
   data <- .parse_categorical_features(
     data = data,
     outcome_type = outcome_type,
-    reference_method = reference_method)
+    reference_method = reference_method
+  )
 
   # Convert integer data to double. This prevents rare errors later e.g., 
   # when aggregating data by computing a median value (that is not guaranteed to
@@ -670,6 +741,103 @@
   )
   
   return(data)
+}
+
+
+
+.check_data_plausibility <- function(
+    data,
+    settings,
+    cl = NULL
+) {
+  # Avoid CRAN NOTE due to non-standard evaluation in data.table.
+  score <- NULL
+  
+  feature_cols <- get_feature_columns(data, outcome_type = settings$data$outcome_type)
+  outcome_cols <- get_outcome_columns(settings$data$outcome_type)
+  
+  # Plausibility checks: duplicate rows.
+  if (anyDuplicated(data[, mget(c(feature_cols, outcome_cols))]) > 0L) {
+    logger_warning(
+      paste0(
+        "Ignoring identifiers, one or more rows in the dataset may contain duplicated data. ",
+        "This means the same combination of feature values and outcome appears multiple times."
+      ),
+      warn_class = "familiar_data_check"
+    )
+  }
+  
+  
+  # Plausibility checks: invariant features.
+  invariant_features <- fam_sapply(
+    cl = cl,
+    assign = NULL,
+    X = data[, mget(feature_cols)],
+    FUN = is_singular_data,
+    progress_bar = FALSE,
+    chopchop = TRUE
+  )
+  
+  invariant_features <- feature_cols[invariant_features]
+  if (length(invariant_features) > 0L) {
+    logger_warning(
+      paste0(
+        "The following features are invariant: ",
+        paste_s(invariant_features),
+        "."
+      ),
+      warn_class = "familiar_data_check"
+    )
+  }
+  
+  
+  # Plausibility checks: one-to-one predictors
+  
+  # Convert to dataObject. We pretend that the data are preprocessed up to
+  # clustering.
+  data <- methods::new(
+    "dataObject",
+    data = data,
+    preprocessing_level = "clustering",
+    outcome_type = settings$data$outcome_type,
+    outcome_info = create_outcome_info(settings = settings),
+    data_column_info = create_data_column_info(settings = settings)
+  )
+  
+  # Set up vimp object and promote to concordance.
+  vimp_object <- promote_vimp_method(methods::new(
+    "familiarVimpMethod",
+    outcome_type = data@outcome_type,
+    outcome_info = data@outcome_info,
+    feature_info = .get_feature_info_data(
+      data = data@data,
+      file_paths = NULL,
+      project_id = character(),
+      outcome_type = settings$data$outcome_type
+    )[["generic"]],
+    vimp_method = "concordance"
+  ))
+  
+  # Compute concordance.
+  vimp_table <- suppressWarnings(get_vimp_table(.vimp(
+    object = vimp_object,
+    data = data
+  )))
+  
+  # Identify features with perfect concordance (1.0) or discordance (also 1.0),
+  # and warn.
+  if (any(vimp_table$score == 1.0)) {
+    logger_warning(
+      paste0(
+        "The following features are perfect predictors for the outcome: ",
+        paste_s(vimp_table[score == 1.0]$name),
+        ". Please ensure that there are no outcome data included as features."
+      ),
+      warn_class = "familiar_data_check"
+    )
+  }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -737,7 +905,8 @@
 .parse_categorical_features <- function(
     data, 
     outcome_type,
-    reference_method = "auto") {
+    reference_method = "auto"
+) {
   # Replace columns types so that only numeric and categorical features remain
 
   # Check presence of feature columns
@@ -750,18 +919,20 @@
   column_class <- lapply(
     feature_columns,
     function(ii, data) (class(data[[ii]])),
-    data = data)
+    data = data
+  )
 
   # Identify categorical columns
   categorical_columns <- sapply(
     column_class,
     function(selected_column_class) {
       any(selected_column_class %in% c("logical", "character", "factor"))
-    })
+    }
+  )
   categorical_columns <- feature_columns[categorical_columns]
 
   # Do not update data if there are no columns for categorical data
-  if (length(categorical_columns) == 0) return(data)
+  if (length(categorical_columns) == 0L) return(data)
 
   # Generate a list of warnings.
   warning_list <- list()
@@ -799,8 +970,8 @@
   }
 
   # Raise an error in case there are missing class levels for any feature.
-  if (length(warning_list) > 0) {
-    stop(paste(warning_list, collapse = "\n"))
+  if (length(warning_list) > 0L) {
+    ..error(paste(warning_list, collapse = "\n"))
   }
 
   return(data)
@@ -859,15 +1030,18 @@
 update_data_set <- function(data, object) {
   # Check if the classes of the input is correct.
   if (!data.table::is.data.table(data)) {
-    stop("update_data_set: data is not a data.table")
+    ..error("update_data_set: data is not a data.table")
   }
   
-  if (!(is(object, "familiarModel") ||
-        is(object, "familiarEnsemble") ||
-        is(object, "familiarNoveltyDetector"))) {
-    stop(paste0(
+  if (!(
+    is(object, "familiarModel") ||
+    is(object, "familiarEnsemble") ||
+    is(object, "familiarNoveltyDetector")
+  )) {
+    ..error(paste0(
       "update_data_set: object is not a familiarModel, familiarNoveltyDetector ",
-      "or a familiarEnsemble."))
+      "or a familiarEnsemble."
+    ))
   }
 
   # Find the outcome type.
@@ -892,44 +1066,52 @@ update_data_set <- function(data, object) {
       if (object@outcome_info@ordered && !is.ordered(data[[outcome_column]])) {
         data[[outcome_column]] <- ordered(
           x = data[[outcome_column]],
-          levels = object@outcome_info@levels)
+          levels = object@outcome_info@levels
+        )
         
       } else if (!object@outcome_info@ordered && !is.factor(data[[outcome_column]])) {
         data[[outcome_column]] <- factor(
           x = data[[outcome_column]],
-          levels = object@outcome_info@levels)
+          levels = object@outcome_info@levels
+        )
       }
 
       # Check that the data does not have extra levels.
       extra_levels <- setdiff(
         levels(data[[outcome_column]]),
-        object@outcome_info@levels)
+        object@outcome_info@levels
+      )
 
-      if (length(extra_levels > 0)) {
+      if (length(extra_levels) > 0L) {
         warning_list <- c(
           warning_list,
           paste0(
             "The outcome column contains the following ",
-            ifelse(length(extra_levels) > 1, "levels", "level"),
+            ifelse(length(extra_levels) > 1L, "levels", "level"),
             " that were not found in the original dataset: ",
-            paste_s(extra_levels), "; original: ", paste_s(object@outcome_info@levels)))
+            paste_s(extra_levels), "; original: ", paste_s(object@outcome_info@levels)
+          )
+        )
         
       } else {
         # Ensure that order is correct.
         data[[outcome_column]] <- factor(
           x = data[[outcome_column]],
           levels = object@outcome_info@levels,
-          ordered = object@outcome_info@ordered)
+          ordered = object@outcome_info@ordered
+        )
       }
     }
   }
 
   # TODO: When we start supporting transformation and normalisation
   # parameters for outcome, process the data here.
-  if (outcome_type %in% c("count", "continuous")) {
+  if (outcome_type %in% c("continuous")) {
     if (is(object@outcome_info, "outcomeInfo")) {
-      if (!is.null(object@outcome_info@transformation_parameters) ||
-          !is.null(object@outcome_info@normalisation_parameters)) {
+      if (
+        !is.null(object@outcome_info@transformation_parameters) ||
+        !is.null(object@outcome_info@normalisation_parameters)
+      ) {
         browser()
       }
     }
@@ -944,14 +1126,16 @@ update_data_set <- function(data, object) {
   non_feature_columns <- get_non_feature_columns(outcome_type)
   missing_non_feature_columns <- setdiff(non_feature_columns, all_columns)
 
-  if (length(missing_non_feature_columns) > 0) {
+  if (length(missing_non_feature_columns) > 0L) {
     warning_list <- c(
       warning_list,
       paste0(
         "The following non-feature ",
-        ifelse(length(missing_non_feature_columns) > 1, "columns are", "column is"),
+        ifelse(length(missing_non_feature_columns) > 1L, "columns are", "column is"),
         " missing in the dataset: ",
-        paste_s(missing_non_feature_columns)))
+        paste_s(missing_non_feature_columns)
+      )
+    )
   }
 
   # Remove non-feature columns from the check.
@@ -969,7 +1153,7 @@ update_data_set <- function(data, object) {
   }
 
   # Check presence of features.
-  if (length(required_features) > 0 && length(model_and_novelty_features) > 0) {
+  if (length(required_features) > 0L && length(model_and_novelty_features) > 0L) {
     if (all(required_features %in% all_columns)) {
       available_features <- required_features
       
@@ -984,20 +1168,22 @@ update_data_set <- function(data, object) {
         warning_list,
         paste0(
           "The following feature ",
-          ifelse(length(missing_feature_columns) > 1, "columns are", "column is"),
+          ifelse(length(missing_feature_columns) > 1L, "columns are", "column is"),
           " missing in the dataset: ",
-          paste_s(missing_feature_columns))
+          paste_s(missing_feature_columns)
+        )
       )
 
       # Select features that are available.
       available_features <- intersect(model_and_novelty_features, all_columns)
 
-      if (length(available_features) == 0) {
+      if (length(available_features) == 0L) {
         warning_list <- c(
           warning_list,
           paste0(
             "No additional feature-specific details could be assessed because ",
-            "none of the features appear in the dataset.")
+            "none of the features appear in the dataset."
+          )
         )
       }
     }
@@ -1020,7 +1206,8 @@ update_data_set <- function(data, object) {
           warning_list,
           paste0(
             "The ", feature, " column contain a numeric feature. Found: ",
-            typeof(data[[feature]]))
+            typeof(data[[feature]])
+          )
         )
       }
       
@@ -1036,30 +1223,34 @@ update_data_set <- function(data, object) {
       # Check for extra levels. Note that fewer levels is fine.
       extra_levels <- setdiff(levels_present, feature_info@levels)
 
-      if (length(extra_levels > 0)) {
+      if (length(extra_levels) > 0L) {
         warning_list <- c(
           warning_list,
           paste0(
             "The ", feature, " column contains the following ",
-            ifelse(length(extra_levels) > 1, "levels", "level"),
+            ifelse(length(extra_levels) > 1L, "levels", "level"),
             " that were not found in the original dataset: ",
-            paste_s(extra_levels), "; original: ", paste_s(feature_info@levels)))
+            paste_s(extra_levels), "; original: ", paste_s(feature_info@levels)
+          )
+        )
         
       } else {
         # Ensure that order of levels in the data is correct.
         data[[feature]] <- factor(data[[feature]],
           levels = feature_info@levels,
-          ordered = feature_info@ordered)
+          ordered = feature_info@ordered
+        )
       }
     } else {
       ..error_reached_unreachable_code(paste0(
         "update_data_set: unknown feature type encountered: ",
-        feature_info@feature_type))
+        feature_info@feature_type
+      ))
     }
   }
 
   # Raise an error in case there was any error for any feature.
-  if (length(warning_list) > 0) stop(paste(warning_list, collapse = "\n\n"))
+  if (length(warning_list) > 0L) ..error(paste(warning_list, collapse = "\n\n"))
 
   return(data)
 }

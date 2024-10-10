@@ -1,7 +1,9 @@
-.compute_rank_borda <- function(x,
-                                rank_threshold,
-                                truncated = FALSE,
-                                enhanced = FALSE) {
+.compute_rank_borda <- function(
+    x,
+    rank_threshold,
+    truncated = FALSE,
+    enhanced = FALSE
+) {
   # Borda selection methods, as in Wald R, Khoshgoftaar TM, Dittman D, Awada W,
   # Napolitano A. An extensive comparison of feature ranking aggregation
   # techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr.,
@@ -36,7 +38,8 @@
     # Any remaining features receive a score of 0.
     borda_count_table[
       rank <= rank_threshold,
-      "borda_score" := (rank_threshold - rank + 1) / rank_threshold]
+      "borda_score" := (rank_threshold - rank + 1L) / rank_threshold
+    ]
     borda_count_table[is.na(borda_score), "borda_score" := 0.0]
     
   } else {
@@ -46,13 +49,15 @@
     borda_count_table[, "max_rank" := max(rank), by = "run_id"]
 
     # Compute a normalised Borda score, with maximum 1 and minimum 1/max_rank.
-    borda_count_table[, "borda_score" := (max_rank - rank + 1) / max_rank]
+    borda_count_table[, "borda_score" := (max_rank - rank + 1L) / max_rank]
   }
 
   # Sum all scores over the different lists
-  borda_count_table <- borda_count_table[, list(
-    sum_score = sum(borda_score)),
-    by = "name"]
+  borda_count_table <- borda_count_table[
+    ,
+    list("sum_score" = sum(borda_score)),
+    by = "name"
+  ]
 
   if (enhanced) {
     # Enhanced borda methods use the occurrence (as in stability selection) for
@@ -60,7 +65,8 @@
     occurrence_table <- .compute_feature_occurrence(
       vimp_table = vimp_table,
       threshold = rank_threshold,
-      n_runs = n_runs)
+      n_runs = n_runs
+    )
 
     # Merge tables by name
     vimp_table <- merge(
@@ -68,7 +74,8 @@
       y = occurrence_table,
       all.x = FALSE,
       all.y = TRUE,
-      by = c("name"))
+      by = c("name")
+    )
 
     # Compute the enhanced borda score.
     vimp_table[, "score" := sum_score * occurrence]
@@ -80,7 +87,8 @@
     data.table::setnames(
       x = vimp_table, 
       old = "sum_score",
-      new = "score")
+      new = "score"
+    )
   }
 
   # Attach to vimpTable object.

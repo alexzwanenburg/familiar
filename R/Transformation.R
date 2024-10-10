@@ -8,13 +8,15 @@ setClass(
   slots = list(
     "method" = "character",
     "transformer" = "ANY",
-    "fitting_parameters" = "ANY"),
+    "fitting_parameters" = "ANY"
+  ),
   prototype = list(
     "method" = "none",
     "transformer" = NULL,
-    "fitting_parameters" = NULL)
+    "fitting_parameters" = NULL
   )
-  
+)
+
 # NOTE: the classes below were used prior to version 1.5.0. These classes should
 # not be removed to make sure that the corresponding objects can be updated. All
 # related methods have been deprecated.
@@ -22,26 +24,23 @@ setClass(
 setClass(
   "featureInfoParametersTransformationNone",
   contains = "featureInfoParameters",
-  slots = list(
-    "reason" = "ANY"),
-  prototype = list(
-    "reason" = NULL))
+  slots = list("reason" = "ANY"),
+  prototype = list("reason" = NULL)
+)
 
 setClass(
   "featureInfoParametersTransformationBoxCox",
   contains = "featureInfoParametersTransformationPowerTransform",
-  slots = list(
-    "lambda" = "numeric"),
-  prototype = list(
-    "lambda" = NA_real_))
+  slots = list("lambda" = "numeric"),
+  prototype = list("lambda" = NA_real_)
+)
 
 setClass(
   "featureInfoParametersTransformationYeoJohnson",
   contains = "featureInfoParametersTransformationPowerTransform",
-  slots = list(
-    "lambda" = "numeric"),
-  prototype = list(
-    "lambda" = NA_real_))
+  slots = list("lambda" = "numeric"),
+  prototype = list("lambda" = NA_real_)
+)
 
 
 
@@ -61,7 +60,8 @@ setClass(
   # Check type
   if (!type %in% c("all", "none", "box_cox", "yeo_johnson")) {
     ..error_reached_unreachable_code(paste0(
-      ".get_available_transformation_methods: unspecified type: ", type))
+      ".get_available_transformation_methods: unspecified type: ", type
+    ))
   }
 
   available_transformation_method <- NULL
@@ -69,19 +69,22 @@ setClass(
   if (type %in% c("none", "all")) {
     available_transformation_method <- c(
       available_transformation_method,
-      .get_available_none_transformation_methods())
+      .get_available_none_transformation_methods()
+    )
   }
 
   if (type %in% c("all", "box_cox")) {
     available_transformation_method <- c(
       available_transformation_method,
-      .get_available_box_cox_transformation_methods())
+      .get_available_box_cox_transformation_methods()
+    )
   }
 
   if (type %in% c("all", "yeo_johnson")) {
     available_transformation_method <- c(
       available_transformation_method,
-      .get_available_yeo_johnson_transformation_methods())
+      .get_available_yeo_johnson_transformation_methods()
+    )
   }
 
   return(available_transformation_method)
@@ -96,7 +99,8 @@ create_transformation_parameter_skeleton <- function(
     transformation_lambda = NULL,
     transformation_optimisation_criterion = "mle",
     transformation_gof_p_value = NULL,
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Creates a skeleton for the provided transformation method. If
   # transformation_lambda is provided (typically not), this value is updated as
   # well.
@@ -107,7 +111,8 @@ create_transformation_parameter_skeleton <- function(
   # Select only features that appear in the feature info list.
   feature_names <- intersect(
     names(feature_info_list),
-    feature_names)
+    feature_names
+  )
 
   # Skip step if no feature info objects are updated.
   if (is_empty(feature_names)) return(feature_info_list)
@@ -116,7 +121,8 @@ create_transformation_parameter_skeleton <- function(
   .check_parameter_value_is_valid(
     x = transformation_method,
     var_name = "transformation_method",
-    values = .get_available_transformation_methods())
+    values = .get_available_transformation_methods()
+  )
 
   # Check that transformation_lambda is numeric. This is slightly redundant, as
   # this is also checked by the power.transform package.
@@ -124,7 +130,8 @@ create_transformation_parameter_skeleton <- function(
     .check_number_in_valid_range(
       x = transformation_lambda,
       var_name = "transformation_lambda",
-      range = c(-Inf, Inf))
+      range = c(-Inf, Inf)
+    )
   }
 
   # Update familiar info objects with a feature transformation skeleton.
@@ -135,7 +142,8 @@ create_transformation_parameter_skeleton <- function(
     lambda = transformation_lambda,
     optimisation_criterion = transformation_optimisation_criterion,
     gof_p_value = transformation_gof_p_value,
-    .override_existing = .override_existing)
+    .override_existing = .override_existing
+  )
 
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -154,11 +162,14 @@ create_transformation_parameter_skeleton <- function(
     optimisation_criterion = "mle",
     gof_p_value = NULL,
     lambda = NULL, 
-    .override_existing = FALSE) {
+    .override_existing = FALSE
+) {
   # Check if transformation data was already completed, and does not require
   # being determined anew.
-  if (feature_info_complete(feature_info@transformation_parameters) &&
-      !.override_existing) {
+  if (
+    feature_info_complete(feature_info@transformation_parameters) &&
+    !.override_existing
+  ) {
     return(feature_info)
   }
 
@@ -170,7 +181,8 @@ create_transformation_parameter_skeleton <- function(
     method = method,
     optimisation_criterion = optimisation_criterion,
     gof_p_value = gof_p_value,
-    lambda = lambda)
+    lambda = lambda
+  )
 
   # Update transformation_parameters slot.
   feature_info@transformation_parameters <- object
@@ -187,7 +199,8 @@ create_transformation_parameter_skeleton <- function(
     method,
     optimisation_criterion = "mle",
     gof_p_value = NULL,
-    lambda = NULL) {
+    lambda = NULL
+) {
   # This is the lowest level function for creation transformation parameter
   # skeletons. This function always generates the same class of object. Fitting
   # parameters are passed on to power.transform::find_transformation_parameters.
@@ -195,9 +208,11 @@ create_transformation_parameter_skeleton <- function(
   if (!require_package("power.transform", message_type = "silent")) {
     fitting_parameters <- list("method" = "none")
     
-  } else if (feature_type != "numeric" || 
-      !available || 
-      (method %in% .get_available_none_transformation_methods())) {
+  } else if (
+    feature_type != "numeric" || 
+    !available || 
+    (method %in% .get_available_none_transformation_methods())
+  ) {
     fitting_parameters <- list("method" = "none")
     
   } else if (method %in% .get_available_box_cox_transformation_methods()) {
@@ -209,7 +224,8 @@ create_transformation_parameter_skeleton <- function(
   } else {
     ..error_reached_unreachable_code(paste0(
       "create_transformation_parameter_skeleton: encountered an unknown transformation method: ",
-      paste_s(method)))
+      paste_s(method)
+    ))
   }
   
   # Set estimation method (optimisation criterion).
@@ -270,7 +286,8 @@ add_transformation_parameters <- function(
     cl = NULL,
     feature_info_list,
     data,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   # Determine transformation parameters and add them to the feature_info_list.
 
   # Find feature columns.
@@ -279,10 +296,12 @@ add_transformation_parameters <- function(
   # Sanity check.
   if (!(setequal(
     feature_names,
-    get_available_features(feature_info_list = feature_info_list)))) {
+    get_available_features(feature_info_list = feature_info_list)
+  ))) {
     ..error_reached_unreachable_code(paste0(
       "add_transformation_parameters: features in data and the feature info ",
-      "list are expect to be the same, but were not."))
+      "list are expect to be the same, but were not."
+    ))
   }
 
   # Iterate over features.
@@ -292,7 +311,8 @@ add_transformation_parameters <- function(
     feature_info = feature_info_list[feature_names],
     data = data@data[, mget(feature_names)],
     progress_bar = verbose,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   # Provide names for the updated feature info objects.
   names(updated_feature_info) <- feature_names
@@ -307,11 +327,13 @@ add_transformation_parameters <- function(
 
 .add_transformation_parameters <- function(
     feature_info,
-    data) {
+    data
+) {
   # Pass to underlying function that adds the feature info.
   object <- add_feature_info_parameters(
     object = feature_info@transformation_parameters,
-    data = data)
+    data = data
+  )
 
   # Update transformation_parameters slot.
   feature_info@transformation_parameters <- object
@@ -326,11 +348,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersTransformationPowerTransform",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Check if all required parameters have been set.
     if (feature_info_complete(object)) return(object)
     
@@ -345,7 +369,7 @@ setMethod(
     # The case where all data are missing is not handled by the power.transform
     # package, which (correctly) throws an error.
     if (is.numeric(data)) {
-      if (all(!is.finite(data))) {
+      if (!any(is.finite(data))) {
         object@fitting_parameters$method <- "none"
       }
     }
@@ -357,7 +381,8 @@ setMethod(
         power.transform::find_transformation_parameters,
         args = c(
           list("x" = data),
-          object@fitting_parameters)
+          object@fitting_parameters
+        )
       ),
       classes = c(
         "power_transform_no_transform",
@@ -381,12 +406,14 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParametersTransformationPowerTransform", 
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     invert = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Check if the power.transform package is present.
     if (!require_package("power.transform", message_type = "silent")) {
@@ -397,7 +424,8 @@ setMethod(
         require_package(
           "power.transform",
           purpose = "to transform features",
-          message_type = "error")
+          message_type = "error"
+        )
       }
     }
     
@@ -407,8 +435,8 @@ setMethod(
           y = data,
           transformer = object@transformer
         ),
-        classes = "power_transform_transform_invalid_values")
-      )
+        classes = "power_transform_transform_invalid_values"
+      ))
       
     } else {
       return(suppressWarnings(
@@ -417,8 +445,8 @@ setMethod(
           transformer = object@transformer,
           oob_action = "valid"
         ),
-        classes = "power_transform_transform_invalid_values")
-      )
+        classes = "power_transform_transform_invalid_values"
+      ))
     }
   }
 )
@@ -428,7 +456,8 @@ setMethod(
 ..collect_and_aggregate_transformation_info <- function(
     feature_info_list, 
     instance_mask, 
-    feature_name) {
+    feature_name
+) {
   # Aggregate transformation parameters. This function exists so that it can be
   # tested as part of a unit test.
 
@@ -437,13 +466,15 @@ setMethod(
   
   none_object <- ..create_transformation_parameter_skeleton(
     feature_name = feature_name,
-    method = "none")
+    method = "none"
+  )
   none_object@transformer <- power.transform::create_transformer_skeleton(method = "none")
   
   if (!any(instance_mask)) {
     return(list(
       "parameters" = none_object,
-      "instance_mask" = instance_mask))
+      "instance_mask" = instance_mask
+    ))
   }
 
   # Check the method of the transformation objects.
@@ -461,7 +492,8 @@ setMethod(
   if (all(object_method[instance_mask] == "none")) {
     return(list(
       "parameters" = none_object,
-      "instance_mask" = instance_mask))
+      "instance_mask" = instance_mask
+    ))
   }
 
   # For the remaining objects, check which class occurs most.
@@ -473,7 +505,7 @@ setMethod(
   method_table <- method_table[!method == "none"]
 
   # Select the method that occurs most often.
-  most_common_method <- method_table[n == max(method_table$n), ]$method[1]
+  most_common_method <- method_table[n == max(method_table$n), ]$method[1L]
 
   # Update the instance mask.
   instance_mask <- instance_mask & object_method == most_common_method
@@ -486,5 +518,6 @@ setMethod(
 
   return(list(
     "parameters" = feature_info_list[[selected_instance]]@transformation_parameters,
-    "instance_mask" = instance_mask))
+    "instance_mask" = instance_mask
+  ))
 }

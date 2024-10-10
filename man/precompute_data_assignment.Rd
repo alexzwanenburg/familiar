@@ -122,7 +122,7 @@ sample or subject identifiers. See \code{batch_id_column} above for more
 details.
 
 If unset, every row will be identified as a single sample.}
-    \item{\code{series_id_column}}{(\strong{optional}) Name of the column containing series
+    \item{\code{series_id_column}}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -142,8 +142,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
     \item{\code{outcome_column}}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
@@ -158,7 +158,6 @@ Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -168,7 +167,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
     \item{\code{class_levels}}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
@@ -304,14 +304,11 @@ the \code{univariate_test}. The p or q-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
     \item{\code{univariate_test_threshold_metric}}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
     \item{\code{univariate_test_max_feature_set_size}}{(\emph{optional}) Maximum size of the
 feature set after the univariate test. P or q values of features are

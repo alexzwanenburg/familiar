@@ -1,3 +1,45 @@
+# Version 2.0.0 (Development)
+
+## Major changes
+
+- Some functionality was deprecated because of redundancy and stability issues:
+
+  - The `count` outcome type has been deprecated. `count` is a subset of `continuous` outcomes. Its previous implementation did not provide any benefits over `continuous`.
+
+  - Gradient boosting using the `mboost` package was deprecated. Use `xgboost` instead.
+
+  - The `qvalue` package for computing q-values was deprecated.
+
+  - The `VGAM` package, which has been soft-deprecated since version 1.3.0, has now fully been deprecated.
+
+  - The variable hunting feature selection method for random forests was removed due to stability issues in unit tests.
+
+- Many evaluation steps that only require model predictions can now be called externally by providing a `familiarDataElementPredictionTable` object that contains model prediction data. Such objects can be created using the `as_prediction_table` table.
+
+## Minor changes
+
+- The `evaluation_elements` configuration parameter was added to allow for specifying which evaluation steps should be performed.
+
+- Concordance variable importance for categorical outcomes now relies on the internal implementation for the area under the receiver operating characteristic curve instead of the Gini measure from the `corelearn` package.
+
+- Palettes from the `paletteer` package can now be used to customise plots.
+
+- Plausibility of datasets is now checked more thoroughly to detect common issues:
+
+  - The presence of duplicate rows with the same feature values and outcome.
+  
+  - The presence of one-to-one predictors of the outcome. This might be outcome-related columns that have been left in the data accidentally.
+  
+  - The presence of invariant predictors.
+  
+- Statistical tests now assess differences between batches if batch normalisation is performed, and warns if the outcome in any batch is significantly different from others.
+
+## Bug fixes
+
+- Fixed errors when creating feature or similarity plots caused by sample or feature names matching internal column names.
+
+- The `sample_similarity` evaluation element is now mentioned in the documentation.
+
 # Version 1.5.0 (Whole Whale)
 
 ## Major changes
@@ -26,7 +68,7 @@
 
 ## Bug fixes
 
-- Adapted tests to work when packages are missing.
+- Adapted tests to work when suggested packages are missing (addresses CRAN noSuggests check).
 
 - Fixed an issue that prevented hyperparameter optimisation of `xgboost` models for survival tasks.
 
@@ -40,7 +82,7 @@
 
   - Plot margins are now correctly set in the default familiar plotting theme.
   - Plot elements of composite plots are now correctly set.
-  
+
 - Fixed an incorrect data.table merge when computing survival predictions from random forests.
 
 # Version 1.4.6 (Talented Toad)

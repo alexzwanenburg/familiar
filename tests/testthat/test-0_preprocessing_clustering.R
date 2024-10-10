@@ -60,7 +60,7 @@ generate_test_parameters <- coro::generator(function(
             # Set outcome type to avoid redundant tests where outcome type does
             # not matter.
             if (current_cluster_representation_method %in% c("best_predictor")) {
-              available_outcome_type <- c("survival", "binomial", "multinomial", "continuous", "count")
+              available_outcome_type <- c("survival", "binomial", "multinomial", "continuous")
             } else {
               available_outcome_type <- c("binomial")
             }

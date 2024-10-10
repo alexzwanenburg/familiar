@@ -39,17 +39,20 @@ setMethod(
     # Extract outcome type.
     outcome_type <- object@outcome_type
 
-    if (
-      outcome_type %in% c("continuous", "count") &&
-      (is(object, "familiarSVMNu") || is(object, "familiarSVMEps"))) {
-      
-      if (outcome_type == "count") ..deprecation_count()
+    if (outcome_type %in% c("continuous") &&
+      (is(object, "familiarSVMNu") || is(object, "familiarSVMEps"))
+    ) {
       return(TRUE)
       
     } else if (
       outcome_type %in% c("binomial", "multinomial") && 
-      (is(object, "familiarSVMNu") || is(object, "familiarSVMC"))) {
+      (is(object, "familiarSVMNu") || is(object, "familiarSVMC"))
+    ) {
       return(TRUE)
+    
+    } else if (outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)  
       
     } else {
       return(FALSE)
@@ -110,61 +113,67 @@ setMethod(
       default = svm_kernel,
       type = "factor",
       range = svm_kernel,
-      randomise = FALSE)
+      randomise = FALSE
+    )
 
     # constraints violation cost C ---------------------------------------------
 
     # This parameter defines the cost for constraint violations. It is expressed
     # on a log10 scale.
     param$c <- .set_hyperparameter(
-      default = c(-3, -1, -0, 1, 3),
+      default = c(-3.0, -1.0, -0.0, 1.0, 3.0),
       type = "numeric",
-      range = c(-5, 3),
+      range = c(-5.0, 3.0),
       valid_range = c(-Inf, Inf),
-      randomise = TRUE)
+      randomise = TRUE
+    )
 
     # error tolerance epsilon --------------------------------------------------
     if (is(object, "familiarSVMNu") || is(object, "familiarSVMEps")) {
       # This parameter defines the error tolerance for regression SVM. It is
       # expressed on a log10 scale.
       param$epsilon <- .set_hyperparameter(
-        default = c(-5, -3, -1, 0, 1),
+        default = c(-5.0, -3.0, -1.0, 0.0, 1.0),
         type = "numeric",
-        range = c(-5, 1),
+        range = c(-5.0, 1.0),
         valid_range = c(-Inf, Inf),
-        randomise = TRUE)
+        randomise = TRUE
+      )
     }
 
     # error bounds parameter nu ------------------------------------------------
     if (is(object, "familiarSVMNu")) {
       # nu is expressed on a log10 scale.
       param$nu <- .set_hyperparameter(
-        default = c(-5, -3, -1, 0, 1),
+        default = c(-5.0, -3.0, -1.0, 0.0, 1.0),
         type = "numeric",
-        range = c(-5, 1),
+        range = c(-5.0, 1.0),
         valid_range = c(-Inf, Inf),
-        randomise = TRUE)
+        randomise = TRUE
+      )
     }
 
     # inverse kernel width gamma -----------------------------------------------
     if (svm_kernel %in% c("radial", "polynomial", "sigmoid")) {
       # sigma is expressed on a log10 scale
       param$gamma <- .set_hyperparameter(
-        default = c(-7, -5, -3, -1, 1),
+        default = c(-7.0, -5.0, -3.0, -1.0, 1.0),
         type = "numeric",
-        range = c(-9, 3),
+        range = c(-9.0, 3.0),
         valid_range = c(-Inf, Inf),
-        randomise = TRUE)
+        randomise = TRUE
+      )
     }
 
     # polynomial degree --------------------------------------------------------
     if (svm_kernel %in% c("polynomial")) {
       param$degree <- .set_hyperparameter(
-        default = c(1, 2, 3, 4, 5),
+        default = c(1L, 2L, 3L, 4L, 5L),
         type = "integer",
-        range = c(1, 5),
-        valid_range = c(1, Inf),
-        randomise = TRUE)
+        range = c(1L, 5L),
+        valid_range = c(1L, Inf),
+        randomise = TRUE
+      )
     }
 
     # kernel offset parameter --------------------------------------------------
@@ -175,9 +184,10 @@ setMethod(
       param$offset <- .set_hyperparameter(
         default = c(0.0, 0.2, 0.5, 1.0),
         type = "numeric",
-        range = c(0, 1),
-        valid_range = c(0, Inf),
-        randomise = TRUE)
+        range = c(0.0, 1.0),
+        valid_range = c(0.0, Inf),
+        randomise = TRUE
+      )
     }
 
     return(param)
@@ -191,20 +201,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarSVM",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -216,7 +229,8 @@ setMethod(
     # Parse the formula.
     formula <- stats::reformulate(
       termlabels = feature_columns,
-      response = quote(outcome))
+      response = quote(outcome)
+    )
 
     # Derive fitting parameters for fitting class probabilities.
     fit_probability <- object@outcome_type %in% c("binomial", "multinomial")
@@ -224,16 +238,22 @@ setMethod(
     # Derive svm type from object
     if (is(object, "familiarSVMC")) {
       svm_type <- "C-classification"
+      
     } else if (
       is(object, "familiarSVMNu") &&
-      object@outcome_type %in% c("binomial", "multinomial")) {
+      object@outcome_type %in% c("binomial", "multinomial")
+    ) {
       svm_type <- "nu-classification"
+      
     } else if (
       is(object, "familiarSVMNu") &&
-      object@outcome_type %in% c("count", "continuous")) {
+      object@outcome_type %in% c("continuous")
+    ) {
       svm_type <- "nu-regression"
+      
     } else if (is(object, "familiarSVMEps")) {
       svm_type <- "eps-regression"
+      
     } else {
       ..error_reached_unreachable_code("..train,familiarSVM: can not set the type of SVM.")
     }
@@ -241,20 +261,21 @@ setMethod(
     # Set svm-related parameters.
     svm_parameter_list <- list(
       "kernel" = as.character(object@hyperparameters$kernel),
-      "cost" = 10^(object@hyperparameters$c))
+      "cost" = 10.0^(object@hyperparameters$c)
+    )
 
     # Set nu-parameter (which not all svm types use).
     if (is(object, "familiarSVMNu")) {
-      svm_parameter_list$nu <- 10^(object@hyperparameters$nu)
+      svm_parameter_list$nu <- 10.0^(object@hyperparameters$nu)
     }
 
     # Set epsilon parameter (which not all svm types use).
     if (is(object, "familiarSVMNu") || is(object, "familiarSVMEps")) {
-      svm_parameter_list$epsilon <- 10^(object@hyperparameters$epsilon)
+      svm_parameter_list$epsilon <- 10.0^(object@hyperparameters$epsilon)
     }
 
     if (!is.null(object@hyperparameters$gamma)) {
-      svm_parameter_list$gamma <- 10^object@hyperparameters$gamma
+      svm_parameter_list$gamma <- 10.0^object@hyperparameters$gamma
     }
 
     if (!is.null(object@hyperparameters$degree)) {
@@ -278,9 +299,12 @@ setMethod(
           "type" = svm_type,
           "probability" = fit_probability,
           "fitted" = FALSE,
-          "cross" = 0L),
-        svm_parameter_list))
-
+          "cross" = 0L
+        ),
+        svm_parameter_list
+      )
+    )
+    
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
     object <- ..update_errors(object = object, model$error)
@@ -292,7 +316,8 @@ setMethod(
     if (is.null(model)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        "SVM model returned as NULL.")))
+        "SVM model returned as NULL."
+      )))
     }
 
     # Add model
@@ -312,9 +337,10 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarSVM",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a naive model.
       object <- methods::new("familiarNaiveModel", object)
     }
@@ -322,7 +348,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -333,33 +360,35 @@ setMethod(
   "..predict",
   signature(
     object = "familiarSVM",
-    data = "dataObject"),
-  function(object, data, type = "default", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       # Make predictions using the model.
       model_predictions <- tryCatch(
         predict(
           object = object@model,
           newdata = data@data,
-          probability = object@outcome_type %in% c("binomial", "multinomial")),
-        error = identity)
+          probability = object@outcome_type %in% c("binomial", "multinomial")
+        ),
+        error = identity
+      )
 
       # Check if the model trained at all.
       if (inherits(model_predictions, "error")) return(callNextMethod())
@@ -372,41 +401,51 @@ setMethod(
 
         # Obtain class levels from the object.
         class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities to the prediction table.
-        class_probability_columns <- get_class_probability_name(x = object)
         
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            # Check if model_predictions is a matrix.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, class_levels[ii]]
           } else {
-            # Or not.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[class_levels[ii]]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[class_levels[ii]]
           }
         }
 
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data,
+          model_object = object
+        )
         
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
-        
-        prediction_table[, "predicted_class" := class_predictions]
-        
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # numerical outcomes ---------------------------------------------------
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data,
+          model_object = object
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
       return(prediction_table)
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
+      return(predict(
+        object = object@model,
+        newdata = data@data,
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -471,10 +510,14 @@ setMethod(
   svm_kernels <- ..get_available_svm_kernels()
   
   # Find matches with end of learner string.
-  kernel_matches <- sapply(svm_kernels, function(suffix, x) (endsWith(x = x, suffix = suffix)), x = learner)
+  kernel_matches <- sapply(
+    svm_kernels,
+    function(suffix, x) (endsWith(x = x, suffix = suffix)),
+    x = learner
+  )
   
   # If all are missing (e.g. "svm_eps), use default RBF kernel.
-  if (all(!kernel_matches)) {
+  if (!any(kernel_matches)) {
     return("radial")
   }
   

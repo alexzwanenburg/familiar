@@ -4,13 +4,15 @@ ProcessClock <- setRefClass(
   fields = list(
     clock_process = "ANY",
     start_time = "numeric",
-    interrupt_time = "ANY"),
+    interrupt_time = "ANY"
+  ),
   methods = list(
     "initialize" = function() {
       # Make sure that the packages are installed and can their namespaces can
       # be attached.
       require_package(c("callr", "microbenchmark"),
-        purpose = "to measure process time")
+        purpose = "to measure process time"
+      )
 
       # Set-up fields.
       .self$initFields(
@@ -35,7 +37,7 @@ ProcessClock <- setRefClass(
 
           # Warn for interrupts if, for some reason (e.g. process suspension, OS
           # hibernation, etc.) the process slept for at least 1 second.
-          if ((time_current - time_start) > 1E9) {
+          if ((time_current - time_start) > 1.0E9) {
             cat(format(time_start, scientific = FALSE),
               ":",
               format(time_current, scientific = FALSE),
@@ -69,13 +71,13 @@ ProcessClock <- setRefClass(
         .self$clock_process$read_output_lines()
       )
 
-      if (length(interrupt) > 0) {
+      if (length(interrupt) > 0L) {
         # Split into start and endtimes.
         interrupt <- strsplit(x = interrupt, split = ":")
 
         interrupt_data <- data.table::data.table(
-          "time_start" = as.numeric(sapply(interrupt, function(x) x[1], USE.NAMES = FALSE)),
-          "time_end" = as.numeric(sapply(interrupt, function(x) x[2], USE.NAMES = FALSE))
+          "time_start" = as.numeric(sapply(interrupt, function(x) x[1L], USE.NAMES = FALSE)),
+          "time_end" = as.numeric(sapply(interrupt, function(x) x[2L], USE.NAMES = FALSE))
         )
 
         # Update interrupt_time field.
@@ -93,10 +95,11 @@ ProcessClock <- setRefClass(
       # Select only data that contains (part of) the reference time interval.
       # Work on a copy of the data to avoid updating by reference.
       interrupt_data <- data.table::copy(
-        .self$interrupt_time[ref_start_time < time_end & ref_end_time > time_start])
+        .self$interrupt_time[ref_start_time < time_end & ref_end_time > time_start]
+      )
 
       # If all interrupts fall outside the reference time interval, return 0.
-      if (nrow(interrupt_data) == 0) return(0.0)
+      if (nrow(interrupt_data) == 0L) return(0.0)
 
       # Update partial interrupt windows.
       interrupt_data[ref_start_time > time_start, "time_start" := ref_start_time]
@@ -109,7 +112,7 @@ ProcessClock <- setRefClass(
       total_interrupt_duration <- sum(interrupt_data$duration)
 
       # Return 0 if the total interrupt was smaller than 1s.
-      if (total_interrupt_duration < 1E9) return(0.0)
+      if (total_interrupt_duration < 1.0E9) return(0.0)
 
       return(total_interrupt_duration)
     },
@@ -132,27 +135,27 @@ ProcessClock <- setRefClass(
       )
 
       conversion_factor <- switch(units,
-        "secs" = 1E9,
-        "sec" = 1E9,
-        "s" = 1E9,
-        "mins" = 60E9,
-        "min" = 60E9,
-        "m" = 60E9,
-        "hours" = 3600E9,
-        "hour" = 3600E9,
-        "h" = 3600E9,
-        "millisecs" = 1E6,
-        "millisec" = 1E6,
-        "milli" = 1E6,
-        "ms" = 1E6,
-        "microsecs" = 1E3,
-        "microsec" = 1E3,
-        "micro" = 1E3,
-        "us" = 1E3,
-        "nanosecs" = 1,
-        "nanosec" = 1,
-        "nano" = 1,
-        "ns" = 1
+        "secs" = 1.0E9,
+        "sec" = 1.0E9,
+        "s" = 1.0E9,
+        "mins" = 60.0E9,
+        "min" = 60.0E9,
+        "m" = 60.0E9,
+        "hours" = 3600.0E9,
+        "hour" = 3600.0E9,
+        "h" = 3600.0E9,
+        "millisecs" = 1.0E6,
+        "millisec" = 1.0E6,
+        "milli" = 1.0E6,
+        "ms" = 1.0E6,
+        "microsecs" = 1.0E3,
+        "microsec" = 1.0E3,
+        "micro" = 1.0E3,
+        "us" = 1.0E3,
+        "nanosecs" = 1.0,
+        "nanosec" = 1.0,
+        "nano" = 1.0,
+        "ns" = 1.0
       )
 
       return((current_time - sum_interrupt_time - reference_time) / conversion_factor)

@@ -5,7 +5,8 @@ NULL
 create_feature_info <- function(
     data,
     signature = NULL,
-    ...) {
+    ...
+) {
   # This creates a list of featureInfo objects, with processing, based on data.
   # This code is primarily used within unit tests.
 
@@ -21,15 +22,19 @@ create_feature_info <- function(
     args = c(
       list(
         "settings" = settings,
-        "data" = data@data),
-      list(...)))
-
+        "data" = data@data
+      ),
+      list(...)
+    )
+  )
+  
   # Create a list of featureInfo objects.
   feature_info_list <- .get_feature_info_data(
     data = data@data,
     file_paths = NULL,
     project_id = character(),
-    outcome_type = data@outcome_type)
+    outcome_type = data@outcome_type
+  )
 
   # Extract the generic data.
   feature_info_list <- feature_info_list[["generic"]]
@@ -37,7 +42,8 @@ create_feature_info <- function(
   # Add signature feature info
   feature_info_list <- add_signature_info(
     feature_info_list = feature_info_list, 
-    signature = signature)
+    signature = signature
+  )
 
   # Perform some pre-processing (i.e. remove singular features)
   feature_info_list <- .determine_preprocessing_parameters(
@@ -45,7 +51,8 @@ create_feature_info <- function(
     data = data,
     feature_info_list = feature_info_list,
     settings = settings,
-    verbose = FALSE)
+    verbose = FALSE
+  )
 
   return(feature_info_list)
 }
@@ -56,11 +63,13 @@ create_feature_info <- function(
     data,
     file_paths, 
     project_id,
-    outcome_type) {
+    outcome_type
+) {
   # Create path to the feature info file
   feature_info_file <- .get_feature_info_file_name(
     file_paths = file_paths,
-    project_id = project_id)
+    project_id = project_id
+  )
 
   if (is.null(file_paths)) {
     # Create, but do not store to disk.
@@ -68,7 +77,8 @@ create_feature_info <- function(
     feature_info_list[["generic"]] <- .get_generic_feature_info(
       data = data,
       outcome_type = outcome_type,
-      descriptor = NULL)
+      descriptor = NULL
+    )
     
   } else if (!file.exists(feature_info_file)) {
     # Generate feature information
@@ -76,7 +86,8 @@ create_feature_info <- function(
     feature_info_list[["generic"]] <- .get_generic_feature_info(
       data = data,
       outcome_type = outcome_type,
-      descriptor = NULL)
+      descriptor = NULL
+    )
 
     # Write to file
     saveRDS(feature_info_list, file = feature_info_file)
@@ -97,7 +108,8 @@ create_feature_info <- function(
 .get_generic_feature_info <- function(
     data,
     outcome_type,
-    descriptor = NULL) {
+    descriptor = NULL
+) {
   # Initialises feature_info objects
 
   # Expect that data is a data.table.
@@ -106,7 +118,8 @@ create_feature_info <- function(
   # Identify feature columns
   feature_columns <- get_feature_columns(
     x = data,
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
 
   # Iterate over feature columns and create a list of feature_info objects
   feature_info_list <- lapply(
@@ -126,7 +139,8 @@ create_feature_info <- function(
         "featureInfo",
         name = ii,
         set_descriptor = ifelse(is.null(descriptor), NA_character_, as.character(descriptor)),
-        feature_type = feature_type)
+        feature_type = feature_type
+      )
       
       # Set factor levels for future reproducibility
       if (feature_type == "factor") {
@@ -146,7 +160,8 @@ create_feature_info <- function(
       return(feature_info)
     },
     data = data,
-    descriptor = descriptor)
+    descriptor = descriptor
+  )
   
   # Set names in the list of featureInfo objects
   names(feature_info_list) <- feature_columns
@@ -159,7 +174,8 @@ create_feature_info <- function(
 add_control_info <- function(
     feature_info_list,
     data_id,
-    run_id) {
+    run_id
+) {
   # Control information is added to every feature regardless of "removed'.
   
   # Make sure that both identifiers are integers
@@ -177,7 +193,8 @@ add_control_info <- function(
       return(object)
     },
     data_id = data_id,
-    run_id = run_id)
+    run_id = run_id
+  )
   
   return(feature_info_list)
 }
@@ -186,7 +203,8 @@ add_control_info <- function(
 
 add_signature_info <- function(
     feature_info_list,
-    signature = NULL) {
+    signature = NULL
+) {
   # Sets the in_signature flag on features in the signature variable.
   
   # Check if there is a signature
@@ -207,7 +225,8 @@ add_signature_info <- function(
       
       return(object)
     },
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   # Update the names
   names(upd_list) <- signature
@@ -222,7 +241,8 @@ add_signature_info <- function(
 
 add_novelty_info <- function(
     feature_info_list, 
-    novelty_features = NULL) {
+    novelty_features = NULL
+) {
   # Sets the in_novelty flag on features in the novelty_features variable.
 
   # Check if there is a signature
@@ -243,7 +263,8 @@ add_novelty_info <- function(
       
       return(object)
     },
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   # Update the names
   names(upd_list) <- novelty_features
@@ -259,7 +280,9 @@ add_novelty_info <- function(
 add_missing_value_fractions <- function(
     cl = NULL,
     feature_info_list,
-    data, threshold) {
+    data,
+    threshold
+) {
   # Add the fraction of missing values for features
 
   # Identify the feature columns in the data
@@ -272,7 +295,8 @@ add_missing_value_fractions <- function(
     X = data@data[, mget(feature_columns)],
     FUN = function(data) (return(sum(is_valid_data(data)))),
     progress_bar = FALSE,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   # Determine fraction of missing values
   missing_frac <- 1.0 - n_valid_val / nrow(data@data)
@@ -299,7 +323,8 @@ add_missing_value_fractions <- function(
     feature_columns = feature_columns,
     feature_info_list = feature_info_list,
     missing_frac = missing_frac,
-    threshold = threshold)
+    threshold = threshold
+  )
   
   # Set names of the updated list
   names(upd_list) <- feature_columns
@@ -314,8 +339,7 @@ add_missing_value_fractions <- function(
 
 add_required_features <- function(feature_info_list) {
   # Find features that are not removed
-  available_features <- get_available_features(
-    feature_info_list = feature_info_list)
+  available_features <- get_available_features(feature_info_list = feature_info_list)
   
   # Add required features slot
   upd_list <- lapply(
@@ -329,14 +353,16 @@ add_required_features <- function(feature_info_list) {
       
       # Required features for imputation
       if (is(object@imputation_parameters, "featureInfoParametersImputation")) {
-        required_features <- c(
-          required_features, object@imputation_parameters@required_features)
+        required_features <- union(
+          required_features, object@imputation_parameters@required_features
+        )
       }
       
       # Required features for clustering
       if (is(object@cluster_parameters, "featureInfoParametersCluster")) {
-        required_features <- c(
-          required_features, object@cluster_parameters@required_features)
+        required_features <- union(
+          required_features, object@cluster_parameters@required_features
+        )
       }
       
       # Add required features
@@ -344,7 +370,8 @@ add_required_features <- function(feature_info_list) {
       
       return(object)
     },
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   # Set names of the updated list
   names(upd_list) <- available_features
@@ -361,7 +388,8 @@ add_required_features <- function(feature_info_list) {
 compute_feature_distribution_data <- function(
     cl,
     feature_info_list,
-    data) {
+    data
+) {
   # Identify the feature columns in the data
   feature_columns <- get_feature_columns(x = data)
 
@@ -373,9 +401,10 @@ compute_feature_distribution_data <- function(
     object = feature_info_list[feature_columns],
     x = data@data[, mget(feature_columns)],
     progress_bar = FALSE,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
-  if (length(feature_columns) > 0) {
+  if (length(feature_columns) > 0L) {
     feature_info_list[feature_columns] <- updated_feature_info
   }
 
@@ -408,7 +437,8 @@ compute_feature_distribution_data <- function(
     
   } else {
     ..error_reached_unreachable_code(
-      ".compute_feature_distribution_data: unknown feature type encountered.")
+      ".compute_feature_distribution_data: unknown feature type encountered."
+    )
   }
 
   # Add to slot
@@ -422,7 +452,8 @@ compute_feature_distribution_data <- function(
 find_invariant_features <- function(
     cl = NULL,
     feature_info_list,
-    data) {
+    data
+) {
   # Find features that are invariant. Such features are ill-behaved and should
   # be removed.
 
@@ -436,12 +467,13 @@ find_invariant_features <- function(
     X = data@data[, mget(feature_columns)],
     FUN = is_singular_data,
     progress_bar = FALSE,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   singular_features <- feature_columns[singular_features]
 
   # Iterate over singular features and mark for removal
-  if (length(singular_features) > 0) {
+  if (length(singular_features) > 0L) {
     upd_list <- lapply(
       singular_features,
       function(ii, feature_info_list) {
@@ -456,7 +488,8 @@ find_invariant_features <- function(
         
         return(object)
       },
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
     
     # Add names to the elements of upd_list
     names(upd_list) <- singular_features
@@ -474,7 +507,8 @@ find_low_variance_features <- function(
     cl = NULL,
     feature_info_list,
     data,
-    settings) {
+    settings
+) {
   # Determine which features have a very low variance and remove these
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -487,11 +521,12 @@ find_low_variance_features <- function(
   is_numeric <- sapply(
     feature_columns,
     function(ii, data) (is.numeric(data@data[[ii]])),
-    data = data)
+    data = data
+  )
   numeric_columns <- feature_columns[is_numeric]
 
   # Skip if there are no numeric columns
-  if (length(numeric_columns) == 0) return(feature_info_list)
+  if (length(numeric_columns) == 0L) return(feature_info_list)
 
   # Determine variance.
   feature_variances <- fam_sapply(
@@ -501,18 +536,20 @@ find_low_variance_features <- function(
     FUN = stats::var,
     progress_bar = FALSE,
     na.rm = TRUE,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
 
   # Define a data table containing the variances
   variance_data <- data.table::data.table(
     "name" = numeric_columns,
-    "variance" = feature_variances)
+    "variance" = feature_variances
+  )
 
   # Set missing parameters
   if (is.null(settings$prep$low_var_threshold)) {
     # If unset, potentially include all data, pending
     # low_var_max_feature_set_size.
-    settings$prep$low_var_threshold <- -1
+    settings$prep$low_var_threshold <- -1.0
   }
 
   if (is.null(settings$prep$low_var_max_feature_set_size)) {
@@ -524,14 +561,15 @@ find_low_variance_features <- function(
   if (settings$prep$low_var_max_feature_set_size > nrow(variance_data)) {
     # If the number allowed features in the feature set exceeds the actual
     # number of features, set the mimimum variance threshold to 0.
-    min_var_thresh <- 0
+    min_var_thresh <- 0.0
     
   } else {
     # Else, set the minimum variance threshold to the level that corresponds to
     # maximum feature set size.
     min_var_thresh <- sort(
       variance_data$variance,
-      decreasing = TRUE)[settings$prep$max_var_feat_set_size]
+      decreasing = TRUE
+    )[settings$prep$max_var_feat_set_size]
   }
 
   # Set the variance threshold
@@ -541,7 +579,7 @@ find_low_variance_features <- function(
   low_variance_features <- variance_data[variance < sel_var_thresh]$name
 
   # Set removal status
-  if (length(low_variance_features) > 0) {
+  if (length(low_variance_features) > 0L) {
     upd_list <- lapply(
       low_variance_features,
       function(ii, feature_info_list) {
@@ -556,7 +594,8 @@ find_low_variance_features <- function(
         
         return(object)
       },
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
     
     # Add names to the elements of upd_list
     names(upd_list) <- low_variance_features
@@ -574,13 +613,14 @@ find_non_robust_features <- function(
     cl = NULL,
     feature_info_list,
     data,
-    settings) {
+    settings
+) {
   # Determine which features lack robustness and are to be removed. This is only
   # possible for repeated measurements.
 
   # Check if repeated measurements are present, otherwise return feature info
   # list as is..
-  if (all(data@data$repetition_id == 1)) return(feature_info_list)
+  if (all(data@data$repetition_id == 1L)) return(feature_info_list)
 
   # Determine which columns contain feature data
   feature_columns <- get_feature_columns(x = data)
@@ -589,11 +629,12 @@ find_non_robust_features <- function(
   is_numeric <- sapply(
     feature_columns,
     function(ii, data) (is.numeric(data@data[[ii]])),
-    data = data)
+    data = data
+  )
   numeric_columns <- feature_columns[is_numeric]
 
   # Skip if there are no columns with numeric data.
-  if (length(numeric_columns) == 0) return(feature_info_list)
+  if (length(numeric_columns) == 0L) return(feature_info_list)
 
   # Read several items from settings
   icc_type <- settings$prep$robustness_icc_type
@@ -610,8 +651,10 @@ find_non_robust_features <- function(
     progress_bar = FALSE,
     MoreArgs = list(
       "id_data" = data@data[, mget(get_id_columns())],
-      "type" = icc_type),
-    chopchop = TRUE)
+      "type" = icc_type
+    ),
+    chopchop = TRUE
+  )
 
   # Combine ICC data from list
   icc_table <- data.table::rbindlist(icc_list)
@@ -620,7 +663,7 @@ find_non_robust_features <- function(
   low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$feature
 
   # Set removal flags for features with low robustness
-  if (length(low_robustness_features) > 0) {
+  if (length(low_robustness_features) > 0L) {
     upd_list <- lapply(
       low_robustness_features, 
       function(ii, feature_info_list) {
@@ -635,7 +678,8 @@ find_non_robust_features <- function(
         
         return(object)
       },
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
     
     # Add names to the elements of upd_list
     names(upd_list) <- low_robustness_features
@@ -653,14 +697,14 @@ find_unimportant_features <- function(
     cl = NULL,
     feature_info_list,
     data,
-    settings) {
+    settings
+) {
   # Find which features are not important for the current endpoint.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  p_full <- q_full <- p_val <- q_val <- name <- NULL
-  p_median <- q_median <- q_sel <- p_sel <- NULL
+  p_full <- p_val <- name <- p_median <- p_sel <- NULL
 
-  # Base calculatutions on medians/modes for repeated data. Repeated
+  # Base calculations on medians/modes for repeated data. Repeated
   # measurements are not independent and may inflate statistics.
   data <- aggregate_data(data = data)
 
@@ -671,7 +715,7 @@ find_unimportant_features <- function(
   if (is.null(settings$prep$univar_threshold)) {
     # If NULL, allow potential selection of all features, pending
     # univar_feat_set_size.
-    settings$prep$univar_threshold <- 1
+    settings$prep$univar_threshold <- 1.0
   }
 
   if (is.null(settings$prep$univar_feat_set_size)) {
@@ -681,18 +725,20 @@ find_unimportant_features <- function(
   }
 
   # Generate bootstraps
-  n_iter <- 10
+  n_iter <- 10L
   iter_list <- .create_bootstraps(
     n_iter = n_iter,
     settings = settings,
     data = data@data,
-    stratify = TRUE)
+    stratify = TRUE
+  )
 
   # Calculate p-values of the coefficients
   regr_pval <- compute_univariable_p_values(
     cl = cl,
     data_obj = data,
-    feature_columns = feature_columns)
+    feature_columns = feature_columns
+  )
 
   # Find and replace non-finite values
   regr_pval[!is.finite(regr_pval)] <- 1.0
@@ -700,74 +746,55 @@ find_unimportant_features <- function(
   # Add to table.
   regression_data <- data.table::data.table(
     "name" = names(regr_pval),
-    "p_full" = regr_pval)
-  regression_data[!is.finite(p_full), "p_full" := 1]
+    "p_full" = regr_pval
+  )
+  regression_data[!is.finite(p_full), "p_full" := 1.0]
 
-  # Calculate q-value
-  if (nrow(regression_data) >= 2 && is_package_installed(name = "qvalue")) {
-    ..deprecation_qvalue()
-    regression_data[, "q_full" := qvalue::qvalue(p = p_full, lambda = 0)$qvalues]
-    
-  } else {
-    regression_data[, "q_full" := p_full]
-  }
-
-  if (settings$prep$univar_metric == "q_value") {
-    # Filter out features with high q-value
-    feature_columns <- feature_columns[
-      feature_columns %in% regression_data[
-        q_full <= settings$prep$univar_threshold, ]$name]
-    
-  } else if (settings$prep$univar_metric == "p_value") {
+  if (settings$prep$univar_metric == "p_value") {
     # Filter out features with high p-value
     feature_columns <- feature_columns[
       feature_columns %in% regression_data[
-        p_full <= settings$prep$univar_threshold, ]$name]
+        p_full <= settings$prep$univar_threshold
+        ,
+      ]$name
+    ]
   }
 
   # Initiate storage list
   regression_data_bootstrap <- list()
 
   # Iterate over bootstraps
-  for (ii in 1:n_iter) {
+  for (ii in 1L:n_iter) {
     # Bootstrap data
     bootstrap_samples <- select_data_from_samples(
       data = data,
-      samples = iter_list$train_list[[ii]])
+      samples = iter_list$train_list[[ii]]
+    )
 
     # Calculate p-values for the current bootstrap
-    if (length(feature_columns) > 0) {
+    if (length(feature_columns) > 0L) {
       regr_pval <- compute_univariable_p_values(
         cl = cl, 
         data_obj = bootstrap_samples,
-        feature_columns = feature_columns)
+        feature_columns = feature_columns
+      )
       
       regression_data_bootstrap[[ii]] <- data.table::data.table(
         "name" = names(regr_pval),
         "p_val" = regr_pval,
-        "iter_id" = ii)
+        "iter_id" = ii
+      )
       
       regression_data_bootstrap[[ii]][!is.finite(p_val), "p_val" := 1.0]
-
-      # Calculate q-values for the current bootstrap
-      if (
-        nrow(regression_data_bootstrap[[ii]]) >= 2 &&
-        is_package_installed(name = "qvalue")) {
-        ..deprecation_qvalue()
-        regression_data_bootstrap[[ii]][, "q_val" := qvalue::qvalue(p = p_val, lambda = 0)$qvalues]
-        
-      } else {
-        regression_data_bootstrap[[ii]][, "q_val" := p_val]
-      }
       
       rm(regr_pval)
       
     } else {
       regression_data_bootstrap[[ii]] <- data.table::data.table(
-        "name" = character(),
-        "p_val" = numeric(), 
-        "iter_id" = numeric(),
-        "q_val" = numeric())
+        "name" = character(0L),
+        "p_val" = numeric(0L), 
+        "iter_id" = numeric(0L)
+      )
     }
 
     rm(bootstrap_samples)
@@ -777,35 +804,35 @@ find_unimportant_features <- function(
   regression_data_bootstrap <- data.table::rbindlist(regression_data_bootstrap)
 
   # Calculate median metric values of the bootstraps
-  regression_data_bootstrap <- regression_data_bootstrap[, list(
-    "p_median" = stats::median(p_val, na.rm = TRUE),
-    "q_median" = stats::median(q_val, na.rm = TRUE)),
-    by = name]
+  regression_data_bootstrap <- regression_data_bootstrap[
+    ,
+    list("p_median" = stats::median(p_val, na.rm = TRUE)),
+    by = name
+  ]
 
   # Merge median metric value table and the full table
   regression_data_bootstrap <- merge(
     x = regression_data_bootstrap,
     y = regression_data,
     by = "name",
-    all = TRUE)
+    all = TRUE
+  )
 
   # Address non-finite entries
-  regression_data_bootstrap[!is.finite(p_median), "p_median" := 1]
-  regression_data_bootstrap[!is.finite(q_median), "q_median" := 1]
+  regression_data_bootstrap[!is.finite(p_median), "p_median" := 1.0]
 
   # Find the worst entries among the bootstraps and the full analysis
-  regression_data_bootstrap[, ":="(
-    "p_sel" = pmax(p_median, p_full),
-    "q_sel" = pmax(q_median, q_full)), 
-    by = name]
+  regression_data_bootstrap[
+    ,
+    ":="("p_sel" = pmax(p_median, p_full)), 
+    by = name
+  ]
 
   rm(regression_data)
 
   # Determine cutoff required to obtain the maximally sized feature set
   if (settings$prep$univar_feat_set_size > nrow(regression_data_bootstrap)) {
-    max_thresh <- 1
-  } else if (settings$prep$univar_metric == "q_value") {
-    max_thresh <- sort(regression_data_bootstrap$q_sel)[settings$prep$univar_feat_set_size]
+    max_thresh <- 1.0
   } else if (settings$prep$univar_metric == "p_value") {
     max_thresh <- sort(regression_data_bootstrap$p_sel)[settings$prep$univar_feat_set_size]
   }
@@ -813,16 +840,14 @@ find_unimportant_features <- function(
   # Set the actual q threshold (the lower of max_q_thresh and settings$prep$univar_threshold)
   sel_thresh <- min(max_thresh, settings$prep$univar_threshold)
 
-  # Return features which have a q-value above the selected threshold
-  if (settings$prep$univar_metric == "q_value") {
-    unimportant_features <- regression_data_bootstrap[q_sel > sel_thresh, ]$name
-  } else if (settings$prep$univar_metric == "p_value") {
+  # Return features which have a p-value above the selected threshold
+  if (settings$prep$univar_metric == "p_value") {
     unimportant_features <- regression_data_bootstrap[p_sel > sel_thresh, ]$name
   } else {
-    unimportant_features <- character(0)
+    unimportant_features <- character(0L)
   }
 
-  if (length(unimportant_features) > 0) {
+  if (length(unimportant_features) > 0L) {
     upd_list <- lapply(
       unimportant_features, 
       function(ii, feature_info_list) {
@@ -837,7 +862,8 @@ find_unimportant_features <- function(
         
         return(object)
       },
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
     
     # Add names to the elements of upd_list
     names(upd_list) <- unimportant_features
@@ -855,12 +881,13 @@ get_available_features <- function(
     feature_info_list,
     data_obj = NULL,
     exclude_signature = FALSE,
-    exclude_novelty = FALSE) {
+    exclude_novelty = FALSE
+) {
   # Determine the intersect of features a removed slot == FALSE and available
   # columns in dt (if not NULL).
 
   # Check that any features are available.
-  if (length(feature_info_list) == 0) return(NULL)
+  if (length(feature_info_list) == 0L) return(NULL)
 
   available_list_features <- names(feature_info_list)[sapply(feature_info_list, is_available)]
 
@@ -900,7 +927,8 @@ get_available_features <- function(
 
 find_novelty_features <- function(
     model_features = NULL, 
-    feature_info_list) {
+    feature_info_list
+) {
   # Find additional features that should be used for novelty detection.
   novelty_features <- unlist(lapply(
     feature_info_list, 
@@ -909,7 +937,8 @@ find_novelty_features <- function(
       if (!feature_info@in_novelty) return(NULL)
       
       return(feature_info@name)
-    }))
+    }
+  ))
 
   return(union(model_features, novelty_features))
 }
@@ -925,7 +954,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
       if (feature_info@removed) return(NULL)
       
       return(feature_info@required_features)
-    }))
+    }
+  ))
   
   # All required features.
   required_features <- unique(required_features)
@@ -938,7 +968,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
       if (!feature_info@in_signature) return(NULL)
       
       return(feature_info@name)
-    }))
+    }
+  ))
   
   # All novelty features.
   novelty_features <- unlist(lapply(
@@ -948,12 +979,14 @@ trim_unused_features_from_list <- function(feature_info_list) {
       if (!feature_info@in_novelty) return(NULL)
       
       return(feature_info@name)
-    }))
+    }
+  ))
   
   features_kept <- unique(c(
     required_features,
     signature_features,
-    novelty_features))
+    novelty_features
+  ))
   
   return(feature_info_list[features_kept])
 }
@@ -964,7 +997,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
     feature, 
     object, 
     model_list, 
-    stop_at = "imputation") {
+    stop_at = "imputation"
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   min <- Q1 <- median <- Q3 <- max <- count <- NULL
 
@@ -979,7 +1013,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
         return(fam_model@feature_info[[feature]])
       }
     },
-    feature = feature)
+    feature = feature
+  )
   
   # Remove NULL entries
   feature_info_list[sapply(feature_info_list, is.null)] <- NULL
@@ -987,12 +1022,13 @@ trim_unused_features_from_list <- function(feature_info_list) {
   # Create a skeleton
   feature_info <- methods::new("featureInfo",
     name = feature,
-    set_descriptor = feature_info_list[[1]]@set_descriptor,
-    feature_type = feature_info_list[[1]]@feature_type,
-    levels = feature_info_list[[1]]@levels,
+    set_descriptor = feature_info_list[[1L]]@set_descriptor,
+    feature_type = feature_info_list[[1L]]@feature_type,
+    levels = feature_info_list[[1L]]@levels,
     data_id = as.integer(object@run_table$ensemble_data_id),
     run_id = as.integer(object@run_table$ensemble_run_id),
-    in_signature = feature_info_list[[1]]@in_signature)
+    in_signature = feature_info_list[[1L]]@in_signature
+  )
 
   # Add package version.
   feature_info <- add_package_version(object = feature_info)
@@ -1001,32 +1037,41 @@ trim_unused_features_from_list <- function(feature_info_list) {
   feature_info@fraction_missing <- mean(extract_from_slot(
     object_list = feature_info_list, 
     slot_name = "fraction_missing",
-    na.rm = TRUE))
+    na.rm = TRUE
+  ))
 
-  if (!all_empty_slot(
-    object_list = feature_info_list, 
-    slot_name = "robustness")) {
+  if (
+    !all_empty_slot(
+      object_list = feature_info_list, 
+      slot_name = "robustness"
+    )
+  ) {
     
     # Compute average robustness  
     feature_info@robustness <- mean(extract_from_slot(
       object_list = feature_info_list, 
       slot_name = "robustness",
-      na.rm = TRUE))
+      na.rm = TRUE
+    ))
   }
 
   
-  if (!all_empty_slot(
-    object_list = feature_info_list,
-    slot_name = "univariate_importance")) {
+  if (
+    !all_empty_slot(
+      object_list = feature_info_list,
+      slot_name = "univariate_importance"
+    )
+  ) {
     # Compute average univariate importance
     feature_info@univariate_importance <- mean(extract_from_slot(
       object_list = feature_info_list, 
       slot_name = "univariate_importance",
-      na.rm = TRUE))
+      na.rm = TRUE
+    ))
   }
 
   # Find distribution items
-  distribution_items <- names(feature_info_list[[1]]@distribution)
+  distribution_items <- names(feature_info_list[[1L]]@distribution)
 
   if (!is.null(distribution_items)) {
     # Placeholder list
@@ -1039,13 +1084,14 @@ trim_unused_features_from_list <- function(feature_info_list) {
         fivenum_values <- lapply(
           feature_info_list, 
           function(feature_info, item) (feature_info@distribution[[item]]),
-          item = item)
+          item = item
+        )
 
         # Combine all the data.tables
         fivenum_values <- data.table::rbindlist(fivenum_values)
 
         # Check for zero-length lists.
-        if (is_empty(fivenum_values)) next()
+        if (is_empty(fivenum_values)) next
 
         # Summarise
         fivenum_values <- fivenum_values[, list(
@@ -1064,7 +1110,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
         frequency_values <- lapply(
           feature_info_list, 
           function(feature_info, item) (feature_info@distribution[[item]]),
-          item = item)
+          item = item
+        )
 
         # Combine all the data.tables
         frequency_values <- data.table::rbindlist(frequency_values)
@@ -1080,7 +1127,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
           object_list = feature_info_list,
           slot_name = "distribution",
           slot_element = item,
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
       }
     }
 
@@ -1095,7 +1143,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
   transformation_parameter_data <- ..collect_and_aggregate_transformation_info(
     feature_info_list = feature_info_list,
     instance_mask = instance_mask,
-    feature_name = feature)
+    feature_name = feature
+  )
 
   # Set the aggregated transformation parameters.
   feature_info@transformation_parameters <- transformation_parameter_data$parameters
@@ -1107,7 +1156,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
   normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(
     feature_info_list = feature_info_list,
     instance_mask = instance_mask,
-    feature_name = feature)
+    feature_name = feature
+  )
 
   # Set the aggregated normalisation methods.
   feature_info@normalisation_parameters <- normalisation_parameter_data$parameters
@@ -1119,7 +1169,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
   batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(
     feature_info_list = feature_info_list,
     instance_mask = instance_mask,
-    feature_name = feature)
+    feature_name = feature
+  )
 
   # Update batch normalisation parameter data.
   feature_info@batch_normalisation_parameters <- batch_normalisation_parameter_data$parameters
@@ -1131,7 +1182,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
   imputation_parameter_data <- ..collect_and_aggregate_imputation_info(
     feature_info_list = feature_info_list,
     feature_name = feature,
-    feature_type = feature_info@feature_type)
+    feature_type = feature_info@feature_type
+  )
 
   # Add to slot.
   feature_info@imputation_parameters <- imputation_parameter_data$parameters
@@ -1162,17 +1214,19 @@ trim_unused_features_from_list <- function(feature_info_list) {
   if (feature_type == "categorical") {
     # Show levels, including which level is the reference.
     classes_str <- object@levels
-    classes_str[1] <- paste0(classes_str[1], " (reference)")
+    classes_str[1L] <- paste0(classes_str[1L], " (reference)")
 
     feature_str <- paste0(
       feature_str, ", with levels: ",
-      paste_s(classes_str))
+      paste_s(classes_str)
+    )
     
   } else if (feature_type == "ordinal") {
     # Show ordered levels of the ordinal.
     feature_str <- paste0(
       feature_str, ", with levels: ",
-      paste0(object@levels, collapse = " < "))
+      paste0(object@levels, collapse = " < ")
+    )
   }
 
   return(paste0(feature_str, line_end))
@@ -1206,7 +1260,8 @@ setMethod(
             power.transform::get_shift(transform_parameters@transformer),
             ", and scale = ",
             power.transform::get_scale(transform_parameters@transformer),
-            ".\n")
+            ".\n"
+          )
         }
       }
     }
@@ -1226,7 +1281,8 @@ setMethod(
             normalisation_parameters@shift,
             " and scale = ",
             normalisation_parameters@scale,
-            ".\n")
+            ".\n"
+          )
         }
         
       } else if (is(normalisation_parameters, "featureInfoParametersNormalisationShift")) {
@@ -1236,7 +1292,8 @@ setMethod(
             normalisation_parameters@method,
             ") with shift = ",
             normalisation_parameters@shift,
-            ".\n")
+            ".\n"
+          )
         }
       }
     }
@@ -1253,28 +1310,36 @@ setMethod(
         for (normalisation_parameters in batch_parameters@batch_parameters) {
           if (is(normalisation_parameters, "featureInfoParametersNormalisationShiftScale")) {
             if (normalisation_parameters@shift != 0.0 || normalisation_parameters@scale != 1.0) {
-              batch_norm_str <- c(batch_norm_str, paste0(
-                "  [",
-                normalisation_parameters@batch,
-                "] normalisation (",
-                normalisation_parameters@method,
-                ") with shift = ",
-                normalisation_parameters@shift,
-                " and scale = ",
-                normalisation_parameters@scale,
-                ".\n"))
+              batch_norm_str <- c(
+                batch_norm_str, 
+                paste0(
+                  "  [",
+                  normalisation_parameters@batch,
+                  "] normalisation (",
+                  normalisation_parameters@method,
+                  ") with shift = ",
+                  normalisation_parameters@shift,
+                  " and scale = ",
+                  normalisation_parameters@scale,
+                  ".\n"
+                )
+              )
             }
             
           } else if (is(normalisation_parameters, "featureInfoParametersNormalisationShift")) {
             if (normalisation_parameters@shift != 0.0) {
-              batch_norm_str <- c(batch_norm_str, paste0(
-                "  [",
-                normalisation_parameters@batch,
-                "] normalisation (",
-                normalisation_parameters@method,
-                ") with shift = ",
-                normalisation_parameters@shift,
-                ".\n"))
+              batch_norm_str <- c(
+                batch_norm_str,
+                paste0(
+                  "  [",
+                  normalisation_parameters@batch,
+                  "] normalisation (",
+                  normalisation_parameters@method,
+                  ") with shift = ",
+                  normalisation_parameters@shift,
+                  ".\n"
+                )
+              )
             }
           }
         }
@@ -1287,24 +1352,26 @@ setMethod(
 
     # Attempt to create an actual descriptor, if meaningful.
     if (is(object@cluster_parameters, "featureInfoParametersCluster")) {
-      if (object@cluster_parameters@cluster_size > 1) {
+      if (object@cluster_parameters@cluster_size > 1L) {
         # Find the feature(s) required to form the cluster.
         cluster_feature_names <- object@cluster_parameters@required_features
 
         # Find the clustering method.
         if (is(object@cluster_parameters@method, "clusterMethod")) {
           cluster_method_str <- paste0(
-            "(", object@cluster_parameters@method@method, ") ")
+            "(", object@cluster_parameters@method@method, ") "
+          )
           
         } else if (is(object@cluster_parameters@method, "character")) {
           cluster_method_str <- paste0(
-            "(", object@cluster_parameters@method, ") ")
+            "(", object@cluster_parameters@method, ") "
+          )
           
         } else {
           cluster_method_str <- NULL
         }
 
-        if (length(cluster_feature_names) == 1) {
+        if (length(cluster_feature_names) == 1L) {
           # Only one feature is required to form the cluster.
           if (cluster_feature_names == object@name) {
             # The current feature is the reference feature.
@@ -1312,8 +1379,9 @@ setMethod(
               "  forms cluster ",
               cluster_method_str,
               "with ",
-              object@cluster_parameters@cluster_size - 1,
-              " other features, and is the reference feature.\n")
+              object@cluster_parameters@cluster_size - 1L,
+              " other features, and is the reference feature.\n"
+            )
             
           } else {
             # The current feature is not the reference feature.
@@ -1321,10 +1389,11 @@ setMethod(
               "  forms cluster ",
               cluster_method_str,
               "with ",
-              object@cluster_parameters@cluster_size - 1,
+              object@cluster_parameters@cluster_size - 1L,
               " other features, with ",
               cluster_feature_names,
-              " as the reference feature.\n")
+              " as the reference feature.\n"
+            )
           }
           
         } else {
@@ -1334,16 +1403,19 @@ setMethod(
             cluster_method_str,
             "with ",
             paste_s(setdiff(cluster_feature_names, object@name)),
-            ".\n")
+            ".\n"
+          )
         }
       }
     }
 
     # Make the feature string complete, depending on additional information.
-    if (length(transform_str) == 0 &&
-      length(normalisation_str) == 0 &&
-      length(batch_norm_str) == 0 &&
-      length(cluster_str) == 0) {
+    if (
+      length(transform_str) == 0L &&
+      length(normalisation_str) == 0L &&
+      length(batch_norm_str) == 0L &&
+      length(cluster_str) == 0L
+    ) {
       feature_str <- paste0(feature_str, ".\n")
       
     } else {
@@ -1352,10 +1424,10 @@ setMethod(
 
     # Export to console.
     cat(feature_str)
-    if (length(transform_str) > 0) cat(transform_str)
-    if (length(normalisation_str) > 0) cat(normalisation_str)
-    if (length(batch_norm_str) > 0) cat(batch_norm_str)
-    if (length(cluster_str) > 0) cat(cluster_str)
+    if (length(transform_str) > 0L) cat(transform_str)
+    if (length(normalisation_str) > 0L) cat(normalisation_str)
+    if (length(batch_norm_str) > 0L) cat(batch_norm_str)
+    if (length(cluster_str) > 0L) cat(cluster_str)
   }
 )
 
@@ -1370,26 +1442,22 @@ setMethod(
     if (!is_available(object)) return(TRUE)
 
     if (level == "none") return(TRUE)
+    
     if (level == "signature") return(TRUE)
 
     if (!feature_info_complete(object@transformation_parameters)) return(FALSE)
-
     if (level == "transformation") return(TRUE)
 
     if (!feature_info_complete(object@normalisation_parameters)) return(FALSE)
-
     if (level == "normalisation") return(TRUE)
     
     if (!feature_info_complete(object@batch_normalisation_parameters)) return(FALSE)
-
     if (level == "batch_normalisation") return(TRUE)
 
     if (!feature_info_complete(object@imputation_parameters)) return(FALSE)
-
     if (level == "imputation") return(TRUE)
 
     if (!feature_info_complete(object@cluster_parameters)) return(FALSE)
-
     if (level == "clustering") return(TRUE)
     
     return(TRUE)
@@ -1406,7 +1474,8 @@ setMethod(
     return(all(sapply(
       object, 
       feature_info_complete, 
-      level = level)))
+      level = level
+    )))
   }
 )
 

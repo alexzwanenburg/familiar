@@ -61,7 +61,7 @@ details.
 
 If unset, every row will be identified as a single sample.}
 
-\item{series_id_column}{(\strong{optional}) Name of the column containing series
+\item{series_id_column}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -84,8 +84,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
@@ -102,7 +102,6 @@ Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -112,7 +111,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
 
 \item{event_indicator}{(\strong{recommended}) Indicator for events in \code{survival}
 and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},

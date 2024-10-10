@@ -8,19 +8,23 @@ setClass("familiarCoreLearnVimp",
 
 setClass(
   "familiarCoreLearnGiniVimp",
-  contains = "familiarCoreLearnVimp")
+  contains = "familiarCoreLearnVimp"
+)
 
 setClass(
   "familiarCoreLearnMDLVimp",
-  contains = "familiarCoreLearnVimp")
+  contains = "familiarCoreLearnVimp"
+)
 
 setClass(
   "familiarCoreLearnRelieffExpRankVimp",
-  contains = "familiarCoreLearnVimp")
+  contains = "familiarCoreLearnVimp"
+)
 
 setClass(
   "familiarCoreLearnGainRatioVimp",
-  contains = "familiarCoreLearnVimp")
+  contains = "familiarCoreLearnVimp"
+)
 
 
 # initialize -------------------------------------------------------------------
@@ -80,7 +84,13 @@ setMethod(
   "is_available",
   signature(object = "familiarCoreLearnRelieffExpRankVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous"))
+    
+    if (object@outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
+    return(object@outcome_type %in% c("binomial", "multinomial", "continuous"))
   }
 )
 
@@ -130,29 +140,33 @@ setMethod(
       score <- CORElearn::attrEval(
         formula, 
         data = data@data, 
-        estimator = "Gini")
+        estimator = "Gini"
+      )
       
     } else if (is(object, "familiarCoreLearnMDLVimp")) {
       # MDL method.
       score <- CORElearn::attrEval(
         formula, 
         data = data@data, 
-        estimator = "MDL")
+        estimator = "MDL"
+      )
       
     } else if (is(object, "familiarCoreLearnRelieffExpRankVimp")) {
-      if (object@outcome_type %in% c("continuous", "count")) {
+      if (object@outcome_type %in% c("continuous")) {
         # RReliefFexpRank method.
         score <- CORElearn::attrEval(
           formula, 
           data = data@data, 
-          estimator = "RReliefFexpRank")
+          estimator = "RReliefFexpRank"
+        )
         
       } else if (object@outcome_type %in% c("binomial", "multinomial")) {
         # ReliefFexpRank method.
         score <- CORElearn::attrEval(
           formula, 
           data = data@data, 
-          estimator = "ReliefFexpRank")
+          estimator = "ReliefFexpRank"
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
@@ -162,11 +176,13 @@ setMethod(
       score <- CORElearn::attrEval(
         formula, 
         data = data@data, 
-        estimator = "GainRatio")
+        estimator = "GainRatio"
+      )
       
     } else {
       ..error_reached_unreachable_code(
-        "..vimp,familiarCoreLearnVimp: unknown class encountered.")
+        "..vimp,familiarCoreLearnVimp: unknown class encountered."
+      )
     }
 
     # Create variable importance object.
@@ -174,9 +190,11 @@ setMethod(
       "vimpTable",
       vimp_table = data.table::data.table(
         "score" = score, 
-        "name" = names(score)),
+        "name" = names(score)
+      ),
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }

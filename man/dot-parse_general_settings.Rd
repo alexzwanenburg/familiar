@@ -88,14 +88,11 @@ the \code{univariate_test}. The p or q-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
     \item{\code{univariate_test_threshold_metric}}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
     \item{\code{univariate_test_max_feature_set_size}}{(\emph{optional}) Maximum size of the
 feature set after the univariate test. P or q values of features are
@@ -622,7 +619,6 @@ If unset, the following metrics are used by default:
 \itemize{
 \item \code{auc_roc}: For \code{binomial} and \code{multinomial} models.
 \item \code{mse}: Mean squared error for \code{continuous} models.
-\item \code{msle}: Mean squared logarithmic error for \code{count} models.
 \item \code{concordance_index}: For \code{survival} models.
 }
 
@@ -766,48 +762,61 @@ are not computed and shown. When the flag is \code{false}, results are computed
 from both the global layer and the next lower level.
 
 Setting the flag to \code{true} saves computation time.}
+    \item{\code{evaluation_elements}}{(\emph{optional}) Specifies which evaluation steps
+should be performed during the evaluation process. Defaults to \code{all},
+indicating that all evaluation steps should be performed. It can have one or
+more of the following values:
+\itemize{
+\item \code{all}, \code{true}: all evaluation steps are performed.
+\item \code{none}, \code{false}: no evaluation is performed.
+\item \code{auc_data}: data for assessing and plotting the area under the receiver
+operating characteristic curve are computed.
+\item \code{calibration_data}: data for assessing and plotting model calibration are
+computed.
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are collected. These data will still be present in the
+models.
+\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
+collected.
+\item \code{decision_curve_analyis}: data for performing a decision curve analysis
+are computed.
+\item \code{feature_expressions}: data for assessing and plotting sample clustering
+are computed.
+\item \code{feature_similarity}: data for assessing and plotting feature clusters
+not computed.
+\item \code{fs_vimp}: data for assessing and plotting feature selection-based
+variable importance are collected.
+\item \code{hyperparameters}: data for assessing model hyperparameters are
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are created.
+\item \code{model_performance}: data for assessing and visualising model performance
+are created.
+\item \code{model_vimp}: data for assessing and plotting model-based variable
+importance are collected.
+\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
+permutation variable importance are computed.
+\item \code{prediction_data}: predictions for each sample are made and exported.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
+survival curves are collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk
+groups are computed.
+\item \code{sample_similarity}: data for assessing sample similarity are computed.
+\item \code{univariate_analysis}: data for assessing and plotting univariate feature
+importance are computed.
+}
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
     \item{\code{skip_evaluation_elements}}{(\emph{optional}) Specifies which evaluation steps,
 if any, should be skipped as part of the evaluation process. Defaults to
 \code{none}, which means that all relevant evaluation steps are performed. It can
-have one or more of the following values:
-\itemize{
-\item \code{none}, \code{false}: no steps are skipped.
-\item \code{all}, \code{true}: all steps are skipped.
-\item \code{auc_data}: data for assessing and plotting the area under the receiver
-operating characteristic curve are not computed.
-\item \code{calibration_data}: data for assessing and plotting model calibration are
-not computed.
-\item \code{calibration_info}: data required to assess calibration, such as baseline
-survival curves, are not collected. These data will still be present in the
-models.
-\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
-not collected.
-\item \code{decision_curve_analyis}: data for performing a decision curve analysis
-are not computed.
-\item \code{feature_expressions}: data for assessing and plotting sample clustering
-are not computed.
-\item \code{feature_similarity}: data for assessing and plotting feature clusters are
-not computed.
-\item \code{fs_vimp}: data for assessing and plotting feature selection-based
-variable importance are not collected.
-\item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected. These data will still be present in the models.
-\item \code{ice_data}: data for individual conditional expectation and partial
-dependence plots are not created.
-\item \code{model_performance}: data for assessing and visualising model performance
-are not created.
-\item \code{model_vimp}: data for assessing and plotting model-based variable
-importance are not collected.
-\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
-permutation variable importance are not computed.
-\item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
-survival curves are not collected.
-\item \code{risk_stratification_info}: data for assessing stratification into risk
-groups are not computed.
-\item \code{univariate_analysis}: data for assessing and plotting univariate feature
-importance are not computed.
-}}
+have one or more of the same values as \code{evaluation_elements}.
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
@@ -1117,8 +1126,6 @@ worklow
 }
 \references{
 \enumerate{
-\item Storey, J. D. A direct approach to false discovery rates. J.
-R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
 \item Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 rater reliability. Psychol. Bull. 86, 420–428 (1979).
 \item Koo, T. K. & Li, M. Y. A guideline of selecting and reporting intraclass

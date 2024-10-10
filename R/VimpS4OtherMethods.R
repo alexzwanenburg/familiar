@@ -4,19 +4,23 @@ NULL
 
 setClass(
   "familiarRandomVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 setClass(
   "familiarNoneVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 setClass(
   "familiarSignatureVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 setClass(
   "familiarNoFeaturesVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 
 

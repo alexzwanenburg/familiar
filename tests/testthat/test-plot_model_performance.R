@@ -12,7 +12,7 @@ familiar:::test_plots(
   not_available_all_prospective = TRUE,
   not_available_any_prospective = c("binomial", "multinomial", "survival"),
   not_available_single_sample = c("binomial", "multinomial", "survival"),
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
@@ -22,6 +22,15 @@ familiar:::test_plot_ordering(
   data_element = "model_performance",
   outcome_type_available = c("binomial", "multinomial"),
   plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
+  outcome_type_available = c("binomial", "multinomial"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
   debug = debug_flag
 )
 
@@ -52,7 +61,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
   debug = debug_flag
 )
@@ -60,8 +69,17 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
+  outcome_type_available = c("continuous"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "facet_by" = c("data_set", "learner", "fs_method"),
     "x_axis_by" = "metric"),
@@ -72,7 +90,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "facet_by" = c("learner", "fs_method"),
     "x_axis_by" = "data_set",
@@ -86,6 +104,15 @@ familiar:::test_plot_ordering(
   data_element = "model_performance",
   outcome_type_available = c("survival"),
   plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  debug = debug_flag
+)
+
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_model_performance,
+  data_element = "model_performance",
+  outcome_type_available = c("survival"),
+  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  use_prediction_table = TRUE,
   debug = debug_flag
 )
 
@@ -129,7 +156,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "barplot",
     "facet_by" = c("data_set", "learner", "fs_method")),
@@ -140,7 +167,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "barplot",
     "facet_by" = c("data_set", "learner", "fs_method"),
@@ -152,7 +179,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "barplot",
     "facet_by" = c("learner", "fs_method"),
@@ -212,7 +239,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "boxplot",
     "facet_by" = c("data_set", "learner", "fs_method")),
@@ -223,7 +250,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "boxplot",
     "facet_by" = c("data_set", "learner", "fs_method"),
@@ -235,7 +262,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "boxplot",
     "facet_by" = c("learner", "fs_method"),
@@ -313,7 +340,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list("plot_type" = "heatmap"),
   debug = debug_flag
 )
@@ -322,7 +349,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "heatmap",
     "facet_by" = c("data_set", "metric"),
@@ -335,7 +362,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   metric = c("rmse", "mae"),
-  outcome_type_available = c("count", "continuous"),
+  outcome_type_available = c("continuous"),
   plot_args = list(
     "plot_type" = "heatmap",
     "annotate_performance" = "value_ci",

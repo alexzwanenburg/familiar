@@ -12,15 +12,6 @@ familiar:::test_all_vimp_methods(
   familiar:::.get_available_rfsrc_vimp_methods(show_general = FALSE),
   debug = FALSE,
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 0.50,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "fs_vh_fold" = 3,
-      "fs_vh_n_rep" = 2
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 0.50,
@@ -66,15 +57,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_rfsrc_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 0.50,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "fs_vh_fold" = 3,
-      "fs_vh_n_rep" = 2
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 0.50,
@@ -114,124 +96,6 @@ familiar:::test_all_vimp_methods_parallel(
   )
 )
 
-# Count outcome ----------------------------------------------------------------
-data <- familiar:::test_create_good_data("count")
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_minimum_depth",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest minimum depth method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c(
-        "per_capita_crime", "lower_status_percentage",
-        "residence_before_1940_proportion", "avg_rooms")),
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_permutation",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest permutation method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c(
-        "per_capita_crime", "lower_status_percentage",
-        "residence_before_1940_proportion", "avg_rooms", "industry")),
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_holdout",
-  vimp_method_parameter_list = list(
-    "n_tree" = 12,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest hold-out method correctly ranks count data."), 
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c(
-        "per_capita_crime", "lower_status_percentage",
-        "residence_before_1940_proportion", "avg_rooms", "property_tax_rate")),
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_variable_hunting",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "fs_vh_fold" = 3,
-    "fs_vh_n_rep" = 3),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest variable hunting method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
-  }
-)
 
 # Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")
@@ -255,12 +119,18 @@ testthat::test_that(
   paste0(
     "The RFSRC random forest minimum depth method correctly ranks continuous data."),
   {
-  vimp_table <- suppressWarnings(
-    familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-
-  testthat::expect_equal(
-    any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")),
-    TRUE)
+    vimp_table <- suppressWarnings(
+      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
+    
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -285,9 +155,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -313,40 +189,18 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")),
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_variable_hunting",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "fs_vh_fold" = 3,
-    "fs_vh_n_rep" = 3),
-  outcome_type = "continuous",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest variable hunting method correctly ranks continuous data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
+
 
 
 # Binomial outcome -------------------------------------------------------------
@@ -373,10 +227,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c(
-        "cell_shape_uniformity", "clump_thickness", "epithelial_cell_size", "bare_nuclei")),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -402,10 +261,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c(
-        "cell_shape_uniformity", "clump_thickness", "epithelial_cell_size", "bare_nuclei")),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -430,41 +294,17 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_variable_hunting",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "fs_vh_fold" = 3,
-    "fs_vh_n_rep" = 3),
-  outcome_type = "binomial",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest variable hunting method correctly ranks binomial data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
-
 
 
 # Multinomial outcome ----------------------------------------------------------
@@ -491,9 +331,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -518,9 +364,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -545,41 +397,17 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_variable_hunting",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "fs_vh_fold" = 3,
-    "fs_vh_n_rep" = 3),
-  outcome_type = "multinomial",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest variable hunting method correctly ranks multinomial outcome data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
-  }
-)
-
 
 
 # Survival outcome -------------------------------------------------------------
@@ -606,9 +434,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), 
-      TRUE)
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -632,9 +466,15 @@ testthat::test_that(
       vimp_table <- suppressWarnings(
         familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
       
-      testthat::expect_equal(
-        all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")),
-        TRUE)
+      # Expect that the vimp table has at most six rows.
+      testthat::expect_lte(nrow(vimp_table), 6L)
+      
+      # Expect that the names are the same as that of the features.
+      testthat::expect_true(
+        all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+      
+      # Feature 1 is most important.
+      testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
     }
 )
 
@@ -660,40 +500,18 @@ testthat::test_that(
     vimp_table <- suppressWarnings(
       familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), 
-      TRUE)
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_rfsrc_variable_hunting",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "fs_vh_fold" = 3,
-    "fs_vh_n_rep" = 3),
-  outcome_type = "survival",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest variable hunting method correctly ranks survival outcome data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
     
-    testthat::expect_equal(
-      all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)),
-      TRUE)
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
+
 
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 

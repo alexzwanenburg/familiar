@@ -7,7 +7,8 @@ setClass(
   "familiarSurvRegr",
   contains = "familiarModel",
   slots = list("encoding_reference_table" = "ANY"),
-  prototype = list("encoding_reference_table" = NULL))
+  prototype = list("encoding_reference_table" = NULL)
+)
 
 # initialize -------------------------------------------------------------------
 setMethod(
@@ -54,21 +55,24 @@ setMethod(
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(
       data = data,
-      restrict_samples = TRUE)
+      restrict_samples = TRUE
+    )
 
     # outcome distribution -----------------------------------------------------
 
     # Randomisation of distribution depends on selected learner.
     if (object@learner == "survival_regr") {
       distribution_default <- c(
-        "weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal")
+        "weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal"
+      )
       
     } else {
       distribution_default <- sub(
         x = object@learner,
         pattern = "survival_regr_",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     # Set the distribution parameter
@@ -76,7 +80,8 @@ setMethod(
       default = distribution_default,
       type = "factor",
       range = distribution_default,
-      randomise = ifelse(length(distribution_default) > 1, TRUE, FALSE))
+      randomise = length(distribution_default) > 1L
+    )
 
     # Return hyper-parameters
     return(param)
@@ -97,7 +102,8 @@ setMethod(
       return("survival_probability")
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarSurvRegr: unknown type")
+        "get_prediction_type,familiarSurvRegr: unknown type"
+      )
     }
   }
 )
@@ -109,20 +115,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -135,7 +144,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -148,7 +158,7 @@ setMethod(
 
     # Set limits to the number of iterations that can be performed by
     # survival regression.
-    model_control <- survival::survreg.control(iter.max = 100)
+    model_control <- survival::survreg.control(iter.max = 100L)
 
     # Train the model.
     model <- do.call_with_handlers(
@@ -157,7 +167,9 @@ setMethod(
         "data" = encoded_data$encoded_data@data,
         "control" = model_control,
         "y" = FALSE,
-        "dist" = as.character(object@hyperparameters$distribution)))
+        "dist" = as.character(object@hyperparameters$distribution)
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -168,10 +180,11 @@ setMethod(
     if (!is.null(object@messages$error)) return(callNextMethod(object = object))
 
     # Check if the model fitter converged in time.
-    if (model$iter >= 100) {
+    if (model$iter >= 100L) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        "Model fitter ran out of iterations and did not converge.")))
+        "Model fitter ran out of iterations and did not converge."
+      )))
     }
 
     # Check if all coefficients could not be estimated. Sometimes models could
@@ -180,10 +193,11 @@ setMethod(
     # selected during hyperparameter optimisation, especially in situations
     # where there is not a lot of signal. Checking for non-finite coefficients
     # is an easy way to figure out if the model is not properly trained.
-    if (any(!sapply(stats::coef(model), is.finite))) {
+    if (!all(sapply(stats::coef(model), is.finite))) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_failed_model_coefficient_estimation())))
+        ..error_message_failed_model_coefficient_estimation()
+      )))
     }
 
     # Add model
@@ -206,7 +220,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Turn into a Naive model.
     object <- methods::new("familiarNaiveSurvivalTimeModel", object)
@@ -214,7 +229,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -225,32 +241,34 @@ setMethod(
   "..predict",
   signature(
     object = "familiarSurvRegr",
-    data = "dataObject"),
-  function(object, data, type = "default", time = NULL, ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    time = NULL, 
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE
+    )
+    
     if (type %in% c("default", "survival_probability")) {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       if (object@outcome_type == "survival") {
         if (type == "default") {
@@ -258,15 +276,24 @@ setMethod(
           model_predictions <- predict(
             object = object@model,
             newdata = encoded_data$encoded_data@data,
-            type = "response")
+            type = "response"
+          )
 
-          # Update the prediction table.
-          prediction_table[, "predicted_outcome" := model_predictions]
+          # Store as prediction table.
+          prediction_table <- as_prediction_table(
+            x = model_predictions,
+            type = "expected_survival_time",
+            data = data,
+            model_object = object
+          )
           
         } else if (type == "survival_probability") {
           # To predict survival probability we first compute survival quantiles,
           # which are survival probabilities.
 
+          # If time is unset, read the max time stored by the model.
+          if (is.null(time)) time <- object@settings$time_max
+          
           # Survival quantiles from 1.00 to 0.01
           survival_quantiles <- seq(from = 1.00, to = 0.01, by = -0.01)
 
@@ -275,8 +302,9 @@ setMethod(
             object = object@model,
             newdata = encoded_data$encoded_data@data,
             type = "quantile",
-            p = 1.00 - survival_quantiles)
-
+            p = 1.00 - survival_quantiles
+          )
+          
           # Set id columns
           id_columns <- get_id_columns()
 
@@ -284,13 +312,15 @@ setMethod(
           if (!is.matrix(failure_matrix)) {
             failure_matrix <- matrix(
               data = failure_matrix,
-              ncol = length(failure_matrix))
+              ncol = length(failure_matrix)
+            )
           }
 
           # Combine with identifiers and cast to table.
           failure_table <- cbind(
-            prediction_table[, mget(id_columns)],
-            data.table::as.data.table(failure_matrix))
+            data@data[, mget(id_columns)],
+            data.table::as.data.table(failure_matrix)
+          )
 
           # Remove duplicate entries
           failure_table <- unique(failure_table, by = id_columns)
@@ -300,19 +330,22 @@ setMethod(
             failure_table,
             id.vars = id_columns,
             variable.name = "quantile_variable",
-            value.name = "survival_time")
+            value.name = "survival_time"
+          )
 
           # Create conversion table to convert temporary variables into
           # the event times.
           conversion_table <- data.table::data.table(
             "quantile_variable" = paste0("V", seq_along(survival_quantiles)),
-            "survival_quantile" = survival_quantiles)
+            "survival_quantile" = survival_quantiles
+          )
 
           # Add in
           failure_table <- merge(
             x = failure_table, 
             y = conversion_table, 
-            on = "quantile_variable")
+            on = "quantile_variable"
+          )
 
           # Drop the time_variable column
           failure_table[, "quantile_variable" := NULL]
@@ -326,29 +359,38 @@ setMethod(
                 x = sample_table$survival_time,
                 y = sample_table$survival_quantile,
                 xout = time,
-                rule = 2
+                rule = 2L
               )$y
               
               # Create an output table
-              output_table <- data.table::copy(sample_table[1, mget(id_columns)])
+              output_table <- data.table::copy(sample_table[1L, mget(id_columns)])
               output_table[, "survival_probability" := value]
               
               return(output_table)
             },
             time = time, 
-            id_columns = id_columns)
+            id_columns = id_columns
+          )
           
           # Concatenate to single table.
           failure_table <- data.table::rbindlist(failure_table)
           
-          # Remove survival_probability from the prediction table.
-          prediction_table[, "survival_probability" := NULL]
-          
           # Then merge the event table into the prediction table.
           prediction_table <- merge(
-            x = prediction_table,
+            x = data@data[, mget(id_columns)],
             y = failure_table, 
-            by = id_columns)
+            by = id_columns,
+            sort = FALSE
+          )
+          
+          # Store as prediction table
+          prediction_table <- as_prediction_table(
+            x = prediction_table$survival_probability,
+            type = "survival_probability",
+            data = data,
+            time = time,
+            model_object = object
+          )
         }
         
       } else {
@@ -357,56 +399,38 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(NULL)
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(NULL)
-
-      # Encode data so that the features are the same as in the
-      # training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Use the model to predict expected survival time.
       return(predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
 
 
 
-# ..predict_survival_probability -----------------------------------------------
+# ..get_prediction_table_type --------------------------------------------------
 setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarSurvRegr",
-    data = "dataObject"),
-  function(object, data, time, ...) {
+  "..get_prediction_table_type",
+  signature(object = "familiarSurvRegr"),
+  function(object, type, ...) {
+    prediction_table_type <- NULL
+    if (object@outcome_type %in% c("survival") && type == "default") {
+      prediction_table_type <- "expected_survival_time"
+    } else {
+      prediction_table_type <- callNextMethod()
+    }
     
-    if (!object@outcome_type %in% c("survival")) return(callNextMethod())
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    return(..predict(
-      object = object, 
-      data = data, 
-      time = time, 
-      type = "survival_probability"))
+    return(prediction_table_type)
   }
 )
 
@@ -428,20 +452,23 @@ setMethod(
     # Define p-values
     coefficient_z_values <- tryCatch(
       .compute_z_statistic(object),
-      error = identity)
+      error = identity
+    )
 
     if (inherits(coefficient_z_values, "error")) return(callNextMethod())
 
     # Remove any intercept from the data.
     coefficient_z_values <- coefficient_z_values[
-      names(coefficient_z_values) != "(Intercept)"]
+      names(coefficient_z_values) != "(Intercept)"
+    ]
 
-    if (length(coefficient_z_values) == 0) return(callNextMethod())
+    if (length(coefficient_z_values) == 0L) return(callNextMethod())
 
     # Assign to variable importance table.
     vimp_table <- data.table::data.table(
       "score" = coefficient_z_values,
-      "name" = names(coefficient_z_values))
+      "name" = names(coefficient_z_values)
+    )
 
     # Remove NA values
     vimp_table <- vimp_table[is.finite(score)]
@@ -452,7 +479,8 @@ setMethod(
       vimp_table = vimp_table,
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }

@@ -197,7 +197,6 @@ If unset, the following metrics are used by default:
 \itemize{
 \item \code{auc_roc}: For \code{binomial} and \code{multinomial} models.
 \item \code{mse}: Mean squared error for \code{continuous} models.
-\item \code{msle}: Mean squared logarithmic error for \code{count} models.
 \item \code{concordance_index}: For \code{survival} models.
 }
 

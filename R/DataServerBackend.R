@@ -35,17 +35,20 @@
     
   } else {
     ..error_reached_unreachable_code(
-      ".get_selected_backend_type: backend_type was not found in familiar_global_env or .GlobalEnv")
+      ".get_selected_backend_type: backend_type was not found in familiar_global_env or .GlobalEnv"
+    )
   }
   
   backend_type <- tryCatch(
     get("backend_type", envir = data_env),
-    error = identity)
+    error = identity
+  )
   
   if (inherits(backend_type, "error")) {
     .assign_backend_options_to_global(
       backend_type = "none",
-      server_port = NULL)
+      server_port = NULL
+    )
     
     backend_type <- "none"
   }
@@ -71,7 +74,8 @@
     
   } else {
     ..error_reached_unreachable_code(
-      ".get_backend_server_port: server_port was not found in familiar_global_env or .GlobalEnv")
+      ".get_backend_server_port: server_port was not found in familiar_global_env or .GlobalEnv"
+    )
   }
 
   return(get("server_port", envir = data_env))
@@ -83,18 +87,24 @@
   assign(
     "backend_type",
     value = backend_type,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   assign(
     "server_port",
     value = server_port,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
 
 
 
-.assign_data_to_backend <- function(data, backend_type = NULL, server_port = NULL) {
+.assign_data_to_backend <- function(
+    data, 
+    backend_type = NULL, 
+    server_port = NULL
+) {
 
   # Find the server port and backend_type variables if not directly provided.
   if (is.null(server_port)) server_port <- .get_backend_server_port()
@@ -103,14 +113,16 @@
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = backend_type),
-    purpose = paste0("to use the requested backend (", backend_type, ")"))
+    purpose = paste0("to use the requested backend (", backend_type, ")")
+  )
   
   if (backend_type %in% c("none")) {
     # Put master_data in global environment
     assign(
       x = "master_data",
       value = data,
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
     
   } else if (backend_type %in% c("socket_server")) {
     # Start the separate r session thread that will run the socket server.
@@ -125,10 +137,12 @@
         assign(
           x = "master_data",
           value = data,
-          envir = familiar_global_env)
+          envir = familiar_global_env
+        )
       },
       args = list("data" = data),
-      package = TRUE)
+      package = TRUE
+    )
     
     # Finally, activate the server subroutine.
     .activate_socket_server_routine(server_port = server_port)
@@ -146,7 +160,8 @@ get_data_from_backend <- function(
     backend_type = NULL,
     server_port = NULL,
     sample_identifiers = NULL,
-    column_names = NULL) {
+    column_names = NULL
+) {
 
   # Find the server port and backend_type variables if not directly provided.
   if (is.null(server_port)) server_port <- .get_backend_server_port()
@@ -155,13 +170,15 @@ get_data_from_backend <- function(
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = backend_type),
-    purpose = paste0("to use the requested backend (", backend_type, ")"))
+    purpose = paste0("to use the requested backend (", backend_type, ")")
+  )
   
   if (backend_type == "none") {
     # Absence of backend.
     x <- .get_data_from_backend(
       sample_identifiers = sample_identifiers,
-      column_names = column_names)
+      column_names = column_names
+    )
     
   } else if (backend_type == "socket_server") {
     # Socket server backend.
@@ -176,11 +193,14 @@ get_data_from_backend <- function(
       .get_data_from_backend,
       args = list(
         "sample_identifiers" = sample_identifiers,
-        "column_names" = column_names))
+        "column_names" = column_names
+      )
+    )
     
   } else {
     ..error_reached_unreachable_code(paste0(
-      "get_data_from_backend: encountered unknown type of backend: ", backend_type))
+      "get_data_from_backend: encountered unknown type of backend: ", backend_type
+    ))
   }
   
   return(x)
@@ -208,7 +228,8 @@ get_data_from_backend <- function(
     
   } else {
     ..error_reached_unreachable_code(
-      ".get_data_from_backend: master_data was not found in familiar_global_env or .GlobalEnv")
+      ".get_data_from_backend: master_data was not found in familiar_global_env or .GlobalEnv"
+    )
   }
   
   # Obtain and export views of the master data set to the calling function.
@@ -223,12 +244,14 @@ get_data_from_backend <- function(
   } else if (!is.null(sample_identifiers) && is.null(column_names)) {
     # Get entire rows from the dataset.
     x <- data.table::copy(get("master_data", envir = data_env)[
-      sample_identifiers, on = .NATURAL])
+      sample_identifiers, on = .NATURAL
+    ])
     
   } else {
     # Get certain columns and rows from the dataset.
     x <- data.table::copy(get("master_data", envir = data_env)[
-      sample_identifiers, mget(column_names), on = .NATURAL])
+      sample_identifiers, mget(column_names), on = .NATURAL
+    ])
   }
   
   return(x)
@@ -239,7 +262,8 @@ get_data_from_backend <- function(
 .assign_feature_info_to_backend <- function(
     feature_info_list,
     backend_type = NULL,
-    server_port = NULL) {
+    server_port = NULL
+) {
 
   # Find the server port and backend_type variables if not directly provided.
   if (is.null(server_port)) server_port <- .get_backend_server_port()
@@ -248,13 +272,15 @@ get_data_from_backend <- function(
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = backend_type),
-    purpose = paste0("to use the requested backend (", backend_type, ")"))
+    purpose = paste0("to use the requested backend (", backend_type, ")")
+  )
   
   # Put master_feature_info_list in the familiar global environment.
   assign(
     x = "master_feature_info_list",
     value = feature_info_list,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   if (backend_type %in% c("socket_server")) {
     # Stop the socket_server subroutine so that we can add or update the list of
@@ -266,23 +292,26 @@ get_data_from_backend <- function(
     
     # Assign the list of feature information to the socket server process so
     # that its accessible later.
-    socket_server_process$run(function(feature_info_list) {
-      # Assign locally.
-      assign(
-        x = "master_feature_info_list",
-        value = feature_info_list,
-        envir = familiar_global_env)
-       
-    },
-    args = list("feature_info_list" = feature_info_list),
-    package = TRUE)
+    socket_server_process$run(
+      function(feature_info_list) {
+        # Assign locally.
+        assign(
+          x = "master_feature_info_list",
+          value = feature_info_list,
+          envir = familiar_global_env
+        )
+      },
+      args = list("feature_info_list" = feature_info_list),
+      package = TRUE
+    )
     
     # Reactivate the server subroutine.
     .activate_socket_server_routine(server_port = server_port)
     
   } else if (backend_type != "none") {
     ..error_reached_unreachable_code(
-      ".assign_feature_info_to_backend: unknown backend encountered")
+      ".assign_feature_info_to_backend: unknown backend encountered"
+    )
   }
 }
 
@@ -291,7 +320,8 @@ get_feature_info_from_backend <- function(
     backend_type = NULL,
     server_port = NULL,
     data_id = NULL,
-    run_id = NULL) {
+    run_id = NULL
+) {
   
   # Find the server port and backend_type variables if not directly provided.
   if (is.null(server_port)) server_port <- .get_backend_server_port()
@@ -300,7 +330,8 @@ get_feature_info_from_backend <- function(
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = backend_type),
-    purpose = paste0("to use the requested backend (", backend_type, ")"))
+    purpose = paste0("to use the requested backend (", backend_type, ")")
+  )
   
   if (backend_type == "none") {
     # Absence of backend.
@@ -320,11 +351,14 @@ get_feature_info_from_backend <- function(
       FUN = .get_feature_info_from_backend,
       args = list(
         "data_id" = data_id,
-        "run_id" = run_id))
+        "run_id" = run_id
+      )
+    )
     
   } else {
     ..error_reached_unreachable_code(paste0(
-      "get_feature_info_from_backend: encountered unknown type of backend: ", backend_type))
+      "get_feature_info_from_backend: encountered unknown type of backend: ", backend_type
+    ))
   }
   
   return(x)
@@ -351,7 +385,8 @@ get_feature_info_from_backend <- function(
   } else {
     ..error_reached_unreachable_code(paste0(
       ".get_feature_info_from_backend: master_feature_info_list was not found ", 
-      "in familiar_global_env or .GlobalEnv."))
+      "in familiar_global_env or .GlobalEnv."
+    ))
   }
   
   # Now read the requested element.
@@ -366,13 +401,15 @@ get_feature_info_from_backend <- function(
   } else if (!is.null(data_id) && !is.null(run_id)) {
     # Retrieve run-specific feature information.
     x <- get("master_feature_info_list", envir = data_env)[[
-      .get_feature_info_list_name(data_id = data_id, run_id = run_id)]]
+      .get_feature_info_list_name(data_id = data_id, run_id = run_id)
+    ]]
     
   } else {
     # data_id and run_id are either both provided, or both NULL.
     ..error_reached_unreachable_code(paste0(
       ".get_feature_info_from_backend: one of data_id and run_id is NULL ", 
-      "instead of both NULL or both not NULL."))
+      "instead of both NULL or both not NULL."
+    ))
   }
   
   # The feature info list should not be empty.
@@ -380,7 +417,8 @@ get_feature_info_from_backend <- function(
     ..error_reached_unreachable_code(paste0(
       ".get_feature_info_from_backend: the requested feature information is empty. ",
       "data_id = ", data_id,
-      "; run_id = ", run_id))
+      "; run_id = ", run_id
+    ))
   }
   
   return(x)
@@ -410,7 +448,8 @@ start_socket_server_process <- function(server_port = NULL) {
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = "socket_server"),
-    purpose = paste0("to use the requested backend (socket_server)"))
+    purpose = paste0("to use the requested backend (socket_server)")
+  )
   
   # Check if the process is already running.
   if (!.is_socket_server_process_started()) {
@@ -421,7 +460,6 @@ start_socket_server_process <- function(server_port = NULL) {
     # Assign initial data to the 
     socket_server_process$run(
       function(server_port) {
-        
         # Load the familiar package locally.
         library(familiar)
         
@@ -429,17 +467,19 @@ start_socket_server_process <- function(server_port = NULL) {
         assign(
           x = "server_port",
           value = server_port,
-          envir = familiar_global_env)
-        
+          envir = familiar_global_env
+        )
       },
       args = list("server_port" = server_port),
-      package = TRUE)
+      package = TRUE
+    )
     
     # Export socket_server_process to the familiar global environment.
     assign(
       "socket_server_process",
       socket_server_process,
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
   }
   
   return(invisible(TRUE))
@@ -452,9 +492,10 @@ start_socket_server_process <- function(server_port = NULL) {
   # socket server process thread. This object is normally stored in the familiar
   # global environment.
   if (!exists("socket_server_process", where = familiar_global_env)) {
-    stop(..error_reached_unreachable_code(paste0(
+    ..error_reached_unreachable_code(paste0(
       ".get_socket_server_process_handle: socket_server_process ",
-      "does not exist in familiar_global_env")))
+      "does not exist in familiar_global_env"
+    ))
   }
   
   return(get("socket_server_process", envir = familiar_global_env))
@@ -484,16 +525,18 @@ start_socket_server_process <- function(server_port = NULL) {
   
   # Check whether the socket server process is running in a separate thread.
   if (!socket_server_process$is_alive()) {
-    stop(..error_reached_unreachable_code(paste0(
+    ..error_reached_unreachable_code(paste0(
       ".activate_socket_server: the socket_server_process that hosts the ",
-      "socket_server routine is not active.")))
+      "socket_server routine is not active."
+    ))
   }
   
   # Check if the socket_server_process is idle.
   if (!socket_server_process$get_state() == "idle") {
-    stop(..error_reached_unreachable_code(paste0(
+    ..error_reached_unreachable_code(paste0(
       ".activate_socket_server: the socket_server_process that hosts the ",
-      "socket_server routine is busy.")))
+      "socket_server routine is busy."
+    ))
   }
   
   # Find the server port if not directly provided.
@@ -503,7 +546,8 @@ start_socket_server_process <- function(server_port = NULL) {
   socket_server_process$call(
     socket_server,
     args = list("port" = server_port),
-    package = TRUE)
+    package = TRUE
+  )
   
   return()
 }
@@ -538,7 +582,7 @@ start_socket_server_process <- function(server_port = NULL) {
       # The process should be responsive within a few milliseconds after sending
       # the command to stop the subroutine. We leave the process 5 seconds to
       # respond.      
-      process_ready <- socket_server_process$poll_process(5000)
+      process_ready <- socket_server_process$poll_process(5000.0)
       
       # Read from the socket_server_process to free up the process again,
       # thereby finalising the shutdown of the socket_server subroutine and
@@ -561,7 +605,8 @@ shutdown_backend_server <- function(backend_type = NULL, server_port = NULL) {
   # Check if required packages are installed.
   require_package(
     x = .required_packages_backend(backend_type = backend_type),
-    purpose = paste0("to use the requested backend (", backend_type, ")"))
+    purpose = paste0("to use the requested backend (", backend_type, ")")
+  )
   
   if (backend_type %in% c("socket_server")) {
     

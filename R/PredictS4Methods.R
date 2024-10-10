@@ -4,6 +4,12 @@ NULL
 
 
 
+.is_available_prediction_type <- function(type) {
+  return(type %in% c(.get_available_prediction_type_arguments()))
+}
+
+
+
 .get_available_prediction_type_arguments <- function() {
   return(c(
     .get_available_novelty_prediction_type_arguments(),
@@ -37,10 +43,9 @@ NULL
 #' @param type Type of prediction made. The following values are directly
 #'   supported:
 #'
-#'  * `default`: Default prediction, i.e. value estimates for `count` and
-#'   `continuous` outcomes, predicted class probabilities and class for
-#'   `binomial` and `multinomial` and the model response for `survival`
-#'   outcomes.
+#'  * `default`: Default prediction, i.e. value estimates for `continuous`
+#'   outcomes, predicted class probabilities and class for `binomial` and
+#'   `multinomial` and the model response for `survival` outcomes.
 #'
 #'  * `survival_probability`: Predicts survival probabilities at the time
 #'   specified by `time`. Only applicable to `survival` outcomes. Some models
@@ -77,9 +82,11 @@ NULL
 #'   `stratification_method` and any threshold values that come with the model
 #'   are ignored, and `stratification_threshold` is used instead.
 #' @param percentiles Currently unused.
+#' @param .as_prediction_table Selects whether a data.table or prediction table
+#'   object should be returned.
 #' @param ... to be documented.
 #'
-#' @inheritParams extract_data
+#' @inheritParams .extract_data
 #'
 #' @details This method is used to predict values for instances specified by the
 #'   `newdata` using the model or ensemble of models specified by the `object`
@@ -109,7 +116,9 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    .as_prediction_table = FALSE,
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
 
@@ -124,7 +133,9 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
+      .as_prediction_table = .as_prediction_table,
+      ...
+    )
 
     return(predictions)
   }
@@ -148,8 +159,10 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
-    if (missing(newdata)) stop("newdata must be provided.")
+    .as_prediction_table = FALSE,
+    ...
+  ) {
+    if (missing(newdata)) rlang::abort("newdata must be provided.")
     if (is_empty(newdata)) ..error_data_set_is_empty()
 
     # Make sure the ensemble model object is updated.
@@ -159,7 +172,8 @@ setMethod(
     data <- as_data_object(
       data = newdata,
       object = object,
-      check_stringency = "external")
+      check_stringency = "external"
+    )
 
     # Propagate to .predict
     predictions <- .predict(
@@ -171,15 +185,29 @@ setMethod(
       ensemble_method = ensemble_method,
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
-      percentiles = percentiles)
-
-    if (type %in% .get_available_prediction_type_arguments()) {
-      # Find non-feature columns.
-      non_feature_columns <- get_non_feature_columns(object)
-      prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
-
-      # Update the table with predictions by removing the non-feature columns.
-      predictions <- data.table::copy(predictions[, mget(prediction_columns)])
+      percentiles = percentiles
+    )
+    
+    if (is(predictions, "familiarDataElementPredictionTable")) {
+      # Only return prediction columns for external predict calls.
+      
+      # Complete the object by adding any missing information, such as the
+      # predicted class.
+      predictions <- .complete(predictions)
+      
+      # Ensure that values are ordered the same as in the input data.
+      predictions@data <- merge(
+        x = data@data[, mget(get_id_columns())],
+        y = predictions@data,
+        on = c(familiar:::get_id_columns()),
+        all.x = TRUE,
+        sort = FALSE
+      )
+      
+      # Isolate predicted values.
+      if (!.as_prediction_table) {
+        predictions <- .as_data_table(predictions)[, mget(predictions@value_column)]
+      }
     }
 
     return(predictions)
@@ -197,33 +225,23 @@ setMethod(
     object,
     newdata,
     type = "novelty",
-    ...) {
-    if (missing(newdata)) stop("newdata must be provided.")
-    if (is_empty(newdata)) ..error_data_set_is_empty()
-
-    # Make sure the ensemble model object is updated.
-    object <- update_object(object = object)
-
-    # Parse newdata to data object
-    data <- as_data_object(
-      data = newdata,
+    ensemble_method = "median",
+    .as_prediction_table = FALSE,
+    ...
+  ) {
+    # Create ensemble.
+    object <- as_familiar_ensemble(object = object)
+    
+    # Create predictions.
+    predictions <- predict(
       object = object,
-      check_stringency = "external")
-
-    # Propagate to .predict
-    predictions <- .predict(
-      object = object,
-      data = data,
-      type = type)
-
-    if (type %in% .get_available_novelty_prediction_type_arguments()) {
-      # Find non-feature columns.
-      non_feature_columns <- get_non_feature_columns(object)
-      prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
-
-      # Update the table with predictions by removing the non-feature columns.
-      predictions <- data.table::copy(predictions[, mget(prediction_columns)])
-    }
+      newdata = newdata,
+      type = type,
+      time = time,
+      ensemble_method = ensemble_method,
+      .as_prediction_table = .as_prediction_table,
+      ...
+    )
 
     return(predictions)
   }
@@ -246,7 +264,9 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    .as_prediction_table = FALSE,
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
 
@@ -261,8 +281,10 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
-
+      .as_prediction_table = .as_prediction_table,
+      ...
+    )
+    
     return(predictions)
   }
 )
@@ -285,7 +307,9 @@ setMethod(
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
-    ...) {
+    .as_prediction_table = FALSE,
+    ...
+  ) {
     # Create ensemble.
     object <- as_familiar_ensemble(object = object)
     
@@ -300,8 +324,10 @@ setMethod(
       stratification_threshold = stratification_threshold,
       stratification_method = stratification_method,
       percentiles = percentiles,
-      ...)
-
+      .as_prediction_table = .as_prediction_table,
+      ...
+    )
+    
     return(predictions)
   }
 )
@@ -316,14 +342,16 @@ setMethod(
     data,
     allow_recalibration = TRUE,
     is_pre_processed = FALSE,
-    time = NULL, type = "default",
+    time = NULL,
+    type = "default",
     dir_path = NULL,
     ensemble_method = "median",
     stratification_threshold = NULL,
     stratification_method = NULL,
     percentiles = NULL,
     ...,
-    aggregate_results = TRUE) {
+    aggregate_results = TRUE
+  ) {
     # Predict function for a model ensemble. This will always return ensemble
     # information, and not details corresponding to the individual models.
 
@@ -331,88 +359,51 @@ setMethod(
     object <- load_models(object, dir_path = dir_path)
 
     # Extract predictions for each individual model
-    if (length(object@model_list) > 0) {
-      predict_list <- lapply(object@model_list,
+    if (length(object@model_list) > 0L) {
+      predict_list <- lapply(
+        object@model_list,
         .predict,
         data = data,
         allow_recalibration = allow_recalibration,
         is_pre_processed = is_pre_processed,
         time = time,
         type = type,
+        ensemble_method = "median",
         stratification_threshold = stratification_threshold,
         stratification_method = stratification_method,
-        ...)
+        percentiles = percentiles,
+        ...
+      )
       
     } else {
       # Generate a placeholder table.
-      predict_list <- list(get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type))
+      predict_list <- NULL
     }
 
-    # ensemble predictions -----------------------------------------------------
     # Generate ensemble predictions
     if (all(type %in% .get_available_prediction_type_arguments())) {
       if (aggregate_results) {
-        # Determine class levels.
-        if (object@outcome_type %in% c("binomial", "multinomial")) {
-          class_levels <- get_outcome_class_levels(x = object)
-        } else {
-          class_levels <- NULL
-        }
-
-        # Set grouping columns. Remove outcome columns for novelty-only
-        # predictions.
-        grouping_column <- get_non_feature_columns(object)
-        if (all(type %in% .get_available_novelty_prediction_type_arguments())) {
-          grouping_column <- setdiff(grouping_column, get_outcome_columns(object))
-        }
-
-        # Ensemble predictions are done using the
-        # .compute_data_element_estimates method.
-        data_element <- methods::new("familiarDataElementPredictionTable",
-          data = data.table::rbindlist(predict_list),
-          detail_level = "ensemble",
-          percentiles = percentiles,
-          type = type,
-          ensemble_method = ensemble_method,
-          estimation_type = ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval"),
-          outcome_type = object@outcome_type,
-          class_levels = class_levels,
-          grouping_column = grouping_column)
-
-        # Compute ensemble values.
-        data_element <- .compute_data_element_estimates(
-          x = data_element,
-          object = object)
-
-        # Check that the data element is not empty.
-        if (is_empty(data_element)) {
-          return(get_placeholder_prediction_table(
-            object = object, 
-            data = data, 
-            type = type))
-        }
-
-        # Extract data from data element.
-        return(data_element[[1]]@data)
         
-      } else {
-        return(data.table::rbindlist(
-          predict_list, 
-          use.names = TRUE, 
-          fill = TRUE))
+        # Merge prediction data etc. slots into the data slot.
+        predict_list <- lapply(predict_list, .merge_slots_into_data)
+        
+        # Compute ensemble values.
+        predict_list <- .compute_data_element_estimates(
+          x = predict_list,
+          object = object
+        )
+        
+        # Extract the merged object.
+        predict_list <- predict_list[[1L]]
       }
-    } else {
-      # Return list with custom types.
-      return(predict_list)
     }
+    
+    return(predict_list)
   }
 )
 
 
-# predict (model) --------------------------------------------------------------
+# .predict (model) -------------------------------------------------------------
 setMethod(
   ".predict",
   signature(object = "familiarModel"),
@@ -423,11 +414,19 @@ setMethod(
     is_pre_processed = FALSE,
     time = NULL,
     type = "default",
+    ensemble_method = "median",
     stratification_threshold = NULL,
     stratification_method = NULL,
-    ...) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
+    percentiles = NULL,
+    ...
+  ) {
+
+    if (length(type) != 1L) {
+      ..error_reached_unreachable_code(paste0(
+        "Only one type of prediction is expected as argument to .predict. ",
+        "Found: ", paste_s(type)
+      ))
+    }
     
     # Prepare input data
     data <- process_input_data(
@@ -435,123 +434,109 @@ setMethod(
       data = data,
       is_pre_processed = is_pre_processed,
       stop_at = "clustering",
-      keep_novelty = "novelty" %in% type)
-
-    # Set empty prediction table that can be updated
-    prediction_table <- NULL
-
+      keep_novelty = "novelty" %in% type
+    )
+    
     # user specified type ------------------------------------------------------
-    if (any(!type %in% .get_available_prediction_type_arguments())) {
+    if (!all(type %in% .get_available_prediction_type_arguments())) {
       # Select the first non-standard type.
-      type <- setdiff(type, .get_available_prediction_type_arguments())[1]
+      type <- setdiff(type, .get_available_prediction_type_arguments())[1L]
 
       # Select only features used by the model.
       data <- select_features(
         data = data,
         features = features_after_clustering(
           features = object@model_features,
-          feature_info_list = object@feature_info))
-
+          feature_info_list = object@feature_info
+        )
+      )
+      
       # Call predict from ..predict method with the given type and the
       # unspecified extra arguments in ... .
-      prediction_element <- ..predict(
+      return(..predict(
         object = object,
         data = data,
         time = time,
         type = type,
-        ...)
-      
-      return(prediction_element)
+        ...
+      ))
     }
 
     # novelty ------------------------------------------------------------------
-    if ("novelty" %in% type) {
+    if (type == "novelty") {
       # Predict instance novelty.
-      prediction_table <- .predict_novelty(
+      return(.predict_novelty(
         object = object,
-        data = data)
-
-      # Keep only model features in data for the remaining analysis.
-      data <- select_features(
-        data = data,
-        features = features_after_clustering(
-          features = object@model_features,
-          feature_info_list = object@feature_info))
+        data = data
+      ))
     }
-
-    # default response ---------------------------------------------------------
-    if ("default" %in% type) {
+    
+    # Keep only model features in data for the remaining predictions.
+    data <- select_features(
+      data = data,
+      features = features_after_clustering(
+        features = object@model_features,
+        feature_info_list = object@feature_info
+      )
+    )
+    
+    if (type == "default") {
+      # default ----------------------------------------------------------------
+      
       # Predict using the model and the standard type.
-      temp_prediction_table <- ..predict(
+      prediction_table <- ..predict(
         object = object,
         data = data,
-        time = time)
-
-      # Recalibrate the results.
+        type = type,
+        time = time
+      )
+      
+      # Recalibrate the default predictions.
       if (allow_recalibration) {
-        temp_prediction_table <- .apply_recalibration(
+        prediction_table <- .apply_recalibration(
           object = object,
-          predictions = temp_prediction_table)
+          prediction_table = prediction_table,
+          data = data
+        )
       }
-
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
-      }
-    }
-
-    # survival probability -----------------------------------------------------
-    if ("survival_probability" %in% type) {
-      # Prediction survival probabilities,
-      temp_prediction_table <- ..predict_survival_probability(
+      
+    } else if (type == "survival_probability") {
+      # survival probability ---------------------------------------------------
+      
+      # Predict using the model and the standard type.
+      prediction_table <- ..predict(
         object = object,
         data = data,
-        time = time)
-
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        # Merge with the prediction table
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
-      }
-    }
-
-    # risk stratification ------------------------------------------------------
-    if ("risk_stratification" %in% type) {
+        type = type,
+        time = time
+      )
+      
+    } else if (type == "risk_stratification") {
+      # risk stratification ----------------------------------------------------
+      
       # Prediction survival probabilities,
-      temp_prediction_table <- .predict_risk_stratification(
+      prediction_table <- .predict_risk_stratification(
         object = object,
         data = data,
         time = time,
         stratification_threshold = stratification_threshold,
         stratification_method = stratification_method,
-        ...)
-
-      # Add new columns to existing prediction table, if necessary.
-      if (is.null(prediction_table)) {
-        prediction_table <- temp_prediction_table
-      } else if (!is_empty(temp_prediction_table)) {
-        prediction_table <- prediction_table[unique(temp_prediction_table), on = .NATURAL]
-      }
+        ...
+      )
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(
+        "Type of prediction was not recognised: ", type
+      ))
     }
-
-    if (!is_empty(prediction_table)) {
-      # Order output columns.
-      ordered_columns <- intersect(
-        colnames(get_placeholder_prediction_table(
-          object = object, 
-          data = data, 
-          type = type)),
-        colnames(prediction_table))
-
-      data.table::setcolorder(
-        x = prediction_table,
-        neworder = ordered_columns)
+  
+    if (is(prediction_table, "familiarDataElementPredictionTable")) {
+      prediction_table@detail_level <- "ensemble"
+      prediction_table@percentiles <- percentiles
+      prediction_table@ensemble_method <- ensemble_method
+      prediction_table@estimation_type <- ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval")
     }
-
+    
     return(prediction_table)
   }
 )
@@ -567,29 +552,22 @@ setMethod(
     data, 
     type = "novelty",
     is_pre_processed = FALSE,
-    ...) {
+    ...
+  ) {
     # Prepare input data.
     data <- process_input_data(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
-      stop_at = "clustering")
-
+      stop_at = "clustering"
+    )
+    
     # Predict novelty.
     prediction_table <- ..predict(
       object = object,
       data = data,
-      type = type)
-
-    if (!is_empty(prediction_table)) {
-      # Order output columns.
-      data.table::setcolorder(
-        x = prediction_table,
-        neworder = colnames(get_placeholder_prediction_table(
-          object = object,
-          data = data,
-          type = type)))
-    }
+      type = type
+    )
 
     return(prediction_table)
   }
@@ -608,10 +586,40 @@ setMethod(
     return(do.call(
       .predict,
       args = c(
-      list(
-        "object" = object,
-        "data" = data),
-      list(...))))
+        list(
+          "object" = object,
+          "data" = data
+        ),
+        list(...)
+      )
+    ))
+  }
+)
+
+
+
+# .predict (list) --------------------------------------------------------------
+setMethod(
+  ".predict",
+  signature(object = "list"),
+  function(object, data, ...) {
+    if (all(sapply(object, is, class2 = "familiarModel"))) {
+      object <- as_familiar_ensemble(object = object)
+      
+      return(do.call(
+        .predict,
+        args = c(
+          list(
+            "object" = object,
+            "data" = data
+          ),
+          list(...)
+        )
+      ))
+      
+    } else {
+      ..error_reached_unreachable_code(".predict for list expects a list of familiarModel objects")
+    }
   }
 )
 
@@ -626,12 +634,14 @@ setMethod(
     data, 
     type = "novelty",
     is_pre_processed = FALSE,
-    ...) {
+    ...
+  ) {
     return(.predict(
       object = object@novelty_detector,
       data = data,
       type = type,
-      is_pre_processed = is_pre_processed))
+      is_pre_processed = is_pre_processed
+    ))
   }
 )
 
@@ -649,7 +659,9 @@ setMethod(
       .predict_novelty,
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -665,10 +677,11 @@ setMethod(
     time, 
     stratification_threshold = NULL,
     stratification_method = NULL, 
-    ...) {
+    ...
+  ) {
     # Only assess stratification for survival outcomes.
     if (!object@outcome_type %in% c("survival")) return(NULL)
-
+    
     # Allow for settings the stratification threshold explicitly.
     if (is.null(stratification_threshold)) {
       if (!is.null(stratification_method)) {
@@ -676,53 +689,45 @@ setMethod(
 
         # First check if the method exists.
         if (!stratification_method %in% object@km_info$stratification_method) {
-          stop(paste0(
+          ..error(paste0(
             "Data for stratification method ", stratification_method,
-            " was not found with the object."))
+            " was not found with the object."
+          ))
         }
 
         # Select stratification threshold for the given method.
         stratification_threshold <- object@km_info$parameters[[stratification_method]]$cutoff
       } else {
         # Select stratification threshold for the first method.
-        stratification_threshold <- object@km_info$parameters[[1]]$cutoff
+        stratification_threshold <- object@km_info$parameters[[1L]]$cutoff
       }
     }
 
-    # Generate an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "risk_stratification")
-
     # Check again if a stratification threshold is now set.
-    if (is.null(stratification_threshold)) return(prediction_table)
+    if (is.null(stratification_threshold)) return(NULL)
 
     # Predict for the instances in data.
     predictions <- .predict(
       object = object,
       data = data,
-      time = time)
-
-    # Check for valid predictions,
-    if (is_empty(predictions)) {
-      return(prediction_table)
-    }
-    if (!any_predictions_valid(
-      prediction_table = predictions,
-      outcome_type = object@outcome_type)) {
-      return(prediction_table)
-    }
+      time = time
+    )
 
     # Find risk groups for each instance.
     assigned_risk_group <- .apply_risk_threshold(
-      object = object,
-      predicted_values = predictions$predicted_outcome,
-      cutoff = stratification_threshold)
+      x = predictions,
+      cutoff = stratification_threshold
+    )
 
-    # Set to prediction table.
-    prediction_table[, "risk_group" := assigned_risk_group]
-
+    # Convert to prediction table
+    prediction_table <- as_prediction_table(
+      x = assigned_risk_group,
+      type = "risk_stratification",
+      data = data,
+      time = time,
+      model_object = object
+    )
+    
     return(prediction_table)
   }
 )
@@ -738,17 +743,9 @@ setMethod(
     time,
     stratification_threshold = NULL,
     stratification_method = NULL,
-    ...) {
-    # Only assess stratification for survival outcomes.
-    if (!object@outcome_type %in% c("survival")) return(NULL)
-
-    # Generate an empty prediction table.
-    prediction_table <- get_placeholder_prediction_table(
-      object = object,
-      data = data,
-      type = "risk_stratification")
-
-    return(prediction_table)
+    ...
+  ) {
+    return(NULL)
   }
 )
 
@@ -766,7 +763,9 @@ setMethod(
       .predict_risk_stratification, 
       args = c(
         list("object" = object),
-        list(...))))
+        list(...)
+      )
+    ))
   }
 )
 
@@ -775,198 +774,3 @@ setMethod(
 .get_available_ensemble_prediction_methods <- function() {
   return(c("median", "mean"))
 }
-
-
-
-all_predictions_valid <- function(
-    prediction_table,
-    outcome_type = NULL,
-    type = "default") {
-  # Return results when checking with the "all" function.
-  return(.predictions_valid(
-    prediction_table = prediction_table,
-    outcome_type = outcome_type,
-    type = type,
-    check_type = "all"))
-}
-
-
-
-any_predictions_valid <- function(
-    prediction_table, 
-    outcome_type = NULL,
-    type = "default") {
-  # Return results when checking with the "any" function.
-  return(.predictions_valid(
-    prediction_table = prediction_table,
-    outcome_type = outcome_type,
-    type = type,
-    check_type = "any"))
-}
-
-
-
-.predictions_valid <- function(
-    prediction_table, 
-    outcome_type, 
-    type, 
-    check_type) {
-  # Set the check function.
-  check_fun <- switch(
-    check_type,
-    "all" = all,
-    "any" = any)
-
-  if (is_empty(prediction_table)) return(FALSE)
-
-  if (type %in% c("default", "survival_probability", "risk_stratification")) {
-    if (is.null(outcome_type)) {
-      ..error_reached_unreachable_code(
-        "any_predictions_valid: outcome_type was not provided.")
-    }
-
-    if (outcome_type %in% c("continuous", "count")) {
-      return(check_fun(is.finite(prediction_table$predicted_outcome)))
-      
-    } else if (outcome_type %in% c("survival", "competing_risk")) {
-      if ("predicted_outcome" %in% colnames(prediction_table)) {
-        return(check_fun(is.finite(prediction_table$predicted_outcome)))
-      } else if ("survival_probability" %in% colnames(prediction_table)) {
-        return(check_fun(is.finite(prediction_table$survival_probability)))
-      } else if ("risk_group" %in% colnames(prediction_table)) {
-        return(check_fun(!is.na(prediction_table$risk_group)))
-      } else {
-        return(FALSE)
-      }
-      
-    } else if (outcome_type %in% c("binomial", "multinomial")) {
-      return(check_fun(!is.na(prediction_table$predicted_class)))
-      
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-    
-  } else if (type %in% c("novelty")) {
-    return(check_fun(is.finite(prediction_table$novelty)))
-    
-  } else {
-    ..error_reached_unreachable_code(
-      "any_predictions_valid: unknown type encountered")
-  }
-}
-
-
-
-
-remove_nonvalid_predictions <- function(prediction_table, outcome_type) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- predicted_class <- survival_probability <- risk_group <- NULL
-
-  if (is_empty(prediction_table)) return(prediction_table)
-
-  # Check predicted outcome columns.
-  if (outcome_type %in% c("survival", "competing_risk")) {
-    if ("predicted_outcome" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[is.finite(predicted_outcome), ]
-    }
-    if ("survival_probability" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[is.finite(survival_probability), ]
-    }
-    if ("risk_group" %in% colnames(prediction_table)) {
-      prediction_table <- prediction_table[!is.na(risk_group), ]
-    }
-    
-  } else if (outcome_type %in% c("continuous", "count")) {
-    prediction_table <- prediction_table[is.finite(predicted_outcome), ]
-    
-  } else if (outcome_type %in% c("binomial", "multinomial")) {
-    # predicted_class may be absent (e.g. for ICE-tables), so we need check if
-    # it exists.
-    if ("predicted_class" %in% colnames(prediction_table)) {
-      # Mask based on predicted_class.
-      prediction_table <- prediction_table[!is.na(predicted_class), ]
-      
-    } else {
-      # Mask probability columns.
-      class_probability_columns <- grepl(
-        pattern = "predicted_class_probability_",
-        x = colnames(prediction_table))
-
-      # Get the names of the probability columns.
-      class_probability_columns <- colnames(prediction_table)[class_probability_columns]
-
-      # Create mask for valid instances.
-      instance_mask <- rep.int(TRUE, nrow(prediction_table))
-      for (ii in class_probability_columns) {
-        instance_mask <- instance_mask & is.finite(prediction_table[[ii]])
-      }
-
-      # Apply mask to the prediction table.
-      prediction_table <- prediction_table[instance_mask, ]
-    }
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-
-  return(prediction_table)
-}
-
-
-
-# remove_missing_outcomes (data.table) -----------------------------------------
-setMethod(
-  "remove_missing_outcomes",
-  signature(data = "data.table"),
-  function(data, outcome_type) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    outcome <- outcome_time <- outcome_event <- NULL
-
-    if (is_empty(data)) return(data)
-
-    # Check predicted outcome columns.
-    if (outcome_type %in% c("survival", "competing_risk")) {
-      data <- data[is.finite(outcome_time) & !is.na(outcome_event), ]
-    } else if (outcome_type %in% c("count", "continuous")) {
-      data <- data[is.finite(outcome), ]
-    } else if (outcome_type %in% c("binomial", "multinomial")) {
-      data <- data[!is.na(outcome), ]
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-
-    return(data)
-  }
-)
-
-
-# remove_missing_outcomes (dataObject) -----------------------------------------
-setMethod(
-  "remove_missing_outcomes", 
-  signature(data = "dataObject"),
-  function(data, outcome_type = NULL) {
-    if (is_empty(data)) return(data)
-
-    if (is.null(outcome_type)) outcome_type <- data@outcome_type
-
-    # Update data attribute
-    data@data <- remove_missing_outcomes(
-      data = data@data,
-      outcome_type = outcome_type)
-
-    return(data)
-  }
-)
-
-
-# remove_missing_outcomes (ANY) ------------------------------------------------
-setMethod(
-  "remove_missing_outcomes",
-  signature(data = "ANY"),
-  function(data, outcome_type = NULL) {
-    if (is_empty(data)) return(data)
-
-    ..error_reached_unreachable_code(
-      "remove_missing_outcomes,ANY: data does not have a known object class, nor is empty.")
-  }
-)

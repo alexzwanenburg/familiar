@@ -32,7 +32,7 @@ The imputed outcome type.
 \description{
 This function allows for imputation of the most plausible outcome type.
 This imputation is only done for trivial cases, where there is little doubt.
-As a consequence \code{count} and \code{continuous} outcome types are never imputed.
+As a consequence \code{continuous} outcome type is never imputed.
 }
 \note{
 It is highly recommended that the user provides the outcome type.

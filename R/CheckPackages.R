@@ -10,13 +10,15 @@ setMethod(
     x,
     purpose = NULL,
     message_type = "error",
-    ...) {
+    ...
+  ) {
     
     # Pass to .require_package
     return(invisible(.require_package(
       x = x,
       purpose = purpose,
-      message_type = message_type)))
+      message_type = message_type
+    )))
   }
 )
 
@@ -36,7 +38,9 @@ setMethod(
     x,
     purpose = NULL,
     message_type = "error",
-    ...) {
+    call = rlang::caller_env(),
+    ...
+) {
   
   if (message_type %in% c("error", "warning")) {
     # Attempt to load required packages.
@@ -57,27 +61,33 @@ setMethod(
     # Throw an error.
     ..error_package_not_installed(
       x = missing_packages,
-      purpose = purpose)
+      purpose = purpose,
+      call = call
+    )
     
   } else if (message_type == "warning") {
     # Raise a warning
     ..warning_package_not_installed(
       x = missing_packages,
-      purpose = purpose)
+      purpose = purpose,
+      call = call
+    )
     
   } else if (message_type == "backend_error") {
     # Add message to backend.
     ..message_package_not_installed_to_backend(
       x = missing_packages,
       purpose = purpose,
-      message_type = "error")
+      message_type = "error"
+    )
     
   } else if (message_type == "backend_warning") {
     # Add message to backend.
     ..message_package_not_installed_to_backend(
       x = missing_packages,
       purpose = purpose,
-      message_type = "warning")
+      message_type = "warning"
+    )
   }
   
   return(FALSE)
@@ -89,7 +99,8 @@ setMethod(
 .check_package_version <- function(
     name,
     version,
-    when = NULL) {
+    when = NULL
+) {
   
   # Do not check if package versions are missing completely.
   if (is_empty(version)) return(invisible(NULL))
@@ -98,13 +109,15 @@ setMethod(
   package_outdated <- mapply(
     is_package_outdated,
     name = name,
-    version = version)
+    version = version
+  )
   
   # Check for newer packages.
   package_newer <- mapply(
     is_package_newer,
     name = name,
-    version = version)
+    version = version
+  )
   
   # Skip if no packages are outdated.
   if (!any(package_outdated) && !any(package_newer)) return(invisible(NULL))
@@ -119,7 +132,8 @@ setMethod(
     when_str <- ifelse(
       multiple_packages,
       paste0(" from those ", when),
-      paste0(" from that ", when))
+      paste0(" from that ", when)
+    )
     
   } else {
     when_str <- NULL
@@ -131,8 +145,9 @@ setMethod(
     ifelse(
       multiple_packages,
       paste0("s have versions that differ", when_str, ":"),
-      paste0(" has a version that differs", when_str, ":")))
-  
+      paste0(" has a version that differs", when_str, ":")
+    )
+  )
   
   for (ii in seq_along(name)) {
     
@@ -148,11 +163,13 @@ setMethod(
         as.character(utils::packageVersion(name[ii])),
         ifelse(package_outdated[ii], " < ", " > "),
         as.character(version[ii]),
-        ifelse(package_outdated[ii], " (outdated)", " (newer)")))
+        ifelse(package_outdated[ii], " (outdated)", " (newer)")
+      )
+    )
   }
   
   # Show as warning.
-  warning(paste(message_str, sep = "\n"))
+  ..warning(paste(message_str, sep = "\n"))
   
   return(invisible(TRUE))
 }
@@ -161,7 +178,7 @@ setMethod(
 
 is_package_installed <- function(name) {
   
-  if (length(name) == 0) return(TRUE)
+  if (length(name) == 0L) return(TRUE)
   
   # Try to obtain the package version. This perhaps the cleanest way to check
   # whether a package exists. require and requireNameSpace attach and load
@@ -169,7 +186,8 @@ is_package_installed <- function(name) {
   # actively discourages its use to identify whether a package is installed.
   installed_version <- tryCatch(
     utils::packageVersion(name),
-    error = identity)
+    error = identity
+  )
   
   return(!inherits(installed_version, "error"))
 }
@@ -178,12 +196,13 @@ is_package_installed <- function(name) {
 
 is_package_outdated <- function(name, version) {
   
-  if (length(name) == 0) return(TRUE)
+  if (length(name) == 0L) return(TRUE)
   
   # Obtain the installed version of the package.
   installed_version <- tryCatch(
     utils::packageVersion(name),
-    error = identity)
+    error = identity
+  )
   
   if (inherits(installed_version, "error")) {
     ..error_package_not_installed(name)
@@ -199,12 +218,13 @@ is_package_outdated <- function(name, version) {
 
 is_package_newer <- function(name, version) {
   
-  if (length(name) == 0) return(TRUE)
+  if (length(name) == 0L) return(TRUE)
   
   # Obtain the installed version of the package.
   installed_version <- tryCatch(
     utils::packageVersion(name),
-    error = identity)
+    error = identity
+  )
   
   if (inherits(installed_version, "error")) {
     ..error_package_not_installed(name)
@@ -219,7 +239,7 @@ is_package_newer <- function(name, version) {
 
 
 .bioconductor_packages <- function() {
-  return("qvalue")
+  return(NULL)
 }
 
 
@@ -227,12 +247,14 @@ is_package_newer <- function(name, version) {
 ..message_package_not_installed_to_backend <- function(
     x,
     purpose,
-    message_type) {
+    message_type
+) {
   
   # Generate message string.
   message_str <- ..message_missing_package(
     x = x,
-    purpose = purpose)
+    purpose = purpose
+  )
   
   missing_packages <- NULL
   
@@ -240,7 +262,8 @@ is_package_newer <- function(name, version) {
   if (exists("missing_packages", where = familiar_global_env)) {
     missing_packages <- get(
       "missing_packages",
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
   }
   
   # Append missing packages.
@@ -250,7 +273,8 @@ is_package_newer <- function(name, version) {
   assign(
     "missing_packages",
     value = missing_packages,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   
   missing_package_messages <- NULL
@@ -260,7 +284,8 @@ is_package_newer <- function(name, version) {
     
     missing_package_messages <- get(
       "missing_package_messages",
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
   }
   
   # Append package messages.
@@ -270,7 +295,8 @@ is_package_newer <- function(name, version) {
   assign(
     "missing_package_messages",
     value = missing_package_messages,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   missing_package_message_type <- NULL
   
@@ -278,7 +304,8 @@ is_package_newer <- function(name, version) {
   if (exists("missing_package_message_type", where = familiar_global_env)) {
     missing_package_message_type <- get(
       "missing_package_message_type",
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
   }
   
   # Append missing packages.
@@ -288,7 +315,8 @@ is_package_newer <- function(name, version) {
   assign(
     "missing_package_message_type",
     value = missing_package_message_type,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
@@ -302,50 +330,46 @@ is_package_newer <- function(name, version) {
   if (!exists("missing_package_messages", where = familiar_global_env)) return()
   
   # Get all missing packages.
-  x <- get(
-    "missing_packages",
-    envir = familiar_global_env)
+  x <- get("missing_packages", envir = familiar_global_env)
   
   # Only unique packages.
   x <- unique(x)
   
   # Retrieve package messages.
-  err_message <- get(
-    "missing_package_messages",
-    envir = familiar_global_env)
+  err_message <- get("missing_package_messages", envir = familiar_global_env)
   
   # Determine number of messages.
   n_messages <- length(err_message)
   
   # Combine error messages.
-  if (n_messages > 1) err_message <- paste0(err_message, collapse = "\n")
+  if (n_messages > 1L) err_message <- paste0(err_message, collapse = "\n")
   
   # Add basic message to install packages.
-  if (n_messages > 1) err_message <- c(
-    err_message, "\n",
-    ..message_missing_package(x = x))
+  if (n_messages > 1L) {
+    err_message <- c(err_message, "\n", ..message_missing_package(x = x))
+  }
   
   # Instructions for CRAN packages.
-  err_message <- c(
-    err_message,
-    ..message_install_from_cran(x = x))
+  err_message <- c(err_message, ..message_install_from_cran(x = x))
   
   # Instructions for Bioconductor packages.
-  err_message <- c(
-    err_message,
-    ..message_install_from_bioconductor(x = x))
+  err_message <- c(err_message, ..message_install_from_bioconductor(x = x))
   
   # Obtain message types.
-  message_type <- get(
-    "missing_package_message_type",
-    envir = familiar_global_env)
+  message_type <- get("missing_package_message_type", envir = familiar_global_env)
   
   # Throw error or warning.
   if (any(message_type == "error")) {
-    stop(paste0(err_message, collapse = ""))
+    ..error(
+      paste0(err_message, collapse = ""),
+      error_class = "package_missing"
+    )
     
   } else {
-    warning(paste0(err_message, collapse = ""))
+    ..warning(
+      paste0(err_message, collapse = ""),
+      warning_class = "package_missing"
+    )
   }
   
   # Clean up
@@ -353,7 +377,8 @@ is_package_newer <- function(name, version) {
     "missing_packages",
     "missing_package_message_type",
     "missing_package_messages",
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
@@ -366,23 +391,25 @@ is_package_newer <- function(name, version) {
   x <- unique(x)
   
   # Check whether packages are not actually installed.
-  all_missing <- all(!sapply(x, is_package_installed))
+  all_missing <- !any(sapply(x, is_package_installed))
   
   if (all_missing) {
     message_str <- paste0(
       "The following package",
-      ifelse(length(x) > 1, "s have", " has"),
+      ifelse(length(x) > 1L, "s have", " has"),
       " to be installed",
       ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
-      paste_s(x), ".")
+      paste_s(x), "."
+    )
     
   } else {
     message_str <- paste0(
       "The following package",
-      ifelse(length(x) > 1, "s have", " has"),
+      ifelse(length(x) > 1L, "s have", " has"),
       " to be installed, or installed again to update dependencies",
       ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
-      paste_s(x), ".")
+      paste_s(x), "."
+    )
   }
   
   return(message_str)
@@ -398,11 +425,12 @@ is_package_newer <- function(name, version) {
   x <- unique(x)
   x_cran <- setdiff(x, .bioconductor_packages())
   
-  if (length(x_cran) > 0) {
+  if (length(x_cran) > 0L) {
     message_str <- paste0(
       "\n\nInstall from CRAN: ",
       "\n\n\tinstall.packages(c(",
-      paste0("\"", x_cran, "\"", collapse = ", "), "))")
+      paste0("\"", x_cran, "\"", collapse = ", "), "))"
+    )
   }
   
   return(message_str)
@@ -418,12 +446,13 @@ is_package_newer <- function(name, version) {
   x <- unique(x)
   x_bioc <- intersect(x, .bioconductor_packages())
   
-  if (length(x_bioc) > 0) {
+  if (length(x_bioc) > 0L) {
     message_str <- paste0(
       "\n\nInstall from Bioconductor: ",
       ifelse(is_package_installed("BiocManager"), "", "\n\n\tinstall.packages(\"BiocManager\")"),
       "\n\tBiocManager::install(c(",
-      paste0("\"", x_bioc, "\"", collapse = ", "), "))")
+      paste0("\"", x_bioc, "\"", collapse = ", "), "))"
+    )
   }
   
   return(message_str)

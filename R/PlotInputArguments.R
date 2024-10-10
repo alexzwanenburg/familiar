@@ -90,74 +90,87 @@
     combine_legend = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
-    caption = waiver()) {
+    caption = waiver()
+) {
   
   # x and y ranges
   if (!is.waive(x_range)) {
     .check_input_plot_range(
       range_var = x_range, 
-      var_name = "x_range")
+      var_name = "x_range"
+    )
   }
   if (!is.waive(y_range)) {
     .check_input_plot_range(
       range_var = y_range, 
-      var_name = "y_range")
+      var_name = "y_range"
+    )
   }
 
   # x and y number of breaks
   if (!is.waive(x_n_breaks)) {
     .check_input_plot_n_breaks(
       n_break_var = x_n_breaks,
-      var_name = "x_n_breaks")
+      var_name = "x_n_breaks"
+    )
   }
   if (!is.waive(y_n_breaks)) {
     .check_input_plot_n_breaks(
       n_break_var = y_n_breaks, 
-      var_name = "y_n_breaks")
+      var_name = "y_n_breaks"
+    )
   }
 
   # x and y breaks
   if (!is.waive(x_breaks)) {
     .check_input_plot_break(
       break_var = x_breaks, 
-      var_name = "x_breaks")
+      var_name = "x_breaks"
+    )
   }
   if (!is.waive(y_breaks)) {
     .check_input_plot_break(
       break_var = y_breaks, 
-      var_name = "y_breaks")
+      var_name = "y_breaks"
+    )
   }
 
   # labels
   if (!is.waive(x_label)) {
     .check_input_plot_label(
       label_var = x_label, 
-      var_name = "x_label")
+      var_name = "x_label"
+    )
   }
   if (!is.waive(y_label)) {
     .check_input_plot_label(
       label_var = y_label, 
-      var_name = "y_label")
+      var_name = "y_label"
+    )
   }
   if (!is.waive(legend_label)) {
     .check_input_plot_legend(
       label_var = legend_label, 
-      var_name = "legend_label")
+      var_name = "legend_label"
+    )
   }
   if (!is.waive(plot_title)) {
     .check_input_plot_label(
       label_var = plot_title, 
-      var_name = "plot_title")
+      var_name = "plot_title"
+    )
   }
   if (!is.waive(plot_sub_title)) {
     .check_input_plot_label(
       label_var = plot_sub_title, 
-      var_name = "plot_sub_title")
+      var_name = "plot_sub_title"
+    )
   }
   if (!is.waive(caption)) {
     .check_input_plot_label(
       label_var = caption, 
-      var_name = "caption")
+      var_name = "caption"
+    )
   }
 
   # Legend combination flag
@@ -165,7 +178,8 @@
     .check_parameter_value_is_valid(
       x = combine_legend, 
       var_name = "combine_legend",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
   }
 
   # Transparency values
@@ -173,8 +187,9 @@
     .check_number_in_valid_range(
       x = conf_int_alpha, 
       var_name = "conf_int_alpha", 
-      range = c(0, 1), 
-      closed = c(TRUE, TRUE))
+      range = c(0.0, 1.0), 
+      closed = c(TRUE, TRUE)
+    )
   }
 
   # Confidence intervals. Note that a confidence interval of 0.0 (equals FALSE)
@@ -183,8 +198,9 @@
     .check_number_in_valid_range(
       x = conf_int, 
       var_name = "conf_int",
-      range = c(0, 1),
-      closed = c(TRUE, FALSE))
+      range = c(0.0, 1.0),
+      closed = c(TRUE, FALSE)
+    )
   }
 
   # Facet wrap cols
@@ -192,8 +208,9 @@
     .check_number_in_valid_range(
       x = facet_wrap_cols,
       var_name = "facet_wrap_cols",
-      range = c(1, Inf), 
-      closed = c(TRUE, TRUE))
+      range = c(1L, Inf), 
+      closed = c(TRUE, TRUE)
+    )
   }
 
   # Style of confidence intervals
@@ -201,7 +218,8 @@
     .check_parameter_value_is_valid(
       x = conf_int_style, 
       var_name = "conf_int_style", 
-      values = conf_int_default)
+      values = conf_int_default
+    )
   }
 
   # Sharing of x-axis labels
@@ -209,7 +227,8 @@
     .check_parameter_value_is_valid(
       x = x_label_shared, 
       var_name = "x_label_shared", 
-      values = c("overall", "column", "individual"))
+      values = c("overall", "column", "individual")
+    )
   }
 
   # Sharing of y-axis labels
@@ -217,7 +236,8 @@
     .check_parameter_value_is_valid(
       x = y_label_shared, 
       var_name = "y_label_shared",
-      values = c("overall", "row", "individual"))
+      values = c("overall", "row", "individual")
+    )
   }
 
   # Rotation of tick labels on the x-axis by 90 degrees
@@ -225,7 +245,8 @@
     .check_parameter_value_is_valid(
       x = rotate_x_tick_labels, 
       var_name = "rotate_x_tick_labels",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
   }
 
   # Rotation of tick labels on the y-axis by 45 degrees
@@ -233,7 +254,8 @@
     .check_parameter_value_is_valid(
       x = rotate_y_tick_labels, 
       var_name = "rotate_y_tick_labels",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
   }
   
   return(invisible(TRUE))
@@ -244,32 +266,52 @@
 .check_input_plot_range <- function(range_var, var_name) {
   # Generic range check
   if (!is.numeric(range_var)) {
-    stop(paste0(
-      "The ", var_name, "argument should be a numerical vector of length 2, ",
-      "indicating min and max of the range. Use NA to indicate an unset upper ",
-      "or lower boundary."))
+    ..error(
+      paste0(
+        "The ", var_name, "argument should be a numerical vector of length 2, ",
+        "indicating min and max of the range. Use NA to indicate an unset upper ",
+        "or lower boundary."
+      ),
+      error_class = "input_argument_error"
+    )
     
-  } else if (length(range_var) != 2) {
-    stop(paste0(
-      "The ", var_name, " argument should be a numerical vector of length 2, ",
-      "indicating min and max of the range. Use NA to indicate an unset upper ",
-      "or lower boundary."))
+  } else if (length(range_var) != 2L) {
+    ..error(
+      paste0(
+        "The ", var_name, " argument should be a numerical vector of length 2, ",
+        "indicating min and max of the range. Use NA to indicate an unset upper ",
+        "or lower boundary."
+      ),
+      error_class = "input_argument_error"
+    )
     
   } else if (any(is.infinite(range_var))) {
-    stop(paste0(
-      "The range provided by the ", var_name, " argument cannot have Inf or -Inf values. ",
-      "Use NA to indicate an unset upper or lower boundary."))
+    ..error(
+      paste0(
+        "The range provided by the ", var_name, " argument cannot have Inf or -Inf values. ",
+        "Use NA to indicate an unset upper or lower boundary."
+      ),
+      error_class = "input_argument_error"
+    )
     
-  } else if (!any(is.na(range_var))) {
-    if (range_var[1] == range_var[2]) {
-      stop(paste0(
-        "The range provided by the ", var_name, " argument cannot have the ",
-        "same value for the lower and upper boundary."))
+  } else if (!anyNA(range_var)) {
+    if (range_var[1L] == range_var[2L]) {
+      ..error(
+        paste0(
+          "The range provided by the ", var_name, " argument cannot have the ",
+          "same value for the lower and upper boundary."
+        ),
+        error_class = "input_argument_error"
+      )
       
-    } else if (range_var[1] > range_var[2]) {
-      stop(paste0(
-        "The range provided by the ", var_name, " argument cannot have a lower ",
-        "boundary with a higher value than the upper boundary."))
+    } else if (range_var[1L] > range_var[2L]) {
+      ..error(
+        paste0(
+          "The range provided by the ", var_name, " argument cannot have a lower ",
+          "boundary with a higher value than the upper boundary."
+        ),
+        error_class = "input_argument_error"
+      )
     }
   }
   
@@ -281,21 +323,31 @@
 .check_input_plot_n_breaks <- function(n_break_var, var_name) {
   # Generic number of breaks check
   if (!is.numeric(n_break_var)) {
-    stop(paste0(
-      "The ", var_name, " argument should be a single integer value of 2 or larger."))
+    ..error(
+      paste0("The ", var_name, " argument should be a single integer value of 2 or larger."),
+      error_class = "input_argument_error"
+    )
     
-  } else if (length(n_break_var) != 1) {
-    stop(paste0(
-      "The ", var_name, " argument should be a single integer value of 2 or larger."))
+  } else if (length(n_break_var) != 1L) {
+    ..error(
+      paste0("The ", var_name, " argument should be a single integer value of 2 or larger."),
+      error_class = "input_argument_error"
+    )
     
   } else if (!is.finite(n_break_var)) {
-    stop(paste0(
-      "The ", var_name, " argument should be a single integer value of 2 or larger. ",
-      "It cannot be infinite or NA."))
+    ..error(
+      paste0(
+        "The ", var_name, " argument should be a single integer value of 2 or larger. ",
+        "It cannot be infinite or NA."
+      ),
+      error_class = "input_argument_error"
+    )
     
-  } else if (n_break_var < 2.0) {
-    stop(paste0(
-      "The ", var_name, " argument should be a single integer value of 2 or larger."))
+  } else if (n_break_var < 2L) {
+    ..error(
+      paste0("The ", var_name, " argument should be a single integer value of 2 or larger."),
+      error_class = "input_argument_error"
+    )
   }
   
   return(invisible(TRUE))
@@ -308,16 +360,22 @@
   if (is.null(break_var)) return(invisible(TRUE))
 
   if (is.numeric(break_var) && !all(is.finite(break_var))) {
-    stop(paste0(
-      "The ", var_name, " argument contains NA or infite values."))
+    ..error(
+      paste0("The ", var_name, " argument contains NA or infite values."),
+      error_class = "input_argument_error"
+    )
     
-  } else if (any(is.na(break_var))) {
-    stop(paste0(
-      "The ", var_name, " argument contains NA or infite values."))
+  } else if (anyNA(break_var)) {
+    ..error(
+      paste0("The ", var_name, " argument contains NA or infite values."),
+      error_class = "input_argument_error"
+    )
     
-  } else if (any(duplicated(break_var))) {
-    stop(paste0(
-      "Some breaks in the ", var_name, " argument are duplicates."))
+  } else if (anyDuplicated(break_var) > 0L) {
+    ..error(
+      paste0("Some breaks in the ", var_name, " argument are duplicates."),
+      error_class = "input_argument_error"
+    )
   }
   
   return(invisible(TRUE))
@@ -332,13 +390,19 @@
   }
 
   if (!(is.numeric(label_var) || is.character(label_var))) {
-    stop(paste0(
-      "The ", var_name, " argument should be NULL, a single number, a single string, ",
-      "or a call or expression interpreted by grDevices::plotmath."))
+    ..error(
+      paste0(
+        "The ", var_name, " argument should be NULL, a single number, a single string, ",
+        "or a call or expression interpreted by grDevices::plotmath."
+      ),
+      error_class = "input_argument_error"
+    )
     
-  } else if (length(label_var) != 1) {
-    stop(paste0(
-      "The ", var_name, " argument contains multiple labels, whereas a single label is expected."))
+  } else if (length(label_var) != 1L) {
+    ..error(
+      paste0("The ", var_name, " argument contains multiple labels, whereas a single label is expected."),
+      error_class = "input_argument_error"
+    )
   }
   
   return(invisible(TRUE))
@@ -357,19 +421,26 @@
     sapply(
       label_var, 
       .check_input_plot_label, 
-      var_name = var_name)
+      var_name = var_name
+    )
 
     return(invisible(TRUE))
   }
 
   if (!(is.numeric(label_var) || is.character(label_var))) {
-    stop(paste0(
-      "The ", var_name, " argument should be NULL, a single number, a single string, ",
-      "or a call or expression interpreted by grDevices::plotmath."))
+    ..error(
+      paste0(
+        "The ", var_name, " argument should be NULL, a single number, a single string, ",
+        "or a call or expression interpreted by grDevices::plotmath."
+      ),
+      error_class = "input_argument_error"
+    )
     
-  } else if (length(label_var) != 1) {
-    stop(paste0(
-      "The ", var_name, " argument contains multiple labels, whereas a single label is expected."))
+  } else if (length(label_var) != 1L) {
+    ..error(
+      paste0("The ", var_name, " argument contains multiple labels, whereas a single label is expected."),
+      error_class = "input_argument_error"
+    )
   }
   
   return(invisible(TRUE))
@@ -379,9 +450,13 @@
 
 .check_plot_grid_unit <- function(x, var_name) {
   if (!grid::is.unit(x)) {
-    stop(paste0(
-      "The ", var_name, " argument should be a grid unit (see ?grid::unit), ",
-      "but instead is ", paste_s(class(x))))
+    ..error(
+      paste0(
+        "The ", var_name, " argument should be a grid unit (see ?grid::unit), ",
+        "but instead is ", paste_s(class(x))
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   return(invisible(TRUE))

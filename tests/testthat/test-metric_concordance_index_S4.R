@@ -1,4 +1,6 @@
-familiar:::test_all_metrics_available(metrics = familiar:::.get_available_concordance_index_metrics())
+familiar:::test_all_metrics_available(
+  metrics = familiar:::.get_available_concordance_index_metrics()
+)
 
 # Skip remainder on CRAN due to runtimes.
 testthat::skip_on_cran()
@@ -6,8 +8,26 @@ testthat::skip_on_cran()
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_concordance_index_metrics(),
   not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE)
+  not_available_all_samples_identical = TRUE
+)
 
+
+
+.as_risk <- function(x) {
+  familiar::as_prediction_table(
+    x = x$predicted_outcome,
+    y = list("outcome_time" = x$outcome_time, "outcome_event" = x$outcome_event),
+    type = "hazard_ratio"
+  )
+}
+
+.as_lifetime <- function(x) {
+  familiar::as_prediction_table(
+    x = x$predicted_outcome,
+    y = list("outcome_time" = x$outcome_time, "outcome_event" = x$outcome_event),
+    type = "expected_survival_time"
+  )
+}
 
 data_good_no_censoring_risk <- data.table::data.table(
   "outcome_time" = c(1, 2, 3, 4, 5),
@@ -112,24 +132,26 @@ data_all_censoring_risk <- data.table::data.table(
 )
 
 data_list <- list(
-  "good_no_censoring_risk" = list("data" = data_good_no_censoring_risk),
-  "inv_no_censoring_risk" = list("data" = data_inv_no_censoring_risk),
-  "bad_no_censoring_risk" = list("data" = data_bad_no_censoring_risk),
-  "moderate_no_censoring_risk" = list("data" = data_moderate_no_censoring_risk),
-  "good_init_censoring_risk" = list("data" = data_good_init_censoring_risk),
-  "inv_init_censoring_risk" = list("data" = data_inv_init_censoring_risk),
-  "bad_init_censoring_risk" = list("data" = data_bad_init_censoring_risk),
-  "moderate_init_censoring_risk" = list("data" = data_moderate_init_censoring_risk),
-  "good_end_censoring_risk" = list("data" = data_good_end_censoring_risk),
-  "inv_end_censoring_risk" = list("data" = data_inv_end_censoring_risk),
-  "bad_end_censoring_risk" = list("data" = data_bad_end_censoring_risk),
-  "moderate_end_censoring_risk" = list("data" = data_moderate_end_censoring_risk),
-  "good_mid_censoring_risk" = list("data" = data_good_mid_censoring_risk),
-  "inv_mid_censoring_risk" = list("data" = data_inv_mid_censoring_risk),
-  "bad_mid_censoring_risk" = list("data" = data_bad_mid_censoring_risk),
-  "moderate_mid_censoring_risk" = list("data" = data_moderate_mid_censoring_risk),
-  "all_censoring_risk" = list("data" = data_all_censoring_risk)
+  "good_no_censoring_risk" = data_good_no_censoring_risk,
+  "inv_no_censoring_risk" = data_inv_no_censoring_risk,
+  "bad_no_censoring_risk" = data_bad_no_censoring_risk,
+  "moderate_no_censoring_risk" = data_moderate_no_censoring_risk,
+  "good_init_censoring_risk" = data_good_init_censoring_risk,
+  "inv_init_censoring_risk" = data_inv_init_censoring_risk,
+  "bad_init_censoring_risk" = data_bad_init_censoring_risk,
+  "moderate_init_censoring_risk" = data_moderate_init_censoring_risk,
+  "good_end_censoring_risk" = data_good_end_censoring_risk,
+  "inv_end_censoring_risk" = data_inv_end_censoring_risk,
+  "bad_end_censoring_risk" = data_bad_end_censoring_risk,
+  "moderate_end_censoring_risk" = data_moderate_end_censoring_risk,
+  "good_mid_censoring_risk" = data_good_mid_censoring_risk,
+  "inv_mid_censoring_risk" = data_inv_mid_censoring_risk,
+  "bad_mid_censoring_risk" = data_bad_mid_censoring_risk,
+  "moderate_mid_censoring_risk" = data_moderate_mid_censoring_risk,
+  "all_censoring_risk" = data_all_censoring_risk
 )
+
+
 
 # Test for risk-like predictions -----------------------------------------------
 testthat::test_that("Concordance index for risk-like predictions is correct", {
@@ -145,23 +167,25 @@ testthat::test_that("Concordance index for risk-like predictions is correct", {
   # Create metric object.
   metric_object <- familiar:::as_metric(
     metric = "concordance_index",
-    outcome_type = "survival",
-    prediction_type = "hazard_ratio")
+    outcome_type = "survival"
+  )
 
   # Iterate over the data sets.
   for (ii in seq_along(data_list)) {
     # Check that the metric is available
-    testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
+    testthat::expect_true(familiar:::is_available(metric_object))
 
     # Compute the metric value.
     score <- familiar:::compute_metric_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = .as_risk(data_list[[ii]])
+    )
 
     # Compute the objective score.
     objective_score <- familiar:::compute_objective_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = .as_risk(data_list[[ii]])
+    )
 
     # Test the values.
     testthat::expect_equal(score, expected_score[ii])
@@ -183,23 +207,25 @@ testthat::test_that("Concordance index for time-like predictions is correct", {
   # Create metric object.
   metric_object <- familiar:::as_metric(
     metric = "concordance_index",
-    outcome_type = "survival",
-    prediction_type = "expected_survival_time")
+    outcome_type = "survival"
+  )
 
   # Iterate over the data sets.
   for (ii in seq_along(data_list)) {
     # Check that the metric is available
-    testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
+    testthat::expect_true(familiar:::is_available(metric_object))
 
     # Compute the metric value.
     score <- familiar:::compute_metric_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = .as_lifetime(data_list[[ii]])
+    )
 
     # Compute the objective score.
     objective_score <- familiar:::compute_objective_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = .as_lifetime(data_list[[ii]])
+    )
 
     # Test the values.
     testthat::expect_equal(score, expected_score[ii])
