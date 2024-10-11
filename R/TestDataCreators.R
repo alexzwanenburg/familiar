@@ -142,6 +142,19 @@ test_create_small_good_data <- function(outcome_type) {
 
 
 
+test_create_reverse_column_order_data <- function(outcome_type) {
+  # Create good dataset with reversed column order.
+  data <- test_create_good_data(outcome_type = outcome_type)
+  
+  # Reverse column order.
+  column_names <- colnames(data@data)
+  data.table::setcolorder(x = data@data, neworder = rev(column_names))
+  
+  return(data)
+}
+
+
+
 test_create_invariant_good_data <- function(outcome_type) {
   # Create good dataset with one invariant feature.
   

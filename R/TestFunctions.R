@@ -61,6 +61,7 @@ test_all_learners_train_predict_vimp <- function(
   for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
+    full_data_reordered <- test_create_reverse_column_order_data(outcome_type)
     full_one_sample_data <- test_create_one_sample_data(outcome_type)
     one_feature_data <- test_create_single_feature_data(outcome_type)
     one_feature_one_sample_data <- test_create_single_feature_one_sample_data(outcome_type)
@@ -236,6 +237,19 @@ test_all_learners_train_predict_vimp <- function(
           testthat::expect_equal(
             prediction_table,
             prediction_table_reloaded,
+            ignore_attr = TRUE
+          )
+          
+          # Expect that a dataset with different column order produces the same
+          # predictions.
+          prediction_table_reordered <- suppressWarnings(.predict(
+            model,
+            data = full_data_reordered
+          ))
+          
+          testthat::expect_equal(
+            prediction_table,
+            prediction_table_reordered,
             ignore_attr = TRUE
           )
         }
