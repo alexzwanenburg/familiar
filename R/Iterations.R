@@ -262,6 +262,13 @@
   id_columns <- get_id_columns(id_depth = "series")
   batch_id_column <- get_id_columns(id_depth = "batch")
 
+  # Start random stream
+  if (is.null(settings$data$iteration_seed)) {
+    rstream_object <- NULL
+  } else {
+    rstream_object <- .start_random_number_stream(seed = settings$data$iteration_seed)
+  }
+  
   # Generate new iterations ----------------------------------------------------
 
   if (is.null(iteration_list)) {
@@ -401,7 +408,8 @@
                 train_or_validate = "train"
               ),
               settings = settings,
-              data = data
+              data = data,
+              rstream_object = rstream_object
             )
 
             # Append runs to the run list
@@ -441,7 +449,8 @@
               ),
               n_iter = n_iter,
               settings = settings,
-              data = data
+              data = data,
+              rstream_object = rstream_object
             )
             
             # Append runs to the run list
@@ -481,7 +490,8 @@
               n_rep = n_rep,
               n_folds = n_folds,
               settings = settings,
-              data = data
+              data = data,
+              rstream_object = rstream_object
             )
 
             # Append runs to the run list
@@ -518,7 +528,8 @@
             cv_iter_list <- .create_loocv(
               sample_identifiers = sample_identifiers,
               settings = settings,
-              data = data
+              data = data,
+              rstream_object = rstream_object
             )
 
             # Append runs to the run list

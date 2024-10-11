@@ -17,6 +17,8 @@
       <imbalance_correction_method></imbalance_correction_method>
       <!-- Number of partitions with random sampling (optional, default:10; only used when random_sample is selected as class imbalance correction method)-->
       <imbalance_n_partitions></imbalance_n_partitions>
+      <!-- Seed for sampling algorithms used in setting up the experiment (optional, default: no fixed seed) -->
+      <iteration_seed></iteration_seed>
        <!-- Name of data column with cohort identifiers (required for external validation experiments, otherwise optional) -->
       <batch_id_column></batch_id_column>
       <!-- Name of data column with sample identifiers (required for separate data and outcome files, otherwise optional) -->

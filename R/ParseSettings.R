@@ -746,6 +746,10 @@
 #' @param imbalance_n_partitions (*optional*) Number of times random
 #'   undersampling should be repeated. 10 undersampled subsets with balanced
 #'   classes are formed by default.
+#' @param iteration_seed (*optional*) Integer seed used in sampling algorithms
+#'   specified by the `experimental_design` argument. This allows for creating
+#'   the same sample assignments across different experiments -- of course
+#'   provided that the same dataset is used. By default a random seed is used.
 #' @param ... Unused arguments.
 #'
 #' @return List of parameters related to data parsing and the experiment.
@@ -773,6 +777,7 @@
     experimental_design = waiver(),
     imbalance_correction_method = waiver(),
     imbalance_n_partitions = waiver(),
+    iteration_seed = waiver(),
     ...
 ) {
   settings <- list()
@@ -821,6 +826,18 @@
     range = c(1L, Inf)
   )
 
+  # iteration_seed -------------------------------------------------------------
+  # Seed for sampling algorithms.
+  settings$iteration_seed <- .parse_arg(
+    x_config = config$iteration_seed,
+    x_var = iteration_seed,
+    var_name = "iteration_seed",
+    type = "integer",
+    optional = TRUE,
+    default = NULL
+  )
+  
+  
   # sample_id_column -----------------------------------------------------------
   # Sample identifier column
   settings$sample_col <- .parse_arg(
