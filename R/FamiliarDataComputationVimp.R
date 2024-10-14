@@ -261,10 +261,10 @@ setMethod(
     
     # Retrieve variable importance table objects.
     vimp_table_list <- .retrieve_feature_selection_data(
-      fs_method = object@fs_method,
+      vimp_method = object@vimp_method,
       project_list = project_list,
       file_paths = file_paths
-    )[[object@fs_method]]
+    )[[object@vimp_method]]
     
     # Define the run table -> at the pooling level
     run <- .get_run_list(

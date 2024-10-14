@@ -96,7 +96,7 @@ load_experiment_data <- function(x, file_paths) {
       # Set file name
       file_name <- .get_feature_selection_data_filename(
         project_id = x@project_id,
-        fs_method = vimp_method,
+        vimp_method = vimp_method,
         file_paths = file_paths
       )
       

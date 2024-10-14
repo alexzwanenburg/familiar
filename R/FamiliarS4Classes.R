@@ -25,8 +25,7 @@
 #' @slot novelty_detector A familiarNoveltyDetector object that can be used to
 #'   detect out-of-distribution samples.
 #' @slot learner Learning algorithm used to create the model.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model.
+#' @slot vimp_method Method used to determine variable importance for the model.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the model,
@@ -79,8 +78,8 @@ setClass("familiarModel",
     novelty_detector = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
@@ -123,7 +122,7 @@ setClass("familiarModel",
     calibration_model = NULL,
     novelty_detector = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
@@ -157,8 +156,8 @@ setClass("familiarModel",
 #' @slot data_column_info Data information object containing information
 #'   regarding identifier column names and outcome column names.
 #' @slot learner Learning algorithm used to create the models in the ensemble.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the models in the ensemble.
+#' @slot vimp_method Method used to determine variable importance for the models
+#'   in the ensemble.
 #' @slot feature_info List of objects containing feature information, e.g.,
 #'   name, class levels, transformation, normalisation and clustering
 #'   parameters.
@@ -199,8 +198,8 @@ setClass("familiarEnsemble",
     data_column_info = "ANY",
     # Name of learner.
     learner = "character",
-    # Name of feature selection method.
-    fs_method = "character",
+    # Name of variable importance method.
+    vimp_method = "character",
     # Data required for feature pre-processing.
     feature_info = "ANY",
     # Required features for complete reconstruction, including imputation.
@@ -237,7 +236,7 @@ setClass("familiarEnsemble",
     outcome_info = NULL,
     data_column_info = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     feature_info = NULL,
     required_features = NULL,
     model_features = NULL,
@@ -271,8 +270,7 @@ setClassUnion(
 #' @slot outcome_type Outcome type of the data used to create the object.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected from feature selection
-#'   methods.
+#' @slot fs_vimp Data collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -285,8 +283,8 @@ setClassUnion(
 #'   model or ensemble of models, but without imputation.
 #' @slot learner Learning algorithm used to create the model or ensemble of
 #'   models.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model or ensemble of models.
+#' @slot vimp_method Method used to determine variable importance for the model
+#'   or ensemble of models.
 #' @slot pooling_table Run table for the data underlying the familiarData
 #'   object. Used internally.
 #' @slot prediction_data Model predictions for a model or ensemble of models for
@@ -337,7 +335,7 @@ setClass("familiarData",
     outcome_type = "character",
     # Outcome info, such as class levels, mean values etc.
     outcome_info = "ANY",
-    # Feature selection variable importance
+    # Variable importance method
     fs_vimp = "ANY",
     # Model variable importance
     model_vimp = "ANY",
@@ -354,8 +352,8 @@ setClass("familiarData",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Run table for the current data
     pooling_table = "ANY",
     # Model predictions for later reference
@@ -408,7 +406,7 @@ setClass("familiarData",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     pooling_table = NULL,
     prediction_data = NULL,
     confusion_matrix = NULL,
@@ -443,8 +441,7 @@ setClass("familiarData",
 #' @slot outcome_type Outcome type for which the collection was created.
 #' @slot outcome_info Outcome information object, which contains information
 #'   concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected by feature selection
-#'   methods.
+#' @slot fs_vimpData collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -456,7 +453,8 @@ setClass("familiarData",
 #' @slot model_features The set of features that are required for using the
 #'   model, but without imputation.
 #' @slot learner Learning algorithm(s) used for data in the collection.
-#' @slot fs_method Feature selection method(s) used for data in the collection.
+#' @slot vimp_method Variable importance method(s) used for data in the
+#'   collection.
 #' @slot prediction_data Model predictions for the data in the collection.
 #' @slot confusion_matrix Confusion matrix information for the data in the
 #'   collection.
@@ -487,9 +485,9 @@ setClass("familiarData",
 #'   See `get_data_set_names` and `set_data_set_names`.
 #' @slot learner_labels Labels for the different learning algorithms used to
 #'   create the collection. See `get_learner_names` and `set_learner_names`.
-#' @slot fs_method_labels Labels for the different feature selection methods
-#'   used to create the collection. See `get_fs_method_names` and
-#'   `set_fs_method_names`.
+#' @slot vimp_method_labels Labels for the different variable importance methods
+#'   used to create the collection. See `get_vimp_method_names` and
+#'   `set_vimp_method_names`.
 #' @slot feature_labels Labels for the features in this collection. See
 #'   `get_feature_names` and `set_feature_names`.
 #' @slot km_group_labels Labels for the risk strata in this collection. See
@@ -535,8 +533,8 @@ setClass("familiarCollection",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Model predictions for later reference
     prediction_data = "ANY",
     # Confusion matrix for categorical outcomes
@@ -569,8 +567,8 @@ setClass("familiarCollection",
     data_set_labels = "ANY",
     # Label and order of learners
     learner_labels = "ANY",
-    # Label and order of feature selection methods
-    fs_method_labels = "ANY",
+    # Label and order of variable importance methods
+    vimp_method_labels = "ANY",
     # Label and order of features
     feature_labels = "ANY",
     # Label and order of kaplan-meier groups
@@ -595,7 +593,7 @@ setClass("familiarCollection",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     prediction_data = NULL,
     confusion_matrix = NULL,
     decision_curve_data = NULL,
@@ -612,7 +610,7 @@ setClass("familiarCollection",
     ice_data = NULL,
     data_set_labels = NULL,
     learner_labels = NULL,
-    fs_method_labels = NULL,
+    vimp_method_labels = NULL,
     feature_labels = NULL,
     km_group_labels = NULL,
     class_labels = NULL,
@@ -858,7 +856,8 @@ setClass("featureInfoParameters",
 #' Variable importance table
 #'
 #' A vimpTable object contains information concerning variable importance of one
-#' or more features. These objects are created during feature selection.
+#' or more features. These objects are created during variable importance
+#' computation..
 #'
 #' @slot vimp_table Table containing features with corresponding scores.
 #' @slot vimp_method Method used to compute variable importance scores for each
@@ -1443,8 +1442,8 @@ setClass(
   slots = list(
     # The primary results.
     data = "ANY",
-    # Identifiers of the data, e.g. the generating model name, the
-    # feature-selection method and learner.
+    # Identifiers of the data, e.g. the generating model name, the variable
+    # importance method and learner.
     identifiers = "ANY",
     # The level of detail at which the data was computed.
     detail_level = "character",
@@ -1546,7 +1545,7 @@ setClass(
   contains = "familiarDataElement",
   slots = list(
     "learner" = "character",
-    "fs_method" = "character",
+    "vimp_method" = "character",
     "ensemble_method" = "character",
     "percentiles" = "ANY",
     "outcome_type" = "ANY",
@@ -1557,7 +1556,7 @@ setClass(
   prototype = methods::prototype(
     bootstrap_ci_method = "percentile",
     learner = "custom_learner",
-    fs_method = "custom_vimp_method",
+    vimp_method = "custom_vimp_method",
     ensemble_method = "median",
     percentiles = NULL,
     outcome_type = NULL,

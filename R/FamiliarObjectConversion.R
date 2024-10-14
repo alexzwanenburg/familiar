@@ -109,8 +109,8 @@ setMethod(
     )
 
     vimp_method <- ifelse(
-      methods::.hasSlot(object[[1L]], "fs_method"),
-      object[[1L]]@fs_method,
+      methods::.hasSlot(object[[1L]], "vimp_method"),
+      object[[1L]]@vimp_method,
       "none"
     )
     
@@ -119,7 +119,7 @@ setMethod(
       "familiarEnsemble",
       model_list = object,
       learner = object[[1L]]@learner,
-      fs_method = vimp_method,
+      vimp_method = vimp_method,
       run_table = list(
         "run_table" = run_table, 
         "ensemble_data_id" = 0L, 
@@ -660,12 +660,12 @@ setMethod(
       fs_vimp = collect(
         x = object,
         data_slot = "fs_vimp",
-        identifiers = c("fs_method")
+        identifiers = c("vimp_method")
       ),
       model_vimp = collect(
         x = object, 
         data_slot = "model_vimp",
-        identifiers = c("fs_method", "learner")
+        identifiers = c("vimp_method", "learner")
       ),
       permutation_vimp = collect(
         x = object,
@@ -674,7 +674,7 @@ setMethod(
       hyperparameters = collect(
         x = object,
         data_slot = "hyperparameters",
-        identifiers = c("fs_method", "learner")
+        identifiers = c("vimp_method", "learner")
       ),
       hyperparameter_data = NULL,
       required_features = unique(unlist(lapply(
@@ -690,9 +690,9 @@ setMethod(
         object, 
         function(fam_data_obj) (fam_data_obj@learner)
       )),
-      fs_method = unique(sapply(
+      vimp_method = unique(sapply(
         object,
-        function(fam_data_obj) (fam_data_obj@fs_method)
+        function(fam_data_obj) (fam_data_obj@vimp_method)
       )),
       prediction_data = collect(
         x = object,
@@ -709,7 +709,7 @@ setMethod(
       calibration_info = collect(
         x = object,
         data_slot = "calibration_info",
-        identifiers = c("fs_method", "learner")
+        identifiers = c("vimp_method", "learner")
       ),
       calibration_data = collect(
         x = object,
@@ -722,7 +722,7 @@ setMethod(
       km_info = collect(
         x = object, 
         data_slot = "km_info",
-        identifiers = c("fs_method", "learner")
+        identifiers = c("vimp_method", "learner")
       ),
       km_data = collect(
         x = object,

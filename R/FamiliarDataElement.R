@@ -547,7 +547,7 @@ setMethod(
   function(
     x,
     data_slot,
-    identifiers = c("data_set", "fs_method", "learner"),
+    identifiers = c("data_set", "vimp_method", "learner"),
     ...
   ) {
     
@@ -605,10 +605,10 @@ setMethod(
       )
     }
     
-    if ("fs_method" %in% identifiers) {
+    if ("vimp_method" %in% identifiers) {
       collected_data_elements <- add_data_element_identifier(
         x = collected_data_elements,
-        fs_method = x@fs_method
+        vimp_method = x@vimp_method
       )
     }
     

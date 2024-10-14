@@ -333,7 +333,7 @@ setMethod(
     # Details concerning variable importance.
     cat(paste0(
       "\nVariable importance was determined using the ",
-      object@fs_method, " variable importance method.\n"
+      object@vimp_method, " variable importance method.\n"
     ))
     
     # Details concerning model features:
@@ -770,7 +770,7 @@ setMethod(
       # Create the full name of the model
       model_name <- get_object_file_name(
         learner = object@learner,
-        fs_method = object@fs_method,
+        vimp_method = object@vimp_method,
         project_id = object@project_id,
         data_id = model_data_id,
         run_id = model_run_id,
@@ -1248,7 +1248,7 @@ setMethod(
     if (is.null(object@hyperparameters$sign_size)) return(FALSE)
 
     # Check if the no-features variable importance.
-    if (object@fs_method %in% .get_available_no_features_vimp_methods()) return(TRUE)
+    if (object@vimp_method %in% .get_available_no_features_vimp_methods()) return(TRUE)
 
     # Check if the signature size is 0.
     return(all(object@hyperparameters$sign_size == 0L))
@@ -1383,7 +1383,7 @@ setMethod(
       get_signature,
       args = list(
         "object" = object@feature_info,
-        "vimp_method" = object@fs_method,
+        "vimp_method" = object@vimp_method,
         "parameter_list" = object@hyperparameters,
         "rank_table" = rank_table
       )

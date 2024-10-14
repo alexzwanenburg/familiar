@@ -57,7 +57,7 @@ run_preprocessing <- function(
   data_id <- c(
     .get_process_step_data_identifier(
       project_info = project_info,
-      process_step = "fs"
+      process_step = "vimp"
     ),
     .get_process_step_data_identifier(
       project_info = project_info,

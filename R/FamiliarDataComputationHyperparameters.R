@@ -223,8 +223,8 @@ setMethod(
       fill = TRUE
     )
     
-    # Split by fs_method
-    data <- split(data, by = "fs_method")
+    # Split by vimp_method
+    data <- split(data, by = "vimp_method")
     
     learner <- x[[1L]]@identifiers$learner
     if (is.null(learner)) learner <- x[[1L]]@data$learner[1L]
@@ -234,12 +234,12 @@ setMethod(
     
     for (current_data in data) {
       # Determine the vimp_method
-      vimp_method <- current_data$fs_method[1L]
+      vimp_method <- current_data$vimp_method[1L]
       
       # Set vimp method.
       parameter_string <- c(
         parameter_string,
-        paste0("fs_method\t", vimp_method),
+        paste0("vimp_method\t", vimp_method),
         "---------------------"
       )
       

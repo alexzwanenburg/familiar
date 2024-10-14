@@ -457,7 +457,7 @@ setMethod(
     # Determine whether certain columns are present.
     has_data_set <- "data_set" %in% columns
     has_learner <- "learner" %in% columns
-    has_fs_method <- "fs_method" %in% columns
+    has_vimp_method <- "vimp_method" %in% columns
     has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature") %in% columns)
     has_risk_group <- any(c("reference_group", "group", "group_1", "group_2") %in% columns)
     has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome") %in% columns) &&
@@ -494,14 +494,14 @@ setMethod(
       )
     }
     
-    if (has_fs_method) {
+    if (has_vimp_method) {
       data.table::set(
         x,
-        j = "fs_method",
+        j = "vimp_method",
         value = factor(
-          x = x$fs_method,
-          levels = get_fs_method_name_levels(x = object),
-          labels = get_fs_method_names(x = object)
+          x = x$vimp_method,
+          levels = get_vimp_method_name_levels(x = object),
+          labels = get_vimp_method_names(x = object)
         )
       )
     }
@@ -642,7 +642,7 @@ setMethod(
     # columns appear on the right. First we identify the grouping
     # columns. Note that not all 
     grouping_columns <- c(
-      "data_set", "fs_method", "learner",
+      "data_set", "vimp_method", "learner",
       "ensemble_model_name", "model_name",
       "evaluation_time", "eval_time",
       "name", "feature_name_1", "feature_name_2", "feature",

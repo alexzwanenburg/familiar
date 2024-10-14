@@ -393,7 +393,7 @@ summon_familiar <- function(
   
   # Variable importance --------------------------------------------------------
   
-  # Start feature selection
+  # Start variable importance computation
   run_feature_selection(
     cl = cl,
     project_list = project_info,
@@ -413,7 +413,7 @@ summon_familiar <- function(
         run_id = waiver()
       ),
       vimp_table_list = .retrieve_feature_selection_data(
-        fs_method = settings$fs$fs_method,
+        vimp_method = settings$fs$vimp_method,
         project_list = project_info,
         file_paths = file_paths
       )
@@ -468,10 +468,10 @@ summon_familiar <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -546,9 +546,9 @@ precompute_data_assignment <- function(
   # Isolate dots.
   dots <- list(...)
   
-  # Drop skip_evaluation_elements, fs_method and learner if present.
+  # Drop skip_evaluation_elements, vimp_method and learner if present.
   dots$skip_evaluation_elements <- NULL
-  dots$fs_method <- NULL
+  dots$vimp_method <- NULL
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
@@ -561,7 +561,7 @@ precompute_data_assignment <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = "none",
+        "vimp_method" = "none",
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
@@ -584,10 +584,10 @@ precompute_data_assignment <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -664,9 +664,9 @@ precompute_feature_info <- function(
   # Isolate dots.
   dots <- list(...)
   
-  # Drop skip_evaluation_elements, fs_method and learner if present.
+  # Drop skip_evaluation_elements, vimp_method and learner if present.
   dots$skip_evaluation_elements <- NULL
-  dots$fs_method <- NULL
+  dots$vimp_method <- NULL
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
@@ -679,7 +679,7 @@ precompute_feature_info <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = "none",
+        "vimp_method" = "none",
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
@@ -702,10 +702,10 @@ precompute_feature_info <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step. Though models are not learned by
 #'   `precompute_vimp`, this element is still required to prevent issues when
@@ -776,37 +776,37 @@ precompute_vimp <- function(
     experiment_data = NULL,
     cl = NULL,
     experimental_design = "fs+mb",
-    fs_method = NULL,
-    fs_method_parameter = NULL,
+    vimp_method = NULL,
+    vimp_method_parameter = NULL,
     verbose = TRUE,
     ...
 ) {
   
   # Check that a single learner is present.
-  fs_method <- .parse_arg(
+  vimp_method <- .parse_arg(
     x_config = NULL,
-    x_var = fs_method,
-    var_name = "fs_method",
+    x_var = vimp_method,
+    var_name = "vimp_method",
     type = "character_list",
     optional = FALSE
   )
   
   # Hyperparameters may be interpreted as belonging to the specified learner.
-  fs_method_parameter <- .parse_arg(
+  vimp_method_parameter <- .parse_arg(
     x_config = NULL,
-    x_var = fs_method_parameter,
-    var_name = "fs_method_parameter",
+    x_var = vimp_method_parameter,
+    var_name = "vimp_method_parameter",
     type = "list",
     optional = TRUE,
     default = list()
   )
   
   # Encode hyperparameter as expected by parsing it to a nested list.
-  if (length(fs_method_parameter) > 0L && length(fs_method) == 1L) {
-    if (is.null(fs_method_parameter[[fs_method]])) {
-      fs_method_parameter_list <- list()
-      fs_method_parameter_list[[fs_method]] <- fs_method_parameter
-      fs_method_parameter <- fs_method_parameter_list
+  if (length(vimp_method_parameter) > 0L && length(vimp_method) == 1L) {
+    if (is.null(vimp_method_parameter[[vimp_method]])) {
+      vimp_method_parameter_list <- list()
+      vimp_method_parameter_list[[vimp_method]] <- vimp_method_parameter
+      vimp_method_parameter <- vimp_method_parameter_list
     }
   }
   
@@ -827,8 +827,8 @@ precompute_vimp <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = fs_method,
-        "fs_method_parameter" = fs_method_parameter,
+        "vimp_method" = vimp_method,
+        "vimp_method_parameter" = vimp_method_parameter,
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
@@ -850,10 +850,10 @@ precompute_vimp <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -890,8 +890,8 @@ precompute_vimp <- function(
 #'   As shown in the example above, sampling algorithms can be nested.
 #'
 #'   The simplest valid experimental design is `fs+mb`. This is the default in
-#'   `train_familiar`, and will create one model for each feature selection
-#'   method in `fs_method`. To create more models, a subsampling method should
+#'   `train_familiar`, and will create one model for each variable importance
+#'   method in `vimp_method`. To create more models, a subsampling method should
 #'   be introduced, e.g. `bs(fs+mb,20)` to create 20 models based on bootstraps
 #'   of the data.
 #'   

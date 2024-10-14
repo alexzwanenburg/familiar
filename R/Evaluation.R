@@ -79,7 +79,7 @@ run_evaluation <- function(
   
   # Suppress NOTES due to non-standard evaluation in data.table
   fam_ensemble_exists <- fam_ensemble <- fam_data_exists <- fam_data <- NULL
-  learner <- fs_method <- NULL
+  learner <- vimp_method <- NULL
   data_dir_path <- model_dir_path <- NULL
   model_data_id <- model_run_id <- pool_data_id <- pool_run_id <- NULL
   ensemble_data_id <- ensemble_run_id <- is_ensemble <- is_validation <- NULL
@@ -122,12 +122,12 @@ run_evaluation <- function(
   )
   
   # Perform a cartesian join of the data sets and the run methods.
-  data_set_list <- run_methods[, as.list(data_sets), by = c("fs_method", "learner")]
+  data_set_list <- run_methods[, as.list(data_sets), by = c("vimp_method", "learner")]
   
   # Add model file names
   data_set_list[, "fam_model" := get_object_file_name(
     learner = learner,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     project_id = project_id,
     data_id = model_data_id,
     run_id = model_run_id,
@@ -141,9 +141,9 @@ run_evaluation <- function(
       dir_path = file_paths$mb_dir,
       object_type = "familiarModel",
       learner = learner,
-      fs_method = fs_method
+      vimp_method = vimp_method
     ),
-    by = c("learner", "fs_method")
+    by = c("learner", "vimp_method")
   ]
   
   # Add paths to data
@@ -158,21 +158,21 @@ run_evaluation <- function(
     "fam_ensemble" := get_object_file_name(
       dir_path = model_dir_path,
       learner = learner,
-      fs_method = fs_method,
+      vimp_method = vimp_method,
       project_id = project_id,
       data_id = ensemble_data_id,
       run_id = ensemble_run_id,
       is_ensemble = TRUE,
       object_type = "familiarEnsemble"
     ),
-    by = c("model_dir_path", "fs_method", "learner", "ensemble_data_id", "ensemble_run_id")
+    by = c("model_dir_path", "vimp_method", "learner", "ensemble_data_id", "ensemble_run_id")
   ]
   
   # Add data file directory + names
   data_set_list[, "fam_data" := get_object_file_name(
     dir_path = data_dir_path,
     learner = learner,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     project_id = project_id,
     data_id = ensemble_data_id,
     run_id = ensemble_run_id,
@@ -200,7 +200,7 @@ run_evaluation <- function(
     fam_ensemble_exists == FALSE,
     mget(c(
       "ensemble_data_id", "ensemble_run_id", "learner",
-      "fs_method", "fam_model", "fam_ensemble"
+      "vimp_method", "fam_model", "fam_ensemble"
     ))
   ])
   
@@ -576,7 +576,7 @@ run_evaluation <- function(
     "familiarEnsemble",
     model_list = as.list(ensemble_table$fam_model),
     learner = ensemble_table$learner[1L],
-    fs_method = ensemble_table$fs_method[1L]
+    vimp_method = ensemble_table$vimp_method[1L]
   )
   
   # Add package version.

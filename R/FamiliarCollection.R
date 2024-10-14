@@ -102,30 +102,30 @@ setMethod(
 
 
 
-# set_fs_method_names ----------------------------------------------------------
+# set_vimp_method_names ----------------------------------------------------------
 
-#' @title Rename feature selection methods for plotting and export
+#' @title Rename variable importance methods for plotting and export
 #'
 #' @description Tabular exports and figures created from a familiarCollection
-#'   object can be customised by providing names for the feature selection
+#'   object can be customised by providing names for the variable importance
 #'   methods.
 #'
-#' @details Labels convert the internal naming for feature selection methods to
-#'   the requested label at export or when plotting. This enables the use of
+#' @details Labels convert the internal naming for variable importance methods
+#'   to the requested label at export or when plotting. This enables the use of
 #'   more specific naming, e.g. changing \code{mim} to \code{Mutual Information
 #'   Maximisation}. Currently assigned labels can be found using the
-#'   \code{get_fs_method_names} method.
+#'   \code{get_vimp_method_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
-#' @aliases set_fs_method_names
+#' @aliases set_vimp_method_names
 #' @seealso * \linkS4class{familiarCollection} for information concerning the
-#' familiarCollection class. * \code{\link{get_fs_method_names}} for obtaining
+#' familiarCollection class. * \code{\link{get_vimp_method_names}} for obtaining
 #' currently assigned labels.
 #' @md
 setMethod(
-  "set_fs_method_names",
+  "set_vimp_method_names",
   signature(x = "familiarCollection"),
   function(
     x,
@@ -139,7 +139,7 @@ setMethod(
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "fs_method_labels"
+      upd_slot = "vimp_method_labels"
     )
     
     return(x)
@@ -351,35 +351,35 @@ setMethod(
 
 
 
-# get_fs_method_names ----------------------------------------------------------
+# get_vimp_method_names ----------------------------------------------------------
 
-#' @title Get current feature selection method name labels
+#' @title Get current variable importance method name labels
 #'
-#' @description Feature selection methods in familiarCollection objects can have
-#'   custom names for export and plotting. This function retrieves the currently
-#'   assigned names.
-#'
-#' @details Labels convert internal naming of feature selection methods to the
+#' @description Variable importance methods in familiarCollection objects can
+#'   have custom names for export and plotting. This function retrieves the
+#'   currently assigned names.
+#' 
+#' @details Labels convert internal naming of variable importance methods to the
 #'   requested label at export or when plotting. Labels can be changed using the
-#'   \code{set_fs_method_names} method.
+#'   \code{set_vimp_method_names} method.
 #'
 #' @inheritParams get_data_set_names,familiarCollection-method
 #'
-#' @return An ordered array of feature selection method name labels.
+#' @return An ordered array of variable importance method name labels.
 #' @export
-#' @aliases get_fs_method_names
+#' @aliases get_vimp_method_names
 #' @seealso
 #' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{set_fs_method_names}} for updating the name of feature selection methods and their ordering.
+#' * \code{\link{set_vimp_method_names}} for updating the name of variable importance methods and their ordering.
 #' @md
 setMethod(
-  "get_fs_method_names",
+  "get_vimp_method_names",
   signature(x = "familiarCollection"),
   function(x) {
     
     return(.get_labels(
       x = x,
-      upd_slot = "fs_method_labels",
+      upd_slot = "vimp_method_labels",
       get_levels = FALSE
     ))
   }
@@ -526,15 +526,15 @@ setMethod(
 
 
 
-# get_fs_method_name_levels ----------------------------------------------------
+# get_vimp_method_name_levels ----------------------------------------------------
 setMethod(
-  "get_fs_method_name_levels",
+  "get_vimp_method_name_levels",
   signature(x = "familiarCollection"),
   function(x) {
     
     return(.get_labels(
       x = x,
-      upd_slot = "fs_method_labels",
+      upd_slot = "vimp_method_labels",
       get_levels = TRUE
     ))
   }
@@ -859,8 +859,8 @@ setMethod(
     } else if (upd_slot == "learner_labels") {
       data <- slot(x, "learner")
       
-    } else if (upd_slot == "fs_method_labels") {
-      data <- slot(x, "fs_method")
+    } else if (upd_slot == "vimp_method_labels") {
+      data <- slot(x, "vimp_method")
       
     } else if (upd_slot == "feature_labels") {
       data <- unique(c(

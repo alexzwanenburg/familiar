@@ -115,7 +115,7 @@
   # Load experiment data table
   experiment_table <- project_info$experiment_setup
   
-  if (process_step == "fs") {
+  if (process_step == "vimp") {
     # Find row on where feature selection takes place and extract the main data
     # id.
     main_data_id <- experiment_table[feat_sel == TRUE, ]$main_data_id[1L]

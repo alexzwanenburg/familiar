@@ -264,7 +264,7 @@ setGeneric("set_data_set_names", function(x, ...) standardGeneric("set_data_set_
 
 setGeneric("set_learner_names", function(x, ...) standardGeneric("set_learner_names"))
 
-setGeneric("set_fs_method_names", function(x, ...) standardGeneric("set_fs_method_names"))
+setGeneric("set_vimp_method_names", function(x, ...) standardGeneric("set_vimp_method_names"))
 
 setGeneric("set_feature_names", function(x, ...) standardGeneric("set_feature_names"))
 
@@ -276,7 +276,7 @@ setGeneric("get_data_set_names", function(x, ...) standardGeneric("get_data_set_
 
 setGeneric("get_learner_names", function(x, ...) standardGeneric("get_learner_names"))
 
-setGeneric("get_fs_method_names", function(x, ...) standardGeneric("get_fs_method_names"))
+setGeneric("get_vimp_method_names", function(x, ...) standardGeneric("get_vimp_method_names"))
 
 setGeneric("get_feature_names", function(x, ...) standardGeneric("get_feature_names"))
 
@@ -288,7 +288,7 @@ setGeneric("get_data_set_name_levels", function(x, ...) standardGeneric("get_dat
 
 setGeneric("get_learner_name_levels", function(x, ...) standardGeneric("get_learner_name_levels"))
 
-setGeneric("get_fs_method_name_levels", function(x, ...) standardGeneric("get_fs_method_name_levels"))
+setGeneric("get_vimp_method_name_levels", function(x, ...) standardGeneric("get_vimp_method_name_levels"))
 
 setGeneric("get_feature_name_levels", function(x, ...) standardGeneric("get_feature_name_levels"))
 

@@ -6,7 +6,7 @@ NULL
     data,
     parameter_list,
     outcome_type,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
     detector = NULL
 ) {
@@ -14,13 +14,13 @@ NULL
   # Check if any hyperparameters have been set
   if (length(parameter_list) == 0L) return(parameter_list)
   
-  if (is.null(fs_method) && is.null(learner) && is.null(detector)) {
-    ..error_reached_unreachable_code(".parse_hyperparameters: one of fs_method, learner, detector should not be NULL")
+  if (is.null(vimp_method) && is.null(learner) && is.null(detector)) {
+    ..error_reached_unreachable_code(".parse_hyperparameters: one of vimp_method, learner, detector should not be NULL")
   }
   
-  if (!is.null(fs_method)) {
-    all_functions <- fs_method
-    type <- "feature selection methods"
+  if (!is.null(vimp_method)) {
+    all_functions <- vimp_method
+    type <- "variable importance methods"
     
   } else if (!is.null(learner)) {
     all_functions <- learner
@@ -35,7 +35,7 @@ NULL
   user_function_names <- names(parameter_list)
   
   # Check whether all names in the hyperparameter list correspond to a
-  # fs_method, learner or detector.
+  # vimp_method, learner or detector.
   unknown_function <- setdiff(user_function_names, all_functions)
   if (length(unknown_function) > 0L) {
     ..error(
@@ -69,7 +69,7 @@ NULL
     .check_hyperparameters,
     in_list = parameter_list,
     data = data,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     learner = learner,
     detector = detector
   )
@@ -86,7 +86,7 @@ NULL
     user_function_name,
     in_list,
     data,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
     detector = NULL
 ) {
@@ -95,14 +95,14 @@ NULL
   in_list <- in_list[[user_function_name]]
   
   # Obtain preset values for hyperparameters.
-  if (!is.null(fs_method)) {
+  if (!is.null(vimp_method)) {
     preset_list <- .get_preset_hyperparameters(
       data = data,
-      fs_method = user_function_name,
+      vimp_method = user_function_name,
       names_only = FALSE
     )
     
-    type <- "feature selection method"
+    type <- "variable importance method"
     
   } else if (!is.null(learner)) {
     preset_list <- .get_preset_hyperparameters(
@@ -258,16 +258,16 @@ NULL
 
 .get_preset_hyperparameters <- function(
     data = NULL,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
     detector = NULL,
     outcome_type = NULL,
     names_only = FALSE
 ) {
   
-  if (is.null(fs_method) && is.null(learner) && is.null(detector)) {
+  if (is.null(vimp_method) && is.null(learner) && is.null(detector)) {
     ..error_reached_unreachable_code(
-      ".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL"
+      ".get_preset_hyperparameters: one of vimp_method, learner, detector should not be NULL"
     )
   }
 
@@ -284,10 +284,10 @@ NULL
   }
   
   # Find the parameter list
-  if (!is.null(fs_method)) {
+  if (!is.null(vimp_method)) {
     preset_list <- .get_vimp_hyperparameters(
       data = data,
-      method = fs_method,
+      method = vimp_method,
       outcome_type = outcome_type, 
       names_only = names_only
     )
@@ -309,7 +309,7 @@ NULL
     
   } else {
     ..error_reached_unreachable_code(
-      ".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL"
+      ".get_preset_hyperparameters: one of vimp_method, learner, detector should not be NULL"
     )
   }
   

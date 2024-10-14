@@ -844,7 +844,7 @@ setMethod(
     required_features = .optional_from_slot(object, "required_features", alternative = NULL),
     model_features = .optional_from_slot(object, "model_features", alternative = NULL),
     learner = object@learner,
-    fs_method = object@fs_method,
+    vimp_method = object@vimp_method,
     pooling_table = pooling_table,
     prediction_data = prediction_data,
     confusion_matrix = confusion_matrix_info,

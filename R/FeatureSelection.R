@@ -6,14 +6,14 @@ run_feature_selection <- function(
     message_indent = 0L,
     verbose = TRUE
 ) {
-  # Check which data object is required for performing feature selection.
+  # Check which data object is required for computing variable importances.
   fs_data_id <- .get_process_step_data_identifier(
     project_info = project_list,
-    process_step = "fs"
+    process_step = "vimp"
   )
 
-  # Get feature selection methods that still need to be checked.
-  run_fs_methods <- .find_missing_feature_selection_data(
+  # Get variable importance methods that still need to be checked.
+  run_vimp_methods <- .find_missing_feature_selection_data(
     project_list = project_list,
     settings = settings,
     file_paths = file_paths
@@ -29,26 +29,26 @@ run_feature_selection <- function(
   cl_fs <- NULL
   if (settings$fs$do_parallel) cl_fs <- cl
 
-  # Create variable importance matrices by iterating over feature selection
+  # Create variable importance matrices by iterating over variable importance
   # methods
-  for (curr_fs_method in run_fs_methods) {
+  for (curr_vimp_method in run_vimp_methods) {
     logger_message(
       paste0(
-        "\nFeature selection: starting feature selection using \"",
-        curr_fs_method, "\" method."
+        "\nVariable importance: starting variable importance computation using \"",
+        curr_vimp_method, "\" method."
       ),
       indent = message_indent,
       verbose = verbose
     )
 
-    # Optimise models used for feature selection
+    # Optimise models used for variable importance
     hpo_list <- run_hyperparameter_optimisation(
       cl = cl,
       project_list = project_list,
       data_id = fs_data_id,
       settings = settings,
       file_paths = file_paths,
-      vimp_method = curr_fs_method,
+      vimp_method = curr_vimp_method,
       message_indent = message_indent + 1L,
       verbose = verbose
     )
@@ -61,7 +61,7 @@ run_feature_selection <- function(
       run = run_list,
       progress_bar = verbose,
       MoreArgs = list(
-        "fs_method" = curr_fs_method,
+        "vimp_method" = curr_vimp_method,
         "hpo_list" = hpo_list,
         "settings" = settings
       )
@@ -70,15 +70,15 @@ run_feature_selection <- function(
     # Save to file
     saveRDS(vimp_list, file = .get_feature_selection_data_filename(
       project_id = project_list$project_id,
-      fs_method = curr_fs_method,
+      vimp_method = curr_vimp_method,
       file_paths = file_paths
     ))
 
-    # Message that feature selection has been completed.
+    # Message that variable importances have been computed.
     logger_message(
       paste0(
-        "Feature selection: feature selection using \"",
-        curr_fs_method, "\" method has been completed."
+        "Variable importance: variable importance have been computed using the \"",
+        curr_vimp_method, "\" method."
       ),
       indent = message_indent,
       verbose = verbose
@@ -92,7 +92,7 @@ run_feature_selection <- function(
 
 compute_variable_importance <- function(
     run,
-    fs_method,
+    vimp_method,
     hpo_list,
     settings
 ) {
@@ -126,7 +126,7 @@ compute_variable_importance <- function(
   vimp_object <- methods::new("familiarVimpMethod",
     outcome_type = data@outcome_type,
     hyperparameters = parameter_list,
-    vimp_method = fs_method,
+    vimp_method = vimp_method,
     outcome_info = .get_outcome_info(),
     run_table = run$run_table
   )
@@ -167,15 +167,15 @@ compute_variable_importance <- function(
     file_paths
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  fs_method <- fs_file <- NULL
+  vimp_method <- fs_file <- NULL
 
-  # All feature selection methods
-  file_table <- data.table::data.table("fs_method" = settings$fs$fs_methods)
+  # All variable importance methods
+  file_table <- data.table::data.table("vimp_method" = settings$fs$vimp_methods)
 
-  # Add expected feature selection file names
+  # Add expected variable importance file names
   file_table[, "fs_file" := .get_feature_selection_data_filename(
     project_id = project_list$project_id,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     file_paths = file_paths
   )]
 
@@ -183,7 +183,7 @@ compute_variable_importance <- function(
   file_list <- normalizePath(
     list.files(
       path = file_paths$fs_dir,
-      pattern = paste0(project_list$project_id, "_fs_"),
+      pattern = paste0(project_list$project_id, "_vimp_"),
       full.names = TRUE,
       recursive = TRUE
     ),
@@ -193,20 +193,20 @@ compute_variable_importance <- function(
   # Remove files which have already been selected
   file_table <- file_table[!fs_file %in% file_list, ]
 
-  return(file_table$fs_method)
+  return(file_table$vimp_method)
 }
 
 
 
 .get_feature_selection_data_filename <- function(
-    fs_method, 
+    vimp_method, 
     project_id, 
     file_paths
 ) {
   return(normalizePath(
     file.path(
       file_paths$fs_dir,
-      paste0(project_id, "_fs_", fs_method, ".RDS")
+      paste0(project_id, "_vimp_", vimp_method, ".RDS")
     ),
     mustWork = FALSE
   ))
@@ -215,19 +215,19 @@ compute_variable_importance <- function(
 
 
 .retrieve_feature_selection_data <- function(
-    fs_method, 
+    vimp_method, 
     project_list, 
     file_paths
 ) {
   # Iterate over the variable importance methods to select the correct files.
   vimp_table_list <- lapply(
-    fs_method, 
+    vimp_method, 
     function(x, project_list, file_paths) {
       # Attempt to read the object. This should produce a list of variable
       # importance tables.
       vimp_table_sub_list <- tryCatch(
         readRDS(.get_feature_selection_data_filename(
-          fs_method = x,
+          vimp_method = x,
           project_id = project_list$project_id,
           file_paths = file_paths
         )),
@@ -260,7 +260,7 @@ compute_variable_importance <- function(
   )
 
   # Update names
-  names(vimp_table_list) <- fs_method
+  names(vimp_table_list) <- vimp_method
 
   return(vimp_table_list)
 }

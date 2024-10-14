@@ -78,7 +78,7 @@
     dir_path = dir_path,
     object_type = object_type,
     learner = object@learner,
-    fs_method = object@fs_method
+    vimp_method = object@vimp_method
   )
 
   # Check if the directory exists, and create anew if not

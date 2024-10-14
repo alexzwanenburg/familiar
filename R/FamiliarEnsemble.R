@@ -110,7 +110,7 @@ setMethod(
       outcome_info = object@outcome_info,
       data_column_info = model_list[[1L]]@data_column_info,
       learner = object@learner,
-      fs_method = object@fs_method,
+      vimp_method = object@vimp_method,
       required_features = required_features,
       model_features = model_features,
       novelty_features = novelty_features,
@@ -181,7 +181,7 @@ setMethod(
       # Details concerning variable importance.
       cat(paste0(
         "\nVariable importance was determined using the ",
-        object@fs_method, " variable importance method.\n"
+        object@vimp_method, " variable importance method.\n"
       ))
 
       # Details concerning model features:
@@ -396,7 +396,7 @@ setMethod(
           dir_path = dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method
+          vimp_method = object@vimp_method
         ),
         model_file_name
       )
@@ -417,7 +417,7 @@ setMethod(
           dir_path = mb_dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method
+          vimp_method = object@vimp_method
         ),
         model_file_name
       )
@@ -439,7 +439,7 @@ setMethod(
           dir_path = model_dir_path,
           object_type = "familiarModel",
           learner = object@learner,
-          fs_method = object@fs_method
+          vimp_method = object@vimp_method
         ),
         model_file_name
       )
@@ -923,7 +923,7 @@ setMethod(
       # Create the full name of the model
       model_name <- get_object_file_name(
         learner = object@learner,
-        fs_method = object@fs_method,
+        vimp_method = object@vimp_method,
         project_id = object@project_id,
         data_id = ensemble_data_id,
         run_id = ensemble_run_id,

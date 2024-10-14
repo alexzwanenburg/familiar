@@ -35,7 +35,7 @@ setMethod(
       "\nThe ensemble that created this dataset contained of one or more ",
       object@learner,
       " models with variable importance computed by the ",
-      object@fs_method,
+      object@vimp_method,
       " variable importance method.\n"
     ))
     
@@ -95,7 +95,7 @@ setMethod(
       # Create the full name of the object
       object_name <- get_object_file_name(
         learner = object@learner,
-        fs_method = object@fs_method,
+        vimp_method = object@vimp_method,
         project_id = object@project_id,
         data_id = ensemble_data_id,
         run_id = ensemble_run_id,
@@ -149,9 +149,9 @@ setMethod(
     
     # Check which identifiers should be added
     if (is.null(more_identifiers)) {
-      if (!all(more_identifiers %in% c("fs_method", "learner"))) {
+      if (!all(more_identifiers %in% c("vimp_method", "learner"))) {
         ..error_reached_unreachable_code(paste0(
-          "Only feature selection methods (\"fs_method\") and learners (\"learner\") ",
+          "Only variable importance methods (\"vimp_method\") and learners (\"learner\") ",
           "can be added as additional identifiers."
         ))
       }
@@ -166,7 +166,7 @@ setMethod(
       # Insert "model_name" column
       data[, "data_set" := data_set]
       
-      if (any(id_order == "fs_method")) data[, "fs_method" := object@fs_method]
+      if (any(id_order == "vimp_method")) data[, "vimp_method" := object@vimp_method]
       
       if (any(id_order == "learner")) data[, "learner" := object@learner]
       
@@ -180,8 +180,8 @@ setMethod(
       # attached.
       empty_table <- data.table::data.table("data_set" = character(0L))
       
-      if (any(id_order == "fs_method")) {
-        empty_table[, "fs_method" := character(0L)]
+      if (any(id_order == "vimp_method")) {
+        empty_table[, "vimp_method" := character(0L)]
       }
       
       if (any(id_order == "learner")) {
