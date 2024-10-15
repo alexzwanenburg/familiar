@@ -185,7 +185,7 @@ setMethod(
         "familiarModel",
         outcome_type = object@outcome_type,
         learner = as.character(object@hyperparameters$learner),
-        fs_method = "none",
+        vimp_method = "none",
         feature_info = object@feature_info,
         outcome_info = .compute_outcome_distribution_data(
           object = object@outcome_info, 

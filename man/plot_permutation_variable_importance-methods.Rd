@@ -385,7 +385,7 @@ feature is randomly permuted.
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:
 \itemize{
-\item \code{fs_method}: feature selection methods.
+\item \code{vimp_method}: variable importance methods.
 \item \code{learner}: learners.
 \item \code{data_set}: data sets.
 \item \code{metric}: the model performance metrics.
@@ -394,11 +394,11 @@ and \code{facet_by}:
 of features to permute simultaneously.
 }
 
-By default, the data is split by \code{fs_method}, \code{learner} and \code{metric},
+By default, the data is split by \code{vimp_method}, \code{learner} and \code{metric},
 faceted by \code{data_set} and \code{evaluation_time}, and coloured by
 \code{similarity_threshold}.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_feature_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 

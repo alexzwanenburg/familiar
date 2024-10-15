@@ -268,11 +268,11 @@ familiarCollection object.
 \details{
 This function generates area under the ROC curve plots.
 
-Available splitting variables are: \code{fs_method}, \code{learner} and \code{data_set}.
-By default, the data is split by \code{fs_method} and \code{learner}, with facetting
+Available splitting variables are: \code{vimp_method}, \code{learner} and \code{data_set}.
+By default, the data is split by \code{vimp_method} and \code{learner}, with facetting
 by \code{data_set}.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

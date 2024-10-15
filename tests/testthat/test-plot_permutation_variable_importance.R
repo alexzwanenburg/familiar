@@ -73,7 +73,7 @@ familiar:::test_plot_ordering(
   metric = c("auc_roc", "accuracy"),
   outcome_type_available = c("multinomial"),
   plot_args = list(
-    "facet_by" = c("data_set", "learner", "fs_method"),
+    "facet_by" = c("data_set", "learner", "vimp_method"),
     "color_by" = c("metric", "similarity_threshold")),
   debug = debug_flag
 )

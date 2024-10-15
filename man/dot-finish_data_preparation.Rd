@@ -68,7 +68,7 @@ status.}
 
 \item{outcome_type}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{

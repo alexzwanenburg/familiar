@@ -70,7 +70,7 @@ indicate the time-to-event or the time of last follow-up and the event
 status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
@@ -107,7 +107,7 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
     \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
 that should be included for the purpose of novelty detection.}
@@ -137,10 +137,11 @@ prior to familiar version 1.3.0.
 }}
     \item{\code{experimental_design}}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building, and external validation. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building, and external validation. The basic workflow
+components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance computation step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
 to subsampling will always be conducted if the subsampling methods create
@@ -203,6 +204,10 @@ that defines the design.}
     \item{\code{imbalance_n_partitions}}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+    \item{\code{iteration_seed}}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
   }}
 }
 \value{

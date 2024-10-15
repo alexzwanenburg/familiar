@@ -75,7 +75,7 @@
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #' @inheritDotParams .parse_evaluation_settings -config -data -parallel -outcome_type -hpo_metric -development_batch_id -vimp_aggregation_rank_threshold -vimp_aggregation_method -prep_cluster_method -prep_cluster_linkage_method -prep_cluster_cut_method -prep_cluster_similarity_threshold -prep_cluster_similarity_metric
@@ -394,7 +394,7 @@ summon_familiar <- function(
   # Variable importance --------------------------------------------------------
   
   # Start variable importance computation
-  run_feature_selection(
+  run_variable_importance_computation(
     cl = cl,
     project_list = project_info,
     settings = settings,
@@ -412,8 +412,8 @@ summon_familiar <- function(
         data_id = waiver(),
         run_id = waiver()
       ),
-      vimp_table_list = .retrieve_feature_selection_data(
-        vimp_method = settings$fs$vimp_method,
+      vimp_table_list = .retrieve_variable_importance_data(
+        vimp_method = settings$vimp$vimp_method,
         project_list = project_info,
         file_paths = file_paths
       )
@@ -516,7 +516,7 @@ summon_familiar <- function(
 #'   training set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
@@ -634,7 +634,7 @@ precompute_data_assignment <- function(
 #'   This argument is ignored if the `experiment_data` argument is set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
@@ -749,13 +749,11 @@ precompute_feature_info <- function(
 #'   This argument is ignored if the `experiment_data` argument is set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
-#'   -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings
-#'   parallel_feature_selection
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -parallel_vimp
 #'
 #' @details This is a thin wrapper around `summon_familiar`, and functions like
 #'   it, but automatically skips learning and subsequent evaluation steps.
@@ -920,7 +918,7 @@ precompute_vimp <- function(
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #'

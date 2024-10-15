@@ -21,7 +21,7 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
   experiment_data <- familiar::summon_familiar(
     data = data,
     experimental_design = "fs+mb",
-    fs_method = "mim",
+    vimp_method = "mim",
     imputation_method = "simple",
     learner = learner,
     estimation_type = "point",
@@ -154,7 +154,7 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
 
   # vimp names -----------------------------------------------------------------
   for (collection in familiar_collection_list) {
-    vimp_names <- familiar::get_fs_method_names(collection)
+    vimp_names <- familiar::get_vimp_method_names(collection)
 
     testthat::test_that(
       "VIMP names are correct",
@@ -163,7 +163,7 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
 
         # Replace vimp-method names.
         new_vimp_names <- paste0("vimp_method_", seq_along(vimp_names))
-        collection <- familiar::set_fs_method_names(
+        collection <- familiar::set_vimp_method_names(
           collection,
           old = vimp_names,
           new = new_vimp_names
@@ -172,7 +172,7 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
         # Expect that the labels are the same and have the same order as the
         # original labels.
         testthat::expect_equal(
-          familiar::get_fs_method_names(collection),
+          familiar::get_vimp_method_names(collection),
           new_vimp_names
         )
       }

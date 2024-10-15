@@ -168,12 +168,12 @@
   )
   if (!dir.exists(file_paths$process_data_dir)) dir.create(file_paths$process_data_dir)
 
-  # Directory for feature selection
-  file_paths$fs_dir <- normalizePath(
+  # Directory for variable importance
+  file_paths$vimp_dir <- normalizePath(
     file.path(experiment_dir, "variable_importance"),
     mustWork = FALSE
   )
-  if (!dir.exists(file_paths$fs_dir)) dir.create(file_paths$fs_dir)
+  if (!dir.exists(file_paths$vimp_dir)) dir.create(file_paths$vimp_dir)
 
   # Directory and files for model building
   file_paths$mb_dir <- normalizePath(
@@ -300,7 +300,7 @@
 #' @param data Data set as loaded using the `.load_data` function.
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -data -config -parallel -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings -data -config -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #' @inheritDotParams .parse_evaluation_settings -config -data -parallel -outcome_type -hpo_metric -development_batch_id -vimp_aggregation_rank_threshold -vimp_aggregation_method -prep_cluster_method -prep_cluster_linkage_method -prep_cluster_cut_method -prep_cluster_similarity_threshold -prep_cluster_similarity_metric
@@ -442,12 +442,12 @@
     )
   )
 
-  # Feature selection settings
-  settings$fs <- do.call_strict(
-    .parse_feature_selection_settings,
+  # Variable importance settings
+  settings$vimp <- do.call_strict(
+    .parse_variable_importance_settings,
     args = c(
       list(
-        "config" = config$feature_selection,
+        "config" = config$variable_importance,
         "data" = data,
         "parallel" = settings$run$parallel,
         "outcome_type" = settings$data$outcome_type
@@ -502,8 +502,8 @@
         "outcome_type" = settings$data$outcome_type,
         "hpo_metric" = settings$hpo$hpo_metric,
         "development_batch_id" = settings$data$train_cohorts,
-        "vimp_aggregation_method" = settings$fs$aggregation,
-        "vimp_aggregation_rank_threshold" = settings$fs$aggr_rank_threshold,
+        "vimp_aggregation_method" = settings$vimp$aggregation,
+        "vimp_aggregation_rank_threshold" = settings$vimp$aggr_rank_threshold,
         "prep_cluster_method" = settings$prep$cluster_method,
         "prep_cluster_linkage_method" = settings$prep$cluster_linkage,
         "prep_cluster_cut_method" = settings$prep$cluster_cut_method,
@@ -517,7 +517,7 @@
   # Set the general parallel switch to FALSE if all workflow steps disabled
   # parallel processing.
   settings$run$parallel <- settings$prep$do_parallel ||
-    settings$fs$do_parallel ||
+    settings$vimp$do_parallel ||
     settings$mb$do_parallel ||
     settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") ||
     settings$eval$do_parallel %in% c("TRUE", "inner", "outer")
@@ -596,7 +596,7 @@
 #'
 #' @param outcome_type (**recommended**) Type of outcome found in the outcome
 #'   column. The outcome type determines many aspects of the overall process,
-#'   e.g. the available feature selection methods and learners, but also the
+#'   e.g. the available variable importance methods and learners, but also the
 #'   type of assessments that can be conducted to evaluate the resulting models.
 #'   Implemented outcome types are:
 #'
@@ -640,7 +640,7 @@
 #'
 #' @param signature (*optional*) One or more names of feature columns that are
 #'   considered part of a specific signature. Features specified here will
-#'   always be used for modelling. Ranking from feature selection has no effect
+#'   always be used for modelling. Ranking of variable importances has no effect
 #'   for these features.
 #'
 #' @param novelty_features (*optional*) One or more names of feature columns
@@ -675,10 +675,11 @@
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)+ev` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building, and external validation. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building, and external validation. The basic workflow
+#'   components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance computation step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -2342,25 +2343,25 @@
 
 
 
-#' Internal function for parsing settings related to feature selection
+#' Internal function for parsing settings related to variable importance
+#' computation.
 #'
 #' @param config A list of settings, e.g. from an xml file.
 #' @param data Data set as loaded using the `.load_data` function.
 #' @param parallel Logical value that whether familiar uses parallelisation. If
-#'   `FALSE` it will override `parallel_feature_selection`.
+#'   `FALSE` it will override `parallel_vimp`.
 #' @param outcome_type Type of outcome found in the data set.
-#' @param fs_method (**required**) Feature selection method to be used for
-#'   determining variable importance. `familiar` implements various feature
-#'   selection methods. Please refer to the vignette on feature selection
-#'   methods for more details.
+#' @param vimp_method (**required**) Variable importance method. `familiar`
+#'   implements various variable importance methods. Please refer to the
+#'   vignette on variable importance methods for more details.
 #'
-#'   More than one feature selection method can be chosen. The experiment will
+#'   More than one variable importance method can be chosen. The experiment will
 #'   then repeated for each feature selection method.
 #'
-#'   Feature selection methods determines the ranking of features. Actual
+#'   Variable importance methods determine the ranking of features. Actual
 #'   selection of features is done by optimising the signature size model
 #'   hyperparameter during the hyperparameter optimisation step.
-#' @param fs_method_parameter (*optional*) List of lists containing parameters
+#' @param vimp_method_parameter (*optional*) List of lists containing parameters
 #'   for feature selection methods. Each sublist should have the name of the
 #'   feature selection method it corresponds to.
 #'
@@ -2418,14 +2419,14 @@
 #'
 #'   This parameter is only relevant for `stability`, `exponential`,
 #'   `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
-#' @param parallel_feature_selection (*optional*) Enable parallel processing for
-#'   the feature selection workflow. Defaults to `TRUE`. When set to `FALSE`,
+#' @param parallel_vimp (*optional*) Enable parallel processing for
+#'   the variable importance workflow. Defaults to `TRUE`. When set to `FALSE`,
 #'   this will disable the use of parallel processing while performing feature
 #'   selection, regardless of the settings of the `parallel` parameter.
-#'   `parallel_feature_selection` is ignored if `parallel=FALSE`.
+#'   `parallel_vimp` is ignored if `parallel=FALSE`.
 #' @param ... Unused arguments.
 #'
-#' @return List of parameters related to feature selection.
+#' @return List of parameters related to variable importance computation.
 #'
 #' @references 1. Wald, R., Khoshgoftaar, T. M., Dittman, D., Awada, W. &
 #'   Napolitano, A. An extensive comparison of feature ranking aggregation
@@ -2440,42 +2441,42 @@
 #'   signatures. PLoS One 6, e28210 (2011).
 #' @md
 #' @keywords internal
-.parse_feature_selection_settings <- function(
+.parse_variable_importance_settings <- function(
     config = NULL,
     data,
     parallel,
     outcome_type,
-    fs_method = waiver(),
-    fs_method_parameter = waiver(),
+    vimp_method = waiver(),
+    vimp_method_parameter = waiver(),
     vimp_aggregation_method = waiver(),
     vimp_aggregation_rank_threshold = waiver(),
-    parallel_feature_selection = waiver(),
+    parallel_vimp = waiver(),
     ...
 ) {
   settings <- list()
   
-  # fs_method ------------------------------------------------------------------
-  # Feature selection methods
-  settings$fs_methods <- .parse_arg(
-    x_config = config$fs_method,
-    x_var = fs_method,
-    var_name = "fs_method",
+  # vimp_method ----------------------------------------------------------------
+  # Variable importance methods
+  settings$vimp_methods <- .parse_arg(
+    x_config = config$vimp_method,
+    x_var = vimp_method,
+    var_name = "vimp_method",
     type = "character_list",
     optional = FALSE
   )
 
   sapply(
-    settings$fs_methods, 
+    settings$vimp_methods, 
     .check_vimp_outcome_type, 
     outcome_type = outcome_type
   )
 
-  # fs_method_parameter --------------------------------------------------------
-  # Feature selection parameters
+  # vimp_method_parameter ------------------------------------------------------
+  # Variable importance parameters
   settings$param <- .parse_arg(
-    x_config = config$fs_method_parameter,
-    x_var = fs_method_parameter,
-    var_name = "fs_method_parameter",
+    x_config = config$vimp_method_parameter,
+    x_var = vimp_method_parameter,
+    var_name = "vimp_method_parameter",
     type = "list",
     optional = TRUE,
     default = list()
@@ -2485,7 +2486,7 @@
     data = data,
     parameter_list = settings$param,
     outcome_type = outcome_type,
-    fs_method = settings$fs_methods
+    vimp_method = settings$vimp_methods
   )
 
   # vimp_aggregation_method ----------------------------------------------------
@@ -2524,12 +2525,12 @@
     )
   }
 
-  # parallel_feature_selection -------------------------------------------------
-  # Parallelisation switch for feature selection
+  # parallel_vimp --------------------------------------------------------------
+  # Parallelisation switch for variable importance computation
   settings$do_parallel <- .parse_arg(
-    x_config = config$parallel_feature_selection,
-    x_var = parallel_feature_selection,
-    var_name = "parallel_feature_selection",
+    x_config = config$parallel_vimp,
+    x_var = parallel_vimp,
+    var_name = "parallel_vimp",
     type = "logical",
     optional = TRUE,
     default = TRUE
@@ -2694,16 +2695,17 @@
 #' @param optimisation_determine_vimp (*optional*) Logical value that indicates
 #'   whether variable importance is determined separately for each of the
 #'   bootstraps created during the optimisation process (`TRUE`) or the
-#'   applicable results from the feature selection step are used (`FALSE`).
+#'   applicable results from the variable importance computation step are used
+#'   (`FALSE`).
 #'
 #'   Determining variable importance increases the initial computational
 #'   overhead. However, it prevents positive biases for the out-of-bag data due
 #'   to overlap of these data with the development data set used for the feature
 #'   selection step. In this case, any hyperparameters of the variable
 #'   importance method are not determined separately for each bootstrap, but
-#'   those obtained during the feature selection step are used instead. In case
-#'   multiple of such hyperparameter sets could be applicable, the set that will
-#'   be used is randomly selected for each bootstrap.
+#'   those obtained during the variable importance computation step are used
+#'   instead. In case multiple of such hyperparameter sets could be applicable,
+#'   the set that will be used is randomly selected for each bootstrap.
 #'
 #'   This parameter only affects hyperparameter optimisation of learners. The
 #'   default is `TRUE`.
@@ -3353,10 +3355,9 @@
 #'  These identifiers are used to determine the cohorts used to determine a
 #'  setting for `time_max`, if the `outcome_type` is `survival`, and both
 #'  `time_max` and `evaluation_times` are not provided.
-#' @param vimp_aggregation_method Method for variable importance aggregation that
-#'  was used for feature selection.
-#' @param vimp_aggregation_rank_threshold Rank threshold for variable importance
-#'  aggregation used during feature selection.
+#' @param vimp_aggregation_method Variable importance aggregation method.
+#' @param vimp_aggregation_rank_threshold Rank threshold used for variable
+#'   importance aggregation.
 #' @param prep_cluster_method Cluster method used during pre-processing.
 #' @param prep_cluster_linkage_method Cluster linkage method used during
 #'  pre-processing.
@@ -3682,9 +3683,9 @@
 #'
 #' @param eval_aggregation_method (*optional*) Method for aggregating variable
 #'  importances for the purpose of evaluation. Variable importances are
-#'  determined during feature selection steps and after training the model. Both
-#'  types are evaluated, but feature selection variable importance is only
-#'  evaluated at run-time.
+#'  determined both during initial variable importance computation steps and
+#'  after training the model. Both types are evaluated after training the
+#'  model, but only the initial variable importances are evaluated at run-time.
 #'
 #'  See the documentation for the `vimp_aggregation_method` argument for
 #'  information concerning the different methods available.
@@ -4622,7 +4623,7 @@
     names(as.list(args(.parse_experiment_settings))),
     names(as.list(args(.parse_setup_settings))),
     names(as.list(args(.parse_preprocessing_settings))),
-    names(as.list(args(.parse_feature_selection_settings))),
+    names(as.list(args(.parse_variable_importance_settings))),
     names(as.list(args(.parse_model_development_settings))),
     names(as.list(args(.parse_hyperparameter_optimisation_settings))),
     names(as.list(args(.parse_evaluation_settings)))
@@ -4653,7 +4654,7 @@
 
 .get_all_configuration_parent_node_names <- function() {
   return(c(
-    "paths", "data", "run", "preprocessing", "feature_selection",
+    "paths", "data", "run", "preprocessing", "variable_importance",
     "model_development", "hyperparameter_optimisation", "evaluation"
   ))
 }

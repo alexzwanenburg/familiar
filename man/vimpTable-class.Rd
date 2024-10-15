@@ -6,7 +6,8 @@
 \title{Variable importance table}
 \description{
 A vimpTable object contains information concerning variable importance of one
-or more features. These objects are created during feature selection.
+or more features. These objects are created during variable importance
+computation..
 }
 \details{
 vimpTable objects exists in various states. These states are

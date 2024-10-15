@@ -24,6 +24,14 @@
   contains model prediction data. Such objects can be created using the
   `as_prediction_table` function.
 
+- Several configuration parameters were renamed to better reflect their actual use:
+
+  - `fs_method` was renamed to `vimp_method`.
+  
+  - `fs_method_parameter` was renamed to `vimp_method_parameter`.
+
+  - `parallel_feature_selection` was renamed to `parallel_vimp`.
+
 ## Minor changes
 
 - The `iteration_seed` configuration parameter was added to provide a fixed seed 

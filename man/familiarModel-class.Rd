@@ -42,8 +42,7 @@ detect out-of-distribution samples.}
 
 \item{\code{learner}}{Learning algorithm used to create the model.}
 
-\item{\code{fs_method}}{Feature selection method used to determine variable
-importance for the model.}
+\item{\code{vimp_method}}{Method used to determine variable importance for the model.}
 
 \item{\code{required_features}}{The set of features required for complete
 reproduction, i.e. with imputation.}

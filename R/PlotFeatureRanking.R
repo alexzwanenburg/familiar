@@ -49,10 +49,10 @@ NULL
 #'   features.
 #'
 #'   The only allowed values for `split_by`, `color_by` or `facet_by` are
-#'   `fs_method` and `learner`, but note that `learner` has no effect when
+#'   `vimp_method` and `learner`, but note that `learner` has no effect when
 #'   plotting variable importance of features acquired during feature selection.
 #'
-#'   Labeling methods such as `set_feature_names` or `set_fs_method_names` can
+#'   Labeling methods such as `set_feature_names` or `set_vimp_method_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -407,7 +407,7 @@ plot_model_signature_variable_importance <- function(...) {
       aggregate_results = TRUE
     )
 
-    available_splitting <- "fs_method"
+    available_splitting <- "vimp_method"
     
   } else if (type == "model") {
     x <- export_model_vimp(
@@ -417,7 +417,7 @@ plot_model_signature_variable_importance <- function(...) {
       aggregate_results = TRUE
     )
 
-    available_splitting <- c("fs_method", "learner")
+    available_splitting <- c("vimp_method", "learner")
     
   } else {
     ..error_reached_unreachable_code(paste0(

@@ -55,15 +55,15 @@ run_hyperparameter_optimisation <- function(
   # If not provided by the user, hyper-parameters and corresponding meta-data
   # are sourced from the learner.
   
-  # In absence of a learner, we assume that feature selection is performed.
+  # In absence of a learner, we assume that variable importance is computed.
   is_vimp <- is.null(learner)
   
   if (is.null(project_list)) project_list <- get_project_list()
   if (is.null(settings)) settings <- get_settings()
   if (is.null(file_paths)) file_paths <- get_file_paths()
   
-  # Get the iteration list for the feature selection or model development step
-  # for which hyperparameter optimisation is performed.
+  # Get the iteration list for the variable importance computation or model
+  # development step for which hyperparameter optimisation is performed.
   hpo_id_list <- .get_preprocessing_iteration_identifiers(run = .get_run_list(
     iteration_list = project_list$iter_list,
     data_id = data_id,
@@ -404,8 +404,8 @@ setMethod(
       user_list <- object@hyperparameters
     }
     
-    # Set the signature size. This parameter may not be used by all feature
-    # selection methods, and will be ignored in that case.
+    # Set the signature size. This parameter may not be used by all variable
+    # importance methods, and will be ignored in that case.
     user_list$sign_size <- get_n_features(x = data)
     
     # Recreate the default parameter list with information from the
@@ -668,7 +668,7 @@ setMethod(
       parameter_list = parameter_list,
       user_list = user_list,
       n_features = ifelse(
-        object@fs_method %in% .get_available_no_features_vimp_methods(),
+        object@vimp_method %in% .get_available_no_features_vimp_methods(),
         0L,
         get_n_features(data)
       )
@@ -1352,7 +1352,7 @@ setMethod(
       
     } else if (
       incumbent_set$validation_score < 0.0 &&
-      !object@fs_method %in% c("none", "signature_only")
+      !object@vimp_method %in% c("none", "signature_only")
     ) {
       # In this case, no set of hyperparameters found that led to a model that
       # was better than the naive model. We then train a naive model instead, by
@@ -1426,7 +1426,7 @@ setMethod(
     object <- promote_vimp_method(object = methods::new(
       "familiarVimpMethod",
       outcome_type = settings$data$outcome_type,
-      hyperparameters = settings$fs$param[[vimp_method]],
+      hyperparameters = settings$vimp$param[[vimp_method]],
       vimp_method = vimp_method,
       outcome_info = .get_outcome_info(),
       run_table = run$run_table,
@@ -1458,7 +1458,7 @@ setMethod(
       outcome_type = settings$data$outcome_type,
       hyperparameters = settings$mb$hyper_param[[learner]],
       learner = learner,
-      fs_method = vimp_method,
+      vimp_method = vimp_method,
       run_table = run$run_table,
       outcome_info = .get_outcome_info(),
       settings = settings$eval,
@@ -1498,12 +1498,12 @@ setMethod(
   } else if (is_vimp) {
     vimp_method <- object@learner
   } else {
-    vimp_method <- object@fs_method
+    vimp_method <- object@vimp_method
   }
   
   # Set created hyperparameters.
   if (is_vimp) {
-    dir_path <- file.path(file_paths$fs_dir, vimp_method)
+    dir_path <- file.path(file_paths$vimp_dir, vimp_method)
   } else {
     dir_path <- file.path(file_paths$mb_dir, object@learner, vimp_method)
   }
@@ -1574,11 +1574,11 @@ setMethod(
   } else if (is_vimp) {
     vimp_method <- object@learner
   } else {
-    vimp_method <- object@fs_method
+    vimp_method <- object@vimp_method
   }
   
   if (is_vimp) {
-    dir_path <- file.path(file_paths$fs_dir, vimp_method)
+    dir_path <- file.path(file_paths$vimp_dir, vimp_method)
     file_name <- paste0(
       object@project_id, "_hyperparameters_",
       vimp_method, "_",

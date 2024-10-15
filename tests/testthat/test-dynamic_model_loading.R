@@ -5,7 +5,7 @@ testthat::skip_on_ci()
 familiar:::integrated_test(
   dynamic_model_loading = TRUE,
   experimental_design = "fs+mb",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,

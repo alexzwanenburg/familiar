@@ -260,7 +260,7 @@ setMethod(
     )
     
     # Retrieve variable importance table objects.
-    vimp_table_list <- .retrieve_feature_selection_data(
+    vimp_table_list <- .retrieve_variable_importance_data(
       vimp_method = object@vimp_method,
       project_list = project_list,
       file_paths = file_paths

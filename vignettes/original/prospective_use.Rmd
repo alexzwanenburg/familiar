@@ -117,7 +117,7 @@ familiar::summon_familiar(
   outcome_column = "birth_weight",
   experimental_design = "bs(fs+mb,5) + ev",
   cluster_method = "none",
-  fs_method = "none",
+  vimp_method = "none",
   learner = "lasso",
   parallel = FALSE,
   estimation_type = "point")

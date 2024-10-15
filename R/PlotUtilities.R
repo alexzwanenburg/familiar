@@ -350,7 +350,7 @@ theme_familiar <- function(
         function(name, x) {
           split_variable_name <- name
 
-          if (split_variable_name == "fs_method") {
+          if (split_variable_name == "vimp_method") {
             split_variable_name <- "VIMP method"
           } else if (split_variable_name == "data_set") {
             split_variable_name <- "data set"

@@ -18,6 +18,6 @@ knitr::opts_chunk$set(fig.path = "prospective_use/")
 knitr::knit("vignettes/original/prospective_use.Rmd", output = "vignettes/prospective_use_precompiled.Rmd")
 
 knitr::knit("vignettes/original/introduction.Rmd", output = "vignettes/introduction_precompiled.Rmd")
-knitr::knit("vignettes/original/feature_selection.Rmd", output = "vignettes/feature_selection_precompiled.Rmd")
+knitr::knit("vignettes/original/variable_importance.Rmd", output = "vignettes/variable_importance_precompiled.Rmd")
 knitr::knit("vignettes/original/learners.Rmd", output = "vignettes/learners_precompiled.Rmd")
 knitr::knit("vignettes/original/performance_metrics.Rmd", output = "vignettes/performance_metrics_precompiled.Rmd")

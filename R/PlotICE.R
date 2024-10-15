@@ -106,13 +106,13 @@ NULL
 #'   predicted value as a function of two features.
 #'
 #'   Available splitting variables are: `feature_x`, `feature_y` (2D only),
-#'   `fs_method`, `learner`, `data_set` and `positive_class` (categorical
+#'   `vimp_method`, `learner`, `data_set` and `positive_class` (categorical
 #'   outcomes) or `evaluation_time` (survival outcomes). By default, for 1D ICE
-#'   plots the data are split by `feature_x`, `fs_method` and `learner`, with
+#'   plots the data are split by `feature_x`, `vimp_method` and `learner`, with
 #'   faceting by `data_set`, `positive_class` or `evaluation_time`. If only
 #'   partial dependence is shown, `positive_class` and `evaluation_time` are
 #'   used to set colours instead. For 2D plots, by default the data are split by
-#'   `feature_x`, `fs_method` and `learner`, with faceting by `data_set`,
+#'   `feature_x`, `vimp_method` and `learner`, with faceting by `data_set`,
 #'   `positive_class` or `evaluation_time`. The `color_by` argument cannot be
 #'   used with 2D plots, and attempting to do so causes an error. Attempting to
 #'   specify `feature_x` or `feature_y` for `color_by` will likewise result in
@@ -136,7 +136,7 @@ NULL
 #'   plots. To avoid clutter, only point estimates for individual samples are
 #'   shown.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -318,13 +318,13 @@ setMethod(
 #'   a function of two features.
 #'
 #'   Available splitting variables are: `feature_x`, `feature_y` (2D only),
-#'   `fs_method`, `learner`, `data_set` and `positive_class` (categorical
+#'   `vimp_method`, `learner`, `data_set` and `positive_class` (categorical
 #'   outcomes) or `evaluation_time` (survival outcomes). By default, for 1D ICE
-#'   plots the data are split by `feature_x`, `fs_method` and `learner`, with
+#'   plots the data are split by `feature_x`, `vimp_method` and `learner`, with
 #'   faceting by `data_set`, `positive_class` or `evaluation_time`. If only
 #'   partial dependence is shown, `positive_class` and `evaluation_time` are
 #'   used to set colours instead. For 2D plots, by default the data are split by
-#'   `feature_x`, `fs_method` and `learner`, with faceting by `data_set`,
+#'   `feature_x`, `vimp_method` and `learner`, with faceting by `data_set`,
 #'   `positive_class` or `evaluation_time`. The `color_by` argument cannot be
 #'   used with 2D plots, and attempting to do so causes an error. Attempting to
 #'   specify `feature_x` or `feature_y` for `color_by` will likewise result in
@@ -354,7 +354,7 @@ setMethod(
 #'  * `none`: confidence intervals are not shown. The point estimate of the
 #'   partial dependence is shown as usual.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -754,7 +754,7 @@ setMethod(
     # Set default splitting variables.
     if (is.null(split_by) && is.null(facet_by) && is.null(color_by)) {
       if (show_2d) {
-        split_by <- c("fs_method", "learner", "feature_x", "feature_y")
+        split_by <- c("vimp_method", "learner", "feature_x", "feature_y")
 
         facet_by <- c("data_set")
         if (object@outcome_type == "multinomial") {
@@ -767,7 +767,7 @@ setMethod(
         color_by <- NULL
         
       } else if (show_ice) {
-        split_by <- c("fs_method", "learner", "feature_x")
+        split_by <- c("vimp_method", "learner", "feature_x")
 
         facet_by <- c("data_set")
         if (object@outcome_type == "multinomial") {
@@ -780,7 +780,7 @@ setMethod(
         color_by <- NULL
         
       } else if (show_pd) {
-        split_by <- c("fs_method", "learner", "feature_x")
+        split_by <- c("vimp_method", "learner", "feature_x")
         facet_by <- c("data_set")
 
         color_by <- NULL
@@ -794,7 +794,7 @@ setMethod(
     }
 
     # Determine splitting variables.
-    available_splitting_vars <- c("fs_method", "learner", "data_set", "feature_x")
+    available_splitting_vars <- c("vimp_method", "learner", "data_set", "feature_x")
     if (show_2d) {
       available_splitting_vars <- c(available_splitting_vars, "feature_y")
     }

@@ -40,10 +40,10 @@ NULL
 #'  dataset. Any data used for calibration (e.g. baseline survival) is obtained
 #'  during model creation.
 #'
-#'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
+#'  Available splitting variables are: `vimp_method`, `learner`, `data_set` and
 #'  `evaluation_time` (survival analysis only) and `positive_class` (multinomial
 #'  endpoints only). By default, separate figures are created for each
-#'  combination of `fs_method` and `learner`, with facetting by `data_set`.
+#'  combination of `vimp_method` and `learner`, with facetting by `data_set`.
 #'
 #'  Calibration in survival analysis is performed at set time points so that
 #'  survival probabilities can be computed from the model, and compared with
@@ -417,7 +417,7 @@ setMethod(
 
     # Add default splitting variables.
     if (is.null(split_by) & is.null(color_by) & is.null(facet_by)) {
-      split_by <- c("fs_method", "learner")
+      split_by <- c("vimp_method", "learner")
 
       # Set faceting variables
       facet_by <- c("data_set")
@@ -436,7 +436,7 @@ setMethod(
     # studied. For survival outcomes, evaluation time is an additional splitting
     # point. For multinomial outcomes, the positive class indicator is an
     # additional splitting variable.
-    available_splitting_vars <- c("fs_method", "learner", "data_set")
+    available_splitting_vars <- c("vimp_method", "learner", "data_set")
     if (object@outcome_type %in% c("survival")) {
       available_splitting_vars <- c(available_splitting_vars, "evaluation_time")
     } else if (object@outcome_type %in% c("multinomial")) {

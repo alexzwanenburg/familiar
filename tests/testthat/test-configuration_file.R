@@ -40,7 +40,7 @@ for (parent_node in expected_node_names) {
     data = familiar:::.parse_experiment_settings,
     run = familiar:::.parse_setup_settings,
     preprocessing = familiar:::.parse_preprocessing_settings,
-    feature_selection = familiar:::.parse_feature_selection_settings,
+    feature_selection = familiar:::.parse_variable_importance_settings,
     model_development = familiar:::.parse_model_development_settings,
     hyperparameter_optimisation = familiar:::.parse_hyperparameter_optimisation_settings,
     evaluation = familiar:::.parse_evaluation_settings
@@ -66,7 +66,7 @@ for (parent_node in expected_node_names) {
     )
   }
 
-  if (parent_node != "feature_selection") {
+  if (parent_node != "variable_importance") {
     expected_config_args <- setdiff(
       expected_config_args,
       c("vimp_aggregation_rank_threshold", "vimp_aggregation_method")

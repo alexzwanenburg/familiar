@@ -26,9 +26,9 @@ NULL
 #'
 #' @details This function generates plots for decision curves.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set` and
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set` and
 #'   `positive_class` (categorical outcomes) or `evaluation_time` (survival
-#'   outcomes). By default, the data is split by `fs_method` and `learner`, with
+#'   outcomes). By default, the data is split by `vimp_method` and `learner`, with
 #'   faceting by `data_set` and colouring by `positive_class` or
 #'   `evaluation_time`.
 #'
@@ -45,7 +45,7 @@ NULL
 #'  * `none`: confidence intervals are not shown. The point estimate of the
 #'   decision curve is shown as usual.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -358,7 +358,7 @@ setMethod(
     if (is.null(split_by) && is.null(facet_by) && is.null(color_by)) {
       # Determine the number of learners and feature_selection methods.
       n_learner <- nlevels(x@data$learner)
-      n_fs_method <- nlevels(x@data$fs_method)
+      n_vimp_method <- nlevels(x@data$vimp_method)
 
       if (object@outcome_type %in% c("multinomial")) {
         n_class_or_time <- nlevels(x@data$positive_class)
@@ -370,9 +370,9 @@ setMethod(
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
-      if (n_learner > 1L && n_fs_method > 1L) {
+      if (n_learner > 1L && n_vimp_method > 1L) {
         # Split by learner and feature selection method.
-        split_by <- c("fs_method", "learner")
+        split_by <- c("vimp_method", "learner")
 
         if (n_class_or_time > 1L) {
           color_by <- split_variable
@@ -382,34 +382,34 @@ setMethod(
         }
         
       } else if (n_learner > 1L) {
-        # Implying n_fs_method == 1
+        # Implying n_vimp_method == 1
 
         if (n_class_or_time > 1L) {
-          split_by <- c("fs_method", "learner")
+          split_by <- c("vimp_method", "learner")
           color_by <- split_variable
           facet_by <- "data_set"
         } else {
-          split_by <- c("fs_method")
+          split_by <- c("vimp_method")
           color_by <- c("learner")
           facet_by <- c("data_set", split_variable)
         }
         
-      } else if (n_fs_method > 1L) {
+      } else if (n_vimp_method > 1L) {
         # Implying n_learner == 1
 
         if (n_class_or_time > 1L) {
-          split_by <- c("fs_method", "learner")
+          split_by <- c("vimp_method", "learner")
           color_by <- split_variable
           facet_by <- "data_set"
         } else {
           split_by <- "learner"
-          color_by <- "fs_method"
+          color_by <- "vimp_method"
           facet_by <- c("data_set", split_variable)
         }
         
       } else {
-        # Implying n_learner == n_fs_method == 1
-        split_by <- c("fs_method", "learner")
+        # Implying n_learner == n_vimp_method == 1
+        split_by <- c("vimp_method", "learner")
 
         if (n_class_or_time > 1L) {
           color_by <- split_variable
@@ -426,7 +426,7 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = c("fs_method", "learner", "data_set", split_variable)
+      available = c("vimp_method", "learner", "data_set", split_variable)
     )
 
     # Update splitting variables

@@ -347,10 +347,10 @@ This function generates a barplot based on variable importance of
 features.
 
 The only allowed values for \code{split_by}, \code{color_by} or \code{facet_by} are
-\code{fs_method} and \code{learner}, but note that \code{learner} has no effect when
+\code{vimp_method} and \code{learner}, but note that \code{learner} has no effect when
 plotting variable importance of features acquired during feature selection.
 
-Labeling methods such as \code{set_feature_names} or \code{set_fs_method_names} can
+Labeling methods such as \code{set_feature_names} or \code{set_vimp_method_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

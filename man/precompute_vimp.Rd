@@ -10,8 +10,8 @@ precompute_vimp(
   experiment_data = NULL,
   cl = NULL,
   experimental_design = "fs+mb",
-  fs_method = NULL,
-  fs_method_parameter = NULL,
+  vimp_method = NULL,
+  vimp_method_parameter = NULL,
   verbose = TRUE,
   ...
 )
@@ -48,10 +48,10 @@ This parameter has no effect if the \code{parallel} argument is set to \code{FAL
 
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building. The basic workflow components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance step.
 \item \code{mb}: (required) model building step. Though models are not learned by
 \code{precompute_vimp}, this element is still required to prevent issues when
 using the resulting \code{experimentData} object to warm-start the experiments.
@@ -90,19 +90,18 @@ dataset.
 
 This argument is ignored if the \code{experiment_data} argument is set.}
 
-\item{fs_method}{(\strong{required}) Feature selection method to be used for
-determining variable importance. \code{familiar} implements various feature
-selection methods. Please refer to the vignette on feature selection
-methods for more details.
+\item{vimp_method}{(\strong{required}) Variable importance method. \code{familiar}
+implements various variable importance methods. Please refer to the
+vignette on variable importance methods for more details.
 
-More than one feature selection method can be chosen. The experiment will
+More than one variable importance method can be chosen. The experiment will
 then repeated for each feature selection method.
 
-Feature selection methods determines the ranking of features. Actual
+Variable importance methods determine the ranking of features. Actual
 selection of features is done by optimising the signature size model
 hyperparameter during the hyperparameter optimisation step.}
 
-\item{fs_method_parameter}{(\emph{optional}) List of lists containing parameters
+\item{vimp_method_parameter}{(\emph{optional}) List of lists containing parameters
 for feature selection methods. Each sublist should have the name of the
 feature selection method it corresponds to.
 
@@ -116,7 +115,7 @@ assessing variable importance.}
 messages and warnings are returned.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_feature_selection_settings]{.parse_feature_selection_settings}}
+  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}
   \describe{
     \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
@@ -175,7 +174,7 @@ indicate the time-to-event or the time of last follow-up and the event
 status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
@@ -212,7 +211,7 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
     \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
 that should be included for the purpose of novelty detection.}
@@ -257,6 +256,10 @@ that defines the design.}
     \item{\code{imbalance_n_partitions}}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+    \item{\code{iteration_seed}}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of
 specific parameters such as \code{parallel_preprocessing}. However, when
@@ -663,11 +666,46 @@ preprocessing workflow. Defaults to \code{TRUE}. When set to \code{FALSE}, this 
 disable the use of parallel processing while preprocessing, regardless of
 the settings of the \code{parallel} parameter. \code{parallel_preprocessing} is
 ignored if \code{parallel=FALSE}.}
-    \item{\code{parallel_feature_selection}}{(\emph{optional}) Enable parallel processing for
-the feature selection workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
-this will disable the use of parallel processing while performing feature
-selection, regardless of the settings of the \code{parallel} parameter.
-\code{parallel_feature_selection} is ignored if \code{parallel=FALSE}.}
+    \item{\code{config}}{A list of settings, e.g. from an xml file.}
+    \item{\code{vimp_aggregation_method}}{(\emph{optional}) The method used to aggregate
+variable importances over different data subsets, e.g. bootstraps. The
+following methods can be selected:
+\itemize{
+\item \code{none}: Don't aggregate ranks, but rather aggregate the variable
+importance scores themselves.
+\item \code{mean}: Use the mean rank of a feature over the subsets to
+determine the aggregated feature rank.
+\item \code{median}: Use the median rank of a feature over the subsets to determine
+the aggregated feature rank.
+\item \code{best}: Use the best rank the feature obtained in any subset to determine
+the aggregated feature rank.
+\item \code{worst}: Use the worst rank the feature obtained in any subset to
+determine the aggregated feature rank.
+\item \code{stability}: Use the frequency of the feature being in the subset of
+highly ranked features as measure for the aggregated feature rank
+(Meinshausen and Buehlmann, 2010).
+\item \code{exponential}: Use a rank-weighted frequence of occurrence in the subset
+of highly ranked features as measure for the aggregated feature rank (Haury
+et al., 2011).
+\item \code{borda} (default): Use the borda count as measure for the aggregated
+feature rank (Wald et al., 2012).
+\item \code{enhanced_borda}: Use an occurrence frequency-weighted borda count as
+measure for the aggregated feature rank (Wald et al., 2012).
+\item \code{truncated_borda}: Use borda count computed only on features within the
+subset of highly ranked features.
+\item \code{enhanced_truncated_borda}: Apply both the enhanced borda method and the
+truncated borda method and use the resulting borda count as the aggregated
+feature rank.
+}
+
+The \emph{feature selection methods} vignette provides additional information.}
+    \item{\code{vimp_aggregation_rank_threshold}}{(\emph{optional}) The threshold used to
+define the subset of highly important features. If not set, this threshold
+is determined by maximising the variance in the occurrence value over all
+features over the subset size.
+
+This parameter is only relevant for \code{stability}, \code{exponential},
+\code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
   }}
 }
 \value{

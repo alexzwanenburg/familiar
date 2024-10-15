@@ -360,10 +360,10 @@
 ) {
   
   if (
-    object@fs_method %in% .get_available_random_vimp_methods() ||
-    object@fs_method %in% .get_available_none_vimp_methods() ||
-    object@fs_method %in% .get_available_signature_only_vimp_methods() ||
-    object@fs_method %in% .get_available_no_features_vimp_methods()
+    object@vimp_method %in% .get_available_random_vimp_methods() ||
+    object@vimp_method %in% .get_available_none_vimp_methods() ||
+    object@vimp_method %in% .get_available_signature_only_vimp_methods() ||
+    object@vimp_method %in% .get_available_no_features_vimp_methods()
   ) {
     return(NULL)
   }
@@ -379,7 +379,7 @@
     # Set up variable importance object.
     vimp_object <- promote_vimp_method(methods::new("familiarVimpMethod",
       outcome_type = object@outcome_type,
-      vimp_method = object@fs_method,
+      vimp_method = object@vimp_method,
       outcome_info = object@outcome_info,
       feature_info = object@feature_info,
       required_features = object@required_features,
@@ -389,7 +389,7 @@
     if (is_main_process) {
       # Load hyperparameters.
       vimp_object <- run_hyperparameter_optimisation(
-        vimp_method = object@fs_method,
+        vimp_method = object@vimp_method,
         data_id = tail(object@run_table, n = 1L)$data_id,
         verbose = FALSE
       )

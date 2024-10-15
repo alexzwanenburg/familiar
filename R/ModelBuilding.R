@@ -20,7 +20,7 @@ run_model_development <- function(
     data_id = mb_data_id
   )
   
-  # Identify combinations of feature selection methods and learners
+  # Identify combinations of variable importance methods and learners
   run_methods <- get_fs_learner_combinations(settings = settings)
   
   # Remove parallel clusters for model building in case these are not required.
@@ -29,8 +29,8 @@ run_model_development <- function(
     cl_mb <- cl
   }
   
-  # Create models by iterating over combination of feature selection methods and
-  # learners
+  # Create models by iterating over combination of variable importance methods
+  # and learners
   for (iter_methods in run_methods) {
     # Check which runs have been completed and skip if all methods were
     # analysed.
@@ -51,7 +51,7 @@ run_model_development <- function(
       paste0(
         "\nModel building: starting model building using \"",
         iter_methods$learner, "\" learner, based on \"",
-        iter_methods$fs_method, "\" variable importance."
+        iter_methods$vimp_method, "\" variable importances."
       ),
       indent = message_indent,
       verbose = verbose
@@ -64,7 +64,7 @@ run_model_development <- function(
       data_id = mb_data_id,
       settings = settings,
       file_paths = file_paths,
-      vimp_method = iter_methods$fs_method,
+      vimp_method = iter_methods$vimp_method,
       learner = iter_methods$learner,
       message_indent = message_indent + 1L,
       verbose = verbose
@@ -84,7 +84,7 @@ run_model_development <- function(
       paste0(
         "Model building: model building using \"",
         iter_methods$learner, "\" learner, based on \"",
-        iter_methods$fs_method, "\" variable importance, has been completed."
+        iter_methods$vimp_method, "\" variable importances, has been completed."
       ),
       indent = message_indent,
       verbose = verbose
@@ -125,11 +125,11 @@ build_model <- function(run, hpo_list) {
   
   # Read variable importance file and retrieve the variable importance table
   # objects.
-  vimp_table_list <- .retrieve_feature_selection_data(
-    fs_method = run$fs_method,
+  vimp_table_list <- .retrieve_variable_importance_data(
+    vimp_method = run$vimp_method,
     project_list = project_list,
     file_paths = file_paths
-  )[[run$fs_method]]
+  )[[run$vimp_method]]
   
   # Collect all relevant variable importance
   vimp_table_list <- collect_vimp_table(
@@ -153,8 +153,8 @@ build_model <- function(run, hpo_list) {
   # Get feature ranks
   vimp_table <- aggregate_vimp_table(
     vimp_table_list,
-    aggregation_method = settings$fs$aggregation,
-    rank_threshold = settings$fs$aggr_rank_threshold
+    aggregation_method = settings$vimp$aggregation,
+    rank_threshold = settings$vimp$aggr_rank_threshold
   )
   
   # Extract rank table.
@@ -165,7 +165,7 @@ build_model <- function(run, hpo_list) {
     "familiarModel",
     outcome_type = settings$data$outcome_type,
     learner = run$learner,
-    fs_method = run$fs_method,
+    vimp_method = run$vimp_method,
     run_table = run$run_table,
     hyperparameters = hyperparameter_object@hyperparameters,
     hyperparameter_data = hyperparameter_object@hyperparameter_data,
@@ -224,8 +224,8 @@ add_model_data_to_run_list <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   data_id <- run_id <- NULL
   
-  # Extract learner and fs_method from methods
-  fs_method <- methods$fs_method
+  # Extract learner and vimp_method from methods
+  vimp_method <- methods$vimp_method
   learner <- methods$learner
   
   # Get table with data and run ids from run_list
@@ -237,7 +237,7 @@ add_model_data_to_run_list <- function(
   # Construct file names
   run_data[, "mb_file" := get_object_file_name(
     learner = learner,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     project_id = project_list$project_id,
     data_id = data_id, 
     run_id = run_id,
@@ -246,12 +246,12 @@ add_model_data_to_run_list <- function(
   
   # Add file names and methods to run_list
   run_list <- mapply(
-    function(run_list, file_path, fs_method, learner) {
+    function(run_list, file_path, vimp_method, learner) {
       return(c(
         run_list,
         list(
           "mb_file" = file_path,
-          "fs_method" = fs_method,
+          "vimp_method" = vimp_method,
           "learner" = learner
         )
       ))
@@ -259,7 +259,7 @@ add_model_data_to_run_list <- function(
     run_list,
     run_data$mb_file,
     MoreArgs = list(
-      "fs_method" = fs_method,
+      "vimp_method" = vimp_method,
       "learner" = learner
     ),
     SIMPLIFY = FALSE
@@ -272,7 +272,7 @@ add_model_data_to_run_list <- function(
       dir_path = file_paths$mb_dir, 
       object_type = "familiarModel",
       learner = learner, 
-      fs_method = fs_method
+      vimp_method = vimp_method
     )
     
     # Determine which files already exist in the model building directory
@@ -294,7 +294,7 @@ add_model_data_to_run_list <- function(
 get_fs_learner_combinations <- function(settings) {
   # Generate all combinations
   combination_data <- data.table::as.data.table(expand.grid(
-    fs_method = settings$fs$fs_methods,
+    vimp_method = settings$vimp$vimp_methods,
     learner = settings$mb$learners,
     KEEP.OUT.ATTRS = FALSE,
     stringsAsFactors = FALSE
@@ -305,7 +305,7 @@ get_fs_learner_combinations <- function(settings) {
     seq_len(nrow(combination_data)),
     function(ii, data) {
       list(
-        "fs_method" = data$fs_method[ii],
+        "vimp_method" = data$vimp_method[ii],
         "learner" = data$learner[ii]
       )
     }, 

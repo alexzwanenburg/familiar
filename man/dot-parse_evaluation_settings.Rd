@@ -66,11 +66,10 @@ These identifiers are used to determine the cohorts used to determine a
 setting for \code{time_max}, if the \code{outcome_type} is \code{survival}, and both
 \code{time_max} and \code{evaluation_times} are not provided.}
 
-\item{vimp_aggregation_method}{Method for variable importance aggregation that
-was used for feature selection.}
+\item{vimp_aggregation_method}{Variable importance aggregation method.}
 
-\item{vimp_aggregation_rank_threshold}{Rank threshold for variable importance
-aggregation used during feature selection.}
+\item{vimp_aggregation_rank_threshold}{Rank threshold used for variable
+importance aggregation.}
 
 \item{prep_cluster_method}{Cluster method used during pre-processing.}
 
@@ -383,9 +382,9 @@ and 1 if they do not.}
 
 \item{eval_aggregation_method}{(\emph{optional}) Method for aggregating variable
 importances for the purpose of evaluation. Variable importances are
-determined during feature selection steps and after training the model. Both
-types are evaluated, but feature selection variable importance is only
-evaluated at run-time.
+determined both during initial variable importance computation steps and
+after training the model. Both types are evaluated after training the
+model, but only the initial variable importances are evaluated at run-time.
 
 See the documentation for the \code{vimp_aggregation_method} argument for
 information concerning the different methods available.}

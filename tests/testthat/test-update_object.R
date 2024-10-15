@@ -23,7 +23,7 @@ test_generate_experiment_parameters <- coro::generator(function(outcome_type) {
     coro::yield(list(
       "experimental_design" = "bs(fs+mb,3)",
       "outcome_type" = current_outcome_type,
-      "fs_method" = c("mim", "concordance"),
+      "vimp_method" = c("mim", "concordance"),
       "learner" = learner))
   }
 })

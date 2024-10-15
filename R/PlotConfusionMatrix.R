@@ -55,11 +55,11 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'   Available splitting variables are: `fs_method`, `learner` and `data_set`.
-#'   By default, the data is split by `fs_method` and `learner`, with facetting
+#'   Available splitting variables are: `vimp_method`, `learner` and `data_set`.
+#'   By default, the data is split by `vimp_method` and `learner`, with facetting
 #'   by `data_set`.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -277,7 +277,7 @@ setMethod(
 
     # Splitting variables
     if (is.null(split_by) && is.null(facet_by)) {
-      split_by <- c("fs_method", "learner")
+      split_by <- c("vimp_method", "learner")
       facet_by <- c("data_set")
     }
 
@@ -286,7 +286,7 @@ setMethod(
       x = x@data,
       split_by = split_by,
       facet_by = facet_by,
-      available = c("fs_method", "learner", "data_set")
+      available = c("vimp_method", "learner", "data_set")
     )
 
     # Update splitting variables

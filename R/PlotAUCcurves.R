@@ -24,8 +24,8 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'   `positive_class`. By default, the data is split by `fs_method` and
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set` and
+#'   `positive_class`. By default, the data is split by `vimp_method` and
 #'   `learner`, with faceting by `data_set` and colouring by `positive_class`.
 #'
 #'   Bootstrap confidence intervals of the ROC curve (if present) can be shown
@@ -40,7 +40,7 @@ NULL
 #'  * `none`: confidence intervals are not shown. The point estimate of the ROC
 #'   curve is shown as usual.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -249,8 +249,8 @@ setMethod(
 #'
 #' @details This function generates area under the precision-recall curve plots.
 #'
-#'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `positive_class`. By default, the data is split by `fs_method` and `learner`,
+#'  Available splitting variables are: `vimp_method`, `learner`, `data_set` and
+#'  `positive_class`. By default, the data is split by `vimp_method` and `learner`,
 #'  with faceting by `data_set` and colouring by `positive_class`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
@@ -273,7 +273,7 @@ setMethod(
 #'  * `none`: confidence intervals are not shown. The point estimate of the ROC
 #'  curve is shown as usual.
 #'
-#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'  Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
 #'
@@ -621,14 +621,14 @@ setMethod(
   if (is.null(split_by) && is.null(facet_by) && is.null(color_by)) {
     # Determine the number of learners and feature_selection methods.
     n_learner <- nlevels(x@data$learner)
-    n_fs_method <- nlevels(x@data$fs_method)
+    n_vimp_method <- nlevels(x@data$vimp_method)
     n_positive_class <- ifelse(
       object@outcome_type == "binomial",
       1L, nlevels(x@data$positive_class)
     )
     
-    if (n_learner > 1L && n_fs_method > 1L) {
-      split_by <- c("fs_method", "learner")
+    if (n_learner > 1L && n_vimp_method > 1L) {
+      split_by <- c("vimp_method", "learner")
       
       if (n_positive_class > 1L) {
         color_by <- "positive_class"
@@ -639,35 +639,35 @@ setMethod(
       }
       
     } else if (n_learner > 1L) {
-      # Implying n_fs_method == 1
+      # Implying n_vimp_method == 1
       
       if (n_positive_class > 1L) {
-        split_by <- c("fs_method", "learner")
+        split_by <- c("vimp_method", "learner")
         color_by <- "positive_class"
         facet_by <- "data_set"
         
       } else {
-        split_by <- c("fs_method")
+        split_by <- c("vimp_method")
         color_by <- c("learner")
         facet_by <- c("data_set", "positive_class")
       }
       
-    } else if (n_fs_method > 1L) {
+    } else if (n_vimp_method > 1L) {
       # Implying n_learner == 1
       
       if (n_positive_class > 1L) {
-        split_by <- c("fs_method", "learner")
+        split_by <- c("vimp_method", "learner")
         color_by <- "positive_class"
         facet_by <- "data_set"
       } else {
         split_by <- "learner"
-        color_by <- "fs_method"
+        color_by <- "vimp_method"
         facet_by <- c("data_set", "positive_class")
       }
       
     } else {
-      # Implying n_learner == n_fs_method == 1
-      split_by <- c("fs_method", "learner")
+      # Implying n_learner == n_vimp_method == 1
+      split_by <- c("vimp_method", "learner")
       
       if (n_positive_class > 1L) {
         color_by <- "positive_class"
@@ -684,7 +684,7 @@ setMethod(
     split_by = split_by,
     color_by = color_by,
     facet_by = facet_by,
-    available = c("fs_method", "learner", "data_set", "positive_class")
+    available = c("vimp_method", "learner", "data_set", "positive_class")
   )
   
   # Update splitting variables

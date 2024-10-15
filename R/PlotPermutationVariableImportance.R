@@ -38,7 +38,7 @@ NULL
 #'   The following splitting variables are available for `split_by`, `color_by`
 #'   and `facet_by`:
 #'
-#'  * `fs_method`: feature selection methods.
+#'  * `vimp_method`: variable importance methods.
 #'
 #'  * `learner`: learners.
 #'
@@ -51,11 +51,11 @@ NULL
 #'  * `similarity_threshold`: the similarity threshold used to identify groups
 #'   of features to permute simultaneously.
 #'
-#'   By default, the data is split by `fs_method`, `learner` and `metric`,
+#'   By default, the data is split by `vimp_method`, `learner` and `metric`,
 #'   faceted by `data_set` and `evaluation_time`, and coloured by
 #'   `similarity_threshold`.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_feature_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_feature_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -329,7 +329,7 @@ setMethod(
 
     # Set default splitting variables if none are provided.
     if (is.null(split_by) && is.null(color_by) && is.null(facet_by)) {
-      split_by <- c("fs_method", "learner", "metric")
+      split_by <- c("vimp_method", "learner", "metric")
 
       facet_by <- c("data_set")
       if (object@outcome_type %in% c("survival")) {
@@ -341,7 +341,7 @@ setMethod(
 
     # Set available splitting variables.
     available_splitting_variables <- c(
-      "fs_method", "learner", "data_set", "metric", "similarity_threshold"
+      "vimp_method", "learner", "data_set", "metric", "similarity_threshold"
     )
     if (object@outcome_type %in% c("survival")) {
       available_splitting_variables <- c(available_splitting_variables, "evaluation_time")
@@ -757,7 +757,7 @@ setMethod(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- metric <- similarity_threshold <- order_id <- i.order_id <- NULL
-  data_set <- learner <- fs_method <- NULL
+  data_set <- learner <- vimp_method <- NULL
 
   # Create local copy
   x <- data.table::copy(x)
@@ -790,7 +790,7 @@ setMethod(
     # Break in case all features have an unique order id.
     if (data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break
 
-    for (current_fs_method in levels(x$fs_method)) {
+    for (current_vimp_method in levels(x$vimp_method)) {
       # Break in case all features have an unique order id.
       if (data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break
 
@@ -806,7 +806,7 @@ setMethod(
             for (id_table in split(
               x[
                 data_set == current_data_set &
-                fs_method == current_fs_method &
+                vimp_method == current_vimp_method &
                 learner == current_learner &
                 metric == current_metric &
                 similarity_threshold == current_threshold

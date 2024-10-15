@@ -14,10 +14,11 @@ extract_experimental_setup(
 \arguments{
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building, and external validation. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building, and external validation. The basic workflow
+components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance computation step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
 to subsampling will always be conducted if the subsampling methods create

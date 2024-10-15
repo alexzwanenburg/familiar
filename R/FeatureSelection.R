@@ -1,4 +1,4 @@
-run_feature_selection <- function(
+run_variable_importance_computation <- function(
     cl,
     project_list,
     settings,
@@ -7,13 +7,13 @@ run_feature_selection <- function(
     verbose = TRUE
 ) {
   # Check which data object is required for computing variable importances.
-  fs_data_id <- .get_process_step_data_identifier(
+  vimp_data_id <- .get_process_step_data_identifier(
     project_info = project_list,
     process_step = "vimp"
   )
 
   # Get variable importance methods that still need to be checked.
-  run_vimp_methods <- .find_missing_feature_selection_data(
+  run_vimp_methods <- .find_missing_variable_importance_data(
     project_list = project_list,
     settings = settings,
     file_paths = file_paths
@@ -22,12 +22,12 @@ run_feature_selection <- function(
   # Get runs
   run_list <- .get_run_list(
     iteration_list = project_list$iter_list,
-    data_id = fs_data_id
+    data_id = vimp_data_id
   )
 
   # Remove cluster information in case no parallelisation is provided.
   cl_fs <- NULL
-  if (settings$fs$do_parallel) cl_fs <- cl
+  if (settings$vimp$do_parallel) cl_fs <- cl
 
   # Create variable importance matrices by iterating over variable importance
   # methods
@@ -45,7 +45,7 @@ run_feature_selection <- function(
     hpo_list <- run_hyperparameter_optimisation(
       cl = cl,
       project_list = project_list,
-      data_id = fs_data_id,
+      data_id = vimp_data_id,
       settings = settings,
       file_paths = file_paths,
       vimp_method = curr_vimp_method,
@@ -68,7 +68,7 @@ run_feature_selection <- function(
     )
 
     # Save to file
-    saveRDS(vimp_list, file = .get_feature_selection_data_filename(
+    saveRDS(vimp_list, file = .get_variable_importance_data_filename(
       project_id = project_list$project_id,
       vimp_method = curr_vimp_method,
       file_paths = file_paths
@@ -161,7 +161,7 @@ compute_variable_importance <- function(
 
 
 
-.find_missing_feature_selection_data <- function(
+.find_missing_variable_importance_data <- function(
     project_list, 
     settings, 
     file_paths
@@ -170,10 +170,10 @@ compute_variable_importance <- function(
   vimp_method <- fs_file <- NULL
 
   # All variable importance methods
-  file_table <- data.table::data.table("vimp_method" = settings$fs$vimp_methods)
+  file_table <- data.table::data.table("vimp_method" = settings$vimp$vimp_methods)
 
   # Add expected variable importance file names
-  file_table[, "fs_file" := .get_feature_selection_data_filename(
+  file_table[, "fs_file" := .get_variable_importance_data_filename(
     project_id = project_list$project_id,
     vimp_method = vimp_method,
     file_paths = file_paths
@@ -182,7 +182,7 @@ compute_variable_importance <- function(
   # List files in directory
   file_list <- normalizePath(
     list.files(
-      path = file_paths$fs_dir,
+      path = file_paths$vimp_dir,
       pattern = paste0(project_list$project_id, "_vimp_"),
       full.names = TRUE,
       recursive = TRUE
@@ -198,23 +198,34 @@ compute_variable_importance <- function(
 
 
 
-.get_feature_selection_data_filename <- function(
+.get_variable_importance_data_filename <- function(
     vimp_method, 
     project_id, 
-    file_paths
+    file_paths,
+    old = FALSE
 ) {
-  return(normalizePath(
-    file.path(
-      file_paths$fs_dir,
-      paste0(project_id, "_vimp_", vimp_method, ".RDS")
-    ),
-    mustWork = FALSE
-  ))
+  if (old) {
+    return(normalizePath(
+      file.path(
+        file_paths$vimp_dir,
+        paste0(project_id, "_fs_", vimp_method, ".RDS")
+      ),
+      mustWork = FALSE
+    ))
+  } else {
+    return(normalizePath(
+      file.path(
+        file_paths$vimp_dir,
+        paste0(project_id, "_vimp_", vimp_method, ".RDS")
+      ),
+      mustWork = FALSE
+    )) 
+  }
 }
 
 
 
-.retrieve_feature_selection_data <- function(
+.retrieve_variable_importance_data <- function(
     vimp_method, 
     project_list, 
     file_paths
@@ -226,7 +237,7 @@ compute_variable_importance <- function(
       # Attempt to read the object. This should produce a list of variable
       # importance tables.
       vimp_table_sub_list <- tryCatch(
-        readRDS(.get_feature_selection_data_filename(
+        readRDS(.get_variable_importance_data_filename(
           vimp_method = x,
           project_id = project_list$project_id,
           file_paths = file_paths
@@ -235,7 +246,21 @@ compute_variable_importance <- function(
       )
       
       # Check if there were issues reading the file.
-      if (inherits(vimp_table_sub_list, "error"))  return(NULL)
+      if (inherits(vimp_table_sub_list, "error")) {
+        # Check if the file used an older style.
+        vimp_table_sub_list <- tryCatch(
+          readRDS(.get_variable_importance_data_filename(
+            vimp_method = x,
+            project_id = project_list$project_id,
+            file_paths = file_paths,
+            old = TRUE
+          )),
+          error = identity
+        )
+        
+        # Check if there were issues reading the file.
+        if (inherits(vimp_table_sub_list, "error")) return(NULL)
+      } 
       
       # Iterate over contents of the variable importance table list to update
       # these to the latest definitions.

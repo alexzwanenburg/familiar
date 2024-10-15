@@ -75,7 +75,7 @@ familiar:::test_plot_ordering(
   data_element = "decision_curve_analyis",
   outcome_type_available = c("binomial"),
   plot_args = list(
-    "facet_by" = c("learner", "fs_method"),
+    "facet_by" = c("learner", "vimp_method"),
     "color_by" = "data_set"),
   debug = debug_flag
 )
@@ -86,7 +86,7 @@ familiar:::test_plot_ordering(
   data_element = "decision_curve_analyis",
   outcome_type_available = c("multinomial"),
   plot_args = list(
-    "facet_by" = c("learner", "fs_method"),
+    "facet_by" = c("learner", "vimp_method"),
     "color_by" = c("data_set", "positive_class")),
   debug = debug_flag
 )
@@ -97,7 +97,7 @@ familiar:::test_plot_ordering(
   data_element = "decision_curve_analyis",
   outcome_type_available = c("survival"),
   plot_args = list(
-    "facet_by" = c("learner", "fs_method"),
+    "facet_by" = c("learner", "vimp_method"),
     "color_by" = c("data_set")),
   debug = debug_flag
 )

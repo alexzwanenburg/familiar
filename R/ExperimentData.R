@@ -94,7 +94,7 @@ load_experiment_data <- function(x, file_paths) {
     for (vimp_method in names(x@vimp_table_list)) {
       
       # Set file name
-      file_name <- .get_feature_selection_data_filename(
+      file_name <- .get_variable_importance_data_filename(
         project_id = x@project_id,
         vimp_method = vimp_method,
         file_paths = file_paths

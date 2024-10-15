@@ -31,7 +31,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_feature_similarity,
   data_element = "feature_similarity",
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
-  plot_args = list("facet_by" = c("learner", "fs_method", "data_set")),
+  plot_args = list("facet_by" = c("learner", "vimp_method", "data_set")),
   debug = debug_flag
 )
 

@@ -50,16 +50,17 @@ finish before exhausting the set of bootstraps.}
 \item{optimisation_determine_vimp}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
 bootstraps created during the optimisation process (\code{TRUE}) or the
-applicable results from the feature selection step are used (\code{FALSE}).
+applicable results from the variable importance computation step are used
+(\code{FALSE}).
 
 Determining variable importance increases the initial computational
 overhead. However, it prevents positive biases for the out-of-bag data due
 to overlap of these data with the development data set used for the feature
 selection step. In this case, any hyperparameters of the variable
 importance method are not determined separately for each bootstrap, but
-those obtained during the feature selection step are used instead. In case
-multiple of such hyperparameter sets could be applicable, the set that will
-be used is randomly selected for each bootstrap.
+those obtained during the variable importance computation step are used
+instead. In case multiple of such hyperparameter sets could be applicable,
+the set that will be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}

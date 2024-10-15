@@ -260,9 +260,9 @@ as_prediction_table <- function(
   
   # Set vimp method.
   if (!is.waive(vimp_method)) {
-    object@fs_method <- vimp_method
+    object@vimp_method <- vimp_method
   } else if (is(model_object, "familiarModelUnion")) {
-    object@fs_method <- model_object@fs_method
+    object@vimp_method <- model_object@vimp_method
   }
   
   if (is_empty(x)) {

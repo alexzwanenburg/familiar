@@ -70,7 +70,7 @@ test_create_experiment_archive <- function(
       coro::yield(list(
         "experimental_design" = "bs(fs+mb,3)",
         "outcome_type" = current_outcome_type,
-        "fs_method" = c("mim", "concordance"),
+        "vimp_method" = c("mim", "concordance"),
         "learner" = learner))
     }
   })

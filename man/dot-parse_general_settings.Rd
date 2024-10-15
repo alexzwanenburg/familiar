@@ -16,7 +16,7 @@ worklow}
 \item{data}{Data set as loaded using the \code{.load_data} function.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_feature_selection_settings]{.parse_feature_selection_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
+  Arguments passed on to \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
   \describe{
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of
@@ -424,18 +424,17 @@ preprocessing workflow. Defaults to \code{TRUE}. When set to \code{FALSE}, this 
 disable the use of parallel processing while preprocessing, regardless of
 the settings of the \code{parallel} parameter. \code{parallel_preprocessing} is
 ignored if \code{parallel=FALSE}.}
-    \item{\code{fs_method}}{(\strong{required}) Feature selection method to be used for
-determining variable importance. \code{familiar} implements various feature
-selection methods. Please refer to the vignette on feature selection
-methods for more details.
+    \item{\code{vimp_method}}{(\strong{required}) Variable importance method. \code{familiar}
+implements various variable importance methods. Please refer to the
+vignette on variable importance methods for more details.
 
-More than one feature selection method can be chosen. The experiment will
+More than one variable importance method can be chosen. The experiment will
 then repeated for each feature selection method.
 
-Feature selection methods determines the ranking of features. Actual
+Variable importance methods determine the ranking of features. Actual
 selection of features is done by optimising the signature size model
 hyperparameter during the hyperparameter optimisation step.}
-    \item{\code{fs_method_parameter}}{(\emph{optional}) List of lists containing parameters
+    \item{\code{vimp_method_parameter}}{(\emph{optional}) List of lists containing parameters
 for feature selection methods. Each sublist should have the name of the
 feature selection method it corresponds to.
 
@@ -483,11 +482,11 @@ features over the subset size.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
-    \item{\code{parallel_feature_selection}}{(\emph{optional}) Enable parallel processing for
-the feature selection workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
+    \item{\code{parallel_vimp}}{(\emph{optional}) Enable parallel processing for
+the variable importance workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while performing feature
 selection, regardless of the settings of the \code{parallel} parameter.
-\code{parallel_feature_selection} is ignored if \code{parallel=FALSE}.}
+\code{parallel_vimp} is ignored if \code{parallel=FALSE}.}
     \item{\code{learner}}{(\strong{required}) One or more algorithms used for model
 development. A sizeable number learners is supported in \code{familiar}. Please
 see the vignette on learners for more information concerning the available
@@ -526,16 +525,17 @@ finish before exhausting the set of bootstraps.}
     \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
 bootstraps created during the optimisation process (\code{TRUE}) or the
-applicable results from the feature selection step are used (\code{FALSE}).
+applicable results from the variable importance computation step are used
+(\code{FALSE}).
 
 Determining variable importance increases the initial computational
 overhead. However, it prevents positive biases for the out-of-bag data due
 to overlap of these data with the development data set used for the feature
 selection step. In this case, any hyperparameters of the variable
 importance method are not determined separately for each bootstrap, but
-those obtained during the feature selection step are used instead. In case
-multiple of such hyperparameter sets could be applicable, the set that will
-be used is randomly selected for each bootstrap.
+those obtained during the variable importance computation step are used
+instead. In case multiple of such hyperparameter sets could be applicable,
+the set that will be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}
@@ -1027,9 +1027,9 @@ Gower's distance: distance is 0 if the values in a pair of samples match,
 and 1 if they do not.}
     \item{\code{eval_aggregation_method}}{(\emph{optional}) Method for aggregating variable
 importances for the purpose of evaluation. Variable importances are
-determined during feature selection steps and after training the model. Both
-types are evaluated, but feature selection variable importance is only
-evaluated at run-time.
+determined both during initial variable importance computation steps and
+after training the model. Both types are evaluated after training the
+model, but only the initial variable importances are evaluated at run-time.
 
 See the documentation for the \code{vimp_aggregation_method} argument for
 information concerning the different methods available.}

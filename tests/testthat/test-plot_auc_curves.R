@@ -61,7 +61,7 @@ familiar:::test_plot_ordering(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set", "positive_class")),
   debug = debug_flag
 )
@@ -122,7 +122,7 @@ familiar:::test_plot_ordering(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set", "positive_class")),
   debug = debug_flag
 )

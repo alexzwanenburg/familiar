@@ -315,18 +315,19 @@ covariance matrix are then used to compute a p-value.
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:
 \itemize{
-\item \code{fs_method}: feature selection methods
+\item \code{vimp_method}: variable importance methods
 \item \code{learner}: learners
 \item \code{data_set}: data sets
 }
 
-Unlike for plots of feature ranking in feature selection and after
-modelling (as assessed by model-specific routines), clusters of features
-are now found during creation of underlying \code{familiarData} objects, instead
-of through consensus clustering. Hence, clustering results may differ due
-to differences in the underlying datasets.
+Unlike for plots of feature ranking in initial variable importance
+computation and after modelling (as assessed by model-specific routines),
+clusters of features are now found during creation of underlying
+\code{familiarData} objects, instead of through consensus clustering. Hence,
+clustering results may differ due to differences in the underlying
+datasets.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_feature_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

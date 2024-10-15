@@ -96,7 +96,7 @@ setMethod(
     # ... This prevents an error caused by multiple matching arguments.
     dots <- list(...)
     dots$parallel <- NULL
-    dots$fs_method <- NULL
+    dots$vimp_method <- NULL
     dots$hyperparameter <- NULL
 
     # Create setting_hyperparam so that it can be parsed correctly.
@@ -108,7 +108,7 @@ setMethod(
     }
 
     # Determine if a naive model should be forced.
-    fs_method <- ifelse(create_naive, "no_features", "none")
+    vimp_method <- ifelse(create_naive, "no_features", "none")
     
     settings <- do.call(
       .parse_general_settings,
@@ -117,7 +117,7 @@ setMethod(
           "settings" = settings,
           "data" = data_bypass@data,
           "parallel" = FALSE,
-          "fs_method" = fs_method,
+          "vimp_method" = vimp_method,
           "learner" = learner,
           "hyperparameter" = setting_hyperparam
         ),
@@ -219,7 +219,7 @@ setMethod(
       "familiarModel",
       outcome_type = settings$data$outcome_type,
       learner = learner,
-      fs_method = fs_method,
+      vimp_method = vimp_method,
       hyperparameters = param_list,
       required_features = required_features,
       model_features = model_features,
@@ -365,7 +365,7 @@ setMethod(
     # ... This prevents an error caused by multiple matching arguments.
     dots <- list(...)
     dots$parallel <- NULL
-    dots$fs_method <- NULL
+    dots$vimp_method <- NULL
     dots$hyperparameter <- NULL
 
     # Create setting_hyperparam so that it can be parsed correctly.
@@ -383,7 +383,7 @@ setMethod(
           "settings" = settings,
           "data" = data_bypass@data,
           "parallel" = FALSE,
-          "fs_method" = "none",
+          "vimp_method" = "none",
           "learner" = "glm",
           "novelty_detector" = detector,
           "detector_parameters" = setting_hyperparam

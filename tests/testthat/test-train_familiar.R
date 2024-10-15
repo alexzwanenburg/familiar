@@ -11,7 +11,7 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "outcome",
@@ -44,7 +44,7 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "none",
+  vimp_method = "none",
   learner = "glm_multinomial",
   outcome_type = "multinomial",
   outcome_column = "outcome",
@@ -73,7 +73,7 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_gaussian",
   outcome_type = "continuous",
   outcome_column = "outcome",
@@ -100,7 +100,7 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "none",
+  vimp_method = "none",
   learner = "cox",
   outcome_type = "survival",
   outcome_column = c("outcome_time", "outcome_event"),
@@ -140,7 +140,7 @@ experiment_data <- familiar::precompute_data_assignment(
 model <- familiar::train_familiar(
   data = data,
   experiment_data = experiment_data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "outcome",
@@ -170,7 +170,7 @@ data <- familiar:::test_create_good_data(
 model <- familiar::train_familiar(
   data = data,
   cluster_method = "none",
-  fs_method = "none",
+  vimp_method = "none",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "outcome",
@@ -197,7 +197,7 @@ data <- familiar:::test_create_good_data(
 model <- familiar::train_familiar(
   data = data,
   signature = c("feature_1", "feature_2a"),
-  fs_method = "signature_only",
+  vimp_method = "signature_only",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "outcome",
@@ -229,7 +229,7 @@ data <- familiar:::test_create_good_data(
 model <- familiar::train_familiar(
   data = data,
   signature = c("feature_1", "feature_2a"),
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "outcome",

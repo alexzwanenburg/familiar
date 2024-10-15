@@ -46,9 +46,9 @@ NULL
 #'   survival the y-axis represents. It is therefore recommended to provide
 #'   `x_label` and `y_label` arguments.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set`,
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
 #'   `group` and `stratification_method`. By default, separate figures are
-#'   created for each combination of `fs_method` and `learner`, with faceting by
+#'   created for each combination of `vimp_method` and `learner`, with faceting by
 #'   `data_set`, colouring of the strata in each individual plot by
 #'   `group`.
 #'
@@ -407,7 +407,7 @@ setMethod(
         is.null(color_by) &&
         is.null(linetype_by) &&
         is.null(facet_by)) {
-      split_by <- c("fs_method", "learner", "stratification_method")
+      split_by <- c("vimp_method", "learner", "stratification_method")
       color_by <- c("group")
       facet_by <- c("data_set")
     }
@@ -420,7 +420,7 @@ setMethod(
       linetype_by = linetype_by,
       facet_by = facet_by,
       available = c(
-        "fs_method", "learner", "data_set", "group", "stratification_method"
+        "vimp_method", "learner", "data_set", "group", "stratification_method"
       )
     )
 

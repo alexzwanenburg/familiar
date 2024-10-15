@@ -59,12 +59,12 @@ NULL
 #' @details This function plots model performance based on empirical bootstraps,
 #'   using various plot representations.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set`,
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
 #'   `evaluation_time` (survival outcome only) and `metric`. The default for
 #'   `heatmap` is to split by `metric`, facet by `data_set` and
-#'   `evaluation_time`, position `learner` along the x-axis and `fs_method`
+#'   `evaluation_time`, position `learner` along the x-axis and `vimp_method`
 #'   along the y-axis. The `color_by` argument is not used. The only valid
-#'   options for `x_axis_by` and `y_axis_by` are `learner` and `fs_method`.
+#'   options for `x_axis_by` and `y_axis_by` are `learner` and `vimp_method`.
 #'
 #'   For other plot types (`barplot`, `boxplot` and `violinplot`), depends on
 #'   the number of learners and feature selection methods:
@@ -76,16 +76,16 @@ NULL
 #'   `metric`, facet by `data_set` and have `learner` along the x-axis.
 #'
 #'  * *multiple feature selection methods and one learner*: the default is to
-#'   split by `metric`, facet by `data_set` and have `fs_method` along the
+#'   split by `metric`, facet by `data_set` and have `vimp_method` along the
 #'   x-axis.
 #'
 #'  * *multiple feature selection methods and learners*: the default is to split
-#'   by `metric`, facet by `data_set`, colour by `fs_method` and have `learner`
+#'   by `metric`, facet by `data_set`, colour by `vimp_method` and have `learner`
 #'   along the x-axis.
 #'
 #'   If applicable, additional faceting is performed for `evaluation_time`.
 #'
-#'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labeling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -397,32 +397,32 @@ setMethod(
 
         # Set y-axis variables. This splitting variable is only used in
         # heatmaps.
-        y_axis_by <- c("fs_method")
+        y_axis_by <- c("vimp_method")
         
       } else {
-        # Determine the number of learners and feature_selection methods.
+        # Determine the number of learners and variable importance methods.
         n_learner <- nlevels(x@data$learner)
-        n_fs_method <- nlevels(x@data$fs_method)
+        n_vimp_method <- nlevels(x@data$vimp_method)
 
         # Split by metric.
         split_by <- c("metric")
 
         # Set facetting variables.
-        if (n_learner > 1L || n_fs_method > 1L) {
+        if (n_learner > 1L || n_vimp_method > 1L) {
           facet_by <- c("data_set")
         }
 
         # Set color variables. This splitting variable is only used in
         # non-heatmap plots.
-        if (n_learner > 1L && n_fs_method > 1L) {
-          color_by <- c("fs_method")
+        if (n_learner > 1L && n_vimp_method > 1L) {
+          color_by <- c("vimp_method")
         }
 
         # Set x-axis variables.
-        if (n_learner == 1L && n_fs_method == 1L) {
+        if (n_learner == 1L && n_vimp_method == 1L) {
           x_axis_by <- c("data_set")
-        } else if (n_learner == 1L && n_fs_method > 1L) {
-          x_axis_by <- c("fs_method")
+        } else if (n_learner == 1L && n_vimp_method > 1L) {
+          x_axis_by <- c("vimp_method")
         } else {
           x_axis_by <- c("learner")
         }
@@ -448,7 +448,7 @@ setMethod(
         x_axis_by = x_axis_by,
         y_axis_by = y_axis_by,
         available = c(
-          "metric", "data_set", "fs_method",
+          "metric", "data_set", "vimp_method",
           "learner", split_variable
         )
       )
@@ -466,7 +466,7 @@ setMethod(
         facet_by = facet_by,
         x_axis_by = x_axis_by,
         available = c(
-          "metric", "data_set", "fs_method",
+          "metric", "data_set", "vimp_method",
           "learner", split_variable
         )
       )
@@ -484,18 +484,18 @@ setMethod(
     }
 
     if (plot_type == "heatmap") {
-      # Check that x_axis_by and y_axis_by only take fs_method or learner.
-      if (!x_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) {
-        ..error("The x_axis_by argument should be one of fs_method, learner or data_set.")
+      # Check that x_axis_by and y_axis_by only take vimp_method or learner.
+      if (!x_axis_by %in% c("vimp_method", "learner", "data_set", split_variable)) {
+        ..error("The x_axis_by argument should be one of vimp_method, learner or data_set.")
       }
-      if (!y_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) {
-        ..error("The y_axis_by argument should be one of fs_method, learner or data_set.")
+      if (!y_axis_by %in% c("vimp_method", "learner", "data_set", split_variable)) {
+        ..error("The y_axis_by argument should be one of vimp_method, learner or data_set.")
       }
     }
 
     if (is.null(x_axis_by)) {
       x_axis_by <- setdiff(
-        c("metric", "data_set", "fs_method", "learner", split_variable),
+        c("metric", "data_set", "vimp_method", "learner", split_variable),
         c(split_by, color_by, facet_by, y_axis_by)
       )
       if (length(x_axis_by) == 0L) ..error("The x_axis_by argument should be set.")
@@ -511,7 +511,7 @@ setMethod(
       x_label <- switch(
         x_axis_by,
         learner = "learner",
-        fs_method = "feature selection method",
+        vimp_method = "feature selection method",
         data_set = "dataset",
         metric = "metric",
         evaluation_time = "time"
@@ -787,7 +787,7 @@ setMethod(
       y_label <- switch(
         y_axis_by,
         learner = "learner",
-        fs_method = "feature selection method",
+        vimp_method = "feature selection method",
         data_set = "dataset",
         metric = "metric",
         evaluation_time = "time"
@@ -854,7 +854,7 @@ setMethod(
         "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
         "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
       ),
-      by = c("metric", "data_set", "fs_method", "learner")
+      by = c("metric", "data_set", "vimp_method", "learner")
     ]
 
     # Determine what direction a metric has.
@@ -968,7 +968,7 @@ setMethod(
         "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
         "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
       ),
-      by = c("metric", "data_set", "fs_method", "learner")
+      by = c("metric", "data_set", "vimp_method", "learner")
     ]
     
     # Generate a guide table

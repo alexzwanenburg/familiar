@@ -1226,7 +1226,7 @@ as_vimp_table_object <- function(
   vimp_table <- methods::new(
     "vimpTable",
     vimp_table = vimp_table,
-    vimp_method = x$fs_method,
+    vimp_method = x$vimp_method,
     run_table = x$run_table,
     score_aggregation = "max",
     encoding_table = NULL,

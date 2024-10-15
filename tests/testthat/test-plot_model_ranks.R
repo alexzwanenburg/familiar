@@ -30,7 +30,7 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner"),
-    "color_by" = c("fs_method")),
+    "color_by" = c("vimp_method")),
   debug = debug_flag
 )
 
@@ -60,6 +60,6 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "facet_by" = c("learner"),
-    "color_by" = c("fs_method")),
+    "color_by" = c("vimp_method")),
   debug = debug_flag
 )

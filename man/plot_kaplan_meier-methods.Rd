@@ -375,9 +375,9 @@ group stratification by the learners.
 survival the y-axis represents. It is therefore recommended to provide
 \code{x_label} and \code{y_label} arguments.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
 \code{group} and \code{stratification_method}. By default, separate figures are
-created for each combination of \code{fs_method} and \code{learner}, with faceting by
+created for each combination of \code{vimp_method} and \code{learner}, with faceting by
 \code{data_set}, colouring of the strata in each individual plot by
 \code{group}.
 

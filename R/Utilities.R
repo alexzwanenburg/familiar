@@ -753,7 +753,7 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
 
 get_object_file_name <- function(
     learner,
-    fs_method,
+    vimp_method,
     project_id,
     data_id,
     run_id,
@@ -775,7 +775,7 @@ get_object_file_name <- function(
   base_str <- paste0(
     project_id, "_", 
     learner, "_", 
-    fs_method, "_", 
+    vimp_method, "_", 
     data_id, "_", 
     run_id
   )
@@ -840,7 +840,7 @@ get_object_dir_path <- function(
     dir_path, 
     object_type, 
     learner = NULL, 
-    fs_method = NULL
+    vimp_method = NULL
 ) {
   # Generate the directory path to an object
 
@@ -851,10 +851,10 @@ get_object_dir_path <- function(
   }
 
   if (object_type %in% c("familiarModel", "familiarEnsemble")) {
-    if (is.null(learner) && is.null(fs_method)) {
+    if (is.null(learner) && is.null(vimp_method)) {
       return(normalizePath(file.path(dir_path), mustWork = FALSE))
     } else {
-      return(normalizePath(file.path(dir_path, learner, fs_method), mustWork = FALSE))
+      return(normalizePath(file.path(dir_path, learner, vimp_method), mustWork = FALSE))
     }
     
   } else if (object_type %in% c("familiarData", "familiarCollection")) {

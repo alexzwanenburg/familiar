@@ -24,7 +24,7 @@ identifier column.}
 
 \item{signature}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
 
 \item{exclude_features}{(\emph{optional}) Feature columns that will be removed

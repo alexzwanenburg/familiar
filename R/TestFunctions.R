@@ -600,7 +600,7 @@ test_all_learners_train_predict_vimp <- function(
         experimental_design = "fs+mb",
         cluster_method = "none",
         imputation_method = "simple",
-        fs_method = "no_features",
+        vimp_method = "no_features",
         learner = learner,
         hyperparameter = hyperparameters,
         parallel = FALSE,
@@ -2127,7 +2127,7 @@ test_all_vimp_methods <- function(
       
       # Find required hyperparameters
       vimp_method_hyperparameters <- .get_preset_hyperparameters(
-        fs_method = vimp_method,
+        vimp_method = vimp_method,
         outcome_type = outcome_type,
         names_only = TRUE
       )
@@ -2534,7 +2534,7 @@ test_all_vimp_methods_parallel <- function(
       
       # Find required hyperparameters
       vimp_method_hyperparameters <- .get_preset_hyperparameters(
-        fs_method = vimp_method,
+        vimp_method = vimp_method,
         outcome_type = outcome_type,
         names_only = TRUE
       )
@@ -4573,7 +4573,7 @@ test_plot_ordering <- function(
   
   ..duplicate_familiar_data_object <- function(x) {
     x <- set_object_name(x)
-    x@fs_method <- "mifs"
+    x@vimp_method <- "mifs"
     return(x)
   }
   
@@ -4609,7 +4609,7 @@ test_plot_ordering <- function(
   
   if (is.null(experiment_args$imputation_method)) experiment_args$imputation_method <- "simple"
   if (is.null(experiment_args$cluster_method)) experiment_args$cluster_method <- "none"
-  if (is.null(experiment_args$fs_method)) experiment_args$fs_method <- "mim"
+  if (is.null(experiment_args$vimp_method)) experiment_args$vimp_method <- "mim"
   if (is.null(experiment_args$time_max)) experiment_args$time_max <- 3.5
   
   # Iterate over the outcome type.
@@ -4857,7 +4857,7 @@ test_export_specific <- function(
   
   ..duplicate_familiar_data_object <- function(x) {
     x <- set_object_name(x)
-    x@fs_method <- "mifs"
+    x@vimp_method <- "mifs"
     return(x)
   }
   
@@ -4909,7 +4909,7 @@ test_export_specific <- function(
           data = test_create_bootstrapped_data(outcome_type, seed = ii),
           cluster_method = "none",
           imputation_method = "simple",
-          fs_method = "mim",
+          vimp_method = "mim",
           hyperparameter_list = hyperparameters,
           learner = "lasso",
           time_max = 3.5,
@@ -5261,7 +5261,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   # Create feature info list.
   feature_info_list <- create_feature_info(
     data = data,
-    fs_method = vimp_method,
+    vimp_method = vimp_method,
     learner = learner,
     cluster_method = cluster_method,
     imputation_method = "simple",
@@ -5297,7 +5297,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
         "familiarModel",
         outcome_type = data@outcome_type,
         learner = learner,
-        fs_method = vimp_method,
+        vimp_method = vimp_method,
         required_features = required_features,
         feature_info = feature_info_list,
         outcome_info = data@outcome_info
@@ -5367,7 +5367,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   
   ..duplicate_familiar_data_object <- function(x) {
     x <- set_object_name(x)
-    x@fs_method <- "mifs"
+    x@vimp_method <- "mifs"
     return(x)
   }
   
@@ -5458,7 +5458,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
           ),
           cluster_method = "none",
           imputation_method = "simple",
-          fs_method = "mim",
+          vimp_method = "mim",
           hyperparameter_list = hyperparameters,
           learner = "lasso",
           time_max = 3.5,
@@ -5702,7 +5702,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       experimental_design = "fs+mb",
       cluster_method = "hclust",
       imputation_method = "simple",
-      fs_method = "no_features",
+      vimp_method = "no_features",
       learner = "lasso",
       hyperparameter = hyperparameters,
       cluster_similarity_threshold = 0.7,
@@ -5711,8 +5711,8 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       verbose = FALSE
     ))
     
-    # Replace fs_method attribute
-    naive_model@fs_method <- "mifs"
+    # Replace vimp_method attribute
+    naive_model@vimp_method <- "mifs"
     
     naive_data <- ..as_familiar_data_object(
       object = naive_model,
@@ -5894,9 +5894,9 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
       create_novelty_detector = create_novelty_detector
     ))
     
-    # Replace fs_method attribute and add naive_model to the multi-model
+    # Replace vimp_method attribute and add naive_model to the multi-model
     # ensemble.
-    naive_model@fs_method <- "none"
+    naive_model@vimp_method <- "none"
     multi_model_set <- c(multi_model_set, list(naive_model))
     
     multi_model_data <- ..as_familiar_data_object(

@@ -71,19 +71,20 @@ NULL
 #'   The following splitting variables are available for `split_by`, `color_by`
 #'   and `facet_by`:
 #'
-#'  * `fs_method`: feature selection methods
+#'  * `vimp_method`: variable importance methods
 #'
 #'  * `learner`: learners
 #'
 #'  * `data_set`: data sets
 #'
-#'   Unlike for plots of feature ranking in feature selection and after
-#'   modelling (as assessed by model-specific routines), clusters of features
-#'   are now found during creation of underlying `familiarData` objects, instead
-#'   of through consensus clustering. Hence, clustering results may differ due
-#'   to differences in the underlying datasets.
+#'   Unlike for plots of feature ranking in initial variable importance
+#'   computation and after modelling (as assessed by model-specific routines),
+#'   clusters of features are now found during creation of underlying
+#'   `familiarData` objects, instead of through consensus clustering. Hence,
+#'   clustering results may differ due to differences in the underlying
+#'   datasets.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_feature_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_feature_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -434,7 +435,7 @@ setMethod(
 
     # Set default splitting variables if none are provided.
     if (is.null(split_by) && is.null(color_by) && is.null(facet_by)) {
-      split_by <- c("fs_method", "learner")
+      split_by <- c("vimp_method", "learner")
       color_by <- c("data_set")
     }
 
@@ -444,7 +445,7 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = c("fs_method", "learner", "data_set")
+      available = c("vimp_method", "learner", "data_set")
     )
 
     # Update splitting variables

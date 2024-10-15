@@ -113,10 +113,10 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, and `data_set`.
-#'   By default, the data is split by `fs_method` and `learner` and `data_set`,
+#'   Available splitting variables are: `vimp_method`, `learner`, and `data_set`.
+#'   By default, the data is split by `vimp_method` and `learner` and `data_set`,
 #'   since the number of samples will typically differ between data sets, even
-#'   for the same feature selection method and learner.
+#'   for the same variable importance method and learner.
 #'
 #'   The `x_axis_by` and `y_axis_by` arguments determine what data are shown
 #'   along which axis. Each argument takes one of `feature` and `sample`, and
@@ -127,7 +127,7 @@ NULL
 #'   ordering of features may differ between facets, and tick labels are
 #'   maintained for each panel.
 #'
-#'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labeling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -705,8 +705,8 @@ setMethod(
 
     # Add default splitting variables
     if (is.null(split_by) & is.null(facet_by)) {
-      # Split by feature selection method and learner
-      split_by <- c("fs_method", "learner", "data_set")
+      # Split by variable importance method and learner
+      split_by <- c("vimp_method", "learner", "data_set")
 
       # Facet by dataset
       facet_by <- NULL
@@ -717,7 +717,7 @@ setMethod(
       x = identifier_table,
       split_by = split_by,
       facet_by = facet_by,
-      available = c("data_set", "fs_method", "learner")
+      available = c("data_set", "vimp_method", "learner")
     )
 
     # Update splitting variables

@@ -411,10 +411,10 @@ This function generates a calibration plot for each model in each
 dataset. Any data used for calibration (e.g. baseline survival) is obtained
 during model creation.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set} and
 \code{evaluation_time} (survival analysis only) and \code{positive_class} (multinomial
 endpoints only). By default, separate figures are created for each
-combination of \code{fs_method} and \code{learner}, with facetting by \code{data_set}.
+combination of \code{vimp_method} and \code{learner}, with facetting by \code{data_set}.
 
 Calibration in survival analysis is performed at set time points so that
 survival probabilities can be computed from the model, and compared with

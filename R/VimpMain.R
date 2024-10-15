@@ -47,7 +47,7 @@ setMethod(
       # Create a familiarModel and promote to the right class.
       object <- methods::new(
         "familiarModel",
-        fs_method = "none",
+        vimp_method = "none",
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -67,7 +67,7 @@ setMethod(
       # Create a familiarModel and promote to the right class.
       object <- methods::new(
         "familiarModel",
-        fs_method = "none",
+        vimp_method = "none",
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -86,7 +86,7 @@ setMethod(
 
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
-        fs_method = "none",
+        vimp_method = "none",
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -108,7 +108,7 @@ setMethod(
 
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
-        fs_method = "none",
+        vimp_method = "none",
         learner = ifelse(method %in% .get_available_rfsrc_vimp_methods(),
           "random_forest_rfsrc",
           "random_forest_rfsrc_default"
@@ -136,7 +136,7 @@ setMethod(
 
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
-        fs_method = "none",
+        vimp_method = "none",
         learner = ifelse(
           method %in% .get_available_ranger_vimp_methods(),
           "random_forest_ranger",
@@ -158,12 +158,11 @@ setMethod(
       object <- ..set_vimp_parameters(object, method = method)
       
     } else if (method %in% .get_available_random_vimp_methods()) {
-      # Random feature selection..
+      # Random variable importances.
       object <- methods::new("familiarRandomVimp", object)
       
     } else if (method %in% .get_available_none_vimp_methods()) {
-      # None feature selection methods - all features are equally
-      # important.
+      # No variable importance: all features are equally important.
       object <- methods::new("familiarNoneVimp", object)
       
     } else if (method %in% .get_available_signature_only_vimp_methods()) {
@@ -171,8 +170,8 @@ setMethod(
       object <- methods::new("familiarSignatureVimp", object)
       
     } else if (method %in% .get_available_no_features_vimp_methods()) {
-      # No feature selection methods - no features are selected, leading
-      # to naive models.
+      # No variable importance methods - no features are selected, leading to
+      # naive models.
       object <- methods::new("familiarNoFeaturesVimp", object)
     }
 
@@ -320,8 +319,8 @@ setMethod(
     # ... This prevents an error caused by multiple matching arguments.
     dots <- list(...)
     dots$parallel <- NULL
-    dots$fs_method <- NULL
-    dots$fs_method_parameter <- NULL
+    dots$vimp_method <- NULL
+    dots$vimp_method_parameter <- NULL
     dots$learner <- NULL
 
     if (!is.null(dots$signature)) settings$data$signature <- dots$signature
@@ -345,9 +344,9 @@ setMethod(
           "settings" = settings,
           "data" = data@data,
           "parallel" = FALSE,
-          "fs_method" = vimp_method,
+          "vimp_method" = vimp_method,
           "learner" = "glm",
-          "fs_method_parameter" = setting_hyperparam
+          "vimp_method_parameter" = setting_hyperparam
         ),
         dots
       )
@@ -389,14 +388,14 @@ setMethod(
     # Get default hyperparameters.
     param_list <- .get_preset_hyperparameters(
       data = data,
-      fs_method = vimp_method,
+      vimp_method = vimp_method,
       names_only = FALSE
     )
 
     # Update with user-provided settings.
     param_list <- .update_hyperparameters(
       parameter_list = param_list,
-      user_list = settings$fs$param[[vimp_method]]
+      user_list = settings$vimp$param[[vimp_method]]
     )
 
     # Determine which hyperparameters still need to be specified.

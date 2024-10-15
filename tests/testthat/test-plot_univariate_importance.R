@@ -43,7 +43,7 @@ familiar:::test_plot_ordering(
   plot_args = list(
     "verbose" = FALSE,
     "p_adjustment_method" = "holm",
-    "facet_by" = c("data_set", "learner", "fs_method")),
+    "facet_by" = c("data_set", "learner", "vimp_method")),
   debug = debug_flag
 )
 
@@ -54,7 +54,7 @@ familiar:::test_plot_ordering(
   plot_args = list(
     "verbose" = FALSE,
     "p_adjustment_method" = "BY",
-    "facet_by" = c("data_set", "fs_method"),
+    "facet_by" = c("data_set", "vimp_method"),
     "color_by" = "learner"),
   debug = debug_flag
 )

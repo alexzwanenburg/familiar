@@ -83,7 +83,7 @@ testthat::test_that("Assert that feature info computation performs correctly", {
 experiment_vimp <- familiar::precompute_vimp(
   data = data,
   experiment_data = experiment_feature_info,
-  fs_method = "univariate_regression",
+  vimp_method = "univariate_regression",
   outcome_type = "binomial",
   outcome_column = "outcome",
   batch_id_column = "batch_id",
@@ -138,7 +138,7 @@ testthat::test_that("Assert that variable importance computation performs correc
 experiment_vimp_3 <- familiar::precompute_vimp(
   data = data,
   experiment_data = experiment_vimp,
-  fs_method = c("univariate_regression", "mim", "mrmr"),
+  vimp_method = c("univariate_regression", "mim", "mrmr"),
   outcome_type = "binomial",
   outcome_column = "outcome",
   batch_id_column = "batch_id",

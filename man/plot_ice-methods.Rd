@@ -467,13 +467,13 @@ predicted value as function of a single feature, whereas 2D plots show the
 predicted value as a function of two features.
 
 Available splitting variables are: \code{feature_x}, \code{feature_y} (2D only),
-\code{fs_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
+\code{vimp_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
 outcomes) or \code{evaluation_time} (survival outcomes). By default, for 1D ICE
-plots the data are split by \code{feature_x}, \code{fs_method} and \code{learner}, with
+plots the data are split by \code{feature_x}, \code{vimp_method} and \code{learner}, with
 faceting by \code{data_set}, \code{positive_class} or \code{evaluation_time}. If only
 partial dependence is shown, \code{positive_class} and \code{evaluation_time} are
 used to set colours instead. For 2D plots, by default the data are split by
-\code{feature_x}, \code{fs_method} and \code{learner}, with faceting by \code{data_set},
+\code{feature_x}, \code{vimp_method} and \code{learner}, with faceting by \code{data_set},
 \code{positive_class} or \code{evaluation_time}. The \code{color_by} argument cannot be
 used with 2D plots, and attempting to do so causes an error. Attempting to
 specify \code{feature_x} or \code{feature_y} for \code{color_by} will likewise result in
@@ -496,7 +496,7 @@ computed for individual samples in individual conditional expectation
 plots. To avoid clutter, only point estimates for individual samples are
 shown.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

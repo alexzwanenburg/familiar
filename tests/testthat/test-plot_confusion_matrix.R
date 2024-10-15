@@ -77,6 +77,6 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  plot_args = list("facet_by" = c("data_set", "learner", "fs_method")),
+  plot_args = list("facet_by" = c("data_set", "learner", "vimp_method")),
   debug = debug_flag
 )

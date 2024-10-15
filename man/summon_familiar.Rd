@@ -62,7 +62,7 @@ messages and warnings are returned.}
 \item{.stop_after}{Variable for internal use.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_feature_selection_settings]{.parse_feature_selection_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
+  Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
   \describe{
     \item{\code{project_dir}}{(\emph{optional}) Path to the project directory. \code{familiar}
 checks if the directory indicated by \code{experiment_dir} and data files in
@@ -161,7 +161,7 @@ indicate the time-to-event or the time of last follow-up and the event
 status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
@@ -198,7 +198,7 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
     \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
 that should be included for the purpose of novelty detection.}
@@ -228,10 +228,11 @@ prior to familiar version 1.3.0.
 }}
     \item{\code{experimental_design}}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building, and external validation. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building, and external validation. The basic workflow
+components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance computation step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
 to subsampling will always be conducted if the subsampling methods create
@@ -294,6 +295,10 @@ that defines the design.}
     \item{\code{imbalance_n_partitions}}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+    \item{\code{iteration_seed}}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of
 specific parameters such as \code{parallel_preprocessing}. However, when
@@ -700,18 +705,17 @@ preprocessing workflow. Defaults to \code{TRUE}. When set to \code{FALSE}, this 
 disable the use of parallel processing while preprocessing, regardless of
 the settings of the \code{parallel} parameter. \code{parallel_preprocessing} is
 ignored if \code{parallel=FALSE}.}
-    \item{\code{fs_method}}{(\strong{required}) Feature selection method to be used for
-determining variable importance. \code{familiar} implements various feature
-selection methods. Please refer to the vignette on feature selection
-methods for more details.
+    \item{\code{vimp_method}}{(\strong{required}) Variable importance method. \code{familiar}
+implements various variable importance methods. Please refer to the
+vignette on variable importance methods for more details.
 
-More than one feature selection method can be chosen. The experiment will
+More than one variable importance method can be chosen. The experiment will
 then repeated for each feature selection method.
 
-Feature selection methods determines the ranking of features. Actual
+Variable importance methods determine the ranking of features. Actual
 selection of features is done by optimising the signature size model
 hyperparameter during the hyperparameter optimisation step.}
-    \item{\code{fs_method_parameter}}{(\emph{optional}) List of lists containing parameters
+    \item{\code{vimp_method_parameter}}{(\emph{optional}) List of lists containing parameters
 for feature selection methods. Each sublist should have the name of the
 feature selection method it corresponds to.
 
@@ -759,11 +763,11 @@ features over the subset size.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
-    \item{\code{parallel_feature_selection}}{(\emph{optional}) Enable parallel processing for
-the feature selection workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
+    \item{\code{parallel_vimp}}{(\emph{optional}) Enable parallel processing for
+the variable importance workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while performing feature
 selection, regardless of the settings of the \code{parallel} parameter.
-\code{parallel_feature_selection} is ignored if \code{parallel=FALSE}.}
+\code{parallel_vimp} is ignored if \code{parallel=FALSE}.}
     \item{\code{learner}}{(\strong{required}) One or more algorithms used for model
 development. A sizeable number learners is supported in \code{familiar}. Please
 see the vignette on learners for more information concerning the available
@@ -802,16 +806,17 @@ finish before exhausting the set of bootstraps.}
     \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
 bootstraps created during the optimisation process (\code{TRUE}) or the
-applicable results from the feature selection step are used (\code{FALSE}).
+applicable results from the variable importance computation step are used
+(\code{FALSE}).
 
 Determining variable importance increases the initial computational
 overhead. However, it prevents positive biases for the out-of-bag data due
 to overlap of these data with the development data set used for the feature
 selection step. In this case, any hyperparameters of the variable
 importance method are not determined separately for each bootstrap, but
-those obtained during the feature selection step are used instead. In case
-multiple of such hyperparameter sets could be applicable, the set that will
-be used is randomly selected for each bootstrap.
+those obtained during the variable importance computation step are used
+instead. In case multiple of such hyperparameter sets could be applicable,
+the set that will be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}
@@ -1303,9 +1308,9 @@ Gower's distance: distance is 0 if the values in a pair of samples match,
 and 1 if they do not.}
     \item{\code{eval_aggregation_method}}{(\emph{optional}) Method for aggregating variable
 importances for the purpose of evaluation. Variable importances are
-determined during feature selection steps and after training the model. Both
-types are evaluated, but feature selection variable importance is only
-evaluated at run-time.
+determined both during initial variable importance computation steps and
+after training the model. Both types are evaluated after training the
+model, but only the initial variable importances are evaluated at run-time.
 
 See the documentation for the \code{vimp_aggregation_method} argument for
 information concerning the different methods available.}
