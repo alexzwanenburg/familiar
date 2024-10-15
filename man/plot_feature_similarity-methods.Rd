@@ -29,7 +29,7 @@ plot_feature_similarity(
   plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
-  y_n_breaks = 3,
+  y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
   show_dendrogram = c("top", "right"),
@@ -64,7 +64,7 @@ plot_feature_similarity(
   plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
-  y_n_breaks = 3,
+  y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
   show_dendrogram = c("top", "right"),
@@ -99,7 +99,7 @@ plot_feature_similarity(
   plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
-  y_n_breaks = 3,
+  y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
   show_dendrogram = c("top", "right"),
@@ -176,7 +176,14 @@ wrapping. If NULL, a facet grid is produced instead.}
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
-colour the similarity or distance between features in a heatmap.}
+colour the similarity or distance between features in a heatmap.
+\code{familiar} has a default palette. Other palettes are supported by the
+\code{paletteer} package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient. This should be a range of two values, e.g. \code{c(0, 1)}. Lower or
@@ -370,23 +377,15 @@ more similar features appear together.
 \details{
 This function generates area under the ROC curve plots.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, and \code{data_set}.
-By default, the data is split by \code{fs_method} and \code{learner}, with facetting
+Available splitting variables are: \code{vimp_method}, \code{learner}, and \code{data_set}.
+By default, the data is split by \code{vimp_method} and \code{learner}, with facetting
 by \code{data_set}.
 
 Note that similarity is determined based on the underlying data. Hence the
 ordering of features may differ between facets, and tick labels are
 maintained for each panel.
 
-Available palettes for \code{gradient_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
-
-Labeling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labeling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

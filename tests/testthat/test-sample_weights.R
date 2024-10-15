@@ -1,5 +1,3 @@
-if (!familiar:::test_data_package_installed("binomial")) testthat::skip()
-
 # Create test dataset.
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 
@@ -99,7 +97,7 @@ testthat::skip("Skip hyperparameter optimisation, unless manual.")
 # Check that variable importance functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
   outcome_column = "cell_malignancy",
@@ -118,7 +116,7 @@ testthat::test_that("Default method is inverse_number_of_samples.", {
 # Check that effective_number_of_samples functions.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   hyperparameter = list("sample_weighting" = "effective_number_of_samples"),
   outcome_type = "binomial",

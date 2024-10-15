@@ -14,8 +14,8 @@ as_data_object(data, ...)
 \S4method{as_data_object}{data.table}(
   data,
   object = NULL,
-  sample_id_column = waiver(),
   batch_id_column = waiver(),
+  sample_id_column = waiver(),
   series_id_column = waiver(),
   development_batch_id = waiver(),
   validation_batch_id = waiver(),
@@ -52,12 +52,6 @@ formats.}
 \item{object}{A \code{familiarEnsemble} or \code{familiarModel} object that is used to
 check consistency of these objects.}
 
-\item{sample_id_column}{(\strong{recommended}) Name of the column containing
-sample or subject identifiers. See \code{batch_id_column} above for more
-details.
-
-If unset, every row will be identified as a single sample.}
-
 \item{batch_id_column}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
 is provided, or if external validation is performed.
@@ -81,7 +75,13 @@ the same series of the same sample in the same batch that share the same
 outcome are encountered.
 }}
 
-\item{series_id_column}{(\strong{optional}) Name of the column containing series
+\item{sample_id_column}{(\strong{recommended}) Name of the column containing
+sample or subject identifiers. See \code{batch_id_column} above for more
+details.
+
+If unset, every row will be identified as a single sample.}
+
+\item{series_id_column}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -104,8 +104,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
@@ -116,13 +116,12 @@ status.}
 
 \item{outcome_type}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -132,7 +131,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
 
 \item{event_indicator}{(\strong{recommended}) Indicator for events in \code{survival}
 and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},
@@ -199,7 +199,7 @@ be completely absent. Used internally for \code{predict}.
 A \code{dataObject} object.
 }
 \description{
-Creates \code{dataObject} a object from input data. Input data can be
+Creates a \code{dataObject} object from input data. Input data can be
 a \code{data.frame} or \code{data.table}, a path to such tables on a local or network
 drive, or a path to tabular data that may be converted to these formats.
 

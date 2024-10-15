@@ -5,78 +5,62 @@ testthat::skip_on_ci()
 # Create data.table.
 data <- familiar:::test_create_good_data(
   outcome_type = "binomial",
-  to_data_object = FALSE)
+  to_data_object = FALSE
+)
 
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_s4_class(model, "familiarGLM")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(model))
   testthat::expect_s3_class(summary(model), "summary.glm")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_false(is.null(familiar::coef(model)))
   
-  # Assert that between 1 and 9 features are present, aside from the intercept.
+  # Assert that between 1 and 6 features are present, aside from the intercept.
   testthat::expect_gte(length(model@model_features), 1L)
-  testthat::expect_lte(length(model@model_features), 9L)
-  testthat::expect_equal(length(model@model_features) <= model@hyperparameters$sign_size, TRUE)
+  testthat::expect_lte(length(model@model_features), 6L)
+  testthat::expect_lte(length(model@model_features), model@hyperparameters$sign_size)
 })
 
 # multinomial ------------------------------------------------------------------
 # Create data.table.
 data <- familiar:::test_create_good_data(
   outcome_type = "multinomial",
-  to_data_object = FALSE)
+  to_data_object = FALSE
+)
 
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "none",
+  vimp_method = "none",
   learner = "glm_multinomial",
   outcome_type = "multinomial",
-  outcome_column = "Species",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
   sample_id_column = "sample_id",
-  class_levels = c("setosa", "versicolor", "virginica"),
-  verbose = FALSE)
+  series_id_column = "series_id",
+  class_levels = c("red", "green", "blue"),
+  verbose = FALSE
+)
 
 testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_s4_class(model, "familiarGLM")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(model))
   testthat::expect_s3_class(summary(model), "summary.multinom")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
-})
-
-# count ------------------------------------------------------------------------
-
-# Create data.table.
-data <- familiar:::test_create_good_data(
-  outcome_type = "count",
-  to_data_object = FALSE)
-
-# Check that train_familiar functions correctly.
-model <- familiar::train_familiar(
-  data = data,
-  fs_method = "mrmr",
-  learner = "glm_poisson",
-  outcome_type = "count",
-  outcome_column = "median_house_value",
-  sample_id_column = "sample_id",
-  verbose = FALSE)
-
-testthat::test_that("Poisson model can be trained using train_familiar", {
-  testthat::expect_s4_class(model, "familiarGLM")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  testthat::expect_s3_class(summary(model), "summary.glm")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_false(is.null(familiar::coef(model)))
+  testthat::expect_false(is.null(familiar::vcov(model)))
 })
 
 # continuous -------------------------------------------------------------------
@@ -89,18 +73,21 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_gaussian",
   outcome_type = "continuous",
-  outcome_column = "testscr",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
   sample_id_column = "sample_id",
-  verbose = FALSE)
+  series_id_column = "series_id",
+  verbose = FALSE
+)
 
 testthat::test_that("Gaussian model can be trained using train_familiar", {
   testthat::expect_s4_class(model, "familiarGLM")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(model))
   testthat::expect_s3_class(summary(model), "summary.glm")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_false(is.null(familiar::coef(model)))
 })
 
 # survival ---------------------------------------------------------------------
@@ -113,19 +100,22 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  fs_method = "none",
+  vimp_method = "none",
   learner = "cox",
   outcome_type = "survival",
-  outcome_column = c("time", "status"),
-  sample_id_column = "id",
-  verbose = FALSE)
+  outcome_column = c("outcome_time", "outcome_event"),
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  verbose = FALSE
+)
 
 testthat::test_that("Cox proportional hazards model can be trained using train_familiar", {
   testthat::expect_s4_class(model, "familiarCoxPH")
-  testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
+  testthat::expect_true(familiar:::model_is_trained(model))
   testthat::expect_s3_class(summary(model), "summary.coxph")
-  testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
-  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
+  testthat::expect_false(is.null(familiar::coef(model)))
+  testthat::expect_false(is.null(familiar::vcov(model)))
 })
 
 # Use experiment data ----------------------------------------------------------
@@ -138,23 +128,28 @@ data <- familiar:::test_create_good_data(
 experiment_data <- familiar::precompute_data_assignment(
   data = data,
   experimental_design = "bt(fs+mb,5)",
-  outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
   experiment_data = experiment_data,
-  fs_method = "mrmr",
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 testthat::test_that("Logistic model can be trained using train_familiar", {
   # Assert that 5 models are trained.
@@ -175,17 +170,20 @@ data <- familiar:::test_create_good_data(
 model <- familiar::train_familiar(
   data = data,
   cluster_method = "none",
-  fs_method = "none",
+  vimp_method = "none",
   learner = "glm_logistic",
   outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 testthat::test_that("Assert that all features are used for \"none\" variable importance method.", {
   # Assert that all features are included in the model.
-  testthat::expect_equal(length(model@model_features), 9L)
+  testthat::expect_equal(length(model@model_features), 6L)
 })
 
 # Check "signature_only" variable importance method ----------------------------
@@ -198,21 +196,25 @@ data <- familiar:::test_create_good_data(
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  signature = c("cell_size_uniformity", "clump_thickness"),
-  fs_method = "signature_only",
+  signature = c("feature_1", "feature_2a"),
+  vimp_method = "signature_only",
   learner = "glm_logistic",
   outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 testthat::test_that("Assert that all features are used for \"signature_only\" variable importance method.", {
   # Assert that only signature features are included in the model.
   testthat::expect_equal(length(model@model_features), 2L)
   testthat::expect_setequal(
-    c("cell_size_uniformity", "clump_thickness"),
-    model@model_features)
+    c("feature_1", "feature_2a"),
+    model@model_features
+  )
 })
 
 # Check interaction between signature and other features -----------------------
@@ -220,24 +222,28 @@ testthat::test_that("Assert that all features are used for \"signature_only\" va
 # Create data.table.
 data <- familiar:::test_create_good_data(
   outcome_type = "binomial",
-  to_data_object = FALSE)
+  to_data_object = FALSE
+)
 
 # Check that train_familiar functions correctly.
 model <- familiar::train_familiar(
   data = data,
-  signature = c("marginal_adhesion", "bland_chromatin"),
-  fs_method = "mrmr",
+  signature = c("feature_1", "feature_2a"),
+  vimp_method = "mrmr",
   learner = "glm_logistic",
   outcome_type = "binomial",
-  outcome_column = "cell_malignancy",
-  sample_id_column = "id",
-  class_levels = c("benign", "malignant"),
-  verbose = FALSE)
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = FALSE
+)
 
 testthat::test_that("Assert that signature features are used in the model.", {
   # Assert that only signature features are included in the model.
   testthat::expect_gte(length(model@model_features), 2L)
-  testthat::expect_lte(length(model@model_features), 9L)
-  testthat::expect_equal(all(c("marginal_adhesion", "bland_chromatin") %in% model@model_features), TRUE)
-  testthat::expect_equal(length(model@model_features) <= model@hyperparameters$sign_size, TRUE)
+  testthat::expect_lte(length(model@model_features), 6L)
+  testthat::expect_true(all(c("feature_1", "feature_2a") %in% model@model_features))
+  testthat::expect_lte(length(model@model_features), model@hyperparameters$sign_size)
 })

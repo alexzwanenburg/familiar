@@ -13,9 +13,16 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created confusion
 #'   matrixes are saved to. Output is saved in the `performance` subdirectory.
 #'   If `NULL` no figures are saved, but are returned instead.
-#' @param discrete_palette (*optional*) Palette used to colour the confusion
-#'   matrix. The colour depends on whether each cell of the confusion matrix is
-#'   on the diagonal (observed outcome matched expected outcome) or not.
+#' @param discrete_palette (*optional*) Palette Palette for colouring the cells
+#'   of the confusion matrix. The colour depends on whether each cell of the
+#'   confusion matrix is on the diagonal (observed outcome matched expected
+#'   outcome) or not. `familiar` has a default palette. Other palettes are
+#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
+#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
+#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
+#'   correspond to the palettes of the same name in `grDevices`. You may also
+#'   specify your own palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param show_alpha (*optional*) Interpreting confusion matrices is made easier
 #'   by setting the opacity of the cells. `show_alpha` takes the following
 #'   values:
@@ -48,19 +55,11 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'   Available splitting variables are: `fs_method`, `learner` and `data_set`.
-#'   By default, the data is split by `fs_method` and `learner`, with facetting
+#'   Available splitting variables are: `vimp_method`, `learner` and `data_set`.
+#'   By default, the data is split by `vimp_method` and `learner`, with facetting
 #'   by `data_set`.
 #'
-#'   Available palettes for `discrete_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'
-#'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -92,7 +91,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_confusion_matrix")
   }
 )
@@ -126,15 +126,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "confusion_matrix"),
-        list(...)))
+          "data_element" = "confusion_matrix"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_confusion_matrix,
@@ -158,7 +162,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -190,7 +196,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     observed_outcome <- expected_outcome <- count <- class_matches <- total_observed <- NULL
 
@@ -207,13 +214,14 @@ setMethod(
     if (is.list(x)) {
       if (is_empty(x)) return(NULL)
 
-      if (length(x) > 1) {
+      if (length(x) > 1L) {
         ..error_reached_unreachable_code(
-          "plot_model_performance: list of data elements contains unmerged elements.")
+          "plot_model_performance: list of data elements contains unmerged elements."
+        )
       }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
 
     # Check that the data are not empty.
@@ -223,7 +231,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = FALSE),
       purpose = "to plot confusion matrices",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -242,7 +251,7 @@ setMethod(
     # x_label
     if (is.waive(x_label)) {
       x_label <- "expected"
-      if (length(outcome_name) > 0) {
+      if (length(outcome_name) > 0L) {
         x_label <- paste(x_label, outcome_name, sep = " ")
       }
     }
@@ -250,7 +259,7 @@ setMethod(
     # y_label
     if (is.waive(y_label)) {
       y_label <- "observed"
-      if (length(outcome_name) > 0) {
+      if (length(outcome_name) > 0L) {
         y_label <- paste(y_label, outcome_name, sep = " ")
       }
     }
@@ -263,11 +272,12 @@ setMethod(
     .check_parameter_value_is_valid(
       x = show_alpha,
       var_name = "show_alpha",
-      values = c("none", "by_class", "by_matrix", "by_figure", "by_all"))
+      values = c("none", "by_class", "by_matrix", "by_figure", "by_all")
+    )
 
     # Splitting variables
     if (is.null(split_by) && is.null(facet_by)) {
-      split_by <- c("fs_method", "learner")
+      split_by <- c("vimp_method", "learner")
       facet_by <- c("data_set")
     }
 
@@ -276,7 +286,8 @@ setMethod(
       x = x@data,
       split_by = split_by,
       facet_by = facet_by,
-      available = c("fs_method", "learner", "data_set"))
+      available = c("vimp_method", "learner", "data_set")
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -294,7 +305,8 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      rotate_x_tick_labels = rotate_x_tick_labels)
+      rotate_x_tick_labels = rotate_x_tick_labels
+    )
 
     # Add a class_matches column
     x@data[, "class_matches" := observed_outcome == expected_outcome]
@@ -307,16 +319,18 @@ setMethod(
       # Determine the alpha level (opacity) of the fills in the confusion
       # matrix. This is determined by the number of instances of observed
       # classes.
-      max_observations <- x@data[, list(
-        "total_observed" = sum(count)),
-        by = c("observed_outcome", facet_by, split_by)]
+      max_observations <- x@data[
+        ,
+        list("total_observed" = sum(count)),
+        by = c("observed_outcome", facet_by, split_by)
+      ]
 
       if (show_alpha == "by_class") {
         # Nothing extra needed
       } else if (show_alpha == "by_matrix") {
         # Find the maximum observations in each facet and split, i.e. normalise
         # per matrix.
-        if (!is.null(facet_by) | !is.null(split_by)) {
+        if (!is.null(facet_by) || !is.null(split_by)) {
           max_observations[, "total_observed" := max(total_observed), by = c(facet_by, split_by)]
         }
       } else if (show_alpha == "by_figure") {
@@ -336,11 +350,11 @@ setMethod(
       x@data <- merge(
         x = x@data,
         y = max_observations,
-        by = c("observed_outcome", facet_by, split_by))
+        by = c("observed_outcome", facet_by, split_by)
+      )
       
       x@data[, "alpha" := count / total_observed]
     }
-    
     
     
     # Create plots -------------------------------------------------------------
@@ -368,7 +382,8 @@ setMethod(
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
-          x = x_split[[ii]])
+          x = x_split[[ii]]
+        )
       }
 
       # Generate plot
@@ -384,7 +399,8 @@ setMethod(
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
-        rotate_x_tick_labels = rotate_x_tick_labels)
+        rotate_x_tick_labels = rotate_x_tick_labels
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -400,7 +416,8 @@ setMethod(
           class_levels = get_outcome_class_levels(object),
           facet_by = facet_by,
           facet_wrap_cols = facet_wrap_cols,
-          rotate_x_tick_labels = rotate_x_tick_labels)
+          rotate_x_tick_labels = rotate_x_tick_labels
+        )
 
         # Save to file.
         do.call(
@@ -414,10 +431,13 @@ setMethod(
               "subtype" = "confusion_matrix",
               "x" = x_split[[ii]],
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list for export.
@@ -430,7 +450,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -448,12 +469,14 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
-    rotate_x_tick_labels) {
+    rotate_x_tick_labels
+) {
   # Find the colours
   discrete_colours <- .get_palette(
     x = discrete_palette,
     palette_type = "qualitative",
-    n = 2)
+    n = 2L
+  )
 
   # Create basic plot
   p <- ggplot2::ggplot(
@@ -462,7 +485,9 @@ setMethod(
       x = !!sym("expected_outcome"),
       y = !!sym("observed_outcome"),
       fill = !!sym("class_matches"),
-      alpha = !!sym("alpha")))
+      alpha = !!sym("alpha")
+    )
+  )
   
   # Add theme
   p <- p + ggtheme
@@ -474,12 +499,14 @@ setMethod(
   p <- p + ggplot2::scale_fill_manual(
     values = discrete_colours,
     breaks = c(FALSE, TRUE),
-    drop = FALSE)
+    drop = FALSE
+  )
 
   # Set alpha scale.
   p <- p + ggplot2::scale_alpha_continuous(
     range = c(0.0, 1.0),
-    limits = c(0.0, 1.0))
+    limits = c(0.0, 1.0)
+  )
 
   # Labels
   p <- p + ggplot2::labs(
@@ -487,7 +514,8 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Obtain default settings.
   text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
@@ -499,17 +527,20 @@ setMethod(
       x = !!sym("expected_outcome"),
       y = !!sym("observed_outcome"),
       label = !!sym("count"),
-      alpha = 1.0),
+      alpha = 1.0
+    ),
     colour = text_settings$colour,
     family = text_settings$family,
     fontface = text_settings$face,
-    size = text_settings$geom_text_size)
+    size = text_settings$geom_text_size
+  )
 
   # Determine how things are facetted
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -518,13 +549,15 @@ setMethod(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
     }
   }
 
@@ -534,7 +567,9 @@ setMethod(
       axis.text.x = ggplot2::element_text(
         vjust = 0.25,
         hjust = 1.0,
-        angle = 90.0))
+        angle = 90.0
+      )
+    )
   }
 
   # Suppress legends
@@ -550,7 +585,8 @@ setMethod(
     class_levels,
     facet_by,
     facet_wrap_cols,
-    rotate_x_tick_labels) {
+    rotate_x_tick_labels
+) {
   # Determine the number of elements along the x-axis.
   n_elements <- length(class_levels)
   longest_element <- max(sapply(class_levels, nchar))
@@ -573,14 +609,15 @@ setMethod(
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * (default_height) + x_tick_space, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * (default_height) + x_tick_space, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm). We leave some
   # room for the legend on the right.
-  width <- min(c(2 + plot_dims[2] * (default_width) + y_tick_space, 19))
+  width <- min(c(2.0 + plot_dims[2L] * (default_width) + y_tick_space, 19.0))
 
   return(c(height, width))
 }

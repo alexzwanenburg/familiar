@@ -7,7 +7,8 @@ NULL
 setClass(
   "familiarDataElementRiskStratificationInfo",
   contains = "familiarDataElement",
-  prototype = methods::prototype(estimation_type = "point"))
+  prototype = methods::prototype(estimation_type = "point")
+)
 
 # extract_risk_stratification_info (generic) -----------------------------------
 
@@ -15,7 +16,7 @@ setClass(
 #'
 #'@description Collects risk stratification information.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list of familiarDataElements with risk stratification information.
 #'@md
@@ -27,7 +28,8 @@ setGeneric(
     detail_level = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_risk_stratification_info")
   }
 )
@@ -42,27 +44,32 @@ setMethod(
     object,
     detail_level = waiver(),
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+  ) {
     
-    # Test if the outcome type is survival. Other outcome types do not 
+    # Test if the outcome type is survival. Other outcome types do not have risk
+    # stratification data associated with them.
     if (!object@outcome_type %in% c("survival")) return(NULL)
     
     # Message extraction start
     logger_message(
       paste0("Extracting stratification information."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Check the level detail.
     detail_level <- .parse_detail_level(
       x = detail_level,
       object = object,
       default = "hybrid",
-      data_element = "risk_stratification_info")
+      data_element = "risk_stratification_info"
+    )
     
     proto_data_element <- methods::new(
       "familiarDataElementRiskStratificationInfo",
-      detail_level = detail_level)
+      detail_level = detail_level
+    )
     
     # Generate elements to send to dispatch.
     stratification_info <- extract_dispatcher(
@@ -73,9 +80,23 @@ setMethod(
       proto_data_element = proto_data_element,
       aggregate_results = FALSE,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     return(stratification_info)
+  }
+)
+
+
+
+# extract_risk_stratification_info (prediction table) --------------------------
+setMethod(
+  "extract_risk_stratification_info",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("risk stratification info")
+    
+    return(NULL)
   }
 )
 
@@ -84,8 +105,8 @@ setMethod(
 .extract_risk_stratification_info <- function(
     object,
     proto_data_element,
-    ...) {
-  
+    ...
+) {
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
@@ -104,15 +125,15 @@ setMethod(
         data <- data.table::data.table(
           "stratification_method" = x$method,
           "cutoff" = x$cutoff,
-          "group_id" = seq_len(length(x$cutoff)))
+          "group_id" = seq_len(length(x$cutoff))
+        )
         
         return(data)
-      })
+      }
+    )
     
     # Combine to single list
     data <- data.table::rbindlist(data, use.names = TRUE)
-    
-    # Check that any data is available..
     if (is_empty(data)) return(NULL)
     
   } else {
@@ -120,14 +141,14 @@ setMethod(
     risk_stratification_data <- extract_risk_stratification_info(
       object = object,
       detail_level = "hybrid",
-      verbose = FALSE)
+      verbose = FALSE
+    )
     
     risk_stratification_data <- .compute_data_element_estimates(risk_stratification_data)
-    
     if (is_empty(risk_stratification_data)) return(NULL)
     
     # Extract data.
-    data <- risk_stratification_data[[1]]@data
+    data <- risk_stratification_data[[1L]]@data
   }
   
   # Attach data to the corresponding attribute.
@@ -199,7 +220,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_risk_stratification_info")
   }
 )
@@ -217,7 +239,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -228,7 +251,8 @@ setMethod(
       dir_path = dir_path,
       aggregate_results = aggregate_results,
       type = "stratification",
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -245,7 +269,8 @@ setMethod(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -253,8 +278,11 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "risk_stratification_info"),
-        list(...)))
+          "data_element" = "risk_stratification_info"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_risk_stratification_info,
@@ -263,7 +291,10 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_resuls" = aggregate_results,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )

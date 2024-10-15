@@ -19,13 +19,15 @@ setMethod(
       cat(paste0(
         "An empty variable importance table for the ", object@vimp_method,
         " variable importance method ",
-        "(", .familiar_version_string(object), ")."))
+        "(", .familiar_version_string(object), ")."
+      ))
       
     } else {
       cat(paste0(
         "A variable importance table for the ", object@vimp_method,
         " variable importance method ",
-        "(", .familiar_version_string(object), "):\n\n"))
+        "(", .familiar_version_string(object), "):\n\n"
+      ))
 
       if (object@invert) {
         show(object@vimp_table[order(-score)])
@@ -87,7 +89,8 @@ setGeneric(
   "get_vimp_table", function(
     x,
     state = "ranked",
-    ...) {
+    ...
+  ) {
     standardGeneric("get_vimp_table")
   }
 )
@@ -116,7 +119,7 @@ setMethod(
   signature(x = "character"),
   function(x, state = "ranked", ...) {
     # Dispatch to list, if x contains more than one element.
-    if (length(x) > 1) {
+    if (length(x) > 1L) {
       return(get_vimp_table(as.list(x), state = state, ...))
     }
 
@@ -127,7 +130,8 @@ setMethod(
     if (is.list(x)) {
       x <- as_vimp_table_object(
         x,
-        project_id = "")
+        project_id = ""
+      )
     }
 
     # Make sure the object is updated.
@@ -182,7 +186,7 @@ setMethod(
   function(x, state = "ranked", ...) {
     # Check if the attribute has been set.
     if (is.null(x@vimp_table_list)) {
-      warning("No variable importance tables are present.")
+      ..warning("No variable importance tables are present.")
 
       return(NULL)
     }
@@ -192,7 +196,8 @@ setMethod(
       x@vimp_table_list,
       get_vimp_table,
       state = state,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -212,7 +217,8 @@ setMethod(
     # object.
     vimp_object <- ..vimp(
       object = x,
-      data = data)
+      data = data
+    )
 
     # Set up a table with clustering information.
     cluster_table <- .create_clustering_table(x@feature_info)
@@ -234,7 +240,8 @@ setMethod(
     } else {
       return(get_vimp_table(
         x = vimp_object,
-        state = state))
+        state = state
+      ))
     }
   }
 )
@@ -274,45 +281,55 @@ setMethod(
         x = data_categorical,
         y = x@encoding_table,
         by.x = "name",
-        by.y = "reference_name")
+        by.y = "reference_name"
+      )
 
       # Summarise score by single value according to the method indicated by the
       # score_aggregation attribute.
       if (x@score_aggregation == "max") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = max(score, na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = max(score, na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "abs_max") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = max(abs(score), na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = max(abs(score), na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "min") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = min(score, na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = min(score, na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "abs_min") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = min(abs(score), na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = min(abs(score), na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "mean") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = mean(score, na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = mean(score, na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "abs_mean") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = mean(abs(score), na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = mean(abs(score), na.rm = TRUE)), by = original_name]
+        )
         
       } else if (x@score_aggregation == "median") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = stats::median(score, na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = stats::median(score, na.rm = TRUE)), by = original_name]
+        )
 
       } else if (x@score_aggregation == "abs_median") {
         data_categorical <- suppressWarnings(
-          data_categorical[, list(score = stats::median(abs(score), na.rm = TRUE)), by = original_name])
+          data_categorical[, list(score = stats::median(abs(score), na.rm = TRUE)), by = original_name]
+        )
         
       } else {
         ..error_reached_unreachable_code(paste0(
-          "decode_vimp_table,vimpTable: unknown score aggregation method"))
+          "decode_vimp_table,vimpTable: unknown score aggregation method"
+        ))
       }
 
       # Change name of original_name column to name
@@ -322,7 +339,8 @@ setMethod(
     # Combine to single data.table
     vimp_table <- rbind(
       data_non_categorical,
-      data_categorical)
+      data_categorical
+    )
 
     # Replace infinite/nan/etc values by NA
     vimp_table[!is.finite(score), "score" := NA_real_]
@@ -374,17 +392,20 @@ setMethod(
       by.x = "name",
       by.y = "cluster_name",
       all.x = FALSE,
-      all.y = FALSE)
+      all.y = FALSE
+    )
 
     # Adapt table by removing the original name column and renaming the
     # feature name column.
     vimp_table[, ":="(
       "name" = NULL, 
-      "feature_required" = NULL)]
+      "feature_required" = NULL
+    )]
     data.table::setnames(
       x = vimp_table,
       old = "feature_name",
-      new = "name")
+      new = "name"
+    )
 
     # Remove weights, unless explicitly stated.
     if (!show_weights && "weight" %in% colnames(vimp_table)) {
@@ -422,7 +443,8 @@ setMethod(
     # Dispatch to method for single variable importance tables.
     return(lapply(
       x,
-      recluster_vimp_table))
+      recluster_vimp_table
+    ))
   }
 )
 
@@ -462,7 +484,8 @@ setMethod(
       by.x = "name",
       by.y = "feature_name",
       all.x = FALSE,
-      all.y = TRUE)
+      all.y = TRUE
+    )
 
     # Compute mean score for all features in the same cluster.
     vimp_table <- vimp_table[, list("score" = mean(score, na.rm = TRUE)), by = "cluster_name"]
@@ -472,7 +495,8 @@ setMethod(
     data.table::setnames(
       x = vimp_table,
       old = "cluster_name",
-      new = "name")
+      new = "name"
+    )
 
     # Update the vimp_table attribute.
     x@vimp_table <- vimp_table
@@ -522,16 +546,16 @@ setMethod(
 
     # Compute dense ranks, with NA ranked as NA.
     if (x@invert) {
-      vimp_table[, "rank" := data.table::frank(
-        -score,
-        ties.method = "dense",
-        na.last = "keep")]
+      vimp_table[
+        ,
+        "rank" := data.table::frank(-score, ties.method = "dense", na.last = "keep")
+      ]
       
     } else {
-      vimp_table[, "rank" := data.table::frank(
-        score, 
-        ties.method = "dense",
-        na.last = "keep")]
+      vimp_table[
+        ,
+        "rank" := data.table::frank(score, ties.method = "dense", na.last = "keep")
+      ]
     }
 
     # Update vimp_table attribute.
@@ -607,7 +631,8 @@ setMethod(
     if (x@state != "initial") {
       ..error_reached_unreachable_code(paste0(
         "remove_signature_features,vimpTable: can only remove signature ",
-        "features from a variable importance table in its initial state."))
+        "features from a variable importance table in its initial state."
+      ))
     }
 
     # If there are no signature features, we don't need to remove them.
@@ -624,7 +649,8 @@ setMethod(
       # Find names of the encoded features as they appear in the variable
       # importance table.
       encoded_features <- x@encoding_table[
-        original_name %in% encoded_features]$reference_name
+        original_name %in% encoded_features
+      ]$reference_name
 
       # Combine encoded and non-encoded feature names.
       features <- c(encoded_features, non_encoded_features)
@@ -660,7 +686,8 @@ setMethod(
     return(lapply(
       x,
       update_vimp_table_to_reference,
-      reference_cluster_table = reference_cluster_table))
+      reference_cluster_table = reference_cluster_table
+    ))
   }
 )
 
@@ -693,7 +720,8 @@ setMethod(
       by.x = "name",
       by.y = "feature_name",
       all.x = FALSE,
-      all.y = TRUE)
+      all.y = TRUE
+    )
 
     # Compute mean score for all features in the same cluster.
     vimp_table[, "score" := mean(score, na.rm = TRUE), by = "cluster_name"]
@@ -739,14 +767,15 @@ setMethod(
     vimp_method <- unique(sapply(x, function(x) x@vimp_method))
 
     # Dispatch to separate lists.
-    if (length(vimp_method) > 1) {
+    if (length(vimp_method) > 1L) {
       # Initialise list to store variable importance tables.
       vimp_table_list <- list()
       for (current_vimp_method in vimp_method) {
         # Identify elements which use the same variable importance method.
         same_vimp_method <- sapply(
           x, 
-          function(x, vimp_method) x@vimp_method == current_vimp_method)
+          function(x, vimp_method) x@vimp_method == current_vimp_method
+        )
 
         # Store all elements with the same variable importance method as an
         # element in the vimp_table_list list.
@@ -758,7 +787,8 @@ setMethod(
         vimp_table_list, 
         aggregate_vimp_table, 
         run_table = run_table, 
-        ...))
+        ...
+      ))
     }
 
     # Select only elements that share the same dataset.
@@ -769,7 +799,8 @@ setMethod(
         # Get a list with identifiers.
         run_id_list <- .get_iteration_identifiers(
           run = list("run_table" = run_table),
-          perturb_level = ii)
+          perturb_level = ii
+        )
 
         # Check whether there are any matching data and run ids by checking if
         # matching creates a non-empty table.
@@ -781,7 +812,8 @@ setMethod(
             }
             
             return(!is_empty(x@run_table[
-              data_id == run_id_list$data & run_id == run_id_list$run]))
+              data_id == run_id_list$data & run_id == run_id_list$run
+            ]))
           },
           run_id_list = run_id_list
         )
@@ -816,7 +848,8 @@ setMethod(
     return(collect_vimp_table(
       x = list(x),
       run_table = run_table,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -858,7 +891,8 @@ setGeneric(
     x,
     aggregation_method,
     rank_threshold = NULL,
-    ...) {
+    ...
+  ) {
     standardGeneric("aggregate_vimp_table")
   }
 )
@@ -927,58 +961,68 @@ setMethod(
     vimp_table <- data.table::rbindlist(vimp_table, use.names = TRUE)
 
     # Create an aggregated variable importance table.
-    aggregated_vimp_object <- methods::new("vimpTable", x[[1]])
+    aggregated_vimp_object <- methods::new("vimpTable", x[[1L]])
 
     # Attach the aggregated variable importance table.
     aggregated_vimp_object@vimp_table <- vimp_table
 
     if (aggregation_method == "none") {
       aggregated_vimp_object <- .compute_rank_mean_score(
-        x = aggregated_vimp_object)
+        x = aggregated_vimp_object
+      )
       
     } else if (aggregation_method %in% c("mean", "median", "best", "worst")) {
       # Perform aggregation using simple ensemble methods
 
       if (aggregation_method == "mean") {
         aggregated_vimp_object <- .compute_rank_mean_rank(
-          x = aggregated_vimp_object)
+          x = aggregated_vimp_object
+        )
         
       } else if (aggregation_method == "median") {
         aggregated_vimp_object <- .compute_rank_median_rank(
-          x = aggregated_vimp_object)
+          x = aggregated_vimp_object
+        )
         
       } else if (aggregation_method == "best") {
         aggregated_vimp_object <- .compute_rank_best_rank(
-          x = aggregated_vimp_object)
+          x = aggregated_vimp_object
+        )
         
       } else if (aggregation_method == "worst") {
         aggregated_vimp_object <- .compute_rank_worst_rank(
-          x = aggregated_vimp_object)
+          x = aggregated_vimp_object
+        )
       }
       
     } else if (aggregation_method %in% c("stability", "exponential")) {
       # Perform aggregation using occurence-based methods.
       if (is.null(rank_threshold)) {
         rank_threshold <- .optimise_feature_occurrence_threshold(
-          vimp_table = aggregated_vimp_object)
+          vimp_table = aggregated_vimp_object
+        )
       }
 
       if (aggregation_method == "stability") {
         aggregated_vimp_object <- .compute_rank_stability(
           x = aggregated_vimp_object,
-          rank_threshold = rank_threshold)
+          rank_threshold = rank_threshold
+        )
         
       } else if (aggregation_method == "exponential") {
         aggregated_vimp_object <- .compute_rank_exponential(
           x = aggregated_vimp_object,
-          rank_threshold = rank_threshold)
+          rank_threshold = rank_threshold
+        )
       }
     } else if (aggregation_method %in% c(
-      "borda", "enhanced_borda", "truncated_borda", "enhanced_truncated_borda")) {
+      "borda", "enhanced_borda", "truncated_borda", "enhanced_truncated_borda"
+    )) {
       # Perform aggregation using Borda-count based methods
       if (is.null(rank_threshold)) {
         rank_threshold <- .optimise_feature_occurrence_threshold(
-          vimp_table = aggregated_vimp_object)
+          vimp_table = aggregated_vimp_object
+        )
       }
 
       if (aggregation_method == "borda") {
@@ -986,33 +1030,38 @@ setMethod(
           x = aggregated_vimp_object,
           rank_threshold = rank_threshold,
           truncated = FALSE,
-          enhanced = FALSE)
+          enhanced = FALSE
+        )
 
       } else if (aggregation_method == "enhanced_borda") {
         aggregated_vimp_object <- .compute_rank_borda(
           x = aggregated_vimp_object,
           rank_threshold = rank_threshold,
           truncated = FALSE,
-          enhanced = TRUE)
+          enhanced = TRUE
+        )
 
       } else if (aggregation_method == "truncated_borda") {
         aggregated_vimp_object <- .compute_rank_borda(
           x = aggregated_vimp_object,
           rank_threshold = rank_threshold,
           truncated = TRUE,
-          enhanced = FALSE)
+          enhanced = FALSE
+        )
 
       } else if (aggregation_method == "enhanced_truncated_borda") {
         aggregated_vimp_object <- .compute_rank_borda(
           x = aggregated_vimp_object,
           rank_threshold = rank_threshold,
           truncated = TRUE,
-          enhanced = TRUE)
+          enhanced = TRUE
+        )
       }
     } else {
       ..error_reached_unreachable_code(paste0(
         "aggregate_vimp_table,list: encountered an unknown aggregation method:",
-        aggregation_method))
+        aggregation_method
+      ))
     }
 
     # Force ranking of the aggregated variable importance object.
@@ -1042,7 +1091,8 @@ setMethod(
       x = as.list(x),
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -1062,7 +1112,8 @@ setMethod(
       x = list(x),
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -1090,7 +1141,7 @@ setMethod(
   function(x, aggregation_method, rank_threshold = NULL, ...) {
     # Check if the attribute has been set.
     if (is.null(x@vimp_table_list)) {
-      warning("No variable importance tables are present.")
+      ..warning("No variable importance tables are present.")
 
       return(NULL)
     }
@@ -1101,7 +1152,8 @@ setMethod(
       aggregate_vimp_table,
       aggregation_method = aggregation_method,
       rank_threshold = rank_threshold,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -1129,24 +1181,28 @@ setMethod(
     "declustered",
     "reclustered",
     "ranked",
-    "aggregated")
+    "aggregated"
+  )
 
   if (!all(x %in% state_levels)) {
     ..error_reached_unreachable_code(
-      ".as_vimp_table_state: one or more of x could not be matched to vimp table states.")
+      ".as_vimp_table_state: one or more of x could not be matched to vimp table states."
+    )
   }
 
   return(factor(
     x = x,
     levels = state_levels,
-    ordered = TRUE))
+    ordered = TRUE
+  ))
 }
 
 
 
 as_vimp_table_object <- function(
     x,
-    project_id) {
+    project_id
+) {
   # Helper function for turning variable importance tables generated prior to
   # version 1.2.0 into vimpTable objects.
   
@@ -1170,7 +1226,7 @@ as_vimp_table_object <- function(
   vimp_table <- methods::new(
     "vimpTable",
     vimp_table = vimp_table,
-    vimp_method = x$fs_method,
+    vimp_method = x$vimp_method,
     run_table = x$run_table,
     score_aggregation = "max",
     encoding_table = NULL,
@@ -1178,7 +1234,8 @@ as_vimp_table_object <- function(
     invert = invert,
     project_id = project_id,
     familiar_version = "1.2.0",
-    state = "declustered")
+    state = "declustered"
+  )
 
   return(vimp_table)
 }
@@ -1193,7 +1250,8 @@ prepare_vimp_table_object <- function(
     encoding_table = NULL,
     cluster_table = NULL,
     invert,
-    state) {
+    state
+) {
   # This function helps prepare a vimpTable object for unit testing. It is not
   # used as part of the main workflow.
 
@@ -1206,7 +1264,8 @@ prepare_vimp_table_object <- function(
     encoding_table = encoding_table,
     cluster_table = cluster_table,
     invert = invert,
-    state = state)
+    state = state
+  )
 
   # Add package version.
   proto_vimp_table <- add_package_version(proto_vimp_table)

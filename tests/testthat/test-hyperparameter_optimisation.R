@@ -193,7 +193,7 @@ object <- familiar:::.test_create_hyperparameter_object(
 new_object <- familiar:::optimise_hyperparameters(
   object = object,
   data = data,
-  user_list = list("sign_size" = c(1, 4, 8)),
+  user_list = list("sign_size" = c(1, 4, 6)),
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
@@ -205,7 +205,7 @@ new_object <- familiar:::optimise_hyperparameters(
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.", {
   testthat::expect_setequal(
     unique(new_object@hyperparameter_data$parameter_table$sign_size),
-    c(1, 4, 8))
+    c(1, 4, 6))
 })
 
 

@@ -5,7 +5,8 @@ NULL
 # familiarMetricCM -------------------------------------------------------------
 setClass(
   "familiarMetricCM",
-  contains = "familiarMetric")
+  contains = "familiarMetric"
+)
 
 
 
@@ -14,7 +15,8 @@ setClass(
   "familiarMetricCMAveraging",
   contains = "familiarMetricCM",
   slots = list("averaging" = "character"),
-  prototype = list("averaging" = "macro"))
+  prototype = list("averaging" = "macro")
+)
 
 
 # initialize -------------------------------------------------------------------
@@ -31,7 +33,8 @@ setMethod(
         x = metric,
         pattern = "_macro",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
     } else if (endsWith(x = metric, suffix = "_micro")) {
       .Object@averaging <- "micro"
@@ -39,7 +42,8 @@ setMethod(
         x = metric,
         pattern = "_micro",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
     } else if (endsWith(x = metric, suffix = "_weighted")) {
       .Object@averaging <- "weighted"
@@ -47,7 +51,8 @@ setMethod(
         x = metric,
         pattern = "_weighted",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
     } else {
       # Default setting.
@@ -79,7 +84,9 @@ setClass(
   prototype = methods::prototype(
     name = "Accuracy",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -89,9 +96,7 @@ setMethod(
   signature(metric = "familiarMetricAccuracy"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -109,7 +114,9 @@ setClass(
   prototype = methods::prototype(
     name = "Balanced Accuracy",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -123,9 +130,7 @@ setMethod(
     # International Conference on Pattern Recognition 3121–3124 (2010).]
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -143,7 +148,9 @@ setClass(
   prototype = methods::prototype(
     name = "Balanced Error Rate",
     value_range = c(0.0, 1.0),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -153,9 +160,7 @@ setMethod(
   signature(metric = "familiarMetricBalancedErrorRate"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -173,7 +178,9 @@ setClass(
   prototype = methods::prototype(
     name = "Cohen's Kappa",
     value_range = c(-1.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -188,9 +195,7 @@ setMethod(
     # https://stats.stackexchange.com/questions/251165/cohens-kappa-with-three-categories-of-variable
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -198,7 +203,7 @@ setMethod(
     obs_agreement <- sum(cm$tp) / cm$n_samples
 
     # Agreement expected at random
-    rand_agreement <- sum((cm$tp + cm$fp) * (cm$tp + cm$fn)) / cm$n_samples^2
+    rand_agreement <- sum((cm$tp + cm$fp) * (cm$tp + cm$fn)) / cm$n_samples^2.0
 
     if (rand_agreement == 1.0 && obs_agreement == 1.0) {
       # Prevent division by zero for perfect predictions.
@@ -219,7 +224,9 @@ setClass(
   prototype = methods::prototype(
     name = "F1 score",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -229,9 +236,7 @@ setMethod(
   signature(metric = "familiarMetricF1Score"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -239,7 +244,8 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     # Compute score
     score <- 2.0 * cm$tp / (2.0 * cm$tp + cm$fp + cm$fn)
@@ -249,7 +255,8 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     return(score)
   }
@@ -264,7 +271,9 @@ setClass(
   prototype = methods::prototype(
     name = "False Discovery Rate",
     value_range = c(0.0, 1.0),
-    higher_better = FALSE))
+    higher_better = FALSE
+  )
+)
 
 
 
@@ -274,9 +283,7 @@ setMethod(
   signature(metric = "familiarMetricFDR"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -284,7 +291,8 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     # Compute score.
     score <- cm$fp / (cm$tp + cm$fp)
@@ -294,8 +302,9 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     return(score)
   }
 )
@@ -309,7 +318,9 @@ setClass(
   prototype = methods::prototype(
     name = "Informedness",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -325,10 +336,8 @@ setMethod(
     # See equations 28, 42.
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
-
+    cm <- ..compute_confusion_matrix_data(data = data)
+    
     if (is.null(cm)) return(callNextMethod())
 
     # Compute the score
@@ -345,7 +354,9 @@ setClass(
   prototype = methods::prototype(
     name = "Markedness",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -361,9 +372,7 @@ setMethod(
     # See equations 29, 43.
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -381,7 +390,9 @@ setClass(
   prototype = methods::prototype(
     name = "Matthews' Correlation Coefficient",
     value_range = c(-1.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -398,9 +409,7 @@ setMethod(
     # Mirrors scikit-learn implementation.
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data, 
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -438,9 +447,7 @@ setMethod(
   signature(metric = "familiarMetricNPV"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data, 
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -448,7 +455,8 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     # Compute NPV
     score <- cm$tn / (cm$tn + cm$fn)
@@ -458,7 +466,8 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     return(score)
   }
@@ -473,8 +482,9 @@ setClass(
   prototype = methods::prototype(
     name = "Positive Predictive Value",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
-
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -485,9 +495,7 @@ setMethod(
   signature(metric = "familiarMetricPPV"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -495,7 +503,8 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     # Compute PPV.
     score <- cm$tp / (cm$tp + cm$fp)
@@ -505,8 +514,9 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     return(score)
   }
 )
@@ -520,7 +530,9 @@ setClass(
   prototype = methods::prototype(
     name = "Sensitivity",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -530,9 +542,7 @@ setMethod(
   signature(metric = "familiarMetricSensitivity"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -540,7 +550,8 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     # Compute sensitivity
     score <- cm$tp / (cm$tp + cm$fn)
@@ -550,8 +561,9 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     return(score)
   }
 )
@@ -565,7 +577,9 @@ setClass(
   prototype = methods::prototype(
     name = "Specificity",
     value_range = c(0.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -575,9 +589,7 @@ setMethod(
   signature(metric = "familiarMetricSpecificity"),
   function(metric, data, ...) {
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -585,8 +597,9 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     # Compute specificity.
     score <- cm$tn / (cm$tn + cm$fp)
 
@@ -595,7 +608,8 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
+      outcome_type = metric@outcome_type
+    )
 
     return(score)
   }
@@ -609,7 +623,9 @@ setClass(
   prototype = methods::prototype(
     name = "Youden's J Statistic",
     value_range = c(-1.0, 1.0),
-    higher_better = TRUE))
+    higher_better = TRUE
+  )
+)
 
 
 
@@ -622,9 +638,7 @@ setMethod(
     # 3, 32–35 (1950).]
 
     # Compute data from the confusion metrics.
-    cm <- ..compute_confusion_matrix_data(
-      data = data,
-      outcome_type = metric@outcome_type)
+    cm <- ..compute_confusion_matrix_data(data = data)
 
     if (is.null(cm)) return(callNextMethod())
 
@@ -632,8 +646,9 @@ setMethod(
     cm <- ..aggregate_confusion_matrix(
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     # Compute Youden index.
     score <- cm$tp / (cm$tp + cm$fn) + cm$tn / (cm$tn + cm$fp) - 1.0
 
@@ -642,44 +657,48 @@ setMethod(
       score = score,
       cm = cm,
       averaging = metric@averaging,
-      outcome_type = metric@outcome_type)
-
+      outcome_type = metric@outcome_type
+    )
+    
     return(score)
   }
 )
 
 
 
-..compute_confusion_matrix_data <- function(data, outcome_type) {
+..compute_confusion_matrix_data <- function(data) {
   # Suppress NOTES due to non-standard evaluation in data.table
   predicted_class <- NULL
-
+  
+  if (is_empty(data)) return(NULL)
+  
+  if (!is(data, "predictionTableClassification")) {
+    ..error_data_not_prediction_table(data, "predictionTableClassification")
+  }
+  
   # Get the classes and number of classes in data.
-  outcome_classes <- get_outcome_class_levels(
-    data,
-    outcome_type = outcome_type)
+  outcome_classes <- get_outcome_class_levels(data)
   n_classes <- length(outcome_classes)
 
+  # Skip calculation if there are no other classes.
+  if (n_classes <= 1L) return(NULL)
+  
   # Remove any entries that lack valid predictions.
-  data <- remove_nonvalid_predictions(
-    prediction_table = data,
-    outcome_type = outcome_type)
-
+  data <- remove_invalid_predictions(data)
+  
   # Remove any entries that lack observed values.
-  data <- remove_missing_outcomes(
-    data = data,
-    outcome_type = outcome_type)
-
+  data <- filter_missing_outcome(data)
   if (is_empty(data)) return(NULL)
-
+  
+  # Identify the outcome column.
+  outcome_column <- get_outcome_columns(x = data@outcome_type)
+  data <- .as_data_table(.complete(data))
+  
   # Create empty scalars
   tp <- tn <- fp <- fn <- prevalence <- bias <- numeric(n_classes)
 
   # Total number of samples
   n_samples <- nrow(data)
-
-  # Get the outcome column.
-  outcome_column <- get_outcome_columns(outcome_type)
 
   # Iterate over positive classes
   for (ii in seq_along(outcome_classes)) {
@@ -704,7 +723,8 @@ setMethod(
     "prevalence" = prevalence,
     "bias" = bias,
     "n_samples" = n_samples,
-    "n_classes" = n_classes))
+    "n_classes" = n_classes
+  ))
 }
 
 
@@ -713,14 +733,15 @@ setMethod(
   if (outcome_type == "binomial") {
     # Use second class as positive class
     return(list(
-      "tp" = cm$tp[2],
-      "tn" = cm$tn[2],
-      "fp" = cm$fp[2],
-      "fn" = cm$fn[2],
+      "tp" = cm$tp[2L],
+      "tn" = cm$tn[2L],
+      "fp" = cm$fp[2L],
+      "fn" = cm$fn[2L],
       "prevalence" = 1.0,
       "bias" = 1.0,
       "n_samples" = cm$n_samples,
-      "n_classes" = 1.0))
+      "n_classes" = 1.0
+    ))
     
   } else if (outcome_type == "multinomial") {
     if (averaging == "micro") {
@@ -733,7 +754,8 @@ setMethod(
         "prevalence" = 1.0,
         "bias" = 1.0,
         "n_samples" = cm$n_classes * cm$n_samples,
-        "n_classes" = 1.0))
+        "n_classes" = 1.0
+      ))
       
     } else {
       # No changes are needed.
@@ -769,7 +791,8 @@ setMethod(
       
     } else {
       ..error_reached_unreachable_code(
-        "..aggregate_confusion_matrix_score: encountered unknown averaging method.")
+        "..aggregate_confusion_matrix_score: encountered unknown averaging method."
+      )
     }
   }
 
@@ -793,7 +816,8 @@ setMethod(
     .get_available_ppv_metrics(),
     .get_available_sensitivity_metrics(),
     .get_available_specificity_metrics(),
-    .get_available_youden_metrics()))
+    .get_available_youden_metrics()
+  ))
 }
 
 
@@ -821,7 +845,8 @@ setMethod(
 .get_available_fdr_metrics <- function() {
   return(c(
     paste0("fdr", c("", "_micro", "_macro", "_weighted")),
-    paste0("false_discovery_rate", c("", "_micro", "_macro", "_weighted"))))
+    paste0("false_discovery_rate", c("", "_micro", "_macro", "_weighted"))
+  ))
 }
 
 .get_available_informedness_metrics <- function() {
@@ -839,14 +864,16 @@ setMethod(
 .get_available_npv_metrics <- function() {
   return(c(
     paste0("npv", c("", "_micro", "_macro", "_weighted")),
-    paste0("negative_predictive_value", c("", "_micro", "_macro", "_weighted"))))
+    paste0("negative_predictive_value", c("", "_micro", "_macro", "_weighted"))
+  ))
 }
 
 .get_available_ppv_metrics <- function() {
   return(c(
     paste0("ppv", c("", "_micro", "_macro", "_weighted")),
     paste0("positive_predictive_value", c("", "_micro", "_macro", "_weighted")),
-    paste0("precision", c("", "_micro", "_macro", "_weighted"))))
+    paste0("precision", c("", "_micro", "_macro", "_weighted"))
+  ))
 }
 
 .get_available_sensitivity_metrics <- function() {
@@ -854,18 +881,21 @@ setMethod(
     paste0("sensitivity", c("", "_micro", "_macro", "_weighted")),
     paste0("recall", c("", "_micro", "_macro", "_weighted")),
     paste0("tpr", c("", "_micro", "_macro", "_weighted")),
-    paste0("true_positive_rate", c("", "_micro", "_macro", "_weighted"))))
+    paste0("true_positive_rate", c("", "_micro", "_macro", "_weighted"))
+  ))
 }
 
 .get_available_specificity_metrics <- function() {
   return(c(
     paste0("specificity", c("", "_micro", "_macro", "_weighted")),
     paste0("tnr", c("", "_micro", "_macro", "_weighted")),
-    paste0("true_negative_rate", c("", "_micro", "_macro", "_weighted"))))
+    paste0("true_negative_rate", c("", "_micro", "_macro", "_weighted"))
+  ))
 }
 
 .get_available_youden_metrics <- function() {
   return(c(
     paste0("youden_j", c("", "_micro", "_macro", "_weighted")),
-    paste0("youden_index", c("", "_micro", "_macro", "_weighted"))))
+    paste0("youden_index", c("", "_micro", "_macro", "_weighted"))
+  ))
 }

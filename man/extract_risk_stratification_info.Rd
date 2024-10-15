@@ -13,8 +13,9 @@ extract_risk_stratification_info(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.

@@ -4,6 +4,7 @@
 \alias{as_familiar_ensemble}
 \alias{as_familiar_ensemble,familiarEnsemble-method}
 \alias{as_familiar_ensemble,familiarModel-method}
+\alias{as_familiar_ensemble,familiarNoveltyDetector-method}
 \alias{as_familiar_ensemble,list-method}
 \alias{as_familiar_ensemble,character-method}
 \alias{as_familiar_ensemble,ANY-method}
@@ -14,6 +15,8 @@ as_familiar_ensemble(object, ...)
 \S4method{as_familiar_ensemble}{familiarEnsemble}(object, ...)
 
 \S4method{as_familiar_ensemble}{familiarModel}(object, ...)
+
+\S4method{as_familiar_ensemble}{familiarNoveltyDetector}(object, ...)
 
 \S4method{as_familiar_ensemble}{list}(object, ...)
 

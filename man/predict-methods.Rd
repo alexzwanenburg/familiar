@@ -21,6 +21,7 @@ predict(object, ...)
   stratification_threshold = NULL,
   stratification_method = NULL,
   percentiles = NULL,
+  .as_prediction_table = FALSE,
   ...
 )
 
@@ -34,10 +35,18 @@ predict(object, ...)
   stratification_threshold = NULL,
   stratification_method = NULL,
   percentiles = NULL,
+  .as_prediction_table = FALSE,
   ...
 )
 
-\S4method{predict}{familiarNoveltyDetector}(object, newdata, type = "novelty", ...)
+\S4method{predict}{familiarNoveltyDetector}(
+  object,
+  newdata,
+  type = "novelty",
+  ensemble_method = "median",
+  .as_prediction_table = FALSE,
+  ...
+)
 
 \S4method{predict}{list}(
   object,
@@ -49,6 +58,7 @@ predict(object, ...)
   stratification_threshold = NULL,
   stratification_method = NULL,
   percentiles = NULL,
+  .as_prediction_table = FALSE,
   ...
 )
 
@@ -62,6 +72,7 @@ predict(object, ...)
   stratification_threshold = NULL,
   stratification_method = NULL,
   percentiles = NULL,
+  .as_prediction_table = FALSE,
   ...
 )
 }
@@ -81,10 +92,9 @@ features. Unlike other \code{predict} methods, \code{newdata} cannot be missing 
 \item{type}{Type of prediction made. The following values are directly
 supported:
 \itemize{
-\item \code{default}: Default prediction, i.e. value estimates for \code{count} and
-\code{continuous} outcomes, predicted class probabilities and class for
-\code{binomial} and \code{multinomial} and the model response for \code{survival}
-outcomes.
+\item \code{default}: Default prediction, i.e. value estimates for \code{continuous}
+outcomes, predicted class probabilities and class for \code{binomial} and
+\code{multinomial} and the model response for \code{survival} outcomes.
 \item \code{survival_probability}: Predicts survival probabilities at the time
 specified by \code{time}. Only applicable to \code{survival} outcomes. Some models
 may not allow for predicting survival probabilities based on their
@@ -132,6 +142,9 @@ In addition this argument is ignored if a \code{stratification_threshold} is
 set.}
 
 \item{percentiles}{Currently unused.}
+
+\item{.as_prediction_table}{Selects whether a data.table or prediction table
+object should be returned.}
 }
 \value{
 A \code{data.table} with predicted values.

@@ -25,10 +25,10 @@ plot_ice(
   plot_sub_title = NULL,
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
@@ -67,10 +67,10 @@ plot_ice(
   plot_sub_title = NULL,
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
@@ -109,10 +109,10 @@ plot_ice(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
@@ -167,14 +167,28 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to colour the different
-plot elements in case a value was provided to the \code{color_by} argument. For
-2D individual conditional expectation plots without novelty, the initial
-colour determines the colour of the points indicating sample values.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
+indicated by the \code{color_by} argument (if any). For 2D individual
+conditional expectation plots without novelty, the initial colour
+determines the colour of the points indicating sample values. \code{familiar}
+has a default palette. Other palettes are supported by the \code{paletteer}
+package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 colour the raster in 2D individual conditional expectation or partial
-dependence plots. This argument is not used for 1D plots.}
+dependence plots. This argument is not used for 1D plots. \code{familiar} has a
+default palette. Other palettes are supported by the \code{paletteer} package,
+\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
+(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
+\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
+name in \code{grDevices}. You may also specify your own palette by providing a
+vector of colour names listed by \code{grDevices::colors()} or through
+hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}. By default, values are determined from the data, dependent on the
@@ -330,8 +344,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -453,28 +467,17 @@ predicted value as function of a single feature, whereas 2D plots show the
 predicted value as a function of two features.
 
 Available splitting variables are: \code{feature_x}, \code{feature_y} (2D only),
-\code{fs_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
+\code{vimp_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
 outcomes) or \code{evaluation_time} (survival outcomes). By default, for 1D ICE
-plots the data are split by \code{feature_x}, \code{fs_method} and \code{learner}, with
+plots the data are split by \code{feature_x}, \code{vimp_method} and \code{learner}, with
 faceting by \code{data_set}, \code{positive_class} or \code{evaluation_time}. If only
 partial dependence is shown, \code{positive_class} and \code{evaluation_time} are
 used to set colours instead. For 2D plots, by default the data are split by
-\code{feature_x}, \code{fs_method} and \code{learner}, with faceting by \code{data_set},
+\code{feature_x}, \code{vimp_method} and \code{learner}, with faceting by \code{data_set},
 \code{positive_class} or \code{evaluation_time}. The \code{color_by} argument cannot be
 used with 2D plots, and attempting to do so causes an error. Attempting to
 specify \code{feature_x} or \code{feature_y} for \code{color_by} will likewise result in
 an error, as multiple features cannot be shown in the same facet.
-
-The splitting variables indicated by \code{color_by} are coloured according to
-the \code{discrete_palette} parameter. This parameter is therefore only used for
-1D plots. Available palettes for \code{discrete_palette} and \code{gradient_palette}
-are those listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
-\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
-palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your
-own palette by using colour names listed by \code{grDevices::colors()} or
-through hexadecimal RGB strings.
 
 Bootstrap confidence intervals of the partial dependence plots can be shown
 using various styles set by \code{conf_int_style}:
@@ -493,7 +496,7 @@ computed for individual samples in individual conditional expectation
 plots. To avoid clutter, only point estimates for individual samples are
 shown.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

@@ -2,13 +2,14 @@ logger_message <- function(
     mess_str,
     file_name = NULL,
     indent = 0L,
-    verbose = TRUE) {
+    verbose = TRUE
+) {
   # Write message to console and file
 
   if (is.null(file_name)) file_name <- .get_log_file()
 
   # Derive an indent string using two spaces for each indentation.
-  indent_str <- paste0(rep("  ", indent), collapse = "")
+  indent_str <- strrep("  ", indent)
 
   # Date and time string
   date_str <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
@@ -21,7 +22,8 @@ logger_message <- function(
     tryCatch(write(
       x = log_str,
       file = file_name,
-      append = TRUE))
+      append = TRUE
+    ))
   }
 
   # Write message to console
@@ -34,9 +36,12 @@ logger_message <- function(
 
 logger_warning <- function(
     warn_str,
-    file_name = NULL) {
+    file_name = NULL,
+    warn_class = NULL,
+    call = rlang::caller_env()
+) {
   # Write warning to console and file
-
+  
   if (is.null(file_name)) file_name <- .get_log_file()
 
   # Date and time string
@@ -50,11 +55,16 @@ logger_warning <- function(
     tryCatch(write(
       x = log_str,
       file = file_name,
-      append = TRUE))
+      append = TRUE
+    ))
   }
 
   # Write warning to console
-  warning(warn_str)
+  rlang::warn(
+    message =  warn_str,
+    class = union("familiar_warning", warn_class),
+    call = call
+  )
   
   return(invisible(NULL))
 }
@@ -63,7 +73,10 @@ logger_warning <- function(
 
 logger_stop <- function(
     err_str,
-    file_name = NULL) {
+    file_name = NULL,
+    error_class = NULL,
+    call = rlang::caller_env()
+) {
   # Write error to console and file
 
   if (is.null(file_name)) file_name <- .get_log_file()
@@ -76,11 +89,19 @@ logger_stop <- function(
 
   # Write error to log file
   if (!is.null(file_name)) {
-    tryCatch(write(x = log_str, file = file_name, append = TRUE))
+    tryCatch(write(
+      x = log_str, 
+      file = file_name, 
+      append = TRUE
+    ))
   }
 
   # Write error to console
-  stop(err_str)
+  rlang::abort(
+    message = err_str,
+    class = union("familiar_error", error_class),
+    call = call
+  )
 }
 
 

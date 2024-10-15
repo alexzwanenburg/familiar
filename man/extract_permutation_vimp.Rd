@@ -29,8 +29,9 @@ extract_permutation_vimp(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
@@ -99,8 +100,8 @@ vignette on performance metrics for the available metrics. If not provided
 explicitly, this parameter is read from settings used at creation of the
 underlying \code{familiarModel} objects.}
 
-\item{evaluation_times}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+\item{evaluation_times}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}

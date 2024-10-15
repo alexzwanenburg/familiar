@@ -13,7 +13,7 @@ familiar:::test_plots(
   not_available_single_sample = TRUE,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   data_element = "feature_similarity",
   debug = debug_flag
 )
@@ -22,7 +22,7 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_feature_similarity,
   data_element = "feature_similarity",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
@@ -30,8 +30,8 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_feature_similarity,
   data_element = "feature_similarity",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
-  plot_args = list("facet_by" = c("learner", "fs_method", "data_set")),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list("facet_by" = c("learner", "vimp_method", "data_set")),
   debug = debug_flag
 )
 
@@ -39,7 +39,7 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_feature_similarity,
   data_element = "feature_similarity",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list("show_dendrogram" = c("left", "bottom")),
   debug = debug_flag
 )

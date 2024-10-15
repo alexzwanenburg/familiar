@@ -13,7 +13,7 @@ familiar:::test_plots(
   not_available_any_prospective = TRUE,
   not_available_single_sample = TRUE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   estimation_type = "point",
   debug = debug_flag
 )
@@ -73,7 +73,7 @@ familiar:::test_plot_ordering(
   metric = c("auc_roc", "accuracy"),
   outcome_type_available = c("multinomial"),
   plot_args = list(
-    "facet_by" = c("data_set", "learner", "fs_method"),
+    "facet_by" = c("data_set", "learner", "vimp_method"),
     "color_by" = c("metric", "similarity_threshold")),
   debug = debug_flag
 )

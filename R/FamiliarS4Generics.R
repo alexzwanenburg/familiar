@@ -2,6 +2,10 @@
 # explicity imported.
 setGeneric("save")
 
+setGeneric(".complete", function(object, ...) standardGeneric(".complete"))
+
+setGeneric(".copy", function(object, ...) standardGeneric(".copy"))
+
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
@@ -63,8 +67,6 @@ setGeneric("transform_features", function(data, ...) standardGeneric("transform_
 setGeneric("normalise_features", function(data, ...) standardGeneric("normalise_features"))
 
 setGeneric("batch_normalise_features", function(data, ...) standardGeneric("batch_normalise_features"))
-
-setGeneric("remove_missing_outcomes", function(data, ...) standardGeneric("remove_missing_outcomes"))
 
 setGeneric("impute_features", function(data, ...) standardGeneric("impute_features"))
 
@@ -159,8 +161,6 @@ setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_c
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
 
-setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
-
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
 setGeneric("has_optimised_hyperparameters", function(object, ...) standardGeneric("has_optimised_hyperparameters"))
@@ -172,6 +172,8 @@ setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_boot
 setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample"))
 
 setGeneric("create_instance_weights", function(data, ...) standardGeneric("create_instance_weights"))
+
+setGeneric(".create_outcome_info", function(object, ...) standardGeneric(".create_outcome_info"))
 
 
 
@@ -186,8 +188,6 @@ setGeneric("..train_naive", function(object, data, ...) standardGeneric("..train
 
 setGeneric("..predict", function(object, data, ...) standardGeneric("..predict"))
 
-setGeneric("..predict_survival_probability", function(object, data, time, ...) standardGeneric("..predict_survival_probability"))
-
 setGeneric("..set_recalibration_model", function(object, data, ...) standardGeneric("..set_recalibration_model"))
 
 setGeneric("..vimp", function(object, ...) standardGeneric("..vimp"))
@@ -196,7 +196,12 @@ setGeneric("get_prediction_type", function(object, ...) standardGeneric("get_pre
 
 setGeneric("..set_calibration_info", function(object, data, ...) standardGeneric("..set_calibration_info"))
 
-setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) standardGeneric("..set_risk_stratification_thresholds"))
+setGeneric(
+  "..set_risk_stratification_thresholds",
+  function(object, data, ...) {
+    standardGeneric("..set_risk_stratification_thresholds")
+  }
+)
 
 setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))
 
@@ -216,6 +221,7 @@ setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
 
 setGeneric("requires_naive_model", function(object, ...) standardGeneric("requires_naive_model"))
 
+setGeneric("..get_prediction_table_type", function(object, ...) standardGeneric("..get_prediction_table_type"))
 
 
 # familiarNoveltyDetector methods ----------------------------------------------
@@ -258,7 +264,7 @@ setGeneric("set_data_set_names", function(x, ...) standardGeneric("set_data_set_
 
 setGeneric("set_learner_names", function(x, ...) standardGeneric("set_learner_names"))
 
-setGeneric("set_fs_method_names", function(x, ...) standardGeneric("set_fs_method_names"))
+setGeneric("set_vimp_method_names", function(x, ...) standardGeneric("set_vimp_method_names"))
 
 setGeneric("set_feature_names", function(x, ...) standardGeneric("set_feature_names"))
 
@@ -270,7 +276,7 @@ setGeneric("get_data_set_names", function(x, ...) standardGeneric("get_data_set_
 
 setGeneric("get_learner_names", function(x, ...) standardGeneric("get_learner_names"))
 
-setGeneric("get_fs_method_names", function(x, ...) standardGeneric("get_fs_method_names"))
+setGeneric("get_vimp_method_names", function(x, ...) standardGeneric("get_vimp_method_names"))
 
 setGeneric("get_feature_names", function(x, ...) standardGeneric("get_feature_names"))
 
@@ -282,7 +288,7 @@ setGeneric("get_data_set_name_levels", function(x, ...) standardGeneric("get_dat
 
 setGeneric("get_learner_name_levels", function(x, ...) standardGeneric("get_learner_name_levels"))
 
-setGeneric("get_fs_method_name_levels", function(x, ...) standardGeneric("get_fs_method_name_levels"))
+setGeneric("get_vimp_method_name_levels", function(x, ...) standardGeneric("get_vimp_method_name_levels"))
 
 setGeneric("get_feature_name_levels", function(x, ...) standardGeneric("get_feature_name_levels"))
 
@@ -311,8 +317,20 @@ setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric("
 
 setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
 
-setGeneric("collect", function(x, ...) standardGeneric("collect"))
+setGeneric(".merge_slots_into_data", function(x, ...) standardGeneric(".merge_slots_into_data"))
 
+setGeneric(".extract_slots_from_data", function(x, ...) standardGeneric(".extract_slots_from_data"))
+
+setGeneric(".as_data_table", function(x, ...) standardGeneric(".as_data_table"))
+
+setGeneric(
+  ".convert_value_to_grouping_column",
+  function(x, ...) {
+    standardGeneric(".convert_value_to_grouping_column")
+  }
+)
+
+setGeneric("collect", function(x, ...) standardGeneric("collect"))
 
 
 # vimpTable methods ------------------------------------------------------------
@@ -328,7 +346,12 @@ setGeneric("preprocess_vimp_table", function(x, ...) standardGeneric("preprocess
 
 setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove_signature_features"))
 
-setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
+setGeneric(
+  "update_vimp_table_to_reference",
+  function(x, ...) {
+    standardGeneric("update_vimp_table_to_reference")
+  }
+)
 
 setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))
 
@@ -347,4 +370,9 @@ setGeneric("feature_info_complete", function(object, ...) standardGeneric("featu
 
 setGeneric("add_feature_info_parameters", function(object, data, ...) standardGeneric("add_feature_info_parameters"))
 
-setGeneric("apply_feature_info_parameters", function(object, data, ...) standardGeneric("apply_feature_info_parameters"))
+setGeneric(
+  "apply_feature_info_parameters",
+  function(object, data, ...) {
+    standardGeneric("apply_feature_info_parameters")
+  }
+)

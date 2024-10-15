@@ -14,8 +14,9 @@ extract_fs_vimp(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{aggregation_method}{Method for aggregating variable importances for the
 purpose of evaluation. Variable importances are determined during feature

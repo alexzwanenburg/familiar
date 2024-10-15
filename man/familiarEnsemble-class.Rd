@@ -25,8 +25,8 @@ regarding identifier column names and outcome column names.}
 
 \item{\code{learner}}{Learning algorithm used to create the models in the ensemble.}
 
-\item{\code{fs_method}}{Feature selection method used to determine variable
-importance for the models in the ensemble.}
+\item{\code{vimp_method}}{Method used to determine variable importance for the models
+in the ensemble.}
 
 \item{\code{feature_info}}{List of objects containing feature information, e.g.,
 name, class levels, transformation, normalisation and clustering

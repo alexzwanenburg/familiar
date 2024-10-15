@@ -6,7 +6,7 @@ debug_flag <- FALSE
 # Test that creates a single naive model.
 familiar:::integrated_test(
   experimental_design = "fs+mb",
-  fs_method = "no_features",
+  vimp_method = "no_features",
   cluster_method = "none",
   imputation_method = "simple",
   estimation_type = "point",

@@ -75,7 +75,7 @@
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #' @inheritDotParams .parse_evaluation_settings -config -data -parallel -outcome_type -hpo_metric -development_batch_id -vimp_aggregation_rank_threshold -vimp_aggregation_method -prep_cluster_method -prep_cluster_linkage_method -prep_cluster_cut_method -prep_cluster_similarity_threshold -prep_cluster_similarity_metric
@@ -98,11 +98,12 @@ summon_familiar <- function(
     config_id = 1L,
     verbose = TRUE,
     .stop_after = "evaluation",
-    ...) {
+    ...
+) {
   
   # Set options.
   # Disable randomForestSRC OpenMP core use.
-  options(rf.cores = as.integer(1))
+  options(rf.cores = 1L)
   on.exit(options(rf.cores = -1L), add = TRUE)
   
   # Disable multithreading on data.table to prevent reduced performance due to
@@ -114,13 +115,15 @@ summon_familiar <- function(
   .check_parameter_value_is_valid(
     x = .stop_after,
     var_name = ".stop_after",
-    values = c("setup", "preprocessing", "vimp", "training", "evaluation"))
+    values = c("setup", "preprocessing", "vimp", "training", "evaluation")
+  )
   
   
   # Load configuration file ----------------------------------------------------
   config <- .load_configuration_file(
     config = config,
-    config_id = config_id)
+    config_id = config_id
+  )
   
   
   # Test arguments provided by ... and config ----------------------------------
@@ -134,7 +137,9 @@ summon_familiar <- function(
     .parse_file_paths,
     args = c(
       list("config" = config, "verbose" = verbose),
-      list(...)))
+      list(...)
+    )
+  )
   
   # Set paths to data
   if (!is.null(file_paths$data) && is.null(data)) {
@@ -145,7 +150,8 @@ summon_familiar <- function(
   if (file_paths$is_temporary) {
     on.exit(
       unlink(file_paths$experiment_dir, recursive = TRUE),
-      add = TRUE)
+      add = TRUE
+    )
   } 
   
   # Load data ------------------------------------------------------------------
@@ -159,7 +165,8 @@ summon_familiar <- function(
   # Parse experiment and data settings
   settings <- do.call(
     .parse_initial_settings,
-    args = c(list("config" = config), dots))
+    args = c(list("config" = config), dots)
+  )
   
   if (is(data, "dataObject")) {
     # Reconstitute settings from the data.
@@ -175,13 +182,15 @@ summon_familiar <- function(
     # Load data.
     data <- do.call(
       .load_data,
-      args = c(list("data" = data), settings$data))
+      args = c(list("data" = data), settings$data)
+    )
     
     # Update settings
     settings <- .update_initial_settings(
       formula = formula,
       data = data,
-      settings = settings)
+      settings = settings
+    )
   }
   
   # Parse data
@@ -197,8 +206,14 @@ summon_familiar <- function(
     censoring_indicator = settings$data$censoring_indicator,
     event_indicator = settings$data$event_indicator,
     competing_risk_indicator = settings$data$competing_risk_indicator,
-    reference_method = settings$data$reference_method)
+    reference_method = settings$data$reference_method
+  )
   
+  # Check data plausibility.
+  .check_data_plausibility(
+    data = data,
+    settings = settings
+  )
   
   # Load experiment data -------------------------------------------------------
   if (!is.null(experiment_data)) {
@@ -206,12 +221,14 @@ summon_familiar <- function(
     # Write experiment data to the file system
     experiment_data <- load_experiment_data(
       experiment_data,
-      file_paths = file_paths)
+      file_paths = file_paths
+    )
     
     # Force the use of existing experiment data.
     settings$data$exp_design <- .get_iteration_file_name(
       project_id = experiment_data@project_id,
-      file_paths = file_paths)
+      file_paths = file_paths
+    )
   }
   
   rm(experiment_data)
@@ -222,20 +239,23 @@ summon_familiar <- function(
   experiment_setup <- extract_experimental_setup(
     experimental_design = settings$data$exp_design,
     file_dir = file_paths$iterations_dir,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Check experiment settings
   settings <- .update_experimental_design_settings(
     section_table = experiment_setup,
     data = data,
-    settings = settings)
+    settings = settings
+  )
   
   # Import remaining settings
   settings <- .parse_general_settings(
     config = config,
     data = data,
     settings = settings,
-    ...)
+    ...
+  )
   
   # Create a generic outcome object
   outcome_info <- create_outcome_info(settings = settings)
@@ -246,7 +266,8 @@ summon_familiar <- function(
     data = data,
     experiment_setup = experiment_setup,
     settings = settings,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data
@@ -260,7 +281,8 @@ summon_familiar <- function(
     settings <- .update_experimental_design_settings(
       section_table = experiment_setup,
       data = data,
-      settings = settings)
+      settings = settings
+    )
   }
   
   # Backend and parallellisation -----------------------------------------------
@@ -282,35 +304,43 @@ summon_familiar <- function(
   .assign_outcome_info_to_global(outcome_info = outcome_info)
   .assign_backend_options_to_global(
     backend_type = settings$run$backend_type,
-    server_port = settings$run$server_port)
+    server_port = settings$run$server_port
+  )
   .assign_data_to_backend(
     data = data,
     backend_type = settings$run$backend_type,
-    server_port = settings$run$server_port)
-
+    server_port = settings$run$server_port
+  )
   .assign_parallel_options_to_global(
     is_external_cluster = is_external_cluster,
     restart_cluster = settings$run$restart_cluster,
     n_cores = settings$run$parallel_nr_cores,
-    cluster_type = settings$run$cluster_type)
+    cluster_type = settings$run$cluster_type
+  )
   
   # Make sure that backend server will close after the process finishes.
   on.exit(
     shutdown_backend_server(
       backend_type = settings$run$backend_type,
-      server_port = settings$run$server_port),
-    add = TRUE)
+      server_port = settings$run$server_port
+    ),
+    add = TRUE
+  )
   
-  if (settings$run$parallel &&
-      !settings$run$restart_cluster &&
-      !is_external_cluster) {
+  if (
+    settings$run$parallel &&
+    !settings$run$restart_cluster &&
+    !is_external_cluster
+  ) {
     # Start local cluster in the overall process.
     cl <- .restart_cluster(cl = NULL, assign = "all")
     on.exit(.terminate_cluster(cl), add = TRUE)
     
-  } else if (settings$run$parallel &&
-             settings$run$restart_cluster &&
-             !is_external_cluster) {
+  } else if (
+    settings$run$parallel &&
+    settings$run$restart_cluster &&
+    !is_external_cluster
+  ) {
     # Start processes locally.
     cl <- waiver()
     
@@ -331,7 +361,8 @@ summon_familiar <- function(
     return(create_experiment_data(
       project_id = project_info$project_id,
       experiment_setup = experiment_setup,
-      iteration_list = project_info$iter_list))
+      iteration_list = project_info$iter_list
+    ))
   }
   
   # Pre-processing -------------------------------------------------------------
@@ -344,7 +375,8 @@ summon_familiar <- function(
     project_info = project_info,
     settings = settings,
     file_paths = file_paths,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("preprocessing")) {
@@ -354,18 +386,21 @@ summon_familiar <- function(
       iteration_list = project_info$iter_list,
       feature_info = get_feature_info_from_backend(
         data_id = waiver(),
-        run_id = waiver())))
+        run_id = waiver()
+      )
+    ))
   }
   
   # Variable importance --------------------------------------------------------
   
-  # Start feature selection
-  run_feature_selection(
+  # Start variable importance computation
+  run_variable_importance_computation(
     cl = cl,
     project_list = project_info,
     settings = settings,
     file_paths = file_paths,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("vimp")) {
@@ -375,11 +410,14 @@ summon_familiar <- function(
       iteration_list = project_info$iter_list,
       feature_info = get_feature_info_from_backend(
         data_id = waiver(),
-        run_id = waiver()),
-      vimp_table_list = .retrieve_feature_selection_data(
-        fs_method = settings$fs$fs_method,
+        run_id = waiver()
+      ),
+      vimp_table_list = .retrieve_variable_importance_data(
+        vimp_method = settings$vimp$vimp_method,
         project_list = project_info,
-        file_paths = file_paths)))
+        file_paths = file_paths
+      )
+    ))
   }
   
   # Training -------------------------------------------------------------------
@@ -390,7 +428,8 @@ summon_familiar <- function(
     project_list = project_info,
     settings = settings,
     file_paths = file_paths,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("training")) {
@@ -405,7 +444,8 @@ summon_familiar <- function(
     project_list = project_info,
     settings = settings,
     file_paths = file_paths,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   if (file_paths$is_temporary) {
     # Collect all familiarModels, familiarEnsemble, familiarData and
@@ -428,10 +468,10 @@ summon_familiar <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -476,7 +516,7 @@ summon_familiar <- function(
 #'   training set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
@@ -500,14 +540,15 @@ precompute_data_assignment <- function(
     cl = NULL,
     experimental_design = "fs+mb",
     verbose = TRUE,
-    ...) {
+    ...
+) {
   
   # Isolate dots.
   dots <- list(...)
   
-  # Drop skip_evaluation_elements, fs_method and learner if present.
+  # Drop skip_evaluation_elements, vimp_method and learner if present.
   dots$skip_evaluation_elements <- NULL
-  dots$fs_method <- NULL
+  dots$vimp_method <- NULL
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
@@ -520,12 +561,15 @@ precompute_data_assignment <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = "none",
+        "vimp_method" = "none",
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
-        ".stop_after" = "setup"),
-      dots))
+        ".stop_after" = "setup"
+      ),
+      dots
+    )
+  )
   
   # Extract familiar models.
   return(experiment_data)
@@ -540,10 +584,10 @@ precompute_data_assignment <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -590,7 +634,7 @@ precompute_data_assignment <- function(
 #'   This argument is ignored if the `experiment_data` argument is set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
@@ -614,14 +658,15 @@ precompute_feature_info <- function(
     cl = NULL,
     experimental_design = "fs+mb",
     verbose = TRUE,
-    ...) {
+    ...
+) {
   
   # Isolate dots.
   dots <- list(...)
   
-  # Drop skip_evaluation_elements, fs_method and learner if present.
+  # Drop skip_evaluation_elements, vimp_method and learner if present.
   dots$skip_evaluation_elements <- NULL
-  dots$fs_method <- NULL
+  dots$vimp_method <- NULL
   dots$learner <- NULL
   
   # Summon a familiar and compute everything up to variable importance data.
@@ -634,12 +679,15 @@ precompute_feature_info <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = "none",
+        "vimp_method" = "none",
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
-        ".stop_after" = "preprocessing"),
-      dots))
+        ".stop_after" = "preprocessing"
+      ),
+      dots
+    )
+  )
   
   # Extract familiar models.
   return(experiment_data)
@@ -654,10 +702,10 @@ precompute_feature_info <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step. Though models are not learned by
 #'   `precompute_vimp`, this element is still required to prevent issues when
@@ -701,13 +749,11 @@ precompute_feature_info <- function(
 #'   This argument is ignored if the `experiment_data` argument is set.
 #'
 #' @inheritParams summon_familiar
-#' @inheritParams .parse_feature_selection_settings
+#' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
-#'   -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings
-#'   parallel_feature_selection
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -parallel_vimp
 #'
 #' @details This is a thin wrapper around `summon_familiar`, and functions like
 #'   it, but automatically skips learning and subsequent evaluation steps.
@@ -728,34 +774,37 @@ precompute_vimp <- function(
     experiment_data = NULL,
     cl = NULL,
     experimental_design = "fs+mb",
-    fs_method = NULL,
-    fs_method_parameter = NULL,
+    vimp_method = NULL,
+    vimp_method_parameter = NULL,
     verbose = TRUE,
-    ...) {
+    ...
+) {
   
   # Check that a single learner is present.
-  fs_method <- .parse_arg(
+  vimp_method <- .parse_arg(
     x_config = NULL,
-    x_var = fs_method,
-    var_name = "fs_method",
+    x_var = vimp_method,
+    var_name = "vimp_method",
     type = "character_list",
-    optional = FALSE)
+    optional = FALSE
+  )
   
   # Hyperparameters may be interpreted as belonging to the specified learner.
-  fs_method_parameter <- .parse_arg(
+  vimp_method_parameter <- .parse_arg(
     x_config = NULL,
-    x_var = fs_method_parameter,
-    var_name = "fs_method_parameter",
+    x_var = vimp_method_parameter,
+    var_name = "vimp_method_parameter",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
   
   # Encode hyperparameter as expected by parsing it to a nested list.
-  if (length(fs_method_parameter) > 0 && length(fs_method) == 1) {
-    if (is.null(fs_method_parameter[[fs_method]])) {
-      fs_method_parameter_list <- list()
-      fs_method_parameter_list[[fs_method]] <- fs_method_parameter
-      fs_method_parameter <- fs_method_parameter_list
+  if (length(vimp_method_parameter) > 0L && length(vimp_method) == 1L) {
+    if (is.null(vimp_method_parameter[[vimp_method]])) {
+      vimp_method_parameter_list <- list()
+      vimp_method_parameter_list[[vimp_method]] <- vimp_method_parameter
+      vimp_method_parameter <- vimp_method_parameter_list
     }
   }
   
@@ -776,13 +825,16 @@ precompute_vimp <- function(
         "experiment_data" = experiment_data,
         "cl" = cl,
         "experimental_design" = experimental_design,
-        "fs_method" = fs_method,
-        "fs_method_parameter" = fs_method_parameter,
+        "vimp_method" = vimp_method,
+        "vimp_method_parameter" = vimp_method_parameter,
         "learner" = "glm",
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
-        ".stop_after" = "vimp"),
-      dots))
+        ".stop_after" = "vimp"
+      ),
+      dots
+    )
+  )
   
   # Extract familiar models.
   return(experiment_data)
@@ -796,10 +848,10 @@ precompute_vimp <- function(
 #'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
-#'   cross-validation with nested feature selection on 20 bootstraps and
-#'   model-building. The basic workflow components are:
+#'   cross-validation with nested variable importance computation on 20
+#'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) feature selection step.
+#'   * `fs`: (required) variable importance step.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -836,8 +888,8 @@ precompute_vimp <- function(
 #'   As shown in the example above, sampling algorithms can be nested.
 #'
 #'   The simplest valid experimental design is `fs+mb`. This is the default in
-#'   `train_familiar`, and will create one model for each feature selection
-#'   method in `fs_method`. To create more models, a subsampling method should
+#'   `train_familiar`, and will create one model for each variable importance
+#'   method in `vimp_method`. To create more models, a subsampling method should
 #'   be introduced, e.g. `bs(fs+mb,20)` to create 20 models based on bootstraps
 #'   of the data.
 #'   
@@ -866,7 +918,7 @@ precompute_vimp <- function(
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
-#' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_variable_importance_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
 #'
@@ -886,7 +938,8 @@ train_familiar <- function(
     learner = NULL,
     hyperparameter = NULL,
     verbose = TRUE,
-    ...) {
+    ...
+) {
   
   # Check that a single learner is present.
   learner <- .parse_arg(
@@ -894,7 +947,8 @@ train_familiar <- function(
     x_var = learner,
     var_name = "learner",
     type = "character",
-    optional = FALSE)
+    optional = FALSE
+  )
   
   # Hyperparameters may be interpreted as belonging to the specified learner.
   hyperparameter <- .parse_arg(
@@ -903,10 +957,11 @@ train_familiar <- function(
     var_name = "hyperparameter",
     type = "list",
     optional = TRUE,
-    default = list())
+    default = list()
+  )
   
   # Encode hyperparameter as expected by parsing it to a nested list.
-  if (length(hyperparameter) > 0 && is.null(hyperparameter[[learner]])) {
+  if (length(hyperparameter) > 0L && is.null(hyperparameter[[learner]])) {
     hyperparameter_list <- list()
     hyperparameter_list[[learner]] <- hyperparameter
     hyperparameter <- hyperparameter_list
@@ -923,7 +978,7 @@ train_familiar <- function(
   # Summon a familiar.
   familiar_models <- do.call(
     summon_familiar,
-    args = (c(
+    args = c(
       list(
         "formula" = formula,
         "data" = data,
@@ -936,8 +991,11 @@ train_familiar <- function(
         "project_dir" = NULL,
         "skip_evaluation_elements" = "all",
         "verbose" = verbose,
-        ".stop_after" = "training"),
-      dots)))
+        ".stop_after" = "training"
+      ),
+      dots
+    )
+  )
   
   # Extract familiar models.
   return(familiar_models)
@@ -947,20 +1005,25 @@ train_familiar <- function(
 
 .is_absolute_path <- function(x) {
   return(dir.exists(paste0(
-    unlist(strsplit(x, split = .Platform$file.sep))[1],
-    .Platform$file.sep)))
+    unlist(strsplit(x, split = .Platform$file.sep))[1L],
+    .Platform$file.sep
+  )))
 }
 
 
 
-.load_configuration_file <- function(config, config_id = 1) {
+.load_configuration_file <- function(config, config_id = 1L) {
   
   if (!is.null(config)) {
     if (is.character(config)) {
-      if (length(config) > 1) {
-        stop(paste0(
-          "Configuration: the path to the configuration file is expected ",
-          "to be a single character string. Multiple strings were found."))
+      if (length(config) > 1L) {
+        ..error(
+          paste0(
+            "Configuration: the path to the configuration file is expected ",
+            "to be a single character string. Multiple strings were found."
+          ),
+          error_class = "input_argument_error"
+        )
       }
       
       # Normalise file paths
@@ -970,12 +1033,12 @@ train_familiar <- function(
       require_package("xml2", "to configure familiar using a configuration file")
       
       # Read xml file, parse to list and remove comments
-      config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
+      config <- xml2::as_list(xml2::read_xml(config))[[1L]][[config_id]]
       config <- .clean_configuration_comments(config = config)
       
     } else {
       if (!is.list(config) || !is.recursive(config)) {
-        stop("Configuration: the input configuration data is not a list of lists.")
+        ..error("Configuration: the input configuration data is not a list of lists.")
       }
     }
   } else {
@@ -996,7 +1059,7 @@ train_familiar <- function(
     if (is.list(conf_list)) {
       
       # Retain only those list entries that are not comments "[ comment ]".
-      conf_list <- Filter(Negate(function(x) ((is.character(x[1]) & x[1] == "[ comment ]"))), conf_list)
+      conf_list <- Filter(Negate(function(x) ((is.character(x[1L]) & x[1L] == "[ comment ]"))), conf_list)
       
       # Go one level deeper by applying this function to the list entries of the current list
       conf_list <- lapply(conf_list, cleaning_cycle)
@@ -1039,7 +1102,8 @@ get_xml_config <- function(dir_path) {
   file.copy(
     from = system.file("config.xml", package = "familiar"),
     to = dir_path,
-    overwrite = FALSE)
+    overwrite = FALSE
+  )
   
   return(invisible(TRUE))
 }
@@ -1051,7 +1115,8 @@ get_xml_config <- function(dir_path) {
   assign(
     x = "settings",
     value = settings,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
@@ -1069,14 +1134,14 @@ get_settings <- function() {
       data_env <- .GlobalEnv
       
     } else {
-      stop("Settings not found in backend.")
+      ..error("Settings not found in backend.")
     }
     
   } else if (exists("settings", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
     
   } else {
-    stop("Settings not found in backend.")
+    ..error("Settings not found in backend.")
   }
   
   return(get("settings", envir = data_env))
@@ -1089,7 +1154,8 @@ get_settings <- function() {
   assign(
     x = "file_paths",
     value = file_paths,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
@@ -1107,14 +1173,14 @@ get_file_paths <- function() {
       data_env <- .GlobalEnv
       
     } else {
-      stop("File paths were not found in backend.")
+      ..error("File paths were not found in backend.")
     }
     
   } else if (exists("file_paths", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
     
   } else {
-    stop("File paths were not found in backend.")
+    ..error("File paths were not found in backend.")
   }
   
   return(get("file_paths", envir = data_env))
@@ -1127,7 +1193,8 @@ get_file_paths <- function() {
   assign(
     x = "project_info_list",
     value = project_info,
-    envir = familiar_global_env)
+    envir = familiar_global_env
+  )
   
   return(invisible(TRUE))
 }
@@ -1145,13 +1212,13 @@ get_project_list <- function() {
       data_env <- .GlobalEnv
       
     } else {
-      stop("Project list not found in backend.")
+      ..error("Project list not found in backend.")
     }
   } else if (exists("project_info_list", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
     
   } else {
-    stop("Project list not found in backend.")
+    ..error("Project list not found in backend.")
   }
   
   return(get("project_info_list", envir = data_env))
@@ -1165,11 +1232,13 @@ get_project_list <- function() {
   model_files <- list.files(
     path = file_paths$mb_dir,
     pattern = "model.RDS",
-    recursive = TRUE)
+    recursive = TRUE
+  )
   model_files <- sapply(
     model_files,
     function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$mb_dir)
+    dir_path = file_paths$mb_dir
+  )
   
   # Load familiarModel files and add to list
   familiar_list$familiarModel <- load_familiar_object(model_files)
@@ -1178,11 +1247,13 @@ get_project_list <- function() {
   ensemble_files <- list.files(
     path = file_paths$mb_dir,
     pattern = "ensemble.RDS",
-    recursive = TRUE)
+    recursive = TRUE
+  )
   ensemble_files <- sapply(
     ensemble_files,
     function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$mb_dir)
+    dir_path = file_paths$mb_dir
+  )
   
   # Load familiarEnsemble files and add to list
   familiar_list$familiarEnsemble <- load_familiar_object(ensemble_files)
@@ -1190,11 +1261,13 @@ get_project_list <- function() {
   # Find familiarData files
   data_files <- list.files(
     path = file_paths$fam_data_dir,
-    pattern = "data.RDS")
+    pattern = "data.RDS"
+  )
   data_files <- sapply(
     data_files,
     function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$fam_data_dir)
+    dir_path = file_paths$fam_data_dir
+  )
   
   # Load familiarData files and add to list
   familiar_list$familiarData <- load_familiar_object(data_files)
@@ -1202,11 +1275,13 @@ get_project_list <- function() {
   # Find familiarCollection files
   coll_files <- list.files(
     path = file_paths$fam_coll_dir,
-    pattern = "ensemble_data_|pooled_data.RDS")
+    pattern = "ensemble_data_|pooled_data.RDS"
+  )
   coll_files <- sapply(
     coll_files,
     function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$fam_coll_dir)
+    dir_path = file_paths$fam_coll_dir
+  )
   
   # Load familiarCollection files and add to list
   familiar_list$familiarCollection <- load_familiar_object(coll_files)
@@ -1221,7 +1296,8 @@ get_project_list <- function() {
   if (exists("familiar_global_env")) {
     rm(
       list = ls(envir = familiar_global_env),
-      envir = familiar_global_env)
+      envir = familiar_global_env
+    )
   }
   
   return(invisible(TRUE))

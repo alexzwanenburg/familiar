@@ -13,7 +13,8 @@ load_experiment_data <- function(x, file_paths) {
     project_id <- gsub(
       x = basename(x),
       pattern = "[[:alpha:]]|[.]RDS$|[_]",
-      replacement = "")
+      replacement = ""
+    )
     
     # Read from file system.
     x <- readRDS(x)
@@ -26,15 +27,20 @@ load_experiment_data <- function(x, file_paths) {
         "experimentData",
         iteration_list = x$iteration_list,
         experiment_setup = x$experiment_setup,
-        project_id = project_id)
+        project_id = project_id
+      )
     }
   }
   
   # Expect that the file is an experimentData object.
   if (!is(x, "experimentData")) {
-    stop(paste0(
-      "An experimentData object was expected. Found: a ",
-      paste_s(class(x)), " object."))
+    ..error(
+      paste0(
+        "An experimentData object was expected. Found: a ",
+        paste_s(class(x)), " object."
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Update the experimentData object.
@@ -47,7 +53,8 @@ load_experiment_data <- function(x, file_paths) {
     # Set file name
     file_name <- .get_iteration_file_name(
       file_paths = file_paths,
-      project_id = x@project_id)
+      project_id = x@project_id
+    )
     
     # Check if the directory exists, and create it otherwise.
     if (!dir.exists(file_paths$iterations_dir)) {
@@ -55,10 +62,13 @@ load_experiment_data <- function(x, file_paths) {
     } 
     
     # Save both files to the expected location.
-    saveRDS(list(
-      "iteration_list" = x@iteration_list,
-      "experiment_setup" = x@experiment_setup),
-      file = file_name)
+    saveRDS(
+      list(
+        "iteration_list" = x@iteration_list,
+        "experiment_setup" = x@experiment_setup
+      ),
+      file = file_name
+    )
   }
   
   # Start writing feature information.
@@ -67,7 +77,8 @@ load_experiment_data <- function(x, file_paths) {
     # Set file name
     file_name <- .get_feature_info_file_name(
       file_paths = file_paths,
-      project_id = x@project_id)
+      project_id = x@project_id
+    )
     
     # Check if the directory exists, and create it otherwise.
     if (!dir.exists(dirname(file_name))) {
@@ -83,10 +94,11 @@ load_experiment_data <- function(x, file_paths) {
     for (vimp_method in names(x@vimp_table_list)) {
       
       # Set file name
-      file_name <- .get_feature_selection_data_filename(
+      file_name <- .get_variable_importance_data_filename(
         project_id = x@project_id,
-        fs_method = vimp_method,
-        file_paths = file_paths)
+        vimp_method = vimp_method,
+        file_paths = file_paths
+      )
       
       # Check if the directory exists, and create it otherwise.
       if (!dir.exists(dirname(file_name))) {
@@ -115,7 +127,8 @@ create_experiment_data <- function(
     "experimentData",
     experiment_setup = experiment_setup,
     iteration_list = iteration_list,
-    project_id = project_id)
+    project_id = project_id
+  )
   
   # Add package version
   x <- add_package_version(x)
@@ -149,15 +162,17 @@ setMethod(
     
     # Check if feature info is present.
     if (!is.null(object@feature_info)) {
-      if (length(object@feature_info) > 1) {
+      if (length(object@feature_info) > 1L) {
         content_str <- c(
           content_str,
-          "basic and extended feature information")
+          "basic and extended feature information"
+        )
         
       } else {
         content_str <- c(
           content_str,
-          "basic feature information")
+          "basic feature information"
+        )
       }
     }
     
@@ -165,12 +180,14 @@ setMethod(
     if (!is.null(object@vimp_table_list)) {
       content_str <- c(
         content_str,
-        paste0("variable importance (", paste_s(names(object@vimp_table_list)), ")"))
+        paste0("variable importance (", paste_s(names(object@vimp_table_list)), ")")
+      )
     }
     
     cat(paste0(
       "Experiment data object (", .familiar_version_string(object), ") with project id ",
-      object@project_id, " containing ", paste_s(content_str), ".\n"))
+      object@project_id, " containing ", paste_s(content_str), ".\n"
+    ))
   }
 )
 

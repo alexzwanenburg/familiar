@@ -22,12 +22,24 @@ NULL
 #'
 #'   The choice for `plot_type` affects several other arguments, e.g. `color_by`
 #'   is not used for `heatmap` and `y_axis_by` is only used by `heatmap`.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'   plot elements in case a value was provided to the `color_by` argument. Only
-#'   used when `plot_type` is not `heatmap`.
+#' @param discrete_palette (*optional*) Palette for colouring plot elements
+#'   indicated by the `color_by` argument (if any). Only used if `plot_type` is
+#'   not `heatmap`. `familiar` has a default palette. Other palettes are
+#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
+#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
+#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
+#'   correspond to the palettes of the same name in `grDevices`. You may also
+#'   specify your own palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
 #'   color the raster in `heatmap` plots. This argument is not used for other
-#'   `plot_type` value.
+#'   `plot_type` value. `familiar` has a default palette. Other palettes are
+#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
+#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
+#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
+#'   correspond to the palettes of the same name in `grDevices`. You may also
+#'   specify your own palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette_range (*optional*) Numerical range used to span the
 #'   gradient. This should be a range of two values, e.g. `c(0, 1)`. Lower or
 #'   upper boundary can be unset by using `NA`. If not set, the full
@@ -47,12 +59,12 @@ NULL
 #' @details This function plots model performance based on empirical bootstraps,
 #'   using various plot representations.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set`,
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
 #'   `evaluation_time` (survival outcome only) and `metric`. The default for
 #'   `heatmap` is to split by `metric`, facet by `data_set` and
-#'   `evaluation_time`, position `learner` along the x-axis and `fs_method`
+#'   `evaluation_time`, position `learner` along the x-axis and `vimp_method`
 #'   along the y-axis. The `color_by` argument is not used. The only valid
-#'   options for `x_axis_by` and `y_axis_by` are `learner` and `fs_method`.
+#'   options for `x_axis_by` and `y_axis_by` are `learner` and `vimp_method`.
 #'
 #'   For other plot types (`barplot`, `boxplot` and `violinplot`), depends on
 #'   the number of learners and feature selection methods:
@@ -64,25 +76,16 @@ NULL
 #'   `metric`, facet by `data_set` and have `learner` along the x-axis.
 #'
 #'  * *multiple feature selection methods and one learner*: the default is to
-#'   split by `metric`, facet by `data_set` and have `fs_method` along the
+#'   split by `metric`, facet by `data_set` and have `vimp_method` along the
 #'   x-axis.
 #'
 #'  * *multiple feature selection methods and learners*: the default is to split
-#'   by `metric`, facet by `data_set`, colour by `fs_method` and have `learner`
+#'   by `metric`, facet by `data_set`, colour by `vimp_method` and have `learner`
 #'   along the x-axis.
 #'
 #'   If applicable, additional faceting is performed for `evaluation_time`.
 #'
-#'   Available palettes for `discrete_palette` and `gradient_palette` are those
-#'   listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
-#'
-#'   Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labeling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -116,14 +119,15 @@ setGeneric(
     caption = NULL,
     rotate_x_tick_labels = waiver(),
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     annotate_performance = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_model_performance")
   }
 )
@@ -159,22 +163,26 @@ setMethod(
     caption = NULL,
     rotate_x_tick_labels = waiver(),
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     annotate_performance = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "model_performance"),
-        list(...)))
+          "data_element" = "model_performance"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_model_performance,
@@ -207,7 +215,9 @@ setMethod(
         "height" = height,
         "units" = units,
         "annotate_performance" = annotate_performance,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -242,14 +252,15 @@ setMethod(
     caption = NULL,
     rotate_x_tick_labels = waiver(),
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
     annotate_performance = NULL,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
 
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -269,7 +280,8 @@ setMethod(
       .check_parameter_value_is_valid(
         x = plot_type,
         var_name = "plot_type",
-        values = c("heatmap", "barplot", "boxplot", "violinplot"))
+        values = c("heatmap", "barplot", "boxplot", "violinplot")
+      )
       
     } else {
       # Set default to violin plot.
@@ -282,7 +294,8 @@ setMethod(
       # Load the data.
       x <- export_model_performance(
         object = object, 
-        aggregate_results = TRUE)
+        aggregate_results = TRUE
+      )
 
       # Check that the data are not empty.
       if (is_empty(x)) return(NULL)
@@ -291,24 +304,29 @@ setMethod(
       # Load the data.
       x <- export_model_performance(
         object = object, 
-        aggregate_results = FALSE)
+        aggregate_results = FALSE
+      )
 
       # Check that the data are not empty.
       if (is_empty(x)) return(NULL)
 
       # Check that data are disaggregated
       if (any(sapply(x, function(x) (x@is_aggregated)))) {
-        warning(paste0(
+        ..warning(paste0(
           "Creating a ", plot_type, " requires de-aggregated data, ",
-          "which are not available."))
+          "which are not available."
+        ))
+        
         return(NULL)
       }
 
       # Check that data are not point estimates.
       if (all(sapply(x, function(x) (x@estimation_type == "point")))) {
-        warning(paste0(
+        ..warning(paste0(
           "Creating a ", plot_type, " requires bias-corrected estimates or ",
-          "bootstrap confidence interval estimates instead of point estimates."))
+          "bootstrap confidence interval estimates instead of point estimates."
+        ))
+        
         return(NULL)
       }
 
@@ -330,11 +348,14 @@ setMethod(
     if (is.list(x)) {
       if (is_empty(x)) return(NULL)
 
-      if (length(x) > 1) ..error_reached_unreachable_code(
-        "plot_model_performance: list of data elements contains unmerged elements.")
+      if (length(x) > 1L) {
+        ..error_reached_unreachable_code(
+          "plot_model_performance: list of data elements contains unmerged elements."
+        )
+      }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
 
     # Check that the data are not empty.
@@ -344,7 +365,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = FALSE),
       purpose = "to plot model performance",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -356,11 +378,13 @@ setMethod(
     }
 
     # Add default splitting variables.
-    if (is.null(split_by) &&
-        is.null(color_by) &&
-        is.null(facet_by) &&
-        is.null(x_axis_by) &&
-        is.null(y_axis_by)) {
+    if (
+      is.null(split_by) &&
+      is.null(color_by) &&
+      is.null(facet_by) &&
+      is.null(x_axis_by) &&
+      is.null(y_axis_by)
+    ) {
       if (plot_type == "heatmap") {
         # Split by metric.
         split_by <- c("metric")
@@ -373,32 +397,32 @@ setMethod(
 
         # Set y-axis variables. This splitting variable is only used in
         # heatmaps.
-        y_axis_by <- c("fs_method")
+        y_axis_by <- c("vimp_method")
         
       } else {
-        # Determine the number of learners and feature_selection methods.
+        # Determine the number of learners and variable importance methods.
         n_learner <- nlevels(x@data$learner)
-        n_fs_method <- nlevels(x@data$fs_method)
+        n_vimp_method <- nlevels(x@data$vimp_method)
 
         # Split by metric.
         split_by <- c("metric")
 
         # Set facetting variables.
-        if (n_learner > 1 || n_fs_method > 1) {
+        if (n_learner > 1L || n_vimp_method > 1L) {
           facet_by <- c("data_set")
         }
 
         # Set color variables. This splitting variable is only used in
         # non-heatmap plots.
-        if (n_learner > 1 && n_fs_method > 1) {
-          color_by <- c("fs_method")
+        if (n_learner > 1L && n_vimp_method > 1L) {
+          color_by <- c("vimp_method")
         }
 
         # Set x-axis variables.
-        if (n_learner == 1 && n_fs_method == 1) {
+        if (n_learner == 1L && n_vimp_method == 1L) {
           x_axis_by <- c("data_set")
-        } else if (n_learner == 1 && n_fs_method > 1) {
-          x_axis_by <- c("fs_method")
+        } else if (n_learner == 1L && n_vimp_method > 1L) {
+          x_axis_by <- c("vimp_method")
         } else {
           x_axis_by <- c("learner")
         }
@@ -413,7 +437,7 @@ setMethod(
 
       # Check if the color_by argument is provided.
       if (!is.null(color_by)) {
-        warning("The color_by argument is ignored for heatmaps.")
+        ..warning("The color_by argument is ignored for heatmaps.")
         color_by <- NULL
       }
 
@@ -424,13 +448,14 @@ setMethod(
         x_axis_by = x_axis_by,
         y_axis_by = y_axis_by,
         available = c(
-          "metric", "data_set", "fs_method",
-          "learner", split_variable)
+          "metric", "data_set", "vimp_method",
+          "learner", split_variable
+        )
       )
     } else {
       # Check if the y_axis_by argument is provided.
       if (!is.null(y_axis_by)) {
-        warning("The y_axis_by argument is ignored for non-heatmap plots.")
+        ..warning("The y_axis_by argument is ignored for non-heatmap plots.")
       }
 
       # Check splitting variables and generate sanitised output
@@ -441,8 +466,10 @@ setMethod(
         facet_by = facet_by,
         x_axis_by = x_axis_by,
         available = c(
-          "metric", "data_set", "fs_method",
-          "learner", split_variable))
+          "metric", "data_set", "vimp_method",
+          "learner", split_variable
+        )
+      )
     }
 
     # Update splitting variables
@@ -457,24 +484,25 @@ setMethod(
     }
 
     if (plot_type == "heatmap") {
-      # Check that x_axis_by and y_axis_by only take fs_method or learner.
-      if (!x_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) {
-        stop("The x_axis_by argument should be one of fs_method, learner or data_set.")
+      # Check that x_axis_by and y_axis_by only take vimp_method or learner.
+      if (!x_axis_by %in% c("vimp_method", "learner", "data_set", split_variable)) {
+        ..error("The x_axis_by argument should be one of vimp_method, learner or data_set.")
       }
-      if (!y_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) {
-        stop("The y_axis_by argument should be one of fs_method, learner or data_set.")
+      if (!y_axis_by %in% c("vimp_method", "learner", "data_set", split_variable)) {
+        ..error("The y_axis_by argument should be one of vimp_method, learner or data_set.")
       }
     }
 
     if (is.null(x_axis_by)) {
       x_axis_by <- setdiff(
-        c("metric", "data_set", "fs_method", "learner", split_variable),
-        c(split_by, color_by, facet_by, y_axis_by))
-      if (length(x_axis_by) == 0) stop("The x_axis_by argument should be set.")
-      if (length(x_axis_by) > 1 && "metric" %in% c(x_axis_by)) {
+        c("metric", "data_set", "vimp_method", "learner", split_variable),
+        c(split_by, color_by, facet_by, y_axis_by)
+      )
+      if (length(x_axis_by) == 0L) ..error("The x_axis_by argument should be set.")
+      if (length(x_axis_by) > 1L && "metric" %in% c(x_axis_by)) {
         x_axis_by <- "metric"
       } else {
-        x_axis_by <- x_axis_by[1]
+        x_axis_by <- x_axis_by[1L]
       }
     }
 
@@ -483,10 +511,11 @@ setMethod(
       x_label <- switch(
         x_axis_by,
         learner = "learner",
-        fs_method = "feature selection method",
+        vimp_method = "feature selection method",
         data_set = "dataset",
         metric = "metric",
-        evaluation_time = "time")
+        evaluation_time = "time"
+      )
     }
 
     # annotate_performance
@@ -498,7 +527,8 @@ setMethod(
     .check_parameter_value_is_valid(
       x = annotate_performance,
       var_name = "annotate_performance",
-      values = c("none", "value", "value_ci"))
+      values = c("none", "value", "value_ci")
+    )
 
     .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
@@ -506,7 +536,8 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      rotate_x_tick_labels = rotate_x_tick_labels)
+      rotate_x_tick_labels = rotate_x_tick_labels
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -518,7 +549,8 @@ setMethod(
       x_split <- split(
         x@data, 
         by = split_by, 
-        drop = FALSE)
+        drop = FALSE
+      )
       
     } else {
       x_split <- list("null.name" = x@data)
@@ -539,11 +571,13 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, facet_by) &&
-          object@outcome_type %in% c("survival")) {
+      if (
+        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        object@outcome_type %in% c("survival")
+      ) {
         additional_subtitle <- c(
           additional_subtitle,
-          .add_time_to_plot_subtitle(x_split[[ii]]$evaluation_time[1])
+          .add_time_to_plot_subtitle(x_split[[ii]]$evaluation_time[1L])
         )
       }
 
@@ -551,7 +585,8 @@ setMethod(
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = x_split[[ii]])
+          x = x_split[[ii]]
+        )
       }
 
       # Generate plot
@@ -578,7 +613,8 @@ setMethod(
         y_n_breaks = y_n_breaks,
         y_breaks = y_breaks,
         annotate_performance = annotate_performance,
-        outcome_type = object@outcome_type)
+        outcome_type = object@outcome_type
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -596,7 +632,8 @@ setMethod(
           y_axis_by = y_axis_by,
           facet_by = facet_by,
           facet_wrap_cols = facet_wrap_cols,
-          rotate_x_tick_labels = rotate_x_tick_labels)
+          rotate_x_tick_labels = rotate_x_tick_labels
+        )
 
         # Save to file.
         do.call(
@@ -610,10 +647,13 @@ setMethod(
               "subtype" = plot_type,
               "x" = x_split[[ii]],
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list for export.
@@ -626,7 +666,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -655,7 +696,8 @@ setMethod(
     y_n_breaks,
     y_breaks,
     annotate_performance,
-    outcome_type) {
+    outcome_type
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- metric <- median <- ci_low <- ci_up <- NULL
   
@@ -669,7 +711,8 @@ setMethod(
       metric_ranges <- lapply(
         metrics, 
         .get_metric_default_range, 
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
 
       # Give a name to the list elements.
       names(metric_ranges) <- metrics
@@ -683,21 +726,23 @@ setMethod(
         # Replace any positive infinite value by the max range in the data.
         if (any(metric_range == Inf)) {
           metric_range[metric_range == Inf] <- max(
-            x[metric == current_metric, value], na.rm = TRUE)
+            x[metric == current_metric, value], na.rm = TRUE
+          )
         }
 
         # Replace any negative infinite value by the min range in the data.
         if (any(metric_range == -Inf)) {
           metric_range[metric_range == -Inf] <- min(
-            x[metric == current_metric, value], na.rm = TRUE)
+            x[metric == current_metric, value], na.rm = TRUE
+          )
         }
 
-        if (y_range[1] > min(metric_range)) {
-          y_range[1] <- min(metric_range)
+        if (y_range[1L] > min(metric_range)) {
+          y_range[1L] <- min(metric_range)
         }
 
-        if (y_range[2] < max(metric_range)) {
-          y_range[2] <- max(metric_range)
+        if (y_range[2L] < max(metric_range)) {
+          y_range[2L] <- max(metric_range)
         }
       }
     } else {
@@ -708,16 +753,18 @@ setMethod(
     if (is.null(y_breaks)) {
       .check_input_plot_args(
         y_range = y_range,
-        y_n_breaks = y_n_breaks)
+        y_n_breaks = y_n_breaks
+      )
 
       # Create breaks and update x_range
       y_breaks <- labeling::extended(
         m = y_n_breaks,
-        dmin = y_range[1],
-        dmax = y_range[2],
-        only.loose = TRUE)
+        dmin = y_range[1L],
+        dmax = y_range[2L],
+        only.loose = TRUE
+      )
       
-      y_range <- c(0, tail(y_breaks, n = 1))
+      y_range <- c(0.0, tail(y_breaks, n = 1L))
       
     } else {
       .check_input_plot_args(y_breaks = y_breaks)
@@ -725,13 +772,14 @@ setMethod(
 
     # y_label for non-heatmap plots
     if (is.waive(y_label)) {
-      y_label <- ifelse(length(metrics) == 1, metrics, "value")
+      y_label <- ifelse(length(metrics) == 1L, metrics, "value")
     }
 
     # Create a legend label
     legend_label <- .create_plot_legend_title(
       user_label = legend_label,
-      color_by = color_by)
+      color_by = color_by
+    )
     
   } else {
     # y-label for heatmap plots
@@ -739,35 +787,39 @@ setMethod(
       y_label <- switch(
         y_axis_by,
         learner = "learner",
-        fs_method = "feature selection method",
+        vimp_method = "feature selection method",
         data_set = "dataset",
         metric = "metric",
-        evaluation_time = "time")
+        evaluation_time = "time"
+      )
     }
 
     # gradient_palette_range
     if (is.waive(gradient_palette_range)) {
-      if (length(metrics) == 1) {
+      if (length(metrics) == 1L) {
         gradient_palette_range <- .get_metric_default_range(
           metric = metrics,
-          outcome_type = outcome_type)
+          outcome_type = outcome_type
+        )
 
         # Replace a positive infinite value by the max range in the data.
-        if (gradient_palette_range[2] == Inf) {
-          gradient_palette_range[2] <- max(x[metric == metrics, value], na.rm = TRUE)
+        if (gradient_palette_range[2L] == Inf) {
+          gradient_palette_range[2L] <- max(x[metric == metrics, value], na.rm = TRUE)
         }
 
         # Replace any negative infinite value by the min range in the data.
-        if (gradient_palette_range[1] == -Inf) {
-          gradient_palette_range[1] <- min(x[metric == metrics, value], na.rm = TRUE)
+        if (gradient_palette_range[1L] == -Inf) {
+          gradient_palette_range[1L] <- min(x[metric == metrics, value], na.rm = TRUE)
         }
 
         gradient_was_provided <- FALSE
+        
       } else {
         # If metric for whatever reason is not a single metric.
         gradient_palette_range <- c(NA, NA)
         gradient_was_provided <- FALSE
       }
+      
     } else {
       # Check for NULL.
       if (is.null(gradient_palette_range)) {
@@ -778,13 +830,14 @@ setMethod(
     }
 
     # Create a legend label
-    legend_label <- ifelse(length(metrics) == 1 && is.waive(legend_label), metrics, "value")
+    legend_label <- ifelse(length(metrics) == 1L && is.waive(legend_label), metrics, "value")
   }
 
   # Check remaining input arguments.
   .check_input_plot_args(
     y_label = y_label,
-    legend_label = legend_label)
+    legend_label = legend_label
+  )
 
   # Create basic plot
   p <- ggplot2::ggplot()
@@ -794,17 +847,22 @@ setMethod(
     # Heatmap ------------------------------------------------------------------
 
     # Create summary data.
-    x_bar <- x[, list(
-      "median" = stats::median(value, na.rm = TRUE),
-      "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
-      "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)),
-      by = c("metric", "data_set", "fs_method", "learner")]
+    x_bar <- x[
+      ,
+      list(
+        "median" = stats::median(value, na.rm = TRUE),
+        "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
+        "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
+      ),
+      by = c("metric", "data_set", "vimp_method", "learner")
+    ]
 
     # Determine what direction a metric has.
-    if (length(metrics) == 1) {
+    if (length(metrics) == 1L) {
       invert_scale <- !is_higher_better(
         metric = metrics,
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
       
     } else {
       invert_scale <- FALSE
@@ -812,11 +870,12 @@ setMethod(
 
     # Determine the type of sequential colorscale. This has no effect if the
     # user provides a colorscale.
-    if (length(metrics) == 1 && !gradient_was_provided) {
+    if (length(metrics) == 1L && !gradient_was_provided) {
       palette_type <- ifelse(
-        length(gradient_palette_range) > 2,
+        length(gradient_palette_range) > 2L,
         "divergent",
-        "sequential")
+        "sequential"
+      )
       
     } else {
       palette_type <- "sequential"
@@ -828,12 +887,15 @@ setMethod(
       mapping = ggplot2::aes(
         x = !!sym(x_axis_by),
         y = !!sym(y_axis_by),
-        fill = !!sym("median")))
+        fill = !!sym("median")
+      )
+    )
 
     # Colors
     gradient_colours <- .get_palette(
       x = gradient_palette, 
-      palette_type = palette_type)
+      palette_type = palette_type
+    )
     
     if (invert_scale) gradient_colours <- rev(gradient_colours)
 
@@ -841,7 +903,8 @@ setMethod(
     p <- p + ggplot2::scale_fill_gradientn(
       name = legend_label,
       colors = gradient_colours,
-      limits = range(gradient_palette_range))
+      limits = range(gradient_palette_range)
+    )
 
     # Obtain default settings.
     text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
@@ -857,21 +920,27 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           y = !!sym(y_axis_by),
-          label = !!sym("performance_text")),
+          label = !!sym("performance_text")
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
-        size = text_settings$geom_text_size)
+        size = text_settings$geom_text_size
+      )
       
     } else if (annotate_performance == "value_ci") {
       # Show median value and credibility interval
-      x_bar[is.finite(median), "performance_text" := paste0(
-        .format_plot_number(median),
-        "\n(",
-        .format_plot_number(ci_low),
-        "\u2013",
-        .format_plot_number(ci_up),
-        ")")]
+      x_bar[
+        is.finite(median),
+        "performance_text" := paste0(
+          .format_plot_number(median),
+          "\n(",
+          .format_plot_number(ci_low),
+          "\u2013",
+          .format_plot_number(ci_up),
+          ")"
+        )
+      ]
 
       # Add to figure.
       p <- p + ggplot2::geom_text(
@@ -879,28 +948,35 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           y = !!sym(y_axis_by),
-          label = !!sym("performance_text")),
+          label = !!sym("performance_text")
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
-        size = text_settings$geom_text_size)
+        size = text_settings$geom_text_size
+      )
     }
     
   } else if (plot_type == "barplot") {
     # Barplot ------------------------------------------------------------------
 
     # Create data for bar
-    x_bar <- x[, list(
-      "median" = stats::median(value, na.rm = TRUE),
-      "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
-      "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)),
-      by = c("metric", "data_set", "fs_method", "learner")]
+    x_bar <- x[
+      ,
+      list(
+        "median" = stats::median(value, na.rm = TRUE),
+        "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
+        "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
+      ),
+      by = c("metric", "data_set", "vimp_method", "learner")
+    ]
     
     # Generate a guide table
     guide_list <- .create_plot_guide_table(
       x = x_bar,
       color_by = color_by,
-      discrete_palette = discrete_palette)
+      discrete_palette = discrete_palette
+    )
 
     # Extract data
     x_bar <- guide_list$data
@@ -914,9 +990,11 @@ setMethod(
         data = x_bar,
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
-          y = !!sym("median")),
+          y = !!sym("median")
+        ),
         stat = "identity",
-        position = "dodge")
+        position = "dodge"
+      )
 
       # Add error bars
       p <- p + ggplot2::geom_errorbar(
@@ -924,9 +1002,11 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           ymin = !!sym("ci_low"),
-          ymax = !!sym("ci_up")),
+          ymax = !!sym("ci_up")
+        ),
         position = ggplot2::position_dodge(width = 0.9),
-        width = 0.20)
+        width = 0.20
+      )
       
     } else {
       # Extract guide_table for color
@@ -938,9 +1018,11 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           y = !!sym("median"),
-          fill = !!sym("color_breaks")),
+          fill = !!sym("color_breaks")
+        ),
         stat = "identity",
-        position = ggplot2::position_dodge(width = 0.9))
+        position = ggplot2::position_dodge(width = 0.9)
+      )
 
       # Add error bars
       p <- p + ggplot2::geom_errorbar(
@@ -949,16 +1031,19 @@ setMethod(
           x = !!sym(x_axis_by),
           ymin = !!sym("ci_low"),
           ymax = !!sym("ci_up"),
-          group = !!sym("color_breaks")),
+          group = !!sym("color_breaks")
+        ),
         position = ggplot2::position_dodge(width = 0.9),
-        width = 0.20)
+        width = 0.20
+      )
 
       # Set fill colours.
       p <- p + ggplot2::scale_fill_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
-        drop = FALSE)
+        drop = FALSE
+      )
     }
 
     # Plot to Cartesian coordinates.
@@ -971,7 +1056,8 @@ setMethod(
     guide_list <- .create_plot_guide_table(
       x = x,
       color_by = color_by,
-      discrete_palette = discrete_palette)
+      discrete_palette = discrete_palette
+    )
 
     # Extract data
     x <- guide_list$data
@@ -985,8 +1071,10 @@ setMethod(
         data = x,
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
-          y = !!sym("value")),
-        outlier.alpha = 0.1)
+          y = !!sym("value")
+        ),
+        outlier.alpha = 0.1
+      )
       
     } else {
       # Extract guide_table for color
@@ -998,15 +1086,18 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           y = !!sym("value"),
-          colour = !!sym("color_breaks")),
-        outlier.alpha = 0.1)
+          colour = !!sym("color_breaks")
+        ),
+        outlier.alpha = 0.1
+      )
 
       # Set fill colours.
       p <- p + ggplot2::scale_colour_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
-        drop = FALSE)
+        drop = FALSE
+      )
     }
 
     # Plot to Cartesian coordinates.
@@ -1019,7 +1110,8 @@ setMethod(
     guide_list <- .create_plot_guide_table(
       x = x,
       color_by = color_by,
-      discrete_palette = discrete_palette)
+      discrete_palette = discrete_palette
+    )
 
     # Extract data
     x <- guide_list$data
@@ -1033,10 +1125,12 @@ setMethod(
         data = x,
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
-          y = !!sym("value")),
+          y = !!sym("value")
+        ),
         draw_quantiles = c(0.025, 0.5, 0.975),
         scale = "width",
-        position = ggplot2::position_dodge(width = 1.0))
+        position = ggplot2::position_dodge(width = 1.0)
+      )
       
     } else {
       # Extract guide_table for color
@@ -1048,17 +1142,20 @@ setMethod(
         mapping = ggplot2::aes(
           x = !!sym(x_axis_by),
           y = !!sym("value"),
-          fill = !!sym("color_breaks")),
+          fill = !!sym("color_breaks")
+        ),
         draw_quantiles = c(0.025, 0.5, 0.975),
         scale = "width",
-        position = ggplot2::position_dodge(width = 1.0))
+        position = ggplot2::position_dodge(width = 1.0)
+      )
 
       # Set fill colours.
       p <- p + ggplot2::scale_fill_manual(
         name = legend_label$guide_color,
         values = g_color$color_values,
         breaks = g_color$color_breaks,
-        drop = FALSE)
+        drop = FALSE
+      )
     }
 
     # Plot to Cartesian coordinates.
@@ -1069,7 +1166,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = x, 
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -1077,12 +1175,14 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows, 
         cols = facet_by_list$facet_cols, 
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by, 
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
@@ -1092,7 +1192,8 @@ setMethod(
     y = y_label, 
     title = plot_title, 
     subtitle = plot_sub_title, 
-    caption = caption)
+    caption = caption
+  )
 
   # Rotate x-axis ticks
   if (rotate_x_tick_labels) {
@@ -1100,7 +1201,9 @@ setMethod(
       axis.text.x = ggplot2::element_text(
         vjust = 0.25, 
         hjust = 1.0, 
-        angle = 90.0))
+        angle = 90.0
+      )
+    )
   }
 
   return(p)
@@ -1115,13 +1218,15 @@ setMethod(
     y_axis_by,
     facet_by,
     facet_wrap_cols,
-    rotate_x_tick_labels) {
+    rotate_x_tick_labels
+) {
   
   # Obtain facetting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x, 
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Determine the number of elements along the x-axis.
   x_elements <- as.character(unique(x[[x_axis_by]]))
@@ -1155,14 +1260,14 @@ setMethod(
     # Assume each x-axis element takes up about 0.8 cm. Then add some room for
     # other plot elements.
     default_width <- x_n_elements * 0.8 + 1.0
-    default_width <- max(c(4, default_width))
+    default_width <- max(c(4.0, default_width))
 
     # Set default height.
-    default_height <- 4
+    default_height <- 4.0
 
     # Set tick space for the x-axis and y-axis. Assume that the y-axis tick
     # labels contain 4 digits.
-    y_tick_space <- 4 * 0.18
+    y_tick_space <- 4.0 * 0.18
 
     # For the x-axis we only reserve extra space in case the ticks are rotated,
     # otherwise we just assume a typical height of 10 points (3.6 mm).
@@ -1170,10 +1275,10 @@ setMethod(
   }
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height + x_tick_space, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height + x_tick_space, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width + y_tick_space, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width + y_tick_space, 19.0))
 
   return(c(height, width))
 }

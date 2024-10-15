@@ -3,9 +3,7 @@ testthat::skip_on_cran()
 testthat::skip_on_ci()
 
 familiar_data_creation_unit_test <- function(outcome_type) {
-  if (outcome_type == "count") {
-    learner <- "glm_poisson"
-  } else if (outcome_type == "continuous") {
+  if (outcome_type == "continuous") {
     learner <- "glm_gaussian"
   } else if (outcome_type == "binomial") {
     learner <- "glm_logistic"
@@ -27,7 +25,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
   
   testthat::test_that(
     paste0(
@@ -108,7 +106,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
 
   testthat::test_that(
     paste0(
@@ -155,7 +153,7 @@ familiar_data_creation_unit_test <- function(outcome_type) {
     imputation_method = "simple",
     hyperparameter_list = list("sign_size" = familiar:::get_n_features(data)),
     learner = learner,
-    time_max = 1832))
+    time_max = 3.5))
 
   testthat::test_that(
     paste0(
@@ -209,7 +207,6 @@ familiar_data_creation_unit_test <- function(outcome_type) {
   )
 }
 
-familiar_data_creation_unit_test("count")
 familiar_data_creation_unit_test("continuous")
 familiar_data_creation_unit_test("binomial")
 familiar_data_creation_unit_test("multinomial")

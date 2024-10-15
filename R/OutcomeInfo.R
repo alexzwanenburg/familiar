@@ -18,7 +18,7 @@ create_outcome_info <- function(settings) {
     outcome_info@ordered <- FALSE
 
     # Set reference level of the outcome
-    outcome_info@reference <- settings$data$class_levels[1]
+    outcome_info@reference <- settings$data$class_levels[1L]
   }
 
   if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
@@ -41,46 +41,143 @@ create_outcome_info <- function(settings) {
 }
 
 
-
-create_outcome_info_from_data <- function(data) {
-  # This is typically an outcomeInfo object created at runtime, without access
-  # to outcome_info in the global backend, or attached to an object.
-
-  outcome_info <- methods::new("outcomeInfo",
-    name = character(0L),
-    outcome_type = data@outcome_type,
-    outcome_column = get_outcome_columns(x = data))
-
-  if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
-    # Set class levels
-    outcome_info@levels <- get_outcome_class_levels(x = data)
-
-    # Set flag indicating that the outcome is ordinal (currently not enabled)
-    outcome_info@ordered <- is.ordered(data@data[[outcome_info@outcome_column]])
-
-    # Set reference level of the outcome
-    outcome_info@reference <- outcome_info@levels[1]
+# .create_outcome_info (model, ensemble) ---------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "familiarModelUnion"),
+  function(object, ...) {
+    return(object@outcome_info)
   }
+)
 
-  if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
-    # Set maximum time
-    outcome_info@time <- Inf
 
-    # Set indicator for censoring
-    outcome_info@censored <- "0"
-
-    # Set indicator for events
-    outcome_info@event <- "1"
+# .create_outcome_info (data object) -------------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "dataObject"),
+  function(object, ...) {
+    
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = object@outcome_type,
+      outcome_column = get_outcome_columns(x = object)
+    )
+    
+    if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
+      # Set class levels
+      outcome_info@levels <- get_outcome_class_levels(x = object)
+      
+      # Set flag indicating that the outcome is ordinal (currently not enabled)
+      outcome_info@ordered <- is.ordered(object@data[[outcome_info@outcome_column]])
+      
+      # Set reference level of the outcome
+      outcome_info@reference <- outcome_info@levels[1L]
+    }
+    
+    if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
+      # Set maximum time
+      outcome_info@time <- Inf
+      
+      # Set indicator for censoring
+      outcome_info@censored <- "0"
+      
+      # Set indicator for events
+      outcome_info@event <- "1"
+    }
+    
+    if (outcome_info@outcome_type %in% c("competing_risk")) {
+      # Set indicator for competing risks
+      outcome_info@competing_risk <- as.character(setdiff(
+        unique_na(object@data[[outcome_info@outcome_column[2L]]]), c(0L, 1L)
+      ))
+    }
+    
+    return(outcome_info)
   }
+)
 
-  if (outcome_info@outcome_type %in% c("competing_risk")) {
-    # Set indicator for competing risks
-    outcome_info@competing_risk <- as.character(setdiff(
-      unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)))
+
+
+# .create_outcome_info (data.table) --------------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "data.table"),
+  function(object, outcome_type, ...) {
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = outcome_type,
+      outcome_column = get_outcome_columns(outcome_type = outcome_type)
+    )
+    
+    if (outcome_info@outcome_type %in% c("binomial", "multinomial")) {
+      # Set class levels
+      outcome_info@levels <- get_outcome_class_levels(x = object, outcome_type = outcome_info@outcome_type)
+      
+      # Set flag indicating that the outcome is ordinal (currently not enabled)
+      outcome_info@ordered <- is.ordered(object[[outcome_info@outcome_column]])
+      
+      # Set reference level of the outcome
+      outcome_info@reference <- outcome_info@levels[1L]
+    }
+    
+    if (outcome_info@outcome_type %in% c("survival", "competing_risk")) {
+      # Set maximum time
+      outcome_info@time <- Inf
+      
+      # Set indicator for censoring
+      outcome_info@censored <- "0"
+      
+      # Set indicator for events
+      outcome_info@event <- "1"
+    }
+    
+    if (outcome_info@outcome_type %in% c("competing_risk")) {
+      # Set indicator for competing risks
+      outcome_info@competing_risk <- as.character(setdiff(
+        unique_na(object[[outcome_info@outcome_column[2L]]]), c(0L, 1L)
+      ))
+    }
+    
+    return(outcome_info)
   }
+)
 
-  return(outcome_info)
-}
+
+# .create_outcome_info (prediction table) --------------------------------------
+setMethod(
+  ".create_outcome_info",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    outcome_info <- methods::new(
+      "outcomeInfo",
+      name = character(0L),
+      outcome_type = object@outcome_type,
+      outcome_column = get_outcome_columns(object@outcome_type)
+    )
+    
+    if (.hasSlot(object, "classes")) {
+      outcome_info@levels <- object@classes
+      outcome_info@ordered <- is.ordered(object@classes)
+      outcome_info@reference <- outcome_info@levels[1L]
+    }
+    
+    if (.hasSlot(object, "time")) {
+      outcome_info@time <- object@time
+    }
+    
+    if (.hasSlot(object, "event")) {
+      outcome_info@event <- object@event
+    }
+    
+    if (.hasSlot(object, "censored")) {
+      outcome_info@censored <- object@censored
+    }
+    
+    return(outcome_info)
+  }
+)
 
 
 
@@ -99,12 +196,12 @@ get_outcome_info_from_backend <- function() {
     } else if (exists("outcome_info", where = .GlobalEnv)) {
       data_env <- .GlobalEnv
     } else {
-      stop("The outcomeInfo object was not found in backend environment.")
+      ..error("The outcomeInfo object was not found in backend environment.")
     }
   } else if (exists("outcome_info", where = .GlobalEnv)) {
     data_env <- .GlobalEnv
   } else {
-    stop("The outcomeInfo object was not found in backend environment.")
+    ..error("The outcomeInfo object was not found in backend environment.")
   }
 
   return(get("outcome_info", envir = data_env))
@@ -128,7 +225,8 @@ get_outcome_info_from_backend <- function() {
   # Second attempt to get from backend
   outcome_info <- tryCatch(
     get_outcome_info_from_backend(),
-    error = identity)
+    error = identity
+  )
 
   if (!inherits(outcome_info, "error")) {
     return(outcome_info)
@@ -137,7 +235,8 @@ get_outcome_info_from_backend <- function() {
   # Third, attempt to infer from settings.
   settings <- tryCatch(
     get_settings(),
-    error = identity)
+    error = identity
+  )
 
   if (!inherits(settings, "error")) {
     return(create_outcome_info(settings = settings))
@@ -145,11 +244,11 @@ get_outcome_info_from_backend <- function() {
 
   # Finally, attempt to infer from dataObject
   if (inherits(x, "dataObject")) {
-    return(create_outcome_info_from_data(data = x))
+    return(.create_outcome_info(x))
   }
 
   if (is.null(outcome_info)) {
-    stop("The requested outcomeInfo object could not be read or created on the fly.")
+    ..error("The requested outcomeInfo object could not be read or created on the fly.")
   }
 }
 
@@ -160,8 +259,12 @@ get_outcome_info_from_backend <- function() {
   min <- Q1 <- median <- Q3 <- max <- count <- incidence <- NULL
   survival_probability <- survival_probability <- NULL
 
+  # Remove empty elements from x.
+  x <- x[!sapply(x, is.null)]
+  if (length(x) == 0L) return(NULL)
+  
   # Copy the first outcome info object
-  outcome_info <- x[[1]]
+  outcome_info <- x[[1L]]
 
   # Find distribution items
   distribution_items <- names(outcome_info@distribution)
@@ -179,7 +282,8 @@ get_outcome_info_from_backend <- function() {
           function(outcome_info_object, item) {
             outcome_info_object@distribution[[item]]
           },
-          item = item)
+          item = item
+        )
         
         # Combine all the data.tables
         fivenum_values <- data.table::rbindlist(fivenum_values)
@@ -205,7 +309,8 @@ get_outcome_info_from_backend <- function() {
           function(outcome_info_object, item) {
             outcome_info_object@distribution[[item]]
           },
-          item = item)
+          item = item
+        )
         
         # Combine all the data.tables
         frequency_values <- data.table::rbindlist(frequency_values)
@@ -222,7 +327,8 @@ get_outcome_info_from_backend <- function() {
           function(outcome_info_object, item) {
             outcome_info_object@distribution[[item]]$time
           },
-          item = item))))
+          item = item
+        ))))
         
         # Interpolate at the unique times.
         incidence_table <- lapply(
@@ -234,7 +340,7 @@ get_outcome_info_from_backend <- function() {
             }
             
             # Check that there is at least unique times.
-            if (data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2) {
+            if (data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2L) {
               return(NULL)
             }
             
@@ -244,16 +350,18 @@ get_outcome_info_from_backend <- function() {
               y = outcome_info_object@distribution[[item]][[item]],
               xout = unique_times,
               method = "linear",
-              rule = 2,
+              rule = 2L,
               yleft = 0.0
             )$y
             
             return(data.table::data.table(
               "time" = unique_times,
-              "incidence" = incidence))
+              "incidence" = incidence
+            ))
           },
           item = item,
-          unique_times = unique_times)
+          unique_times = unique_times
+        )
         
         # Aggregate the incidence table.
         incidence_table <- data.table::rbindlist(incidence_table)
@@ -265,7 +373,8 @@ get_outcome_info_from_backend <- function() {
         data.table::setnames(
           x = incidence_table, 
           old = "incidence",
-          new = item)
+          new = item
+        )
 
         # Add to list
         distr_list[[item]] <- incidence_table
@@ -277,7 +386,8 @@ get_outcome_info_from_backend <- function() {
           function(outcome_info_object, item) {
             outcome_info_object@distribution[[item]]$time
           },
-          item = item))))
+          item = item
+        ))))
         
         # Interpolate at the unique times.
         survival_table <- lapply(
@@ -289,7 +399,7 @@ get_outcome_info_from_backend <- function() {
             }
             
             # Check that there is at least unique times.
-            if (data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2) {
+            if (data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2L) {
               return(NULL)
             }
             
@@ -299,13 +409,14 @@ get_outcome_info_from_backend <- function() {
               y = outcome_info_object@distribution[[item]][[item]],
               xout = unique_times,
               method = "linear",
-              rule = 2,
+              rule = 2L,
               yleft = 1.0
             )$y
             
             return(data.table::data.table(
               "time" = unique_times,
-              "survival_probability" = survival_probability))
+              "survival_probability" = survival_probability
+            ))
           },
           item = item,
           unique_times = unique_times
@@ -315,22 +426,27 @@ get_outcome_info_from_backend <- function() {
         survival_table <- data.table::rbindlist(survival_table)
         
         # Compute the mean survival prob by each time point.
-        survival_table <- survival_table[, list(
-          "survival_probability" = mean(survival_probability)),
-          by = "time"]
+        survival_table <- survival_table[
+          ,
+          list("survival_probability" = mean(survival_probability)),
+          by = "time"
+        ]
         
         # Update the column name.
         data.table::setnames(
           x = survival_table,
           old = "survival_probability",
-          new = item)
+          new = item
+        )
 
         # Add to list
         distr_list[[item]] <- survival_table
+        
       } else {
         # Find mean value
         distr_list[[item]] <- mean(unlist(extract_from_slot(
-          x, "distribution", item, na.rm = TRUE)))
+          x, "distribution", item, na.rm = TRUE
+        )))
       }
     }
 
@@ -343,15 +459,18 @@ get_outcome_info_from_backend <- function() {
     transform_method <- get_mode(extract_from_slot(
       object_list = x,
       slot_name = "transformation_parameters",
-      slot_element = "transform_method"))
+      slot_element = "transform_method"
+    ))
     transform_lambda <- get_mode(extract_from_slot(
       object_list = x,
       slot_name = "transformation_parameters",
-      slot_element = "transform_lambda"))
+      slot_element = "transform_lambda"
+    ))
 
     outcome_info@transformation_parameters <- list(
       "transform_method" = transform_method,
-      "transform_lambda" = transform_lambda)
+      "transform_lambda" = transform_lambda
+    )
   }
 
   # Update normalisation parameters
@@ -359,20 +478,24 @@ get_outcome_info_from_backend <- function() {
     normalisation_method <- get_mode(extract_from_slot(
       object_list = x,
       slot_name = "normalisation_parameters",
-      slot_element = "norm_method"))
+      slot_element = "norm_method"
+    ))
     normalisation_shift <- mean(extract_from_slot(
       object_list = x, 
       slot_name = "normalisation_parameters",
-      slot_element = "norm_shift"))
+      slot_element = "norm_shift"
+    ))
     normalisation_scale <- mean(extract_from_slot(
       object_list = x,
       slot_name = "normalisation_parameters",
-      slot_element = "norm_scale"))
+      slot_element = "norm_scale"
+    ))
 
     outcome_info@normalisation_parameters <- list(
       "norm_method" = normalisation_method,
       "norm_shift" = normalisation_shift,
-      "norm_scale" = normalisation_scale)
+      "norm_scale" = normalisation_scale
+    )
   }
 
   return(outcome_info)
@@ -395,7 +518,8 @@ get_outcome_info_from_backend <- function() {
   # Find outcome data
   x <- data.table::copy(unique(
     data@data,
-    by = get_id_columns(id_depth = "series")))
+    by = get_id_columns(id_depth = "series")
+  ))
 
   if (object@outcome_type %in% c("binomial", "multinomial")) {
     # Number of samples
@@ -404,7 +528,7 @@ get_outcome_info_from_backend <- function() {
     # Number of instances for each class
     distr_list[["frequency"]] <- x[, list("count" = .N), by = "outcome"]
     
-  } else if (object@outcome_type %in% c("continuous", "count")) {
+  } else if (object@outcome_type %in% c("continuous")) {
     # Number of samples
     distr_list[["n"]] <- nrow(x)
 
@@ -421,48 +545,59 @@ get_outcome_info_from_backend <- function() {
     surv_group <- data.table::copy(x)
 
     # Count events and censoring at each time point.
-    surv_group <- surv_group[, list(
-      "event" = sum(outcome_event == 1),
-      "censored" = sum(outcome_event == 0),
-      "competing" = sum(outcome_event > 1)),
-    by = "outcome_time"
+    surv_group <- surv_group[
+      ,
+      list(
+        "event" = sum(outcome_event == 1L),
+        "censored" = sum(outcome_event == 0L),
+        "competing" = sum(outcome_event > 1L)
+      ),
+      by = "outcome_time"
     ][order(outcome_time)]
 
     # Add group sizes at the start of each interval.
     surv_group[, "n" := nrow(x) - data.table::shift(
       cumsum(event + censored + competing),
-      n = 1,
-      fill = 0,
-      type = "lag")]
+      n = 1L,
+      fill = 0L,
+      type = "lag"
+    )]
 
     # Compute the incidence and censoring rates in the interval
     surv_group[, ":="(
       "interval_survival" = 1.0 - (event + competing) / n,
       "interval_incidence_rate" = event / n,
-      "interval_non_censoring_rate" = 1.0 - censored / n)]
+      "interval_non_censoring_rate" = 1.0 - censored / n
+    )]
 
     # Compute the Kaplan-Meier survival estimator and censoring estimator.
     surv_group[, ":="(
       "survival_probability" = cumprod(interval_survival),
-      "cumulative_censoring" = 1.0 - cumprod(interval_non_censoring_rate))]
+      "cumulative_censoring" = 1.0 - cumprod(interval_non_censoring_rate)
+    )]
 
     # Compute cumulative incidence and censoring rates.
-    surv_group[, ":="(
-      "cumulative_incidence" = cumsum(data.table::shift(
+    surv_group[
+      ,
+      ":="("cumulative_incidence" = cumsum(data.table::shift(
         survival_probability,
         n = 1L,
         fill = 1.0,
-        type = "lag") * interval_incidence_rate))]
+        type = "lag"
+      ) * interval_incidence_rate))
+    ]
 
     # Rename the outcome_time column.
     data.table::setnames(
       x = surv_group, 
       old = "outcome_time",
-      new = "time")
+      new = "time"
+    )
 
     # Retain only import
     surv_group <- surv_group[, c(
-      "time", "survival_probability", "cumulative_incidence", "cumulative_censoring")]
+      "time", "survival_probability", "cumulative_incidence", "cumulative_censoring"
+    )]
 
     if (!any(surv_group$time == 0.0)) {
       surv_group <- rbind(
@@ -470,7 +605,8 @@ get_outcome_info_from_backend <- function() {
           "time" = 0.0,
           "survival_probability" = 1.0,
           "cumulative_incidence" = 0.0,
-          "cumulative_censoring" = 0.0),
+          "cumulative_censoring" = 0.0
+        ),
         surv_group
       )
     }
@@ -479,13 +615,13 @@ get_outcome_info_from_backend <- function() {
     distr_list[["n"]] <- nrow(x)
 
     # Number of events
-    distr_list[["n_event"]] <- sum(x$outcome_event == 1, na.rm = TRUE)
+    distr_list[["n_event"]] <- sum(x$outcome_event == 1L, na.rm = TRUE)
 
     # Five-number summary of follow-up
     distr_list[["follow_up_fivenum"]] <- fivenum_summary(x$outcome_time, na.rm = TRUE)
 
     # Five-number summary of event
-    distr_list[["event_fivenum"]] <- fivenum_summary(x[outcome_event == 1, ]$outcome_time, na.rm = TRUE)
+    distr_list[["event_fivenum"]] <- fivenum_summary(x[outcome_event == 1L, ]$outcome_time, na.rm = TRUE)
 
     # Survival probability
     distr_list[["survival_probability"]] <- unique(surv_group[, c("time", "survival_probability")])
@@ -513,7 +649,7 @@ setMethod(
   function(object) {
     # Basic outcome information.
     outcome_name <- object@name
-    if (length(outcome_name) == 0) outcome_name <- "outcome"
+    if (length(outcome_name) == 0L) outcome_name <- "outcome"
 
     # Form basic string.
     outcome_str <- paste0(outcome_name, " (", object@outcome_type, ")")
@@ -522,56 +658,62 @@ setMethod(
     if (object@outcome_type %in% c("binomial")) {
       # Show the reference class.
       outcome_classes <- object@levels
-      outcome_classes[1] <- paste0(outcome_classes[1], " (reference)")
+      outcome_classes[1L] <- paste0(outcome_classes[1L], " (reference)")
 
       # Add to the outcome string.
       outcome_str <- paste0(
         outcome_str, ", with classes: ",
-        paste_s(outcome_classes), ".\n")
+        paste_s(outcome_classes), ".\n"
+      )
       
     } else if (object@outcome_type %in% c("multinomial")) {
       # Show the outcome classes.
       outcome_str <- paste0(
         outcome_str, ", with classes: ",
-        paste_s(object@levels), ".\n")
+        paste_s(object@levels), ".\n"
+      )
       
-    } else if (object@outcome_type %in% c("count", "continuous")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # No further details provided.
       outcome_str <- paste0(outcome_str, ".\n")
       
     } else if (object@outcome_type %in% c("survival")) {
       # Show the censoring and event values.
-      if (length(object@censored) > 0) {
+      if (length(object@censored) > 0L) {
         censoring_str <- paste0("censoring: ", paste_s(object@censored))
         event_str <- paste0("event: ", paste_s(object@event))
 
         # Add to outcome string.
         outcome_str <- paste0(
           outcome_str, ", with ", censoring_str,
-          "; and ", event_str, ".\n")
+          "; and ", event_str, ".\n"
+        )
         
       } else {
         event_str <- paste0("event: ", paste_s(object@event))
 
         # Add to outcome string.
         outcome_str <- paste0(
-          outcome_str, ", without censoring; and ", event_str, ".\n")
+          outcome_str, ", without censoring; and ", event_str, ".\n"
+        )
       }
       
     } else if (object@outcome_type %in% c("competing_risk")) {
-      if (length(object@censored) > 0) {
+      if (length(object@censored) > 0L) {
         censoring_str <- paste0("with censoring: ", paste_s(object@censored))
       } else {
         censoring_str <- "without censoring"
       }
 
-      if (length(object@competing_risk) > 0) {
+      if (length(object@competing_risk) > 0L) {
         competing_risk_str <- paste0(
           ifelse(
-            length(object@competing_risk) > 1,
+            length(object@competing_risk) > 1L,
             "competing risks: ",
-            "competing risk: "),
-          paste_s(object@competing_risk))
+            "competing risk: "
+          ),
+          paste_s(object@competing_risk)
+        )
         
       } else {
         competing_risk_str <- "no competing risks"
@@ -584,7 +726,8 @@ setMethod(
         outcome_str, ", ",
         censoring_str, "; ", 
         event_str, "; and ",
-        competing_risk_str, ".\n")
+        competing_risk_str, ".\n"
+      )
       
     } else {
       ..error_no_known_outcome_type(object@outcome_type)

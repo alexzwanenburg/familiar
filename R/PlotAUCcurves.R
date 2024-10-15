@@ -7,14 +7,12 @@ NULL
 #' @title Plot the receiver operating characteristic curve.
 #'
 #' @description This method creates receiver operating characteristic curves
-#'  based on data in a familiarCollection object.
+#'   based on data in a familiarCollection object.
 #'
-#' @param dir_path (*optional*) Path to the directory where the plots of receiver
-#'  operating characteristic curves are saved to. Output is saved in the
-#'  `performance` subdirectory. If `NULL` no figures are saved, but are returned
-#'  instead.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'  plot elements in case a value was provided to the `color_by` argument.
+#' @param dir_path (*optional*) Path to the directory where the plots of
+#'   receiver operating characteristic curves are saved to. Output is saved in
+#'   the `performance` subdirectory. If `NULL` no figures are saved, but are
+#'   returned instead.
 #'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
@@ -26,33 +24,25 @@ NULL
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
-#'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `positive_class`. By default, the data is split by `fs_method` and `learner`,
-#'  with faceting by `data_set` and colouring by `positive_class`.
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set` and
+#'   `positive_class`. By default, the data is split by `vimp_method` and
+#'   `learner`, with faceting by `data_set` and colouring by `positive_class`.
 #'
-#'  Available palettes for `discrete_palette` are those listed by
-#'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'  (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'  `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'  name in `grDevices`. If not specified, a default palette based on palettes
-#'  in Tableau are used. You may also specify your own palette by using colour
-#'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'
-#'  Bootstrap confidence intervals of the ROC curve (if present) can be shown
-#'  using various styles set by `conf_int_style`:
+#'   Bootstrap confidence intervals of the ROC curve (if present) can be shown
+#'   using various styles set by `conf_int_style`:
 #'
 #'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
-#'  opacity of `conf_int_alpha` around the point estimate of the ROC curve.
+#'   opacity of `conf_int_alpha` around the point estimate of the ROC curve.
 #'
 #'  * `step` (default): confidence intervals are shown as a step function around
-#'  the point estimate of the ROC curve.
+#'   the point estimate of the ROC curve.
 #'
 #'  * `none`: confidence intervals are not shown. The point estimate of the ROC
-#'  curve is shown as usual.
+#'   curve is shown as usual.
 #'
-#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
-#'  be applied to the `familiarCollection` object to update labels, and order
-#'  the output in the figure.
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
+#'   be applied to the `familiarCollection` object to update labels, and order
+#'   the output in the figure.
 #'
 #' @return `NULL` or list of plot objects, if `dir_path` is `NULL`.
 #'
@@ -77,9 +67,9 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -87,7 +77,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_auc_roc_curve")
   }
 )
@@ -114,9 +105,9 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -124,15 +115,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "auc_data"),
-        list(...)))
+          "data_element" = "auc_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_auc_roc_curve,
@@ -161,7 +156,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -188,9 +185,9 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -198,7 +195,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
@@ -230,7 +228,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -249,8 +249,8 @@ setMethod(
 #'
 #' @details This function generates area under the precision-recall curve plots.
 #'
-#'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `positive_class`. By default, the data is split by `fs_method` and `learner`,
+#'  Available splitting variables are: `vimp_method`, `learner`, `data_set` and
+#'  `positive_class`. By default, the data is split by `vimp_method` and `learner`,
 #'  with faceting by `data_set` and colouring by `positive_class`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
@@ -273,7 +273,7 @@ setMethod(
 #'  * `none`: confidence intervals are not shown. The point estimate of the ROC
 #'  curve is shown as usual.
 #'
-#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'  Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
 #'
@@ -300,9 +300,9 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -310,7 +310,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_auc_precision_recall_curve")
   }
 )
@@ -339,9 +340,9 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -349,15 +350,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "auc_data"),
-        list(...)))
+          "data_element" = "auc_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_auc_precision_recall_curve,
@@ -386,7 +391,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -414,9 +421,9 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -424,7 +431,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
@@ -456,7 +464,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -479,9 +489,9 @@ setMethod(
     plot_title = NULL,
     plot_sub_title = NULL,
     caption = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     conf_int_style = c("ribbon", "step", "none"),
     conf_int_alpha = 0.4,
@@ -489,12 +499,14 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+) {
   
   # Get input data.
   x <- export_auc_data(
     object = object,
-    aggregate_results = TRUE)
+    aggregate_results = TRUE
+  )
   
   # Check that the data are not empty.
   if (is_empty(x)) return(NULL)
@@ -509,13 +521,14 @@ setMethod(
   if (is.list(x)) {
     if (is_empty(x)) return(NULL)
     
-    if (length(x) > 1) {
+    if (length(x) > 1L) {
       ..error_reached_unreachable_code(
-        ".plot_auc_curve: list of data elements contains unmerged elements.")
+        ".plot_auc_curve: list of data elements contains unmerged elements."
+      )
     }
     
     # Get x directly.
-    x <- x[[1]]
+    x <- x[[1L]]
   }
   
   # Check that the data are not empty.
@@ -525,7 +538,8 @@ setMethod(
   .check_parameter_value_is_valid(
     x = curve_type,
     var_name = "curve_type",
-    values = c("roc", "pr"))
+    values = c("roc", "pr")
+  )
   
   # Select the correct subset.
   if (curve_type == "roc") {
@@ -540,10 +554,13 @@ setMethod(
   # Check package requirements for plotting.
   if (!require_package(
     x = ..required_plotting_packages(extended = FALSE),
-    purpose = ifelse(curve_type == "roc",
-                     "to create AUC-ROC plots",
-                     "to create AUC-PR plots"),
-    message_type = "warning")) {
+    purpose = ifelse(
+      curve_type == "roc",
+      "to create AUC-ROC plots",
+      "to create AUC-PR plots"
+    ),
+    message_type = "warning"
+  )) {
     return(NULL)
   }
   
@@ -570,9 +587,10 @@ setMethod(
     # Create breaks
     x_breaks <- labeling::extended(
       m = x_n_breaks,
-      dmin = x_range[1],
-      dmax = x_range[2],
-      only.loose = TRUE)
+      dmin = x_range[1L],
+      dmax = x_range[2L],
+      only.loose = TRUE
+    )
   }
   
   # y_breaks
@@ -582,14 +600,15 @@ setMethod(
     # Create breaks
     y_breaks <- labeling::extended(
       m = y_n_breaks,
-      dmin = y_range[1],
-      dmax = y_range[2],
-      only.loose = TRUE)
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = TRUE
+    )
   }
   
   # conf_int_style
-  if (length(conf_int_style) > 1) {
-    conf_int_style <- head(conf_int_style, n = 1)
+  if (length(conf_int_style) > 1L) {
+    conf_int_style <- head(conf_int_style, n = 1L)
   }
   
   # Set the style of the confidence interval to none, in case no confidence
@@ -602,52 +621,55 @@ setMethod(
   if (is.null(split_by) && is.null(facet_by) && is.null(color_by)) {
     # Determine the number of learners and feature_selection methods.
     n_learner <- nlevels(x@data$learner)
-    n_fs_method <- nlevels(x@data$fs_method)
+    n_vimp_method <- nlevels(x@data$vimp_method)
     n_positive_class <- ifelse(
       object@outcome_type == "binomial",
-      1L, nlevels(x@data$positive_class))
+      1L, nlevels(x@data$positive_class)
+    )
     
-    if (n_learner > 1 && n_fs_method > 1) {
-      split_by <- c("fs_method", "learner")
+    if (n_learner > 1L && n_vimp_method > 1L) {
+      split_by <- c("vimp_method", "learner")
       
-      if (n_positive_class > 1) {
+      if (n_positive_class > 1L) {
         color_by <- "positive_class"
         facet_by <- "data_set"
+        
       } else {
         color_by <- c("data_set", "positive_class")
       }
       
-    } else if (n_learner > 1) {
-      # Implying n_fs_method == 1
+    } else if (n_learner > 1L) {
+      # Implying n_vimp_method == 1
       
-      if (n_positive_class > 1) {
-        split_by <- c("fs_method", "learner")
+      if (n_positive_class > 1L) {
+        split_by <- c("vimp_method", "learner")
         color_by <- "positive_class"
         facet_by <- "data_set"
+        
       } else {
-        split_by <- c("fs_method")
+        split_by <- c("vimp_method")
         color_by <- c("learner")
         facet_by <- c("data_set", "positive_class")
       }
       
-    } else if (n_fs_method > 1) {
+    } else if (n_vimp_method > 1L) {
       # Implying n_learner == 1
       
-      if (n_positive_class > 1) {
-        split_by <- c("fs_method", "learner")
+      if (n_positive_class > 1L) {
+        split_by <- c("vimp_method", "learner")
         color_by <- "positive_class"
         facet_by <- "data_set"
       } else {
         split_by <- "learner"
-        color_by <- "fs_method"
+        color_by <- "vimp_method"
         facet_by <- c("data_set", "positive_class")
       }
       
     } else {
-      # Implying n_learner == n_fs_method == 1
-      split_by <- c("fs_method", "learner")
+      # Implying n_learner == n_vimp_method == 1
+      split_by <- c("vimp_method", "learner")
       
-      if (n_positive_class > 1) {
+      if (n_positive_class > 1L) {
         color_by <- "positive_class"
         facet_by <- "data_set"
       } else {
@@ -662,7 +684,8 @@ setMethod(
     split_by = split_by,
     color_by = color_by,
     facet_by = facet_by,
-    available = c("fs_method", "learner", "data_set", "positive_class"))
+    available = c("vimp_method", "learner", "data_set", "positive_class")
+  )
   
   # Update splitting variables
   split_by <- split_var_list$split_by
@@ -672,7 +695,8 @@ setMethod(
   # Create a legend label
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
-    color_by = color_by)
+    color_by = color_by
+  )
   
   # Check input arguments for validity.
   .check_input_plot_args(
@@ -688,7 +712,8 @@ setMethod(
     legend_label = legend_label,
     plot_title = plot_title,
     plot_sub_title = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
   
   # Create plots ---------------------------------------------------------------
   
@@ -708,19 +733,21 @@ setMethod(
   # Iterate over splits
   for (ii in names(x_split)) {
     # Skip empty datasets
-    if (is_empty(x_split[[ii]])) next()
+    if (is_empty(x_split[[ii]])) next
     
     if (is.waive(plot_title)) {
       plot_title <- ifelse(
         curve_type == "roc",
         "Receiver operating characteristic curve",
-        "Precision-recall curve")
+        "Precision-recall curve"
+      )
     }
     
     if (autogenerate_plot_subtitle) {
       plot_sub_title <- .create_plot_subtitle(
         split_by = split_by,
-        x = x_split[[ii]])
+        x = x_split[[ii]]
+      )
     }
     
     # Generate plot
@@ -757,7 +784,8 @@ setMethod(
       def_plot_dims <- .determine_auc_roc_plot_dimensions(
         x = x_split[[ii]],
         facet_by = facet_by,
-        facet_wrap_cols = facet_wrap_cols)
+        facet_wrap_cols = facet_wrap_cols
+      )
       
       # Save to file.
       do.call(
@@ -771,10 +799,13 @@ setMethod(
             "subtype" = paste0("auc_", curve_type),
             "x" = x_split[[ii]],
             "split_by" = split_by,
-            "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-            "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-            "units" = ifelse(is.waive(units), "cm", units)),
-          list(...)))
+            "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+            "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+            "units" = ifelse(is.waive(units), "cm", units)
+          ),
+          list(...)
+        )
+      )
       
     } else {
       # Store as list for export.
@@ -787,7 +818,8 @@ setMethod(
     dir_path = dir_path,
     plot_list = plot_list,
     export_collection = export_collection,
-    object = object))
+    object = object
+  ))
 }
 
 
@@ -810,11 +842,13 @@ setMethod(
     y_range,
     y_breaks,
     conf_int_style,
-    conf_int_alpha) {
+    conf_int_alpha
+) {
   # Generate a guide table.
   guide_list <- .create_plot_guide_table(
     x = x, color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
   
   # Extract data
   x <- guide_list$data
@@ -824,7 +858,9 @@ setMethod(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("x"),
-      y = !!sym("y")))
+      y = !!sym("y")
+    )
+  )
   
   # Add theme
   p <- p + ggtheme
@@ -837,7 +873,8 @@ setMethod(
   } else {
     # With colour-based splitting.
     p <- p + ggplot2::geom_line(
-      mapping = ggplot2::aes(colour = !!sym("color_breaks")))
+      mapping = ggplot2::aes(colour = !!sym("color_breaks"))
+    )
     
     # Extract guidetable for color
     g_color <- guide_list$guide_color
@@ -847,59 +884,71 @@ setMethod(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
     
     p <- p + ggplot2::scale_fill_manual(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
   }
   
   # Plot confidence intervals
-  if (conf_int_style[1] != "none") {
-    if (conf_int_style[1] == "step") {
+  if (conf_int_style[1L] != "none") {
+    if (conf_int_style[1L] == "step") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(y = !!sym("ci_low")),
-          linetype = "dashed")
+          linetype = "dashed"
+        )
         
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(y = !!sym("ci_up")),
-          linetype = "dashed")
+          linetype = "dashed"
+        )
         
       } else {
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(
             y = !!sym("ci_low"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
         
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(
             y = !!sym("ci_up"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
       }
       
       # Do not show dashed lines in the legend.
       p <- p + ggplot2::scale_linetype(guide = FALSE)
       
-    } else if (conf_int_style[1] == "ribbon") {
+    } else if (conf_int_style[1L] == "ribbon") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_ribbon(
           mapping = ggplot2::aes(
             ymin = !!sym("ci_low"),
-            ymax = !!sym("ci_up")),
-          alpha = conf_int_alpha)
+            ymax = !!sym("ci_up")
+          ),
+          alpha = conf_int_alpha
+        )
         
       } else {
         p <- p + ggplot2::geom_ribbon(
           mapping = ggplot2::aes(
             ymin = !!sym("ci_low"),
             ymax = !!sym("ci_up"),
-            fill = !!sym("color_breaks")),
-          alpha = conf_int_alpha)
+            fill = !!sym("color_breaks")
+          ),
+          alpha = conf_int_alpha
+        )
       }
     }
   }
@@ -914,13 +963,15 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
   
   # Determine how things are faceted
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
   
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -929,20 +980,23 @@ setMethod(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
     }
   }
   
   # Prevent removal of data outside or on plot limits.
   p <- p + ggplot2::coord_cartesian(
     xlim = x_range,
-    ylim = y_range)
+    ylim = y_range
+  )
   
   return(p)
 }
@@ -952,22 +1006,24 @@ setMethod(
 .determine_auc_roc_plot_dimensions <- function(
     x,
     facet_by,
-    facet_wrap_cols) {
+    facet_wrap_cols
+) {
   # Obtain faceting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x, 
     facet_by = facet_by, 
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
   
   # Set default height and width for each subplot (in cm).
-  default_width <- 6
-  default_height <- 4
+  default_width <- 6.0
+  default_height <- 4.0
   
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
   
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
   
   return(c(height, width))
 }

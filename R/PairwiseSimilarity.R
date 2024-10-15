@@ -11,13 +11,16 @@ setClass(
     "range" = "numeric",
     "distance" = "logical",
     "require_normalisation" = "logical",
-    "highly_similar_threshold" = "numeric"),
+    "highly_similar_threshold" = "numeric"
+  ),
   prototype = list(
     "similarity_metric" = character(),
     "range" = NA_real_,
     "distance" = logical(),
     "require_normalisation" = logical(),
-    "highly_similar_threshold" = NA_real_))
+    "highly_similar_threshold" = NA_real_
+  )
+)
 
 
 
@@ -29,7 +32,9 @@ setClass(
     "range" = c(0.0, 1.0),
     "distance" = FALSE,
     "require_normalisation" = FALSE,
-    "highly_similar_threshold" = 0.80))
+    "highly_similar_threshold" = 0.80
+  )
+)
 
 
 
@@ -41,7 +46,9 @@ setClass(
     "range" = c(-1.0, 0.0, 1.0),
     "distance" = FALSE,
     "require_normalisation" = FALSE,
-    "highly_similar_threshold" = 0.90))
+    "highly_similar_threshold" = 0.90
+  )
+)
 
 
 
@@ -53,7 +60,9 @@ setClass(
     "range" = c(0.0, 1.0),
     "distance" = FALSE,
     "require_normalisation" = FALSE,
-    "highly_similar_threshold" = 0.45))
+    "highly_similar_threshold" = 0.45
+  )
+)
 
 
 
@@ -65,7 +74,9 @@ setClass(
     "range" = c(0.0, Inf),
     "distance" = TRUE,
     "require_normalisation" = TRUE,
-    "highly_similar_threshold" = 0.01))
+    "highly_similar_threshold" = 0.01
+  )
+)
 
 
 
@@ -97,37 +108,45 @@ setMethod(
     x = similarity_metric, 
     pattern = "_trim", 
     replacement = "",
-    fixed = TRUE)
+    fixed = TRUE
+  )
   similarity_metric <- gsub(
     x = similarity_metric,
     pattern = "_winsor",
     replacement = "", 
-    fixed = TRUE)
+    fixed = TRUE
+  )
   
   if (similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2", "mcfadden_r2")) {
     object <- methods::new(
       "familiarSimilarityMetricPseudoR2",
-      similarity_metric = similarity_metric)
+      similarity_metric = similarity_metric
+    )
     
   } else if (similarity_metric %in% c("pearson", "kendall", "spearman")) {
     object <- methods::new(
       "familiarSimilarityMetricCorrelation",
-      similarity_metric = similarity_metric)
+      similarity_metric = similarity_metric
+    )
     
   } else if (similarity_metric %in% c("mutual_information")) {
     object <- methods::new(
       "familiarSimilarityMetricMutualInformation",
-      similarity_metric = similarity_metric)
+      similarity_metric = similarity_metric
+    )
 
   } else if (similarity_metric %in% c(
-    "gower", "euclidean", "manhattan", "chebyshev", "cosine", "canberra", "bray_curtis")) {
+    "gower", "euclidean", "manhattan", "chebyshev", "cosine", "canberra", "bray_curtis"
+  )) {
     object <- methods::new(
       "familiarSimilarityMetricDistance",
-      similarity_metric = similarity_metric)
+      similarity_metric = similarity_metric
+    )
     
   } else {
     ..error_reached_unreachable_code(
-      "compute_similarity_metric: encountered unknown similarity metric")
+      "compute_similarity_metric: encountered unknown similarity metric"
+    )
   }
   
   return(object)
@@ -142,7 +161,8 @@ setMethod(
   "encode_categorical_variables",
   signature(
     object = "familiarSimilarityMetric",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(object, data, ...) {
     
     # Extract data table with contrasts.
@@ -150,7 +170,8 @@ setMethod(
       data = data,
       object = NULL,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
     
     return(data$encoded_data)
   }
@@ -163,7 +184,8 @@ setMethod(
   "encode_categorical_variables",
   signature(
     object = "familiarSimilarityMetricDistance",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(object, data, ...) {
     
     # Leave data as is.
@@ -180,7 +202,8 @@ compute_feature_similarity_metric <- function(
     similarity_metric,
     feature_info_list,
     cl = NULL,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   if (is_empty(data)) return(NULL)
   if (!is(data, "dataObject")) ..error_reached_unreachable_code("data should be dataObject.")
@@ -190,12 +213,14 @@ compute_feature_similarity_metric <- function(
     x = similarity_metric, 
     pattern = "_trim", 
     replacement = "",
-    fixed = TRUE)
+    fixed = TRUE
+  )
   similarity_metric_type <- gsub(
     x = similarity_metric_type,
     pattern = "_winsor",
     replacement = "", 
-    fixed = TRUE)
+    fixed = TRUE
+  )
   
   # Find similarity object.
   object <- .create_similarity_metric_object(similarity_metric = similarity_metric_type)
@@ -205,19 +230,22 @@ compute_feature_similarity_metric <- function(
   
   # Check that the number of features is at least two. This is more of technical
   # requirement than anything else.
-  if (length(feature_columns) < 2) return(NULL)
+  if (length(feature_columns) < 2L) return(NULL)
   
   # Set the categorical mask.
   categorical_mask <- sapply(
     feature_info_list[feature_columns],
-    function(x) (x@feature_type == "factor"))
+    function(x) (x@feature_type == "factor")
+  )
 
   if (!is_available(object = object, any_categorical = any(categorical_mask))) {
-    rlang::warn(
+    ..warning(
       message = paste0(
         "The ", similarity_metric, " metric can not be used to assess similarity between ",
-        "categorical variables. We will use mutual_information instead."),
-      class = "parameter_replacement_warning")
+        "categorical variables. We will use mutual_information instead."
+      ),
+      warning_class = "parameter_replacement_warning"
+    )
     
     # Replace metric by mutual_information.
     object <- .create_similarity_metric_object(similarity_metric = "mutual_information")
@@ -244,12 +272,13 @@ compute_feature_similarity_metric <- function(
       data.table::set(data@data, j = ii, value = .normalise(
         x = data@data[[ii]],
         normalisation_method = norm_method,
-        range = c(0, 1)))
+        range = c(0.0, 1.0)
+      ))
     }
   }
   
   # Generate all combinations of features
-  combinations <- utils::combn(sort(feature_columns), 2)
+  combinations <- utils::combn(sort(feature_columns), 2L)
   
   # Determine similarity measures for each feature pair.
   similarity <- fam_sapply(
@@ -259,8 +288,8 @@ compute_feature_similarity_metric <- function(
     function(ii, combinations, data, object, categorical_mask) {
       
       # Identify features that are being compared.
-      feature_1 <- combinations[1, ii]
-      feature_2 <- combinations[2, ii]
+      feature_1 <- combinations[1L, ii]
+      feature_2 <- combinations[2L, ii]
       
       # Compute pairwise similarity
       similarity <- .compute_feature_similarity(
@@ -268,7 +297,8 @@ compute_feature_similarity_metric <- function(
         x = data[[feature_1]],
         y = data[[feature_2]],
         x_categorical = categorical_mask[feature_1],
-        y_categorical = categorical_mask[feature_2])
+        y_categorical = categorical_mask[feature_2]
+      )
       
       return(similarity)
     },
@@ -277,13 +307,15 @@ compute_feature_similarity_metric <- function(
     data = droplevels(data@data),
     object = object,
     categorical_mask = categorical_mask,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Transform similarity scores into a data.table.
   similarity_data  <- data.table::data.table(
-    "feature_name_1" = combinations[1, ],
-    "feature_name_2" = combinations[2, ],
-    "value" = similarity)
+    "feature_name_1" = combinations[1L, ],
+    "feature_name_2" = combinations[2L, ],
+    "value" = similarity
+  )
   
   return(similarity_data)
 }
@@ -293,7 +325,10 @@ compute_feature_similarity_metric <- function(
 
 
 ## .compute_feature_similarity (generic) ---------------------------------------
-setGeneric(".compute_feature_similarity", function(object, ...) standardGeneric(".compute_feature_similarity"))
+setGeneric(
+  ".compute_feature_similarity",
+  function(object, ...) standardGeneric(".compute_feature_similarity")
+)
 
 
 
@@ -319,12 +354,14 @@ setMethod(
     x_categorical, 
     y_categorical, 
     type = "approximate", 
-    ...) {
+    ...
+  ) {
     
     .check_parameter_value_is_valid(
       x = type,
       var_name = "type",
-      values = c("exact", "approximate"))
+      values = c("exact", "approximate")
+    )
     
     ..encode_variable_to_list <- function(x, is_categorical, insert_intercept = FALSE) {
       if (is_categorical) {
@@ -339,9 +376,10 @@ setMethod(
           level_count <- nlevels(x)
           
           x <- lapply(
-            level_names[2:level_count],
+            level_names[2L:level_count],
             function(ii, x) (as.numeric(x == ii)),
-            x = x)
+            x = x
+          )
         }
       } else {
         # Numeric variables are only stored as a list.
@@ -360,21 +398,21 @@ setMethod(
     
     # Remove missing elements.
     valid_elements <- is.finite(x) & is.finite(y)
-    if (sum(valid_elements) <= 1) return(callNextMethod())
+    if (sum(valid_elements) <= 1L) return(callNextMethod())
     
     # Keep only valid elements.
     x <- x[valid_elements]
     y <- y[valid_elements]
     
     # Check if x and y are both invariant.
-    x_invariant <- all(x == x[1])
-    y_invariant <- all(y == y[1])
+    x_invariant <- all(x == x[1L])
+    y_invariant <- all(y == y[1L])
     if (x_invariant && y_invariant) return(1.0)
     if (x_invariant || y_invariant) return(0.0)
     
     if (type == "approximate") {
       # Select the number of samples for the computing approximate distances.
-      n_samples <- min(c(length(x), ceiling(1000^0.3 * length(x)^0.7)))
+      n_samples <- as.integer(min(c(length(x), ceiling(1000.0^0.3 * length(x)^0.7))))
       
       # Set sample indices - avoid selecting samples randomly, as that is a
       # somewhat costly operation.
@@ -387,8 +425,8 @@ setMethod(
       if (y_categorical) y <- droplevels(y)
       
       # Check if x and y are now both invariant.
-      x_invariant <- all(x == x[1])
-      y_invariant <- all(y == y[1])
+      x_invariant <- all(x == x[1L])
+      y_invariant <- all(y == y[1L])
       if (x_invariant && y_invariant) return(1.0)
       if (x_invariant || y_invariant) return(0.0)
     }
@@ -399,7 +437,8 @@ setMethod(
       x = x,
       y = y,
       x_categorical = x_categorical,
-      y_categorical = y_categorical)
+      y_categorical = y_categorical
+    )
     
     x <- analysis_info$x
     y <- analysis_info$y
@@ -418,18 +457,20 @@ setMethod(
         predictors <- ..encode_variable_to_list(
           x = x,
           is_categorical = x_categorical,
-          insert_intercept = TRUE)
+          insert_intercept = TRUE
+        )
         
         # Fit informative model.
         model <- fastglm::fastglm(
           x = as.matrix(predictors),
           y = y,
           family = fitting_family,
-          method = 3L)
+          method = 3L
+        )
         
         predictor_names <- setdiff(names(model$coefficients), "intercept__")
         
-        if (any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
+        if (!all(is.finite(model$coefficients[predictor_names]))) return(0.0)
         if (all(approximately(model$coefficients[predictor_names], 0.0))) return(0.0)
         if (approximately(model$deviance, 0.0)) return(1.0)
         
@@ -438,31 +479,34 @@ setMethod(
           x = as.matrix(numeric(length(y)), ncol = 1L),
           y = y,
           family = fitting_family,
-          method = 3L)
+          method = 3L
+        )
         
       } else {
         # Fit informative model.
         model <- stats::glm(
           "y ~ x",
           data = data.table::data.table("x" = x, "y" = y),
-          family = fitting_family)
+          family = fitting_family
+        )
         
         predictor_names <- setdiff(names(coef(model)), "(Intercept)")
         
-        if (any(!is.finite(model$coefficients[predictor_names]))) return(0.0)
-        if (all(near(model$coefficients[predictor_names], 0.0, df = 2 * length(x)))) return(0.0)
+        if (!all(is.finite(model$coefficients[predictor_names]))) return(0.0)
+        if (all(near(model$coefficients[predictor_names], 0.0, df = 2L * length(x)))) return(0.0)
         if (approximately(model$deviance, 0.0)) return(1.0)
         
         # Fit uninformative model.
         null_model <- stats::glm(
           "y ~ 1",
           data = data.table::data.table("x" = x, "y" = y),
-          family = fitting_family)
+          family = fitting_family
+        )
       }
       
       # Compute log-likelihoods
-      model_loglik <- stats::logLik(model)[1]
-      null_loglik <- stats::logLik(null_model)[1]
+      model_loglik <- stats::logLik(model)[1L]
+      null_loglik <- stats::logLik(null_model)[1L]
       
     } else if (analysis_info$type == "multinomial") {
       
@@ -470,46 +514,53 @@ setMethod(
         x = "nnet",
         purpose = paste0(
           "to compute log-likelihood pseudo R2 similarity using the ",
-          object@similarity_metric, " metric"))
+          object@similarity_metric, " metric"
+        )
+      )
       
       # Set predictors and response.
       predictors <- ..encode_variable_to_list(
         x = x,
-        is_categorical = x_categorical)
+        is_categorical = x_categorical
+      )
       response <- data.table::data.table("response" = y)
       
       # Set model formula.
       model_formula <- stats::reformulate(
         termlabels = names(predictors),
-        response = quote(response))
+        response = quote(response)
+      )
       null_formula <- stats::as.formula("response ~ 1")
       
       quiet(model <- nnet::multinom(
         model_formula,
         data = cbind(predictors, response),
         maxit = ifelse(type == "approximate", 100L, 500L),
-        MaxNWts = Inf))
+        MaxNWts = Inf
+      ))
       
       model_coefficients <- stats::coef(model)
       predictor_names <- setdiff(colnames(model_coefficients), "(Intercept)")
       
-      if (any(!is.finite(model_coefficients[, predictor_names]))) return(0.0)
-      if (all(near(as.vector(model_coefficients[, predictor_names]), 0.0, df = 2 * length(x)))) return(0.0)
+      if (!all(is.finite(model_coefficients[, predictor_names]))) return(0.0)
+      if (all(near(as.vector(model_coefficients[, predictor_names]), 0.0, df = 2L * length(x)))) return(0.0)
       if (approximately(model$deviance, 0.0)) return(1.0)
       
       quiet(null_model <- nnet::multinom(
         null_formula,
         data = cbind(predictors, response),
-        maxit = ifelse(type == "approximate", 100L, 500L)))
+        maxit = ifelse(type == "approximate", 100L, 500L)
+      ))
       
       # Compute log-likelihoods
-      model_loglik <- stats::logLik(model)[1]
-      null_loglik <- stats::logLik(null_model)[1]
+      model_loglik <- stats::logLik(model)[1L]
+      null_loglik <- stats::logLik(null_model)[1L]
       
     } else {
       ..error_reached_unreachable_code(paste0(
         ".compute_similarity,familiarSimilarityMetricPseudoR2: ",
-        "encountered unknown analysis type"))
+        "encountered unknown analysis type"
+      ))
     }
     
     # Compute pseudo R-squared values from log-likelihoods
@@ -528,8 +579,9 @@ setMethod(
       
     } else {
       ..error_reached_unreachable_code(paste0(
-      ".compute_similarity,familiarSimilarityMetricPseudoR2: ",
-      "encountered unknown similarity metric"))
+        ".compute_similarity,familiarSimilarityMetricPseudoR2: ",
+        "encountered unknown similarity metric"
+      ))
     }
     
     # Check if similarity is NaN or infinite.
@@ -562,7 +614,8 @@ setMethod(
     y, 
     x_categorical, 
     y_categorical, 
-    ...) {
+    ...
+  ) {
    
     ..dummy_encode <- function(x) {
       # Dummy encoding of categorical variable.
@@ -570,9 +623,10 @@ setMethod(
       level_count <- nlevels(x)
       
       return(lapply(
-        level_names[2:level_count],
+        level_names[2L:level_count],
         function(ii, x) (as.numeric(x == ii)),
-        x = x))
+        x = x
+      ))
     }
     
     ..encode_variable_to_list <- function(x, is_categorical) {
@@ -581,9 +635,11 @@ setMethod(
         # one-hot-encoding (nominal).
         if (is.ordered(x)) {
           x <- list(as.numeric(x))
+          
         } else {
           x <- ..dummy_encode(x)
         }
+        
       } else {
         # Numeric variables are only stored as a list.
         x <- list(x)
@@ -602,7 +658,8 @@ setMethod(
       ii = seq_along(x), 
       jj = seq_along(y),
       KEEP.OUT.ATTRS = FALSE,
-      stringsAsFactors = FALSE)
+      stringsAsFactors = FALSE
+    )
     
     # Calculate correlation coefficients
     correlation_coef <- sapply(
@@ -612,12 +669,14 @@ setMethod(
           x = x[[combinations$ii[kk]]],
           y = y[[combinations$jj[kk]]],
           use = "na.or.complete",
-          method = method)
+          method = method
+        )
       },
       combinations = combinations,
       x = x,
       y = y,
-      method = object@similarity_metric)
+      method = object@similarity_metric
+    )
     
     if (x_categorical || y_categorical) {
       correlation_coef <- abs(correlation_coef)
@@ -646,18 +705,19 @@ setMethod(
     y, 
     x_categorical, 
     y_categorical, 
-    ...) {
+    ...
+  ) {
     
     # Remove missing elements.
     valid_elements <- is.finite(x) & is.finite(y)
-    if (sum(valid_elements) <= 1) return(callNextMethod())
+    if (sum(valid_elements) <= 1L) return(callNextMethod())
     
     # Keep only valid elements.
     x <- x[valid_elements]
     y <- y[valid_elements]
     
     # Check if there are more than one unique values in x and or y.
-    if (length(unique(x)) == 1 && length(unique(y)) == 1) return(1.0)
+    if (length(unique(x)) == 1L && length(unique(y)) == 1L) return(1.0)
     
     # Ensure that numeric values are actually encoded as numeric, because
     # praznik handles integers as categorical variables. This is not the
@@ -669,10 +729,14 @@ setMethod(
       x = "praznik",
       purpose = paste0(
         "to compute similarity using the ",
-        object@similarity_metric, " metric"))
+        object@similarity_metric, " metric"
+      )
+    )
     
     # Compute normalised mutual information.
-    return(praznik::miScores(x, y, threads = 1L) / praznik::jhScores(x, y, threads = 1L))
+    return(
+      praznik::miScores(x, y, threads = 1L) / praznik::jhScores(x, y, threads = 1L)
+    )
   }
 )
 
@@ -688,7 +752,8 @@ setMethod(
     y, 
     x_categorical, 
     y_categorical, 
-    ...) {
+    ...
+  ) {
     
     # For feature-wise comparison, the presence of categorical features is
     # problematic, because they don't have a "distance".
@@ -699,8 +764,9 @@ setMethod(
       object = object,
       x = x,
       y = y,
-      categorical = logical(length(x))),
-      ...)
+      categorical = logical(length(x)),
+      ...
+    ))
   }
 )
 
@@ -711,7 +777,8 @@ compute_sample_similarity_metric <- function(
     similarity_metric,
     feature_info_list,
     cl = NULL,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   if (is_empty(data)) return(NULL)
   if (!is(data, "dataObject")) ..error_reached_unreachable_code("data should be dataObject.")
@@ -721,15 +788,19 @@ compute_sample_similarity_metric <- function(
     x = similarity_metric, 
     pattern = "_trim", 
     replacement = "",
-    fixed = TRUE)
+    fixed = TRUE
+  )
   similarity_metric_type <- gsub(
     x = similarity_metric_type,
     pattern = "_winsor",
     replacement = "", 
-    fixed = TRUE)
+    fixed = TRUE
+  )
   
   # Find similarity object.
-  object <- .create_similarity_metric_object(similarity_metric = similarity_metric_type)
+  object <- .create_similarity_metric_object(
+    similarity_metric = similarity_metric_type
+  )
   
   # Set feature columns.
   feature_columns <- get_feature_columns(data)
@@ -737,7 +808,8 @@ compute_sample_similarity_metric <- function(
   # Set the categorical mask.
   categorical_mask <- sapply(
     feature_info_list[feature_columns],
-    function(x) (x@feature_type == "factor"))
+    function(x) (x@feature_type == "factor")
+  )
   
   # Normalise data, if required.
   if (object@require_normalisation) {
@@ -760,26 +832,17 @@ compute_sample_similarity_metric <- function(
       data.table::set(data@data, j = ii, value = .normalise(
         x = data@data[[ii]],
         normalisation_method = norm_method,
-        range = c(0, 1)))
+        range = c(0.0, 1.0)
+      ))
     }
   }
   
   # Check that the number of rows is at least two. This is more
   # of technical requirement than anything else.
-  if (nrow(data@data) < 2) return(NULL)
+  if (nrow(data@data) < 2L) return(NULL)
   
   # Generate all combinations of samples
-  combinations <- utils::combn(seq_len(nrow(data@data)), 2)
-  
-  # # Encode data -- this has no effect for distance-based metrics.
-  # data <- encode_categorical_variables(object = object, data = data)
-  # 
-  # # Find feature columns and categorical mask from encoded data.
-  # feature_columns <- get_feature_columns(data)
-  # categorical_mask <- sapply(
-  #   feature_columns,
-  #   function(feature, x) (is.factor(x[[feature]])),
-  #   )
+  combinations <- utils::combn(seq_len(nrow(data@data)), 2L)
   
   # Determine similarity measures for each sample pair.
   similarity <- fam_sapply(
@@ -789,15 +852,16 @@ compute_sample_similarity_metric <- function(
     function(ii, combinations, data, object, categorical_mask) {
       
       # Identify features that are being compared.
-      row_1 <- combinations[1, ii]
-      row_2 <- combinations[2, ii]
+      row_1 <- combinations[1L, ii]
+      row_2 <- combinations[2L, ii]
       
       # Compute pairwise similarity
       similarity <- .compute_sample_similarity(
         object = object,
         x = as.numeric(data[row_1, ]),
         y = as.numeric(data[row_2, ]),
-        categorical = categorical_mask)
+        categorical = categorical_mask
+      )
       
       return(similarity)
     },
@@ -806,16 +870,18 @@ compute_sample_similarity_metric <- function(
     data = data@data[, mget(feature_columns)],
     object = object,
     categorical_mask = categorical_mask,
-    chopchop = TRUE)
+    chopchop = TRUE
+  )
   
   # Create unique row names.
   row_names <- get_unique_row_names(x = data)
   
   # Transform similarity scores into a data.table.
   similarity_data  <- data.table::data.table(
-    "sample_1" = row_names[combinations[1, ]],
-    "sample_2" = row_names[combinations[2, ]],
-    "value" = similarity)
+    "sample_1" = row_names[combinations[1L, ]],
+    "sample_2" = row_names[combinations[2L, ]],
+    "value" = similarity
+  )
   
   return(similarity_data)
 }
@@ -823,7 +889,10 @@ compute_sample_similarity_metric <- function(
 
 
 # .compute_sample_similarity (generic) -----------------------------------------
-setGeneric(".compute_sample_similarity", function(object, ...) standardGeneric(".compute_sample_similarity"))
+setGeneric(
+  ".compute_sample_similarity",
+  function(object, ...) standardGeneric(".compute_sample_similarity")
+)
 
 
 
@@ -847,7 +916,8 @@ setMethod(
     x, 
     y, 
     categorical, 
-    ...) {
+    ...
+  ) {
     
     # The presence of categorical variables is problematic for computing
     # pseudo R2, because we can only correlation
@@ -861,7 +931,8 @@ setMethod(
       y = y,
       categorical_x = FALSE,
       categorical_y = FALSE,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -876,7 +947,8 @@ setMethod(
     x, 
     y, 
     categorical, 
-    ...) {
+    ...
+  ) {
     
     # The presence of categorical variables is problematic for computing
     # sample-wise similarity, because we can only correlation
@@ -890,7 +962,8 @@ setMethod(
       y = y,
       categorical_x = FALSE,
       categorical_y = FALSE,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -905,7 +978,8 @@ setMethod(
     x, 
     y, 
     categorical, 
-    ...) {
+    ...
+  ) {
     
     # The presence of categorical variables is problematic for computing
     # sample-wise similarity, because we can only compute mutual information
@@ -919,7 +993,8 @@ setMethod(
       y = y,
       categorical_x = FALSE,
       categorical_y = FALSE,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -934,7 +1009,8 @@ setMethod(
     x, 
     y, 
     categorical,
-    ...) {
+    ...
+  ) {
     
     # Ensure that data presented as numeric values.
     if (!is.numeric(x)) x <- as.numeric(x)
@@ -942,7 +1018,7 @@ setMethod(
     
     # Remove missing elements.
     valid_elements <- is.finite(x) & is.finite(y)
-    if (sum(valid_elements) < 1) return(callNextMethod())
+    if (sum(valid_elements) < 1.0) return(callNextMethod())
     
     # Keep only valid elements.
     x <- x[valid_elements]
@@ -967,13 +1043,13 @@ setMethod(
     if (object@similarity_metric == "gower") {
       distance <- sum(abs(x - y)) / length(x)
     } else if (object@similarity_metric == "euclidean") {
-      distance <- sqrt(sum((x - y)^2))
+      distance <- sqrt(sum((x - y)^2.0))
     } else if (object@similarity_metric == "manhattan") {
       distance <- sum(abs(x - y))
     } else if (object@similarity_metric == "chebyshev") {
       distance <- max(abs(x - y))
     } else if (object@similarity_metric == "cosine") {
-      distance <- 1 - sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
+      distance <- 1.0 - sum(x * y) / (sqrt(sum(x^2.0)) * sqrt(sum(y^2.0)))
     } else if (object@similarity_metric == "canberra") {
       distance <- sum(abs(x - y) / (abs(x) + abs(y)))
     } else if (object@similarity_metric == "bray_curtis") {
@@ -1002,7 +1078,7 @@ setMethod(
     # Case 1: Both x and y are categorical variables.
 
     # Determine analysis type.
-    analysis_type <- ifelse(min(c(n_x, n_y)) <= 2, "binomial", "multinomial")
+    analysis_type <- ifelse(min(c(n_x, n_y)) <= 2L, "binomial", "multinomial")
 
     # Determine if swapping is required.
     requires_swap <- n_x < n_y
@@ -1011,7 +1087,7 @@ setMethod(
     # Case 2: x is a categorical variable, and y numerical.
 
     # Determine analysis type.
-    analysis_type <- ifelse(n_x <= 2, "binomial", "multinomial")
+    analysis_type <- ifelse(n_x <= 2L, "binomial", "multinomial")
 
     # Swapping is required.
     requires_swap <- TRUE
@@ -1020,7 +1096,7 @@ setMethod(
     # Case 3: x is a numerical variable, and y categorical.
 
     # Determine analysis type.
-    analysis_type <- ifelse(n_y <= 2, "binomial", "multinomial")
+    analysis_type <- ifelse(n_y <= 2L, "binomial", "multinomial")
 
     # Swapping is not required.
     requires_swap <- FALSE
@@ -1050,7 +1126,8 @@ setMethod(
     "x" = x_out,
     "y" = y_out,
     "x_categorical" = x_categorical_out,
-    "y_categorical" = y_categorical_out))
+    "y_categorical" = y_categorical_out
+  ))
 }
 
 
@@ -1064,13 +1141,17 @@ convert_similarity_to_distance <- function(x, similarity_metric) {
   
   return(.similarity_to_distance(
     object = object,
-    x = x))
+    x = x
+  ))
 }
 
 
 
 ## .similarity_to_distance (generic) -------------------------------------------
-setGeneric(".similarity_to_distance", function(object, ...) standardGeneric(".similarity_to_distance"))
+setGeneric(
+  ".similarity_to_distance",
+  function(object, ...) standardGeneric(".similarity_to_distance")
+)
 
 
 
@@ -1079,7 +1160,7 @@ setMethod(
   ".similarity_to_distance",
   signature(object = "familiarSimilarityMetricPseudoR2"),
   function(object, x, ...) {
-    return(1 - sqrt(x))
+    return(1.0 - sqrt(x))
   }
 )
 
@@ -1090,7 +1171,7 @@ setMethod(
   ".similarity_to_distance",
   signature(object = "familiarSimilarityMetricCorrelation"),
   function(object, x, ...) {
-    return(1 - abs(x))
+    return(1.0 - abs(x))
   }
 )
 
@@ -1101,7 +1182,7 @@ setMethod(
   ".similarity_to_distance",
   signature(object = "familiarSimilarityMetricMutualInformation"),
   function(object, x, ...) {
-    return(1 - x)
+    return(1.0 - x)
   }
 )
 
@@ -1128,13 +1209,17 @@ convert_distance_to_similarity <- function(x, similarity_metric) {
   
   return(.distance_to_similarity(
     object = object,
-    x = x))
+    x = x
+  ))
 }
 
 
 
 ## .distance_to_similarity (generic) -------------------------------------------
-setGeneric(".distance_to_similarity", function(object, ...) standardGeneric(".distance_to_similarity"))
+setGeneric(
+  ".distance_to_similarity",
+  function(object, ...) standardGeneric(".distance_to_similarity")
+)
 
 
 
@@ -1143,7 +1228,7 @@ setMethod(
   ".distance_to_similarity",
   signature(object = "familiarSimilarityMetricPseudoR2"),
   function(object, x, ...) {
-    return((1 - x)^2)
+    return((1.0 - x)^2.0)
   }
 )
 
@@ -1155,7 +1240,7 @@ setMethod(
   signature(object = "familiarSimilarityMetricCorrelation"),
   function(object, x, ...) {
     # Note that the sign is lost at conversion back to similarity.
-    return(1 - abs(x))
+    return(1.0 - abs(x))
   }
 )
 
@@ -1166,7 +1251,7 @@ setMethod(
   ".distance_to_similarity",
   signature(object = "familiarSimilarityMetricMutualInformation"),
   function(object, x, ...) {
-    return(1 - x)
+    return(1.0 - x)
   }
 )
 
@@ -1204,7 +1289,8 @@ get_similarity_range <- function(similarity_metric, as_distance = FALSE) {
   if (as_distance) {
     value_range <- .similarity_to_distance(
       object = object,
-      x = value_range)
+      x = value_range
+    )
     
     value_range <- sort(unique(value_range))
   }
@@ -1228,7 +1314,8 @@ is_default_distance <- function(similarity_metric) {
     # Pair-wise comparison between features.
     return(c(
       "mcfadden_r2", "cox_snell_r2", "nagelkerke_r2", "spearman", 
-      "kendall", "pearson", "mutual_information"))
+      "kendall", "pearson", "mutual_information"
+    ))
     
   } else {
     # Pair-wise comparison between samples.

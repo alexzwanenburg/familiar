@@ -14,7 +14,7 @@
 )
 }
 \arguments{
-\item{file_paths}{Set of paths to relevant files and directories.}
+\item{file_paths}{Path to directory where iteration files are stored.}
 
 \item{data}{Data set as loaded using the \code{.load_data} function.}
 

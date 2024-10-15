@@ -89,7 +89,17 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  debug = debug_flag
+)
+
+# Test alignment of different plots from prediction tables.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_calibration_data,
+  data_element = "calibration_data",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  prediction_type = list("survival" = "survival_probability"),
+  use_prediction_table = TRUE,
   debug = debug_flag
 )
 
@@ -97,19 +107,9 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("count"),
-  plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
-    "color_by" = c("data_set")),
-  debug = debug_flag
-)
-
-familiar:::test_plot_ordering(
-  plot_function = familiar:::plot_calibration_data,
-  data_element = "calibration_data",
   outcome_type_available = c("continuous"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set")),
   debug = debug_flag
 )
@@ -119,7 +119,7 @@ familiar:::test_plot_ordering(
   data_element = "calibration_data",
   outcome_type_available = c("binomial"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set")),
   debug = debug_flag
 )
@@ -129,7 +129,7 @@ familiar:::test_plot_ordering(
   data_element = "calibration_data",
   outcome_type_available = c("multinomial"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set", "positive_class")),
   debug = debug_flag
 )
@@ -139,7 +139,7 @@ familiar:::test_plot_ordering(
   data_element = "calibration_data",
   outcome_type_available = c("survival"),
   plot_args = list(
-    "facet_by" = c("fs_method", "learner"),
+    "facet_by" = c("vimp_method", "learner"),
     "color_by" = c("data_set")),
   debug = debug_flag
 )
@@ -147,8 +147,8 @@ familiar:::test_plot_ordering(
 familiar:::test_plot_ordering(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  outcome_type_available = c("count", "continuous", "binomial", "survival"),
-  plot_args = list("facet_by" = c("learner", "fs_method", "data_set")),
+  outcome_type_available = c("continuous", "binomial", "survival"),
+  plot_args = list("facet_by" = c("learner", "vimp_method", "data_set")),
   debug = debug_flag
 )
 
@@ -157,7 +157,7 @@ familiar:::test_plot_ordering(
   data_element = "calibration_data",
   outcome_type_available = c("multinomial"),
   plot_args = list(
-    "facet_by" = c("learner", "fs_method", "data_set"),
+    "facet_by" = c("learner", "vimp_method", "data_set"),
     "color_by" = "positive_class"),
   debug = debug_flag
 )

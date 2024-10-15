@@ -6,7 +6,8 @@ NULL
 # familiarKNN ------------------------------------------------------------------
 setClass(
   "familiarKNN",
-  contains = "familiarModel")
+  contains = "familiarModel"
+)
 
 
 
@@ -38,8 +39,7 @@ setMethod(
       
     } else if (object@outcome_type == "count") {
       ..deprecation_count()
-      return(TRUE)
-      
+      return(FALSE)
     }
     
     return(FALSE)
@@ -66,7 +66,8 @@ setMethod(
     # Get the number of unique series.
     n_samples <- data.table::uniqueN(
       data@data,
-      by = get_id_columns(id_depth = "series"))
+      by = get_id_columns(id_depth = "series")
+    )
 
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(data = data)
@@ -74,15 +75,19 @@ setMethod(
     # number of nearest neighbours k -------------------------------------------
 
     # Define the range for the number of nearest neighbour clusters.
-    k_range <- c(1, max(c(1, ceiling(2 * n_samples^(1 / 3)))))
+    k_range <- c(1L, max(c(1L, as.integer(ceiling(2L * n_samples^(1.0 / 3.0))))))
 
     # Define the default value.
-    k_default <- sort(unique(c(1, 2, 5, 10, 20, k_range)))
-    k_default <- k_default[k_default >= k_range[1] & k_default <= k_range[2]]
+    k_default <- sort(unique(c(1L, 2L, 5L, 10L, 20L, k_range)))
+    k_default <- k_default[k_default >= k_range[1L] & k_default <= k_range[2L]]
 
     param$k <- .set_hyperparameter(
-      default = k_default, type = "integer", range = k_range,
-      valid_range = c(1L, Inf), randomise = TRUE)
+      default = k_default,
+      type = "integer",
+      range = k_range,
+      valid_range = c(1L, Inf),
+      randomise = TRUE
+    )
 
     # distance metric ----------------------------------------------------------
 
@@ -91,14 +96,16 @@ setMethod(
       x = object@learner,
       pattern = c("knn", "k_nearest_neighbours"), 
       replacement = "", 
-      fixed = TRUE)
+      fixed = TRUE
+    )
     
     if (distance_metric != "") {
       distance_metric <- sub(
         x = distance_metric, 
         pattern = "_", 
         replacement = "", 
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     if (distance_metric == "") {
@@ -110,7 +117,8 @@ setMethod(
       if (all(sapply(
         feature_columns, 
         function(ii, data) (is.numeric(data@data[[ii]])),
-        data = data))) {
+        data = data
+      ))) {
         distance_metric_default <- "euclidean"
         
       } else {
@@ -128,7 +136,8 @@ setMethod(
     if (requireNamespace("proxy", quietly = TRUE)) {
       distance_metric_valid_range <- tolower(unname(unlist(lapply(
         proxy::pr_DB$get_entries(), 
-        function(list_elem) (list_elem$names)))))
+        function(list_elem) (list_elem$names)
+      ))))
       
     } else {
       distance_metric_valid_range <- distance_metric_default_range
@@ -140,7 +149,8 @@ setMethod(
       type = "factor",
       range = distance_metric_default_range,
       valid_range = distance_metric_valid_range,
-      randomise = distance_metric == "")
+      randomise = distance_metric == ""
+    )
 
     return(param)
   }
@@ -153,20 +163,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarKNN",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -178,7 +191,8 @@ setMethod(
     # Parse formula
     formula <- stats::reformulate(
       termlabels = feature_columns,
-      response = quote(outcome))
+      response = quote(outcome)
+    )
 
     # Train model. Disable scaling because of bad interaction with
     # predicting single instances.
@@ -188,7 +202,9 @@ setMethod(
         "data" = data@data,
         "k" = object@hyperparameters$k,
         "method" = as.character(object@hyperparameters$distance_metric),
-        "scale" = FALSE))
+        "scale" = FALSE
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -217,9 +233,10 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarKNN",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a naive model.
       object <- methods::new("familiarNaiveModel", object)
     }
@@ -227,7 +244,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -238,29 +256,24 @@ setMethod(
   "..predict",
   signature(
     object = "familiarKNN",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, type = "default", ...) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         # Binomial and multinomial outcomes-------------------------------------
@@ -269,34 +282,40 @@ setMethod(
         model_predictions <- predict(
           object = object@model,
           newdata = data@data,
-          type = "prob")
+          type = "prob"
+        )
 
-        # Obtain class levels.
+        # Obtain class levels and set class probabilities.
         class_levels <- get_outcome_class_levels(x = object)
-
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
-        for (ii in seq_along(class_probability_columns)) {
-          prediction_table[, (class_probability_columns[ii]) := model_predictions[, class_levels[ii]]]
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
+          prediction_list[[class_levels[ii]]] <- model_predictions[, class_levels[ii]]
         }
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[apply(
-          prediction_table[, mget(class_probability_columns)], 1, which.max)]
         
-        class_predictions <- factor(class_predictions, levels = class_levels)
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data,
+          model_object = object
+        )
         
-      } else if (object@outcome_type %in% c("continuous", "count")) {
-        # Count and continuous outcomes ----------------------------------------
+      } else if (object@outcome_type %in% c("continuous")) {
+        # Continuous outcomes --------------------------------------------------
 
         # Use the model for prediction.
         model_predictions <- predict(
           object = object@model,
-          newdata = data@data)
+          newdata = data@data
+        )
 
-        # Set outcome.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data,
+          model_object = object
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
@@ -304,27 +323,19 @@ setMethod(
 
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-      # Note: the predict method for e1071::sknn specifies class, prob and
-      # votes.
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
-
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
+      
       # Use the model for prediction.
       return(predict(
         object = object@model,
         newdata = data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
@@ -378,7 +389,9 @@ setMethod(
   distance_metrics <- tolower(unname(unlist(
     lapply(
       proxy::pr_DB$get_entries(),
-      function(list_elem) (list_elem$names)))))
+      function(list_elem) (list_elem$names)
+    )
+  )))
   
   distance_metrics_default <- c("euclidean", "manhattan", "gower")
   

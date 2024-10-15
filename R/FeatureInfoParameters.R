@@ -8,11 +8,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "NULL",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # This is when feature info parameters are completely missing.
     return(object)
   }
@@ -25,11 +27,13 @@ setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParameters",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Default behaviour is to return the object as is.
     return(object)
   }
@@ -41,11 +45,13 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "NULL",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # This is when feature info parameters are completely missing.
     return(data)
   }
@@ -58,11 +64,13 @@ setMethod(
   "apply_feature_info_parameters",
   signature(
     object = "featureInfoParameters",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
-    ...) {
+    ...
+  ) {
     # Default behaviour is to return the data as is.
     return(data)
   }

@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.5.0
+Version: 2.0.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
@@ -47,7 +47,6 @@ Suggests:
     coro,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
-    Ecdat,
     fastcluster,
     fastglm,
     ggplot2 (>= 3.0.0),
@@ -58,23 +57,19 @@ Suggests:
     knitr,
     labeling,
     laGP,
-    MASS,
     maxstat,
-    mboost (>= 2.9.0),
     microbenchmark,
     nnet,
-    partykit,
+    paletteer,
     power.transform,
     praznik,
     proxy,
-    qvalue,
     randomForestSRC,
     ranger,
     rmarkdown,
     scales,
     testthat (>= 3.0.0),
     xml2,
-    VGAM,
     xgboost
 Collate: 
     'FamiliarS4Classes.R'
@@ -105,6 +100,8 @@ Collate:
     'FamiliarCollectionExport.R'
     'FamiliarData.R'
     'FamiliarDataComputation.R'
+    'FamiliarDataComputationPredictionData.R'
+    'PredictionTable.R'
     'FamiliarDataComputationAUCCurves.R'
     'FamiliarDataComputationCalibrationData.R'
     'FamiliarDataComputationCalibrationInfo.R'
@@ -116,7 +113,6 @@ Collate:
     'FamiliarDataComputationICE.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'
-    'FamiliarDataComputationPredictionData.R'
     'FamiliarDataComputationRiskStratificationData.R'
     'FamiliarDataComputationRiskStratificationInfo.R'
     'FamiliarDataComputationSampleSimilarity.R'
@@ -147,6 +143,7 @@ Collate:
     'Iterations.R'
     'LearnerMain.R'
     'LearnerRecalibration.R'
+    'LearnerRiskStratification.R'
     'LearnerS4Cox.R'
     'LearnerS4GLM.R'
     'LearnerS4GLMnet.R'
@@ -158,7 +155,6 @@ Collate:
     'LearnerS4SVM.R'
     'LearnerS4SurvivalRegression.R'
     'LearnerS4XGBoost.R'
-    'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
     'Logger.R'
     'MetricS4.R'
@@ -168,8 +164,8 @@ Collate:
     'MetricS4ConfusionMatrixMetrics.R'
     'MetricS4Regression.R'
     'ModelBuilding.R'
-    'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
+    'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorS4NoneNoveltyDetector.R'
     'OutcomeInfo.R'
     'PairwiseSimilarity.R'

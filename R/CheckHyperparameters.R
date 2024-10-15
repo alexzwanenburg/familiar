@@ -6,20 +6,21 @@ NULL
     data,
     parameter_list,
     outcome_type,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
-    detector = NULL) {
+    detector = NULL
+) {
   
   # Check if any hyperparameters have been set
-  if (length(parameter_list) == 0) return(parameter_list)
+  if (length(parameter_list) == 0L) return(parameter_list)
   
-  if (is.null(fs_method) && is.null(learner) && is.null(detector)) {
-    ..error_reached_unreachable_code(".parse_hyperparameters: one of fs_method, learner, detector should not be NULL")
+  if (is.null(vimp_method) && is.null(learner) && is.null(detector)) {
+    ..error_reached_unreachable_code(".parse_hyperparameters: one of vimp_method, learner, detector should not be NULL")
   }
   
-  if (!is.null(fs_method)) {
-    all_functions <- fs_method
-    type <- "feature selection methods"
+  if (!is.null(vimp_method)) {
+    all_functions <- vimp_method
+    type <- "variable importance methods"
     
   } else if (!is.null(learner)) {
     all_functions <- learner
@@ -34,18 +35,24 @@ NULL
   user_function_names <- names(parameter_list)
   
   # Check whether all names in the hyperparameter list correspond to a
-  # fs_method, learner or detector.
+  # vimp_method, learner or detector.
   unknown_function <- setdiff(user_function_names, all_functions)
-  if (length(unknown_function) > 0) {
-    stop(paste0(
-      "Could not match all entries in the parameter list to ", type, ".\n",
-      "Failed to match: ", paste_s(unknown_function)))
+  if (length(unknown_function) > 0L) {
+    ..error(
+      paste0(
+        "Could not match all entries in the parameter list to ", type, ".\n",
+        "Failed to match: ", paste_s(unknown_function)
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Check for duplicates.
   if (anyDuplicated(user_function_names)) {
-    stop(paste0(
-      "Parameters for one or more of the ", type, " are defined more than once."))
+    ..error(
+      "Parameters for one or more of the ", type, " are defined more than once.",
+      error_class = "input_argument_error"
+    )
   }
   
   # Package data into a data object.
@@ -53,7 +60,8 @@ NULL
     "dataObject",
     data = data,
     preprocessing_level = "none",
-    outcome_type = outcome_type)
+    outcome_type = outcome_type
+  )
   
   # Iterate over the feature selection methods or learners to parse and check the hyperparameters
   out_list <- lapply(
@@ -61,9 +69,10 @@ NULL
     .check_hyperparameters,
     in_list = parameter_list,
     data = data,
-    fs_method = fs_method,
+    vimp_method = vimp_method,
     learner = learner,
-    detector = detector)
+    detector = detector
+  )
   
   # Set names of the input parameters
   names(out_list) <- user_function_names
@@ -77,27 +86,30 @@ NULL
     user_function_name,
     in_list,
     data,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
-    detector = NULL) {
+    detector = NULL
+) {
   
   # Select current parameter list
   in_list <- in_list[[user_function_name]]
   
   # Obtain preset values for hyperparameters.
-  if (!is.null(fs_method)) {
+  if (!is.null(vimp_method)) {
     preset_list <- .get_preset_hyperparameters(
       data = data,
-      fs_method = user_function_name,
-      names_only = FALSE)
+      vimp_method = user_function_name,
+      names_only = FALSE
+    )
     
-    type <- "feature selection method"
+    type <- "variable importance method"
     
   } else if (!is.null(learner)) {
     preset_list <- .get_preset_hyperparameters(
       data = data,
       learner = user_function_name,
-      names_only = FALSE)
+      names_only = FALSE
+    )
     
     type <- "learner"
     
@@ -105,7 +117,8 @@ NULL
     preset_list <- .get_preset_hyperparameters(
       data = data,
       detector = user_function_name,
-      names_only = FALSE)
+      names_only = FALSE
+    )
     
     type <- "novelty detector"
   }
@@ -114,41 +127,55 @@ NULL
   user_function_name <- paste(user_function_name, type)
   
   # Check if the desired function actually has parameters.
-  if (length(preset_list) == 0) {
-    stop(paste0("The ", user_function_name, " has no associated parameters."))
+  if (length(preset_list) == 0L) {
+    ..error(
+      "The ", user_function_name, " has no associated parameters.",
+      error_class = "input_argument_error"
+    )
   }
   
   # Check if there are any parameters in the user-provided list that do not appear in the preset list
   unknown_parameter <- setdiff(names(in_list), names(preset_list))
-  if (length(unknown_parameter) > 0) {
-    stop(paste0(
-      "Could not match all parameters provided for the ",
-      user_function_name,
-      " to a valid parameter. Failed to match: ",
-      paste_s(unknown_parameter)))
+  if (length(unknown_parameter) > 0L) {
+    ..error(
+      paste0(
+        "Could not match all parameters provided for the ",
+        user_function_name,
+        " to a valid parameter. Failed to match: ",
+        paste_s(unknown_parameter)
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Check if there are any duplicate parameters
   if (anyDuplicated(names(in_list))) {
-    stop(paste0(
-      "One or more parameters provided for the ",
-      user_function_name,
-      " appear more than once."))
+    ..error(
+      paste0(
+        "One or more parameters provided for the ",
+        user_function_name,
+        " appear more than once: ",
+        names(in_list)[duplicated(names(in_list))]
+      ),
+      error_class = "input_argument_error"
+    )
   }
   
   # Iterate over the individual parameters and parse/check individual parameters
   out_list <- lapply(
     names(in_list),
     function(parameter_name, in_list, user_function_name, preset_list) {
-    .check_single_hyperparameter(
-      parameter_name,
-      user_function_name = user_function_name,
-      x = in_list[[parameter_name]],
-      preset_list = preset_list[[parameter_name]])
+      .check_single_hyperparameter(
+        parameter_name,
+        user_function_name = user_function_name,
+        x = in_list[[parameter_name]],
+        preset_list = preset_list[[parameter_name]]
+      )
     },
     user_function_name = user_function_name,
     in_list = in_list,
-    preset_list = preset_list)
+    preset_list = preset_list
+  )
   
   # Set names of the out_list
   names(out_list) <- names(in_list)
@@ -162,9 +189,10 @@ NULL
     parameter_name,
     user_function_name,
     x,
-    preset_list) {
+    preset_list
+) {
 
-  if (is.list(x) && length(x) == 1) {
+  if (is.list(x) && length(x) == 1L) {
     # Unlist list. This happens when the hyperparameter settings come from a
     # configuration file.
     x <- unlist(x) 
@@ -175,14 +203,16 @@ NULL
     x <- strsplit(
       x = x,
       split = ",",
-      fixed = TRUE)[[1]]
+      fixed = TRUE
+    )[[1L]]
     
     # Remove whitespace
     x <- gsub(
       x = x,
       pattern = " ",
       replacement = "",
-      fixed = TRUE)
+      fixed = TRUE
+    )
   }
   
   # Update the parameter_name for passing into error warnings
@@ -194,7 +224,8 @@ NULL
     to_type = preset_list$type,
     var_name = parameter_name,
     req_length = 1L,
-    allow_more = TRUE)
+    allow_more = TRUE
+  )
   
   # Check if the parameter has the allowed values
   if (!is.null(preset_list$valid_range)) {
@@ -209,13 +240,15 @@ NULL
       x,
       .check_number_in_valid_range,
       var_name = parameter_name,
-      range = valid_range)
+      range = valid_range
+    )
     
   } else {
     .check_parameter_value_is_valid(
       x = x,
       var_name = parameter_name,
-      values = valid_range)
+      values = valid_range
+    )
   }
   
   return(x)
@@ -225,15 +258,17 @@ NULL
 
 .get_preset_hyperparameters <- function(
     data = NULL,
-    fs_method = NULL,
+    vimp_method = NULL,
     learner = NULL,
     detector = NULL,
     outcome_type = NULL,
-    names_only = FALSE) {
+    names_only = FALSE
+) {
   
-  if (is.null(fs_method) && is.null(learner) && is.null(detector)) {
+  if (is.null(vimp_method) && is.null(learner) && is.null(detector)) {
     ..error_reached_unreachable_code(
-      ".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL")
+      ".get_preset_hyperparameters: one of vimp_method, learner, detector should not be NULL"
+    )
   }
 
   # Internal error checks. We should be able to obtain the outcome_type.
@@ -249,29 +284,33 @@ NULL
   }
   
   # Find the parameter list
-  if (!is.null(fs_method)) {
+  if (!is.null(vimp_method)) {
     preset_list <- .get_vimp_hyperparameters(
       data = data,
-      method = fs_method,
+      method = vimp_method,
       outcome_type = outcome_type, 
-      names_only = names_only)
+      names_only = names_only
+    )
     
   } else if (!is.null(learner)) {
     preset_list <- .get_learner_hyperparameters(
       data = data,
       learner = learner,
       outcome_type = outcome_type,
-      names_only = names_only)
+      names_only = names_only
+    )
     
   } else if (!is.null(detector)) {
     preset_list <- .get_detector_hyperparameters(
       data = data,
       detector = detector,
-      names_only = names_only)
+      names_only = names_only
+    )
     
   } else {
     ..error_reached_unreachable_code(
-      ".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL")
+      ".get_preset_hyperparameters: one of vimp_method, learner, detector should not be NULL"
+    )
   }
   
   return(preset_list)
@@ -282,10 +321,11 @@ NULL
 .update_hyperparameters <- function(
     parameter_list,
     user_list = NULL,
-    n_features = NULL) {
+    n_features = NULL
+) {
   
   # Check if any parameters are provided
-  if (length(parameter_list) == 0) return(parameter_list)
+  if (length(parameter_list) == 0L) return(parameter_list)
   
   for (parameter_name in names(parameter_list)) {
     
@@ -304,22 +344,23 @@ NULL
         user_values[user_values > n_features] <- n_features
       }
       
-      if (length(user_values) == 1) {
+      if (length(user_values) == 1L) {
         # User provides one value for a parameter
         parameter_list[[parameter_name]]$init_config <- user_values
         parameter_list[[parameter_name]]$randomise <- FALSE
         
-      } else if (length(user_values) > 1) {
+      } else if (length(user_values) > 1L) {
 
         if (parameter_list[[parameter_name]]$type %in% c("numeric", "integer")) {
           
-          if (length(user_values) == 2) {
+          if (length(user_values) == 2L) {
             # Find initial values from the default and from the user-provided
             # range. Only values within the latter range are used.
             initial_values <- sort(unique(c(
               parameter_list[[parameter_name]]$init_config,
-              user_values)))
-            initial_values <- initial_values[initial_values >= user_values[1] & initial_values <= user_values[2]]
+              user_values
+            )))
+            initial_values <- initial_values[initial_values >= user_values[1L] & initial_values <= user_values[2L]]
             
           } else {
             # For more than 2 values, copy the user values directly.
@@ -341,14 +382,15 @@ NULL
         # This code should never be reached as such cases should be captures by
         # .parse_hyperparameters earlier in the workflow.
         ..error_reached_unreachable_code(paste0(
-          ".update_hyperparameters: at least one user_values is expected."))
+          ".update_hyperparameters: at least one user_values is expected."
+        ))
       }
     }
     
     # Identify parameters that only allow for a single value.
-    if (length(unique(parameter_list[[parameter_name]]$range)) == 1) {
-      parameter_list[[parameter_name]]$init_config <- parameter_list[[parameter_name]]$range[1]
-      parameter_list[[parameter_name]]$range <- parameter_list[[parameter_name]]$range[1]
+    if (length(unique(parameter_list[[parameter_name]]$range)) == 1L) {
+      parameter_list[[parameter_name]]$init_config <- parameter_list[[parameter_name]]$range[1L]
+      parameter_list[[parameter_name]]$range <- parameter_list[[parameter_name]]$range[1L]
       parameter_list[[parameter_name]]$randomise <- FALSE
     }
     
@@ -358,21 +400,24 @@ NULL
         parameter_list[[parameter_name]]$init_config,
         .check_number_in_valid_range,
         var_name = parameter_name,
-        range = parameter_list[[parameter_name]]$valid_range)
+        range = parameter_list[[parameter_name]]$valid_range
+      )
       
     } else {
       sapply(
         parameter_list[[parameter_name]]$init_config,
         .check_parameter_value_is_valid,
         var_name = parameter_name,
-        values = parameter_list[[parameter_name]]$valid_range)
+        values = parameter_list[[parameter_name]]$valid_range
+      )
     }
     
     if (!parameter_list[[parameter_name]]$randomise) {
-      if (length(parameter_list[[parameter_name]]$init_config) > 1) {
+      if (length(parameter_list[[parameter_name]]$init_config) > 1L) {
         ..error_reached_unreachable_code(paste0(
           ".update_hyperparameters: non-randomised hyperparameter (",
-          parameter_name, ") contains more than one initial value."))
+          parameter_name, ") contains more than one initial value."
+        ))
       }
     }
   }
@@ -390,15 +435,16 @@ NULL
   # function is used to check whether there are any randomisable
   # hyper-parameters.
   
-  if (length(parameter_list) == 0) return(FALSE)
+  if (length(parameter_list) == 0L) return(FALSE)
 
   # Determine if any parameters require randomisation
   requires_randomisation <- sapply(
     parameter_list,
-    function(list_entry) (list_entry$randomise))
+    function(list_entry) (list_entry$randomise)
+  )
   
   # Return FALSE if no feature is randomised, and TRUE if any feature is randomised.
-  return(sum(requires_randomisation) > 0)
+  return(sum(requires_randomisation) > 0L)
 }
 
 
@@ -408,7 +454,8 @@ NULL
     range,
     valid_range = NULL,
     randomise = FALSE,
-    distribution = NULL) {
+    distribution = NULL
+) {
   
   # Initialise list
   hyperparameter <- list()
@@ -422,7 +469,8 @@ NULL
   # Check for accidental typos in type.
   if (!type %in% c("numeric", "integer", "factor", "logical")) {
     ..error_reached_unreachable_code(paste0(
-      ".set_hyperparameter: type does not match one of the expected types: ", type))
+      ".set_hyperparameter: type does not match one of the expected types: ", type
+    ))
   }
   
   # Set range.
@@ -446,7 +494,8 @@ NULL
     if (!distribution %in% c("log")) {
       ..error_reached_unreachable_code(paste0(
         ".set_hyperparameter: distribution does not match one of the expected distributions: ",
-        distribution))
+        distribution
+      ))
     }
   }
   

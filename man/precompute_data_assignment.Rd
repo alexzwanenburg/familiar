@@ -46,10 +46,10 @@ This parameter has no effect if the \code{parallel} argument is set to \code{FAL
 
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building. The basic workflow components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. If validation batches or cohorts
 are present in the dataset (\code{data}), these should be indicated in the
@@ -122,7 +122,7 @@ sample or subject identifiers. See \code{batch_id_column} above for more
 details.
 
 If unset, every row will be identified as a single sample.}
-    \item{\code{series_id_column}}{(\strong{optional}) Name of the column containing series
+    \item{\code{series_id_column}}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -142,8 +142,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
     \item{\code{outcome_column}}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
@@ -152,13 +152,12 @@ indicate the time-to-event or the time of last follow-up and the event
 status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -168,7 +167,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
     \item{\code{class_levels}}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
@@ -189,7 +189,7 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
     \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
 that should be included for the purpose of novelty detection.}
@@ -234,6 +234,10 @@ that defines the design.}
     \item{\code{imbalance_n_partitions}}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+    \item{\code{iteration_seed}}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of
 specific parameters such as \code{parallel_preprocessing}. However, when
@@ -304,14 +308,11 @@ the \code{univariate_test}. The p or q-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
     \item{\code{univariate_test_threshold_metric}}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
     \item{\code{univariate_test_max_feature_set_size}}{(\emph{optional}) Maximum size of the
 feature set after the univariate test. P or q values of features are

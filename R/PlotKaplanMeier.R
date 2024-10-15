@@ -14,9 +14,6 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created figures are
 #'   saved to. Output is saved in the `stratification` subdirectory. If `NULL`
 #'   no figures are saved, but are returned instead.
-#' @param discrete_palette (*optional*) Palette to use to color the different
-#'   risk strata in case a non-singular variable was provided to the `color_by`
-#'   argument.
 #' @param censoring (*optional*) Flag to indicate whether censored samples
 #'   should be indicated on the survival curve.
 #' @param censor_shape (*optional*) Shape used to indicate censored samples on
@@ -25,7 +22,7 @@ NULL
 #' @param show_logrank (*optional*) Specifies whether the results of a logrank
 #'   test to assess differences between the risk strata is annotated in the
 #'   plot. A log-rank test can only be shown when `color_by` and `linestyle_by`
-#'   are either unset, or only contain `risk_group`.
+#'   are either unset, or only contain `group`.
 #' @param show_survival_table (*optional*) Specifies whether a survival table is
 #'   shown below the Kaplan-Meier survival curves. Survival in the risk strata
 #'   is assessed for each of the breaks in `x_breaks`.
@@ -49,19 +46,11 @@ NULL
 #'   survival the y-axis represents. It is therefore recommended to provide
 #'   `x_label` and `y_label` arguments.
 #'
-#'   Available splitting variables are: `fs_method`, `learner`, `data_set`,
-#'   `risk_group` and `stratification_method`. By default, separate figures are
-#'   created for each combination of `fs_method` and `learner`, with faceting by
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
+#'   `group` and `stratification_method`. By default, separate figures are
+#'   created for each combination of `vimp_method` and `learner`, with faceting by
 #'   `data_set`, colouring of the strata in each individual plot by
-#'   `risk_group`.
-#'
-#'   Available palettes for `discrete_palette` are those listed by
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
-#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
-#'   name in `grDevices`. If not specified, a default palette based on palettes
-#'   in Tableau are used. You may also specify your own palette by using colour
-#'   names listed by `grDevices::colors()` or through hexadecimal RGB strings.
+#'   `group`.
 #'
 #'   Greenwood confidence intervals of the Kaplan-Meier curve can be shown using
 #'   various styles set by `conf_int_style`:
@@ -108,10 +97,10 @@ setGeneric(
       plot_sub_title = waiver(),
       caption = NULL,
       x_range = NULL,
-      x_n_breaks = 5,
+      x_n_breaks = 5L,
       x_breaks = NULL,
-      y_range = c(0, 1),
-      y_n_breaks = 5,
+      y_range = c(0.0, 1.0),
+      y_n_breaks = 5L,
       y_breaks = NULL,
       confidence_level = NULL,
       conf_int_style = c("ribbon", "step", "none"),
@@ -124,7 +113,8 @@ setGeneric(
       height = waiver(),
       units = waiver(),
       export_collection = FALSE,
-      ...) {
+      ...
+  ) {
     standardGeneric("plot_kaplan_meier")
   }
 )
@@ -158,10 +148,10 @@ setMethod(
       plot_sub_title = waiver(),
       caption = NULL,
       x_range = NULL,
-      x_n_breaks = 5,
+      x_n_breaks = 5L,
       x_breaks = NULL,
-      y_range = c(0, 1),
-      y_n_breaks = 5,
+      y_range = c(0.0, 1.0),
+      y_n_breaks = 5L,
       y_breaks = NULL,
       confidence_level = NULL,
       conf_int_style = c("ribbon", "step", "none"),
@@ -174,15 +164,19 @@ setMethod(
       height = waiver(),
       units = waiver(),
       export_collection = FALSE,
-      ...) {
+      ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "risk_stratification_data"),
-        list(...)))
+          "data_element" = "risk_stratification_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_kaplan_meier,
@@ -222,7 +216,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -255,10 +251,10 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
-    y_range = c(0, 1),
-    y_n_breaks = 5,
+    y_range = c(0.0, 1.0),
+    y_n_breaks = 5L,
     y_breaks = NULL,
     confidence_level = NULL,
     conf_int_style = c("ribbon", "step", "none"),
@@ -271,9 +267,10 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
-    risk_group <- .NATURAL <- NULL
+    outcome_event <- .NATURAL <- NULL
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -281,7 +278,8 @@ setMethod(
     # Get input data
     x <- export_risk_stratification_data(
       object = object,
-      export_strata = FALSE)
+      export_strata = FALSE
+    )
     
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
@@ -296,25 +294,29 @@ setMethod(
     if (is.list(x)) {
       if (is_empty(x)) return(NULL)
 
-      if (length(x) > 1) ..error_reached_unreachable_code(
-        "plot_kaplan_meier: list of data elements contains unmerged elements.")
+      if (length(x) > 1L) {
+        ..error_reached_unreachable_code(
+          "plot_kaplan_meier: list of data elements contains unmerged elements."
+        )
+      }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
-
+    
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
-    if (!all_predictions_valid(x@data, outcome_type = "survival")) return(NULL)
+    if (!all_predictions_valid(x)) return(NULL)
 
     # Remove non-valid risk groups
-    x@data <- x@data[!is.na(risk_group)]
+    x <- remove_invalid_predictions(x)
 
     # Check package requirements for plotting.
     if (!require_package(
       x = ..required_plotting_packages(extended = TRUE),
       purpose = "to create kaplan-meier survival curves",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -336,9 +338,15 @@ setMethod(
     } else {
       y_label_shared <- "row"
     }
-
+    
     # x_range
-    if (is.null(x_range)) x_range <- c(0, x@time)
+    if (is.null(x_range)) {
+      time_max <- object@outcome_info@time
+      if (is.infinite(time_max)) {
+        time_max <- .get_default_time_max(x@data[outcome_event == 1L, ]$outcome_time)
+      }
+      x_range <- c(0.0, time_max)
+    }
 
     # x_breaks
     if (is.null(x_breaks)) {
@@ -347,15 +355,16 @@ setMethod(
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
         m = x_n_breaks,
-        dmin = x_range[1],
-        dmax = x_range[2],
-        only.loose = TRUE)
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
 
-      x_range <- c(0, tail(x_breaks, n = 1))
+      x_range <- c(0.0, tail(x_breaks, n = 1L))
     }
 
     # y_range
-    if (is.null(y_range)) y_range <- c(0, 1)
+    if (is.null(y_range)) y_range <- c(0.0, 1.0)
 
     # y_breaks
     if (is.null(y_breaks)) {
@@ -364,10 +373,11 @@ setMethod(
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
         m = y_n_breaks,
-        dmin = y_range[1],
-        dmax = y_range[2])
+        dmin = y_range[1L],
+        dmax = y_range[2L]
+      )
 
-      y_range <- c(0, tail(y_breaks, n = 1))
+      y_range <- c(0.0, tail(y_breaks, n = 1L))
     }
 
     # confidence level
@@ -376,7 +386,8 @@ setMethod(
         x = confidence_level,
         var_name = "confidence_level",
         range = c(0.0, 1.0),
-        closed = c(FALSE, FALSE))
+        closed = c(FALSE, FALSE)
+      )
 
       # Attach to object.
       x@confidence_level <- confidence_level
@@ -384,8 +395,8 @@ setMethod(
 
 
     # conf_int_style
-    if (length(conf_int_style) > 1) {
-      conf_int_style <- head(conf_int_style, n = 1)
+    if (length(conf_int_style) > 1L) {
+      conf_int_style <- head(conf_int_style, n = 1L)
     }
 
     # Store plots to list in case no dir_path is provided
@@ -396,8 +407,8 @@ setMethod(
         is.null(color_by) &&
         is.null(linetype_by) &&
         is.null(facet_by)) {
-      split_by <- c("fs_method", "learner", "stratification_method")
-      color_by <- c("risk_group")
+      split_by <- c("vimp_method", "learner", "stratification_method")
+      color_by <- c("group")
       facet_by <- c("data_set")
     }
 
@@ -409,8 +420,9 @@ setMethod(
       linetype_by = linetype_by,
       facet_by = facet_by,
       available = c(
-        "fs_method", "learner", "data_set",
-        "risk_group", "stratification_method"))
+        "vimp_method", "learner", "data_set", "group", "stratification_method"
+      )
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -423,12 +435,13 @@ setMethod(
       user_label = legend_label,
       color_by = color_by,
       linetype_by = linetype_by,
-      combine_legend = combine_legend)
+      combine_legend = combine_legend
+    )
 
     # Set show_logrank to FALSE in case color_by and linetype_by
-    # contain more than risk_group at most.
+    # contain more than group at most.
     if (!is.null(union(color_by, linetype_by))) {
-      if (!all(union(color_by, linetype_by) == "risk_group")) {
+      if (!all(union(color_by, linetype_by) == "group")) {
         show_logrank <- FALSE
       }
     }
@@ -447,7 +460,8 @@ setMethod(
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption)
+      caption = caption
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -459,7 +473,8 @@ setMethod(
       data_split <- split(
         unique(x@data[, mget(split_by)]),
         by = split_by,
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       data_split <- list(NULL)
@@ -473,9 +488,10 @@ setMethod(
       # Generate split.
       if (!is.null(current_split)) {
         x_split <- methods::new(
-          "familiarDataElementRiskStratification",
+          "predictionTableRiskGroups",
           x,
-          data = x@data[current_split, on = .NATURAL])
+          data = x@data[current_split, on = .NATURAL]
+        )
         
       } else {
         x_split <- x
@@ -483,13 +499,11 @@ setMethod(
 
       if ("stratification_method" %in% split_by) {
         # Check that only relevant risk groups are present.
-        x_split@data$risk_group <- droplevels(x_split@data$risk_group)
+        x_split@data$group <- droplevels(x_split@data$group)
       }
 
       if (is_empty(x_split)) next
-      if (!any_predictions_valid(x_split@data, outcome_type = "survival")) {
-        return(NULL)
-      }
+      if (!any_predictions_valid(x_split)) next
 
       if (is.waive(plot_title)) {
         plot_title <- "Kaplan-Meier survival curve"
@@ -500,17 +514,18 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
-        additional_subtitle <- c(
-          additional_subtitle,
-          .add_time_to_plot_subtitle(x_split@time))
-      }
+      # if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
+      #   additional_subtitle <- c(
+      #     additional_subtitle,
+      #     .add_time_to_plot_subtitle(x_split@time))
+      # }
 
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = current_split)
+          x = current_split
+        )
       }
 
       # Create plot
@@ -540,7 +555,8 @@ setMethod(
         censoring = censoring,
         censor_shape = censor_shape,
         show_logrank = show_logrank,
-        show_survival_table = show_survival_table)
+        show_survival_table = show_survival_table
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -555,7 +571,8 @@ setMethod(
           x = x_split@data,
           facet_by = facet_by,
           facet_wrap_cols = facet_wrap_cols,
-          show_survival_table = show_survival_table)
+          show_survival_table = show_survival_table
+        )
 
         # Save to file.
         do.call(
@@ -568,10 +585,13 @@ setMethod(
               "type" = "stratification",
               "x" = current_split,
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list
@@ -584,7 +604,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -616,7 +637,8 @@ setMethod(
     censoring,
     censor_shape,
     show_logrank,
-    show_survival_table) {
+    show_survival_table
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
 
@@ -625,13 +647,15 @@ setMethod(
   plot_layout_table <- .get_plot_layout_table(
     x = x@data,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Define the split in data required for faceting.
   data_split <- split(
     plot_layout_table,
     by = c("col_id", "row_id"),
-    sorted = TRUE)
+    sorted = TRUE
+  )
 
   # Create plots to join
   figure_list <- list()
@@ -640,18 +664,20 @@ setMethod(
     # Generate the split in case there is a faceting variable.
     if (!is.null(facet_by)) {
       x_split <- methods::new(
-        "familiarDataElementRiskStratification",
+        "predictionTableRiskGroups",
         x,
         data = x@data[current_split, on = .NATURAL]
       )
+      
     } else {
       x_split <- x
     }
-
+    
     # Compute strata for the current split.
     strata <- .compute_risk_stratification_curves(
       x = x_split,
-      time_range = x_range)
+      time_range = x_range
+    )
 
     # Compute logrank test value.
     if (show_logrank) {
@@ -688,7 +714,8 @@ setMethod(
       conf_int_alpha = conf_int_alpha,
       censoring = censoring,
       censor_shape = censor_shape,
-      show_logrank = show_logrank)
+      show_logrank = show_logrank
+    )
 
     # Extract plot elements from the Kaplan-Meier plot.
     extracted_elements <- .extract_plot_grobs(p = p_kaplan_meier)
@@ -699,7 +726,8 @@ setMethod(
     # Rename plot elements.
     g_kaplan_meier <- .rename_plot_grobs(
       g = .convert_to_grob(p_kaplan_meier),
-      extension = "main")
+      extension = "main"
+    )
 
     if (show_survival_table && gtable::is.gtable(g_kaplan_meier)) {
       # Survival tables
@@ -710,13 +738,15 @@ setMethod(
         ggtheme = ggtheme,
         discrete_palette = discrete_palette,
         x_range = x_range,
-        x_breaks = x_breaks)
+        x_breaks = x_breaks
+      )
 
       # Extract survival gtable, which consists of the panel and the left axis.
       g_survival_table <- .gtable_extract(
         g = .convert_to_grob(p_survival_table),
         element = c("panel", "axis-l"),
-        partial_match = TRUE)
+        partial_match = TRUE
+      )
 
       # Insert survival table into the kaplan-meier table. Use partial matching
       # to match elements from g_survival_table with those in g_kaplan_meier.
@@ -725,7 +755,8 @@ setMethod(
         g_new = g_survival_table,
         where = "bottom",
         ref_element = "xlab-b-main",
-        partial_match = TRUE)
+        partial_match = TRUE
+      )
     }
 
     # Add combined grob to list
@@ -744,14 +775,16 @@ setMethod(
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
     plot_layout_table = plot_layout_table,
     element_grobs = extracted_element_list,
-    ggtheme = ggtheme)
+    ggtheme = ggtheme
+  )
 
   return(g)
 }
@@ -782,9 +815,10 @@ setMethod(
     conf_int_alpha,
     censoring,
     censor_shape,
-    show_logrank) {
+    show_logrank
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  n_censor <- risk_group_1 <- NULL
+  n_censor <- group_1 <- NULL
   
   if (!is_empty(x)) x <- x@data
   if (!is_empty(h)) h <- h@data
@@ -795,7 +829,8 @@ setMethod(
     color_by = color_by,
     linetype_by = linetype_by,
     discrete_palette = discrete_palette,
-    combine_legend = combine_legend)
+    combine_legend = combine_legend
+  )
   
   # Extract data
   x <- guide_list$data
@@ -805,7 +840,10 @@ setMethod(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("time"),
-      y = !!sym("survival")))
+      y = !!sym("survival")
+    )
+  )
+  
   p <- p + ggtheme
 
   # Create step function
@@ -814,16 +852,19 @@ setMethod(
     
   } else if (!is.null(color_by) && is.null(linetype_by)) {
     p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-      colour = !!sym("color_breaks")))
+      colour = !!sym("color_breaks")
+    ))
     
   } else if (is.null(color_by) && !is.null(linetype_by)) {
     p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-      linetype = !!sym("linetype_breaks")))
+      linetype = !!sym("linetype_breaks")
+    ))
     
   } else {
     p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
       colour = !!sym("color_breaks"),
-      linetype = !!sym("linetype_breaks")))
+      linetype = !!sym("linetype_breaks")
+    ))
   }
 
   # Set colour
@@ -835,13 +876,15 @@ setMethod(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
 
     p <- p + ggplot2::scale_fill_manual(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
   }
 
   # Set line style
@@ -853,13 +896,15 @@ setMethod(
       name = legend_label$guide_linetype,
       values = g_linetype$linetype_values,
       breaks = g_linetype$linetype_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
   }
 
   if (show_logrank && !is_empty(h)) {
     # Parse p-value
     p_value_label <- paste0(
-      "p: ", as.character(signif(h[risk_group_1 == "all"]$p_value, 2)))
+      "p: ", as.character(signif(h[group_1 == "all"]$p_value, 2L))
+    )
 
     # Obtain default settings.
     text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
@@ -867,46 +912,51 @@ setMethod(
     # Show in plot
     p <- p + ggplot2::annotate(
       "text",
-      x = x_range[1],
-      y = y_range[1],
+      x = x_range[1L],
+      y = y_range[1L],
       label = p_value_label,
       colour = text_settings$colour,
       family = text_settings$family,
       fontface = text_settings$face,
       size = text_settings$geom_text_size,
       vjust = "inward",
-      hjust = "inward")
+      hjust = "inward"
+    )
   }
 
   # Plot confidence intervals
-  if (conf_int_style[1] != "none" && !is_empty(x)) {
-    if (conf_int_style[1] == "step") {
+  if (conf_int_style[1L] != "none" && !is_empty(x)) {
+    if (conf_int_style[1L] == "step") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
 
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
         
       } else {
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
           colour = !!sym("color_breaks"),
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
 
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
           linetype = "ci_up",
           colour = !!sym("color_breaks"),
-          na.rm = TRUE))
+          na.rm = TRUE
+        ))
       }
       
-    } else if (conf_int_style[1] == "ribbon") {
+    } else if (conf_int_style[1L] == "ribbon") {
       if (is.null(color_by)) {
         # Create special data for ribbon so that it becomes a step ribbon.
         x_ribbon <- .prepare_km_conf_int_plot_data(x = x)
@@ -916,15 +966,18 @@ setMethod(
           mapping = ggplot2::aes(
             x = !!sym("time"),
             ymin = !!sym("ci_low"),
-            ymax = !!sym("ci_up")),
+            ymax = !!sym("ci_up")
+          ),
           alpha = conf_int_alpha,
-          na.rm = TRUE)
+          na.rm = TRUE
+        )
         
       } else {
         # Create special data for ribbon so that it becomes a step ribbon.
         x_ribbon <- data.table::rbindlist(lapply(
           split(x, by = "color_breaks"),
-          .prepare_km_conf_int_plot_data))
+          .prepare_km_conf_int_plot_data
+        ))
         
         p <- p + ggplot2::geom_ribbon(
           data = x_ribbon,
@@ -932,9 +985,11 @@ setMethod(
             x = !!sym("time"),
             ymin = !!sym("ci_low"),
             ymax = !!sym("ci_up"),
-            fill = !!sym("color_breaks")),
+            fill = !!sym("color_breaks")
+          ),
           alpha = conf_int_alpha,
-          na.rm = TRUE)
+          na.rm = TRUE
+        )
       }
     }
   }
@@ -943,18 +998,21 @@ setMethod(
   if (censoring) {
     if (is.null(color_by)) {
       p <- p + ggplot2::geom_point(
-        data = x[n_censor > 0],
+        data = x[n_censor > 0L],
         shape = censor_shape,
-        show.legend = FALSE)
+        show.legend = FALSE
+      )
       
     } else {
       p <- p + ggplot2::geom_point(
-        data = x[n_censor > 0],
+        data = x[n_censor > 0L],
         mapping = ggplot2::aes(
           colour = !!sym("color_breaks"),
-          fill = !!sym("color_breaks")),
+          fill = !!sym("color_breaks")
+        ),
         shape = censor_shape,
-        show.legend = FALSE)
+        show.legend = FALSE
+      )
     }
   }
 
@@ -968,13 +1026,15 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Determine how things are facetted.
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -983,20 +1043,20 @@ setMethod(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
         labeller = "label_context",
-        drop = TRUE)
+        drop = TRUE
+      )
     }
   }
 
   # Plot to Cartesian coordinates.
-  p <- p + ggplot2::coord_cartesian(
-    xlim = x_range,
-    ylim = y_range)
+  p <- p + ggplot2::coord_cartesian(xlim = x_range, ylim = y_range)
 
   return(p)
 }
@@ -1010,7 +1070,8 @@ setMethod(
     ggtheme,
     discrete_palette,
     x_range,
-    x_breaks) {
+    x_breaks
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   id <- missing_entry <- NULL
 
@@ -1019,7 +1080,8 @@ setMethod(
     # Parse the table to obtain group sizes at x_breaks
     survival_table <- ..get_survival_breakpoints(
       x@data,
-      x_breaks = x_breaks)
+      x_breaks = x_breaks
+    )
 
     survival_table[, ":="("group_name" = "")]
     
@@ -1028,12 +1090,14 @@ setMethod(
     survival_list <- lapply(
       split(x@data, by = c(color_by, linetype_by)),
       ..get_survival_breakpoints,
-      x_breaks = x_breaks)
+      x_breaks = x_breaks
+    )
 
     # Combine into list
     survival_table <- data.table::rbindlist(
       survival_list, 
-      use.names = TRUE)
+      use.names = TRUE
+    )
 
     unique_vars <- unique(c(color_by, linetype_by))
 
@@ -1041,32 +1105,37 @@ setMethod(
     guide_table <- data.table::data.table(expand.grid(lapply(
       rev(unique_vars),
       function(ii, x) (levels(x[[ii]])),
-      x = survival_table)))
+      x = survival_table
+    )))
 
     # Rename variables
     data.table::setnames(
       x = guide_table,
-      rev(unique_vars))
+      rev(unique_vars)
+    )
 
     # Convert to factors
     for (ii in unique_vars) {
       guide_table[[ii]] <- factor(
         x = guide_table[[ii]],
-        levels = levels(x@data[[ii]]))
+        levels = levels(x@data[[ii]])
+      )
     }
 
     # Order columns according to unique_vars
     data.table::setcolorder(
       x = guide_table,
-      neworder = unique_vars)
+      neworder = unique_vars
+    )
 
     # Order data set by columns
     data.table::setorderv(
       x = guide_table,
-      cols = unique_vars)
+      cols = unique_vars
+    )
 
     # Set breaks
-    breaks <- apply(guide_table, 1, paste, collapse = ", ")
+    breaks <- apply(guide_table, 1L, paste, collapse = ", ")
 
     # Update guide_table
     guide_table$group_name <- factor(breaks, levels = breaks)
@@ -1081,25 +1150,28 @@ setMethod(
           x = x,
           y = y,
           by = by,
-          all = FALSE)))
+          all = FALSE
+        )))
       },
       y = survival_table,
-      by = unique_vars)
+      by = unique_vars
+    )
 
     if (any(guide_table$missing_entry)) {
       # Find a suitable prototype and then create a prototype table.
-      available_prototype <- head(guide_table[missing_entry == FALSE]$id, 1)
+      available_prototype <- head(guide_table[missing_entry == FALSE]$id, 1L)
 
       proto_table <- merge(
         x = survival_table,
-        y = guide_table[id == available_prototype, mget(unique_vars)])
+        y = guide_table[id == available_prototype, mget(unique_vars)]
+      )
 
       # Iterate over missing entries.
       new_survival_list <- lapply(
         split(guide_table[missing_entry == TRUE], by = "id"),
         function(x, proto_table, unique_vars) {
           # Make a copy of the prototype and replace the group size by 0.
-          y <- data.table::copy(proto_table)[, "group_size" := 0]
+          y <- data.table::copy(proto_table)[, "group_size" := 0L]
           
           # Insert the correct values for each plotting variable that was
           # previously missing.
@@ -1110,24 +1182,28 @@ setMethod(
           return(y)
         },
         proto_table = proto_table,
-        unique_vars = unique_vars)
+        unique_vars = unique_vars
+      )
 
       # Add the placeholder entries to the table.
       survival_table <- data.table::rbindlist(
         c(list(survival_table), new_survival_list),
-        use.names = TRUE)
+        use.names = TRUE
+      )
 
       # Remove superfluous columns from guide_table
       guide_table[, ":="(
         "id" = NULL,
-        "missing_entry" = NULL)]
+        "missing_entry" = NULL
+      )]
     }
 
     # Combine the guide table with the survival table to add in the group names.
     survival_table <- merge(
       x = survival_table,
       y = guide_table,
-      by = unique_vars)
+      by = unique_vars
+    )
   }
 
   # Obtain default settings.
@@ -1142,23 +1218,28 @@ setMethod(
     mapping = ggplot2::aes(
       x = !!sym("time"),
       y = !!sym("group_name"),
-      label = !!sym("group_size")))
+      label = !!sym("group_size")
+    )
+  )
 
   # Annotate survival in strata.
   p <- p + ggplot2::geom_text(
     colour = text_settings$colour,
     family = text_settings$family,
     fontface = text_settings$face,
-    size = text_settings$geom_text_size)
+    size = text_settings$geom_text_size
+  )
 
   # Adapt axes.
   p <- p + ggplot2::scale_x_continuous(
     breaks = x_breaks,
-    limits = x_range)
+    limits = x_range
+  )
 
   p <- p + ggplot2::scale_y_discrete(
     breaks = rev(levels(survival_table$group_name)),
-    limits = rev(levels(survival_table$group_name)))
+    limits = rev(levels(survival_table$group_name))
+  )
 
   # Set main theme
   p <- p + ggtheme
@@ -1172,7 +1253,8 @@ setMethod(
     axis.text.x = ggplot2::element_blank(),
     axis.ticks.x = ggplot2::element_blank(),
     axis.title.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank())
+    axis.title.y = ggplot2::element_blank()
+  )
 
   # Convert to gtable
   g <- ggplot2::ggplotGrob(p)
@@ -1180,7 +1262,7 @@ setMethod(
   # Set the height on the panel element to n * fontsize + (n-1) * lineheight
   n_lines <- data.table::uniqueN(survival_table$group_name)
   grob_height <- n_lines * fontsize * fontsize_rel + 
-    (n_lines - 1) * fontsize * fontsize_rel * lineheight + 4
+    (n_lines - 1L) * fontsize * fontsize_rel * lineheight + 4.0
 
   # Find the panel
   panel_row_t <- g$layout[g$layout$name == "panel", "t"]
@@ -1189,10 +1271,10 @@ setMethod(
   g$heights[panel_row_t] <- grid::unit(x = grob_height, "pt")
 
   # Set to p
-  p$custom_grob <- list(
-    "heights" = list(
-      "name" = "panel",
-      "height" = grid::unit(grob_height, "pt")))
+  p$custom_grob <- list("heights" = list(
+    "name" = "panel",
+    "height" = grid::unit(grob_height, "pt")
+  ))
 
   class(p) <- c("familiar_ggplot", class(p))
 
@@ -1210,19 +1292,21 @@ setMethod(
     x_breaks,
     function(break_time, x) {
       # Find the nearest candidate entry
-      candidate_entry <- data.table::copy(tail(x[time <= break_time, ], n = 1))
+      candidate_entry <- data.table::copy(tail(x[time <= break_time, ], n = 1L))
 
       # In case the number of survivors is 0, the group size is also 0.
-      candidate_entry[survival == 0, "group_size" := 0]
+      candidate_entry[survival == 0L, "group_size" := 0L]
 
       return(candidate_entry)
     },
-    x = x)
+    x = x
+  )
 
   # Convert to a new data.table
   survival_table <- data.table::rbindlist(
     survival_list,
-    use.names = TRUE)
+    use.names = TRUE
+  )
 
   # Update time to x_breaks
   survival_table[, "time" := x_breaks]
@@ -1236,22 +1320,24 @@ setMethod(
     x,
     facet_by,
     facet_wrap_cols,
-    show_survival_table) {
+    show_survival_table
+) {
   # Obtain facetting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Set default height and width for each subplot (in cm).
-  default_width <- 6
-  default_height <- ifelse(show_survival_table, 6, 4)
+  default_width <- 6.0
+  default_height <- ifelse(show_survival_table, 6.0, 4.0)
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }
@@ -1266,8 +1352,8 @@ setMethod(
 
   # Make sure that the surv_lower and surv_upper coordinate sets are correct.
   x <- data.table::copy(x)[order(time)]
-  y <- data.table::copy(x)[1:nrow(x) - 1]
-  y[, "time" := x$time[2:nrow(x)]]
+  y <- data.table::copy(x)[1L:(nrow(x) - 1L)]
+  y[, "time" := x$time[2L:nrow(x)]]
 
   # Combine and order correctly.
   x <- rbind(x, y)[order(time, -ci_low, -ci_up)]

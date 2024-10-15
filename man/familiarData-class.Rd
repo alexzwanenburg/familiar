@@ -19,8 +19,7 @@ aggregated in a familiarCollection object.
 \item{\code{outcome_info}}{Outcome information object, which contains additional
 information concerning the outcome, such as class levels.}
 
-\item{\code{fs_vimp}}{Variable importance data collected from feature selection
-methods.}
+\item{\code{fs_vimp}}{Data collected for variable importance methods.}
 
 \item{\code{model_vimp}}{Variable importance data collected from model-specific
 algorithms implemented by models created by familiar.}
@@ -41,8 +40,8 @@ model or ensemble of models, but without imputation.}
 \item{\code{learner}}{Learning algorithm used to create the model or ensemble of
 models.}
 
-\item{\code{fs_method}}{Feature selection method used to determine variable
-importance for the model or ensemble of models.}
+\item{\code{vimp_method}}{Method used to determine variable importance for the model
+or ensemble of models.}
 
 \item{\code{pooling_table}}{Run table for the data underlying the familiarData
 object. Used internally.}

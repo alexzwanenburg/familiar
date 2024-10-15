@@ -1,5 +1,6 @@
 familiar:::test_all_metrics_available(
-  metrics = familiar:::.get_available_regression_metrics())
+  metrics = familiar:::.get_available_regression_metrics()
+)
 
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
@@ -18,26 +19,30 @@ regr_metric_test <- function(
   # Create metric object
   metric_object <- familiar:::as_metric(
     metric = metric,
-    outcome_type = "continuous")
+    outcome_type = "continuous"
+  )
 
   # Set baseline-value explicitly.
   metric_object@baseline_value <- familiar:::compute_metric_score(
     metric = metric_object,
-    data = data_list[["no_slope"]]$data)
+    data = data_list[["no_slope"]]
+  )
 
   for (ii in seq_along(data_list)) {
     # Check that the metric is available
-    testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
+    testthat::expect_true(familiar:::is_available(metric_object))
 
     # Compute the metric value.
     score <- familiar:::compute_metric_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = data_list[[ii]]
+    )
 
     # Compute the objective score.
     objective_score <- familiar:::compute_objective_score(
       metric = metric_object,
-      data = data_list[[ii]]$data)
+      data = data_list[[ii]]
+    )
 
     # Test the values.
     testthat::expect_equal(score, expected_score[ii])
@@ -45,39 +50,44 @@ regr_metric_test <- function(
   }
 }
 
-
-good_data <- data.table::data.table(
-  "outcome" = c(1, 2, 3, 4, 5),
-  "predicted_outcome" = c(1, 2, 3, 4, 5)
+good_data <- familiar::as_prediction_table(
+  x = c(1, 2, 3, 4, 5),
+  y = c(1, 2, 3, 4, 5),
+  type = "regression"
 )
 
-bad_data <- data.table::data.table(
-  "outcome" = c(1, 2, 3, 4, 5),
-  "predicted_outcome" = c(5, 4, 3, 2, 1)
+bad_data <- familiar::as_prediction_table(
+  x = c(5, 4, 3, 2, 1),
+  y = c(1, 2, 3, 4, 5),
+  type = "regression"
 )
 
-no_slope_data <- data.table::data.table(
-  "outcome" = c(1, 2, 3, 4, 5),
-  "predicted_outcome" = c(3, 3, 3, 3, 3)
+no_slope_data <- familiar::as_prediction_table(
+  x = c(3, 3, 3, 3, 3),
+  y = c(1, 2, 3, 4, 5),
+  type = "regression"
 )
 
-bias_offset_data <- data.table::data.table(
-  "outcome" = c(1, 2, 3, 4, 5),
-  "predicted_outcome" = c(0, 1, 2, 3, 4)
+bias_offset_data <- familiar::as_prediction_table(
+  x = c(0, 1, 2, 3, 4),
+  y = c(1, 2, 3, 4, 5),
+  type = "regression"
 )
 
 data_list <- list(
-  "good" = list("data" = good_data),
-  "bad" = list("data" = bad_data),
-  "no_slope" = list("data" = no_slope_data),
-  "bias_offset" = list("data" = bias_offset_data)
+  "good" = good_data,
+  "bad" = bad_data,
+  "no_slope" = no_slope_data,
+  "bias_offset" = bias_offset_data
 )
+
 
 # Mean absolute error ----------------------------------------------------------
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_mae_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Mean absolute error is correct", {
   for (metric in familiar:::.get_available_mae_metrics()) {
@@ -94,7 +104,8 @@ testthat::test_that("Mean absolute error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_rae_metrics(),
   not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE)
+  not_available_all_samples_identical = TRUE
+)
 
 testthat::test_that("Relative absolute error is correct", {
   for (metric in familiar:::.get_available_rae_metrics()) {
@@ -111,7 +122,8 @@ testthat::test_that("Relative absolute error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_mlae_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Mean log absolute error is correct", {
   for (metric in familiar:::.get_available_mlae_metrics()) {
@@ -139,7 +151,8 @@ testthat::test_that("Mean log absolute error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_mse_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Mean squared error is correct", {
   for (metric in familiar:::.get_available_mse_metrics()) {
@@ -174,7 +187,8 @@ testthat::test_that("Relative squared error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_msle_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Mean squared log error is correct", {
   expected_score <- c(
@@ -199,7 +213,8 @@ testthat::test_that("Mean squared log error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_medea_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Median absolute error is correct", {
   for (metric in familiar:::.get_available_medea_metrics()) {
@@ -234,7 +249,8 @@ testthat::test_that("Root mean square error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_rrse_metrics(),
   not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE)
+  not_available_all_samples_identical = TRUE
+)
 
 testthat::test_that("Root relative squared error is correct", {
   for (metric in familiar:::.get_available_rrse_metrics()) {
@@ -251,7 +267,8 @@ testthat::test_that("Root relative squared error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_rmsle_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Root mean square log error is correct", {
   expected_score <- sqrt(c(
@@ -282,7 +299,8 @@ testthat::test_that("Root mean square log error is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_explained_variance_metrics(),
   not_available_single_sample = FALSE,
-  not_available_all_samples_identical = FALSE)
+  not_available_all_samples_identical = FALSE
+)
 
 testthat::test_that("Explained variance is correct", {
   for (metric in familiar:::.get_available_explained_variance_metrics()) {
@@ -299,7 +317,8 @@ testthat::test_that("Explained variance is correct", {
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_r_squared_metrics(),
   not_available_single_sample = TRUE,
-  not_available_all_samples_identical = TRUE)
+  not_available_all_samples_identical = TRUE
+)
 
 testthat::test_that("R2 score is correct", {
   for (metric in familiar:::.get_available_r_squared_metrics()) {

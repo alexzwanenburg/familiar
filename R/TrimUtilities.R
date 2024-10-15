@@ -2,16 +2,17 @@
   return(list(
     "coef" = list(
       "FUN" = stats::coef,
-      "with_timeout" = FALSE),
+      "with_timeout" = FALSE
+    ),
     "vcov" = list(
       "FUN" = stats::vcov,
-      "with_timeout" = TRUE),
+      "with_timeout" = TRUE
+    ),
     "summary" = list(
       "FUN" = summary,
-      "with_timeout" = TRUE),
-    "varimp" = list(
-      "FUN" = mboost::varimp,
-      "with_timeout" = TRUE)))
+      "with_timeout" = TRUE
+    )
+  ))
 }
 
 
@@ -23,7 +24,8 @@
   # Capture message
   captured_message <- suppressWarnings(tryCatch(
     utils::capture.output(show(object@model), file = NULL),
-    error = identity))
+    error = identity
+  ))
 
   # Check if show generated an error.
   if (inherits(captured_message, "error")) return(object)
@@ -42,14 +44,15 @@
   # Add to trimmed functions.
   object@trimmed_function <- c(
     object@trimmed_function,
-    list("show" = captured_message))
+    list("show" = captured_message)
+  )
 
   return(object)
 }
 
 
 
-.replace_broken_functions <- function(object, trimmed_object, timeout = 60000) {
+.replace_broken_functions <- function(object, trimmed_object, timeout = 60000.0) {
   # Find all methods that are trimmable.
   trimmable_methods <- names(..trim_functions())
 
@@ -64,7 +67,7 @@
   # dependent packages. There seems to be an issue with visibility of such
   # methods when the package is only loaded, not attached. I don't want to
   # attach packages because that may alter the search space of the user.
-  if (any(class(object@model) %in% c("mboost"))) {
+  if (inherits(object@model, "mboost")) {
     class_methods <- unique(c(class_methods, "varimp"))
   }
 
@@ -81,12 +84,14 @@
     ..replace_broken_function,
     object = object,
     trimmed_object = trimmed_object,
-    timeout = timeout)
+    timeout = timeout
+  )
 
   # Get non-null items and add to existing functions.
   trimmed_object@trimmed_function <- c(
     trimmed_object@trimmed_function,
-    replacement_functions[!sapply(replacement_functions, is.null)])
+    replacement_functions[!sapply(replacement_functions, is.null)]
+  )
 
   return(trimmed_object)
 }
@@ -103,7 +108,8 @@
     FUN,
     args = list(object@model),
     timeout = timeout,
-    additional_packages = object@package)
+    additional_packages = object@package
+  )
 
   # If an error occurs or the project times out the required function is not
   # considered implemented for the object.
@@ -115,7 +121,8 @@
   # Attempt to extract the results from the trimmed object.
   new_info <- do.call_with_handlers(
     FUN,
-    args = list(trimmed_object@model))
+    args = list(trimmed_object@model)
+  )
 
   # If an error occurs, it means that the information required to create the
   # function is no longer available due to object trimming, or recreating the
@@ -195,7 +202,8 @@
     if (exists(current_object, envir = envir, inherits = FALSE)) {
       remove(
         list = current_object, 
-        envir = envir)
+        envir = envir
+      )
     }
   }
 }
@@ -207,8 +215,10 @@
   duplicated_environment <- list2env(
     as.list.environment(envir,
       all.names = TRUE,
-      sorted = FALSE),
-    parent = parent)
+      sorted = FALSE
+    ),
+    parent = parent
+  )
 
   return(duplicated_environment)
 }
@@ -229,7 +239,8 @@
           x = local_x,
           old_env = old_env,
           new_env = new_env,
-          recursive = recursive)
+          recursive = recursive
+        )
         
         # Re-assign to environment.
         assign(y, local_x, envir = x)
@@ -239,12 +250,13 @@
       x = x,
       old_env = old_env,
       new_env = new_env,
-      recursive = recursive)
+      recursive = recursive
+    )
 
     return(invisible(NULL))
     
   } else if (is.list(x)) {
-    if (length(x) == 0) return(x)
+    if (length(x) == 0L) return(x)
 
     # Determine class (if any).
     object_class <- class(x)
@@ -265,14 +277,16 @@
             x,
             old_env = old_env,
             new_env = new_env,
-            recursive = recursive)
+            recursive = recursive
+          )
         }
         
         return(x)
       },
       old_env = old_env,
       new_env = new_env,
-      recursive = recursive)
+      recursive = recursive
+    )
     
     class(x) <- object_class
     

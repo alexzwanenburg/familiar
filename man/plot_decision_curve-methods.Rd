@@ -23,10 +23,10 @@ plot_decision_curve(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
@@ -54,10 +54,10 @@ plot_decision_curve(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
@@ -85,10 +85,10 @@ plot_decision_curve(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
@@ -134,8 +134,15 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-plot elements in case a value was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -219,8 +226,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -345,19 +352,11 @@ familiarCollection object.
 \details{
 This function generates plots for decision curves.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set} and
 \code{positive_class} (categorical outcomes) or \code{evaluation_time} (survival
-outcomes). By default, the data is split by \code{fs_method} and \code{learner}, with
+outcomes). By default, the data is split by \code{vimp_method} and \code{learner}, with
 faceting by \code{data_set} and colouring by \code{positive_class} or
 \code{evaluation_time}.
-
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
 
 Bootstrap confidence intervals of the decision curve (if present) can be
 shown using various styles set by \code{conf_int_style}:
@@ -371,7 +370,7 @@ the point estimate of the decision curve.
 decision curve is shown as usual.
 }
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

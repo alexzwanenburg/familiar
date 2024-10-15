@@ -30,19 +30,21 @@ paste_s <- function(...) {
   # "element_1, element_2, ..., and element_n".
   dots <- c(...)
 
-  if (length(dots) > 2) {
+  if (length(dots) > 2L) {
     # For more than 2 elements, split into an initial and final section.
     initial_string <- paste0(
-      head(dots, n = length(dots) - 2),
-      collapse = ", ")
+      head(dots, n = length(dots) - 2L),
+      collapse = ", "
+    )
 
     final_string <- paste0(
-      tail(dots, n = 2), 
-      collapse = " and ")
+      tail(dots, n = 2L), 
+      collapse = " and "
+    )
 
     return(paste0(c(initial_string, final_string), collapse = ", "))
     
-  } else if (length(dots) == 2) {
+  } else if (length(dots) == 2L) {
     # For exactly 2 elements, combine with "and".
     return(paste0(dots, collapse = " and "))
     
@@ -50,6 +52,22 @@ paste_s <- function(...) {
     # For only one element, return as is.
     return(paste0(dots))
   }
+}
+
+
+
+paste_sh <- function(..., n = 6L) {
+  # Function to collapse the first few elements of a series of strings into a
+  # summation of the form: "element_1, element_2, element_3, ..."
+  
+  dots <- c(...)
+  
+  # Check if all elements can be collapsed.
+  if (length(dots) <= n) return(paste_s(...))
+  
+  initial_string <- paste0(head(dots, n = n), collapse = ", ")
+  
+  return(paste0(initial_string, ", ..."))
 }
 
 
@@ -63,12 +81,13 @@ paste_c <- function(x, y, collapse = NULL) {
 
 
 
+
 rstring <- function(n = 1L, character_set = "alphanumeric") {
   # Initialise the available set.
   available_characters <- NULL
 
   # Sanity check on n.
-  if (n < 1) stop("n cannot be smaller than 1.")
+  if (n < 1L) stop("n cannot be smaller than 1.")
 
   # Uppercase characters
   if (character_set %in% c("uppercase", "alphanumeric", "letters")) {
@@ -89,17 +108,19 @@ rstring <- function(n = 1L, character_set = "alphanumeric") {
   }
 
   # Draw random indices and convert to integer values by rounding up.
-  random_indices <- ceiling(stats::runif(
+  random_indices <- as.integer(ceiling(stats::runif(
     n = n,
-    min = 0, 
-    max = length(available_characters)))
+    min = 0L, 
+    max = length(available_characters)
+  )))
 
   # Replaces any 0 (which is improbable, but could happen).
-  random_indices[random_indices == 0] <- 1
+  random_indices[random_indices == 0L] <- 1L
 
   return(paste0(
     available_characters[random_indices],
-    collapse = ""))
+    collapse = ""
+  ))
 }
 
 
@@ -112,7 +133,8 @@ startswith_any <- function(x, prefix) {
       any(startsWith(x = x, prefix = prefix))
     },
     prefix = prefix,
-    USE.NAMES = FALSE))
+    USE.NAMES = FALSE
+  ))
 }
 
 
@@ -125,7 +147,8 @@ endswith_any <- function(x, suffix) {
       any(endsWith(x = x, suffix = suffix))
     },
     suffix = suffix,
-    USE.NAMES = FALSE))
+    USE.NAMES = FALSE
+  ))
 }
 
 
@@ -138,7 +161,8 @@ sub_all_patterns <- function(pattern, replacement, x, ...) {
       x = x, 
       replacement = replacement, 
       pattern = current_pattern, 
-      ...)
+      ...
+    )
   }
 
   return(x)
@@ -153,7 +177,8 @@ gsub_all_patterns <- function(pattern, replacement, x, ...) {
       x = x, 
       replacement = replacement, 
       pattern = current_pattern, 
-      ...)
+      ...
+    )
   }
 
   return(x)
@@ -169,30 +194,32 @@ sub_last <- function(pattern, replacement, x, ...) {
     pattern = pattern, 
     replacement = replacement, 
     ..., 
-    USE.NAMES = FALSE))
+    USE.NAMES = FALSE
+  ))
 }
 
 
 
 .sub_last <- function(x, pattern, replacement, ...) {
   # Replace last instance of a pattern in x.
-  instances <- gregexpr(pattern = pattern, text = x, ...)[[1]]
+  instances <- gregexpr(pattern = pattern, text = x, ...)[[1L]]
 
   # Skip if pattern has not been found.
-  if (all(instances == -1)) return(x)
+  if (all(instances == -1L)) return(x)
 
   # Select last instance.
   instances <- tail(instances, n = 1L)
 
   # Replace the pattern with its replacement.
-  initial_string <- substr(x, start = 1L, instances - 1)
+  initial_string <- substr(x, start = 1L, instances - 1L)
   final_string <- substr(x, start = instances + nchar(pattern), stop = nchar(x))
 
   return(paste0(
     initial_string, 
     replacement, 
     final_string, 
-    collapse = ""))
+    collapse = ""
+  ))
 }
 
 
@@ -205,10 +232,12 @@ strsplit_all <- function(x, split, ...) {
       return(strsplit(
         x = x, 
         split = split,
-        ...)[[1]])
+        ...
+      )[[1L]])
     },
     split = split,
-    ...)
+    ...
+  )
 
   return(y)
 }

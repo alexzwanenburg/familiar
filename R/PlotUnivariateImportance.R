@@ -20,13 +20,26 @@ NULL
 #'   p-values and q-values. q-values may not be available.
 #' @param show_cluster (*optional*) Show which features were clustered together.
 #' @param ggtheme (*optional*) `ggplot` theme to use for plotting.
-#' @param discrete_palette (*optional*) Palette used to fill the bars in case a
-#'   non-singular variable was provided to the `color_by` argument.
+#' @param discrete_palette (*optional*) Palette for colouring the plot elements
+#'   according to the groupings indicated by the `color_by` argument (if any).
+#'   `familiar` has a default palette. Other palettes are supported by
+#'   `paletteer`, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Palette to use for filling the bars in
 #'   case the `color_by` argument is not set. The bars are then coloured
 #'   according to their importance. By default, no gradient is used, and the
 #'   bars are not filled according to importance. Use `NULL` to fill the bars
-#'   using the default palette in `familiar`.
+#'   using the default palette in `familiar`. Other palettes are supported by
+#'   the `paletteer` package, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param significance_level_shown Position(s) to draw vertical lines indicating
 #'   a significance level, e.g. 0.05. Can be NULL to not draw anything.
 #' @param height (*optional*) Height of the plot. A default value is derived
@@ -58,28 +71,20 @@ NULL
 #'   The following splitting variables are available for `split_by`, `color_by`
 #'   and `facet_by`:
 #'
-#'  * `fs_method`: feature selection methods
+#'  * `vimp_method`: variable importance methods
 #'
 #'  * `learner`: learners
 #'
 #'  * `data_set`: data sets
 #'
-#'   Unlike for plots of feature ranking in feature selection and after
-#'   modelling (as assessed by model-specific routines), clusters of features
-#'   are now found during creation of underlying `familiarData` objects, instead
-#'   of through consensus clustering. Hence, clustering results may differ due
-#'   to differences in the underlying datasets.
+#'   Unlike for plots of feature ranking in initial variable importance
+#'   computation and after modelling (as assessed by model-specific routines),
+#'   clusters of features are now found during creation of underlying
+#'   `familiarData` objects, instead of through consensus clustering. Hence,
+#'   clustering results may differ due to differences in the underlying
+#'   datasets.
 #'
-#'   Available palettes for `discrete_palette` and `gradient_palette` are those
-#'   listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
-#'
-#'   Labelling methods such as `set_fs_method_names` or `set_feature_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_feature_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -114,7 +119,7 @@ setGeneric(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     significance_level_shown = 0.05,
     width = waiver(),
@@ -122,7 +127,8 @@ setGeneric(
     units = waiver(),
     verbose = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_univariate_importance")
   }
 )
@@ -159,7 +165,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     significance_level_shown = 0.05,
     width = waiver(),
@@ -167,7 +173,8 @@ setMethod(
     units = waiver(),
     verbose = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
@@ -179,8 +186,11 @@ setMethod(
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
           "feature_similarity_threshold" = feature_similarity_threshold,
-          "verbose" = verbose),
-        list(...)))
+          "verbose" = verbose
+        ),
+        list(...)
+      )
+    )
 
     return(do.call(
       plot_univariate_importance,
@@ -215,7 +225,9 @@ setMethod(
         "height" = height,
         "units" = units,
         "verbose" = verbose,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -249,7 +261,7 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     significance_level_shown = 0.05,
     width = waiver(),
@@ -257,7 +269,8 @@ setMethod(
     units = waiver(),
     verbose = TRUE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     value <- .NATURAL <- NULL
 
@@ -269,7 +282,8 @@ setMethod(
     # Get input data.
     x <- export_univariate_analysis_data(
       object = object,
-      p_adjustment_method = p_adjustment_method)
+      p_adjustment_method = p_adjustment_method
+    )
 
     # Use only the univariate data.
     x <- x$univariate
@@ -287,11 +301,14 @@ setMethod(
     if (is.list(x)) {
       if (is_empty(x)) return(NULL)
 
-      if (length(x) > 1) ..error_reached_unreachable_code(
-        "plot_univariate_importance: list of data elements contains unmerged elements.")
+      if (length(x) > 1L) {
+        ..error_reached_unreachable_code(
+          "plot_univariate_importance: list of data elements contains unmerged elements."
+        )
+      }
 
       # Get x directly.
-      x <- x[[1]]
+      x <- x[[1L]]
     }
 
     # Check that the data are not empty.
@@ -301,7 +318,8 @@ setMethod(
     .check_parameter_value_is_valid(
       x = show_cluster, 
       var_name = "show_cluster",
-      values = c(FALSE, TRUE))
+      values = c(FALSE, TRUE)
+    )
 
     if (show_cluster) {
       # Get feature similarity data.
@@ -314,7 +332,7 @@ setMethod(
         export_dendrogram = FALSE,
         export_ordered_data = FALSE,
         export_clustering = TRUE
-      )[[1]]
+      )[[1L]]
       
     } else {
       feature_similarity <- NULL
@@ -329,7 +347,8 @@ setMethod(
     column_data <- .plot_univariate_check_p_adjustment_method(
       method = p_adjustment_method,
       x = x@data,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     if (is.null(column_data)) return(NULL)
 
@@ -337,17 +356,19 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = FALSE),
       purpose = "to plot univariate variable importance",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
     data.table::setnames(
       x = x@data,
       old = column_data$value_column, 
-      new = "value")
+      new = "value"
+    )
 
     # Update p-values below the machine precision (i.e. p=0.0).
-    x@data[value <= 0.0, "value" := 2 * .Machine$double.eps]
+    x@data[value <= 0.0, "value" := 2.0 * .Machine$double.eps]
 
     # Convert p-value column to logarithmic scale
     x@data[, "log_value" := -log10(value)]
@@ -363,34 +384,41 @@ setMethod(
         significance_level_shown, 
         .check_number_in_valid_range,
         var_name = "significance_level_shown",
-        range = c(0, 1),
-        closed = c(FALSE, TRUE))
+        range = c(0.0, 1.0),
+        closed = c(FALSE, TRUE)
+      )
     }
 
     # x_range
     if (is.null(x_range) && is.null(significance_level_shown)) {
-      x_range <- c(0, max(x@data$log_value, na.rm = TRUE))
+      x_range <- c(0.0, max(x@data$log_value, na.rm = TRUE))
       
     } else if (is.null(x_range) && !is.null(significance_level_shown)) {
-      x_range <- c(0, max(c(
-        max(x@data$log_value, na.rm = TRUE),
-        max(-log10(significance_level_shown)))))
+      x_range <- c(
+        0.0,
+        max(c(
+          max(x@data$log_value, na.rm = TRUE),
+          max(-log10(significance_level_shown))
+        ))
+      )
     }
 
     # x_breaks
     if (is.null(x_breaks)) {
       .check_input_plot_args(
         x_range = x_range, 
-        x_n_breaks = x_n_breaks)
+        x_n_breaks = x_n_breaks
+      )
 
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
         m = x_n_breaks,
-        dmin = x_range[1],
-        dmax = x_range[2],
-        only.loose = TRUE)
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
       
-      x_range <- c(0, tail(x_breaks, n = 1))
+      x_range <- c(0.0, tail(x_breaks, n = 1L))
     }
 
     # x_label Set default name for x-axis label
@@ -407,7 +435,7 @@ setMethod(
 
     # Set default splitting variables if none are provided.
     if (is.null(split_by) && is.null(color_by) && is.null(facet_by)) {
-      split_by <- c("fs_method", "learner")
+      split_by <- c("vimp_method", "learner")
       color_by <- c("data_set")
     }
 
@@ -417,7 +445,8 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = c("fs_method", "learner", "data_set"))
+      available = c("vimp_method", "learner", "data_set")
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -427,7 +456,8 @@ setMethod(
     # Parse legend label
     legend_label <- .create_plot_legend_title(
       user_label = legend_label, 
-      color_by = color_by)
+      color_by = color_by
+    )
 
     # Check general input arguments
     .check_input_plot_args(
@@ -439,7 +469,8 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      facet_wrap_cols = facet_wrap_cols)
+      facet_wrap_cols = facet_wrap_cols
+    )
 
     # Create plots -------------------------------------------------------------
 
@@ -471,7 +502,8 @@ setMethod(
           x_temporary <- data.table::copy(x_sub)
           x_temporary[, ":="(
             "cluster_id" = .I,
-            "cluster_size" = 1L)]
+            "cluster_size" = 1L
+          )]
         }
 
         # Replace x_sub
@@ -483,7 +515,8 @@ setMethod(
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
-          x = x_sub)
+          x = x_sub
+        )
       }
 
       # Generate plot
@@ -504,7 +537,8 @@ setMethod(
         caption = caption,
         x_range = x_range,
         x_breaks = x_breaks,
-        significance_level_shown = significance_level_shown)
+        significance_level_shown = significance_level_shown
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -518,7 +552,8 @@ setMethod(
         def_plot_dims <- .determine_univariate_importance_plot_dimensions(
           x = x_sub,
           facet_by = facet_by,
-          facet_wrap_cols = facet_wrap_cols)
+          facet_wrap_cols = facet_wrap_cols
+        )
 
         # Save to file.
         do.call(
@@ -532,10 +567,13 @@ setMethod(
               "subtype" = "univariate",
               "x" = x_sub,
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list and export
@@ -548,7 +586,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -581,7 +620,8 @@ setMethod(
     caption,
     x_range,
     x_breaks,
-    significance_level_shown) {
+    significance_level_shown
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   log_value <- NULL
   
@@ -597,7 +637,8 @@ setMethod(
   guide_list <- .create_plot_guide_table(
     x = x,
     color_by = color_by,
-    discrete_palette = discrete_palette)
+    discrete_palette = discrete_palette
+  )
 
   # Extract data
   x <- guide_list$data
@@ -607,7 +648,8 @@ setMethod(
     x <- .add_plot_cluster_name(
       x = x,
       color_by = color_by,
-      facet_by = facet_by)
+      facet_by = facet_by
+    )
   }
 
   # Create basic plot
@@ -615,7 +657,9 @@ setMethod(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("feature"), 
-      y = !!sym("log_value")))
+      y = !!sym("log_value")
+    )
+  )
   p <- p + ggtheme
 
   # Add fill colors
@@ -626,25 +670,30 @@ setMethod(
     p <- p + ggplot2::geom_bar(
       stat = "identity",
       mapping = ggplot2::aes(fill = !!sym("color_breaks")),
-      position = "dodge")
+      position = "dodge"
+    )
 
     p <- p + ggplot2::scale_fill_manual(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
     
   } else if (!is.waive(gradient_palette)) {
     # Coloring by log of the p-value
     p <- p + ggplot2::geom_bar(
       stat = "identity",
       mapping = ggplot2::aes(fill = !!sym("log_value")),
-      show.legend = FALSE)
+      show.legend = FALSE
+    )
     p <- p + ggplot2::scale_fill_gradientn(
       colors = .get_palette(
         x = gradient_palette,
-        palette_type = "sequential"),
-      limits = x_range)
+        palette_type = "sequential"
+      ),
+      limits = x_range
+    )
     
   } else {
     # No colouring of the bars.
@@ -659,7 +708,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -667,12 +717,14 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
@@ -686,12 +738,14 @@ setMethod(
         ggplot2::aes(
           label = !!sym("cluster_name"),
           y = 0.0,
-          angle = 270.0),
+          angle = 270.0
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
         size = text_settings$geom_text_size,
-        vjust = -0.50)
+        vjust = -0.50
+      )
       
     } else {
       p <- p + ggplot2::geom_text(
@@ -699,13 +753,15 @@ setMethod(
           label = !!sym("cluster_name"),
           y = 0.0,
           group = !!sym("color_breaks"),
-          angle = 270.0),
+          angle = 270.0
+        ),
         colour = text_settings$colour,
         family = text_settings$family,
         fontface = text_settings$face,
         size = text_settings$geom_text_size,
         vjust = -0.50,
-        position = ggplot2::position_dodge(width = 0.9))
+        position = ggplot2::position_dodge(width = 0.9)
+      )
     }
   }
   
@@ -714,7 +770,8 @@ setMethod(
     for (curr_signif_level in significance_level_shown) {
       p <- p + ggplot2::geom_hline(
         yintercept = -log10(curr_signif_level),
-        linetype = "dotted")
+        linetype = "dotted"
+      )
     }
   }
 
@@ -725,7 +782,8 @@ setMethod(
     y = x_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   return(p)
 }
@@ -735,13 +793,15 @@ setMethod(
 .determine_univariate_importance_plot_dimensions <- function(
     x,
     facet_by, 
-    facet_wrap_cols) {
+    facet_wrap_cols
+) {
   
   # Get plot layout dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Determine the number of features within each facet.
   n_features <- data.table::uniqueN(x = x$feature)
@@ -749,17 +809,17 @@ setMethod(
 
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.7mm)
   # spacing. Then add some room for other plot elements.
-  default_height <- n_features * 0.5 + (n_features - 1) * 0.07 + 1.0
+  default_height <- n_features * 0.5 + (n_features - 1L) * 0.07 + 1.0
 
   # Set a default height. Assume that the typical width of a character is about
   # 5 points (1.8mm).
-  default_width <- 6 + longest_name * 0.18
+  default_width <- 6.0 + longest_name * 0.18
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }
@@ -769,11 +829,13 @@ setMethod(
 .plot_univariate_check_p_adjustment_method <- function(
     x, 
     method, 
-    verbose = TRUE) {
+    verbose = TRUE
+) {
   .check_parameter_value_is_valid(
     x = method,
     var_name = "p_adjustment_method",
-    values = c(stats::p.adjust.methods, "p_value", "q_value"))
+    values = c(stats::p.adjust.methods, "p_value", "q_value")
+  )
 
   value_column <- switch(
     method,
@@ -786,7 +848,8 @@ setMethod(
     "fdr" = "adjusted_p_value",
     "none" = "p_value",
     "p_value" = "p_value",
-    "q_value" = "q_value")
+    "q_value" = "q_value"
+  )
 
   label_name <- switch(
     method,
@@ -799,20 +862,22 @@ setMethod(
     "fdr" = "FDR-corrected p-value",
     "none" = "p-value",
     "p_value" = "p-value",
-    "q_value" = "q-value")
+    "q_value" = "q-value"
+  )
 
   # Check if the column is present.
   if (is.null(x[[value_column]])) {
-    stop(paste0(
+    ..error(paste0(
       "Univariate importance can not be plotted as the values for ",
       "the requested p adjustment method (", value_column, 
-      ") were not found in the data."))
+      ") were not found in the data."
+    ))
   }
 
   # Check if any values are valid.
-  if (all(!is.finite(x[[value_column]]))) {
+  if (!any(is.finite(x[[value_column]]))) {
     if (verbose) {
-      warning("Univariate importance can not be plotted as all values are NA.")
+      ..warning("Univariate importance can not be plotted as all values are NA.")
     }
 
     return(NULL)
@@ -820,5 +885,6 @@ setMethod(
 
   return(list(
     "value_column" = value_column,
-    "label" = label_name))
+    "label" = label_name
+  ))
 }

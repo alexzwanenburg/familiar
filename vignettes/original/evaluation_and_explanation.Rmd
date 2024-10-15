@@ -87,28 +87,28 @@ that sufficient models are created. Experimental designs such as
 `experiment_design="bs(fs+mb,400)+ev"` allow for this, but are computationally
 expensive.
 
-| Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit |
-|------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|
-| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 | `export_auc_data`                     |        ×        |      ×       |              |
-| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              | `export_auc_data`                     |        ×        |      ×       |              |
-| Calibration info^c^                      |                                                                                   | `export_calibration_info`             |                 |      ×       |              |
-| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           | `export_confusion_matrix_data`        |                 |      ×       |              |
-| Decision curve analysis^ab^              | `plot_decision_curve`                                                             | `export_decision_curve_analysis_data` |        ×        |      ×       |              |
-| Feature expression^c^                    | `plot_sample_clustering`                                                          | `export_feature_expressions`          |                 |              |              |
-| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` | `export_fs_vimp`                      |                 |              |              |
-| Feature similarity^c^                    | `plot_feature_similarity`                                                         | `export_feature_similarity`           |        ×        |              |              |
-| Hyperparameters^c^                       |                                                                                   | `export_hyperparameters`              |                 |              |              |
-| Individual conditional expectation^c^    | `plot_ice`                                                                        | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |
-| Model calibration^ce^                    | `plot_calibration_data`                                                           | `export_calibration_data`             |        ×        |      ×       |              |
-| Model performance^c^                     | `plot_model_performance`                                                          | `export_model_performance`            |        ×        |      ×       |              |
-| Model predictions^c^                     |                                                                                   | `export_prediction_data`              |      ×^d^       |      ×       |              |
-| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     | `export_model_vimp`                   |                 |              |              |
-| Partial dependence^c^                    | `plot_pd`                                                                         | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |
-| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            | `export_permutation_vimp`             |        ×        |      ×       |              |
-| Risk stratification info^b^              |                                                                                   | `export_risk_stratification_info`     |                 |      ×       |              |
-| Risk stratification data^b^              | `plot_kaplan_meier`                                                               | `export_risk_stratification_data`     |                 |      ×       |              |
-| Sample similarity^c^                     |                                                                                   | `export_sample_similarity`            |        ×        |              |      ×       |
-| Univariate analysis^c^                   | `plot_univariate_importance`                                                      | `export_univariate_analysis_data`     |                 |              |              |
+| Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit | Stand-alone |
+|------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|:-----------:|
+| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
+| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
+| Calibration info^c^                      |                                                                                   | `export_calibration_info`             |                 |      ×       |              |             |
+| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           | `export_confusion_matrix_data`        |                 |      ×       |              |      ×      |
+| Decision curve analysis^ab^              | `plot_decision_curve`                                                             | `export_decision_curve_analysis_data` |        ×        |      ×       |              |      ×      |
+| Feature expression^c^                    | `plot_sample_clustering`                                                          | `export_feature_expressions`          |                 |              |              |             |
+| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` | `export_fs_vimp`                      |                 |              |              |             |
+| Feature similarity^c^                    | `plot_feature_similarity`                                                         | `export_feature_similarity`           |        ×        |              |              |             |
+| Hyperparameters^c^                       |                                                                                   | `export_hyperparameters`              |                 |              |              |             |
+| Individual conditional expectation^c^    | `plot_ice`                                                                        | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |             |
+| Model calibration^ce^                    | `plot_calibration_data`                                                           | `export_calibration_data`             |        ×        |      ×       |              |             |
+| Model performance^c^                     | `plot_model_performance`                                                          | `export_model_performance`            |        ×        |      ×       |              |      ×      |
+| Model predictions^c^                     |                                                                                   | `export_prediction_data`              |      ×^d^       |      ×       |              |      x      |
+| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     | `export_model_vimp`                   |                 |              |              |             |
+| Partial dependence^c^                    | `plot_pd`                                                                         | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |             |
+| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            | `export_permutation_vimp`             |        ×        |      ×       |              |             |
+| Risk stratification info^b^              |                                                                                   | `export_risk_stratification_info`     |                 |      ×       |              |             |
+| Risk stratification data^b^              | `plot_kaplan_meier`                                                               | `export_risk_stratification_data`     |                 |      ×       |              |      ×      |
+| Sample similarity^c^                     |                                                                                   | `export_sample_similarity`            |        ×        |              |      ×       |             |
+| Univariate analysis^c^                   | `plot_univariate_importance`                                                      | `export_univariate_analysis_data`     |                 |              |              |             |
 
 : Evaluation and explanation steps.\
 ^a^ Available for binomial and multinomial outcomes.\
@@ -139,15 +139,16 @@ familiar::summon_familiar(
   experiment_dir = "binomial",
   experimental_design = "fs+mb",
   cluster_method = "none",
-  fs_method = "none",
+  vimp_method = "none",
   hyperparameter = list(
-    "random_forest_ranger" =
-      list(
-        "n_tree" = 4,
-        "sample_size" = 0.7,
-        "m_try" = 0.5,
-        "node_size" = 20,
-        "tree_depth" = 3)),
+    "random_forest_ranger" = list(
+      "n_tree" = 4,
+      "sample_size" = 0.7,
+      "m_try" = 0.5,
+      "node_size" = 20,
+      "tree_depth" = 3
+    )
+  ),
   learner = "random_forest_ranger",
   parallel = FALSE,
   skip_evaluation_elements = "all"
@@ -155,10 +156,12 @@ familiar::summon_familiar(
 
 # Create path to the directory containing the models.
 model_directory_path <- file.path(
-  tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
+  tempdir(), "binomial", "trained_models", "random_forest_ranger", "none"
+)
 model_path <- file.path(
   model_directory_path,
-  list.files(model_directory_path, pattern = "model")[1])
+  list.files(model_directory_path, pattern = "model")[1L]
+)
 
 # Load the model.
 binomial_model <- readRDS(model_path)
@@ -181,16 +184,17 @@ familiar::summon_familiar(
   experiment_dir = "survival",
   experimental_design = "fs+mb",
   cluster_method = "none",
-  fs_method = "none",
+  vimp_method = "none",
   hyperparameter = list(
-    "random_forest_ranger" =
-      list(
-        "n_tree" = 9,
-        "sample_size" = 0.95,
-        "m_try" = 0.68,
-        "node_size" = 30,
-        "tree_depth" = 2,
-        "alpha" = 0.25)),
+    "random_forest_ranger" = list(
+      "n_tree" = 9,
+      "sample_size" = 0.95,
+      "m_try" = 0.68,
+      "node_size" = 30,
+      "tree_depth" = 2,
+      "alpha" = 0.25
+    )
+  ),
   learner = "random_forest_ranger",
   parallel = FALSE,
   skip_evaluation_elements = "all"
@@ -198,10 +202,12 @@ familiar::summon_familiar(
 
 # Create path to the directory containing the models.
 model_directory_path <- file.path(
-  tempdir(), "survival", "trained_models", "random_forest_ranger", "none")
+  tempdir(), "survival", "trained_models", "random_forest_ranger", "none"
+)
 model_path <- file.path(
   model_directory_path, 
-  list.files(model_directory_path, pattern = "model")[1])
+  list.files(model_directory_path, pattern = "model")[1L]
+)
 
 # Load the model.
 survival_model <- readRDS(model_path)
@@ -220,9 +226,10 @@ plots <- familiar::plot_model_performance(
   object = binomial_model,
   data = binomial_data,
   metric = c("auc", "brier", "f1_score"),
-  x_axis_by = "metric")
+  x_axis_by = "metric"
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 The plot shows distributions of the area under the receiver operating
@@ -247,9 +254,10 @@ follows:
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-bci"}
 plots <- familiar::plot_auc_roc_curve(
   object = binomial_model,
-  data = binomial_data)
+  data = binomial_data
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 Under ideal circumstances, the curve would lie in the top-left corner of the
@@ -279,9 +287,10 @@ of a single model or the complete ensemble of models is evaluated
 plots <- familiar::plot_auc_roc_curve(
   object = binomial_model,
   data = binomial_data,
-  estimation_type = "point")
+  estimation_type = "point"
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 Note that we did not specify the detail level to create the above plot because
@@ -303,9 +312,10 @@ follows:
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-bci"}
 plots <- familiar::plot_auc_precision_recall_curve(
   object = binomial_model,
-  data = binomial_data)
+  data = binomial_data
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 Under ideal circumstances, the curve would lie in the top-right part of the
@@ -335,9 +345,10 @@ In the breast cancer dataset, this produces the following curve:
 plots <- familiar::plot_auc_precision_recall_curve(
   object = binomial_model,
   data = binomial_data,
-  estimation_type = "point")
+  estimation_type = "point"
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 ## Confusion matrix
@@ -349,9 +360,10 @@ potential weaknesses of classifiers, i.e. false positives or negatives.
 ```{r, fig.align='center', fig.width=7, label="confusion-matrix"}
 plots <- familiar::plot_confusion_matrix(
   object = binomial_model,
-  data = binomial_data)
+  data = binomial_data
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 Familiar selects the class with the highest predicted class probability as the
@@ -395,10 +407,11 @@ Kaplan-Meier plot:
 ```{r, fig.align='center', fig.width=7, label="kaplan-meier-plot"}
 plots <- familiar::plot_kaplan_meier(
   object = survival_model,
-  data = survival_data)
+  data = survival_data
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 In the plot above, familiar divides instances into two groups by the median
@@ -425,10 +438,11 @@ the breast cancer dataset produces the following calibration plot:
 ```{r, fig.align='center', fig.width=7, label="calibration-data-bci"}
 plots <- familiar::plot_calibration_data(
   object = binomial_model,
-  data = binomial_data)
+  data = binomial_data
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 The calibration curve shows the expected (predicted) probability of malignant
@@ -493,10 +507,11 @@ We can observe the points thus created in a calibration plot when
 plots <- familiar::plot_calibration_data(
   object = binomial_model,
   data = binomial_data,
-  estimation_type = "point")
+  estimation_type = "point"
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 The plot with point estimates and the earlier calibration plot with bootstrap
@@ -538,9 +553,10 @@ figure:
 plots <- familiar::plot_decision_curve(
   object = binomial_model,
   data = binomial_data,
-  y_range = c(-0.2, 0.5))
+  y_range = c(-0.2, 0.5)
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 The shaded curve is the decision curve produced by the model, with 95% confidence
@@ -574,9 +590,10 @@ importance is determined. This produces the following plot:
 ```{r, fig.align='center', fig.width=7, label="model-variable-importance"}
 plots <- familiar::plot_model_signature_variable_importance(
   object = binomial_model,
-  data = binomial_data)
+  data = binomial_data
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 In such plots, we always order features so that the most important features are
@@ -604,9 +621,10 @@ For the breast cancer dataset, this results in the following figure:
 plots <- familiar::plot_permutation_variable_importance(
   object = binomial_model,
   data = binomial_data,
-  estimation_type = "bias_correction")
+  estimation_type = "bias_correction"
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 The figure shows the features along the y-axis, and the loss in AUC-ROC caused
@@ -640,9 +658,10 @@ plots <- familiar::plot_permutation_variable_importance(
   data = binomial_data,
   estimation_type = "bias_correction",
   feature_similarity_metric = "spearman",
-  feature_similarity_threshold = c(0.6, 1.0))
+  feature_similarity_threshold = c(0.6, 1.0)
+)
 
-plots[[1]]
+plots[[1L]]
 ```
 
 This figure paints a different picture: the `cell_shape_uniformity`, `bare_nuclei`,
@@ -666,10 +685,11 @@ was found to be important for predicting cell malignancy in the breast cancer.
 plots <- familiar::plot_ice(
   object = binomial_model,
   data = binomial_data,
-  features = "cell_shape_uniformity")
+  features = "cell_shape_uniformity"
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 The ICE plot shows multiple curves for individual samples, as well as their
@@ -700,10 +720,11 @@ plots <- familiar::plot_ice(
   object = binomial_model,
   data = binomial_data,
   features = "cell_shape_uniformity",
-  anchor_values = list("cell_shape_uniformity" = 10.0))
+  anchor_values = list("cell_shape_uniformity" = 10.0)
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 In the plot above, we have anchored the values at `cell_shape_uniformity=10`,
@@ -717,10 +738,11 @@ time:
 plots <- familiar::plot_ice(
   object = binomial_model,
   data = binomial_data,
-  features = c("cell_shape_uniformity", "bare_nuclei"))
+  features = c("cell_shape_uniformity", "bare_nuclei")
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 The partial dependence plot above shows the `cell_shape_uniformity` along the
@@ -740,11 +762,13 @@ plots <- familiar::plot_ice(
   features = c("cell_shape_uniformity", "bare_nuclei"),
   anchor_values = list(
     "cell_shape_uniformity" = 10.0,
-    "bare_nuclei" = 10.0),
-  show_novelty = FALSE)
+    "bare_nuclei" = 10.0
+  ),
+  show_novelty = FALSE
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 We disabled novelty (`show_novelty=FALSE`) for plotting the 2D anchored plot.
@@ -765,10 +789,11 @@ plots <- familiar::plot_ice(
   data = survival_data,
   features = c("nodes", "rx"),
   evaluation_times = 1000,
-  show_novelty = FALSE)
+  show_novelty = FALSE
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 Here we see that the number of nodes was not sampled linearly. Survival
@@ -785,7 +810,8 @@ visualised using similarity heatmaps:
 plots <- familiar::plot_feature_similarity(
   object = binomial_model,
   data = binomial_data,
-  feature_similarity_metric = "spearman")
+  feature_similarity_metric = "spearman"
+)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -800,11 +826,13 @@ It is also possible to view the sample clustering. This can be used to identify
 if samples are readily stratified into clusters, which may or may not correlate
 to the endpoint of interest. For the breast cancer dataset, this yields the
 following heatmap:
+
 ```{r, fig.align='center', fig.width=7, label="sample-similarity"}
 plots <- familiar::plot_sample_clustering(
   object = binomial_model,
   data = binomial_data,
-  feature_similarity_metric = "spearman")
+  feature_similarity_metric = "spearman"
+)
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
@@ -827,10 +855,11 @@ plots <- familiar::plot_sample_clustering(
   object = binomial_model,
   data = binomial_data,
   feature_similarity_metric = "spearman",
-  show_normalised_data = "none")
+  show_normalised_data = "none"
+)
 
 grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+grid::grid.draw(plots[[1L]])
 ```
 
 # References

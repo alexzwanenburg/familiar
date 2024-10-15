@@ -1,10 +1,12 @@
 .get_palette <- function(
     x = NULL,
     palette_type,
-    n = 5, 
+    n = NULL, 
     invert = FALSE,
     use_alternative = FALSE,
-    diverge_to_white = FALSE) {
+    diverge_to_white = FALSE
+) {
+  
   # Check whether the provided palette is known, a set of colours, or a default.
   if (is.null(x)) {
     colours <- .get_default_palette(
@@ -12,35 +14,48 @@
       palette_type = palette_type,
       invert = invert,
       use_alternative = use_alternative,
-      diverge_to_white = diverge_to_white)
+      diverge_to_white = diverge_to_white
+    )
     
   } else if (all(is.character(x))) {
-    if (length(x) > 1) {
+    if (length(x) > 1L) {
       # Check that all elements are colours.
       valid_colours <- sapply(x, .is_colour)
 
-      if (any(!valid_colours)) {
-        stop(paste0(
+      if (!all(valid_colours)) {
+        ..error(paste0(
           "The following palette colours could not be interpreted: ",
           paste_s(x[!valid_colours]),
           " . A valid colour is either a hexadecimal string (e.g. \"#4F94CD\"), ",
           "a colour specified in grDevices::colors() (e.g. \"steelblue3\"), ",
-          "or \"transparant\". Alternatively, a palette can be specified by name."))
+          "or \"transparant\". Alternatively, a palette can be specified by name."
+        ))
       }
 
       colours <- x
       
-    } else if (length(x) == 1) {
+    } else if (length(x) == 1L) {
+      if (palette_type %in% c("divergent", "sequential") && is.null(n)) {
+        # Set n if unspecified.
+        n <- 31L
+        
+      } else if (palette_type == "qualitative" && is.null(n)) {
+        # In case of qualitative palettes, n should be set explicitly by familiar.
+        ..error_reached_unreachable_code("Qualitative palettes requires the number of discrete cases n.")
+      }
+      
       # Obtain colours from a predefined palette.
       colours <- .palette_to_colour(
         x = x,
-        n = n)
+        n = n
+      )
     }
     
   } else {
-    stop(paste0(
+    ..error(paste0(
       "The requested palette are neither colours nor a palette: ",
-      paste0(x, collapse = ", ")))
+      paste_s(x)
+    ))
   }
 
   return(colours)
@@ -49,32 +64,74 @@
 
 
 .is_colour <- function(x) {
-  return(x %in% grDevices::colors() ||
-           x == "transparant" ||
-           grepl(pattern = "^#(\\d|[a-f]){6,8}$", x, ignore.case = TRUE))
+  return(
+    x %in% grDevices::colors() ||
+      x == "transparant" ||
+      grepl(pattern = "^#(\\d|[a-f]){6,8}$", x, ignore.case = TRUE)
+  )
 }
 
 
 
-.palette_to_colour <- function(x, n = 5) {
+.palette_to_colour <- function(x, n) {
   # Determine if the string ends with _, _r or _rev.
   invert_colours <- grepl(pattern = "_$|_r$|_rev$", x, ignore.case = TRUE)
 
   # Strip from x
   x <- gsub(pattern = "_$|_r$|_rev$", replacement = "", x)
 
+  colours <- NULL
+  # Try paletteer.
+  if (rlang::is_installed("paletteer")) {
+    # Continuous palette
+    colours <- tryCatch(
+      paletteer::paletteer_c(
+        palette = x,
+        n = n
+      ),
+      error = function(err) (NULL)
+    )
+    
+    # Dynamic palette
+    if (is.null(colours)) {
+      colours <- tryCatch(
+        paletteer::paletteer_dynamic(
+          palette = x,
+          n = n
+        ),
+        error = function(err) (NULL)
+      )
+    }
+    
+    # Discrete palette
+    if (is.null(colours)) {
+      colours <- tryCatch(
+        paletteer::paletteer_d(
+          palette = x,
+          n = n
+        ),
+        error = function(err) (NULL)
+      )
+    }
+  }
+  
   # Try grDevices::palette (requires R version >= 4.0.0)
-  colours <- tryCatch(
-    grDevices::palette.colors(n = n, palette = x),
-    error = function(err) (NULL))
+  if (is.null(colours)) {
+    colours <- tryCatch(
+      grDevices::palette.colors(n = n, palette = x),
+      error = function(err) (NULL)
+    )
+  }
 
   # Try grDevices::hcl.colors (requires R version >= 3.6.0)
   if (is.null(colours)) {
     colours <- tryCatch(
       grDevices::hcl.colors(n = n, palette = x),
-      error = function(err) (NULL))
+      error = function(err) (NULL)
+    )
   }
-
+  
+  
   # Palettes that are always available.
   if (is.null(colours)) {
     if (x == "default") {
@@ -93,15 +150,14 @@
   }
 
   if (is.null(colours)) {
-    stop(paste0(
+    ..error(paste0(
       "The palette was not recognised: ", x,
       ". Please check the spelling. Note that some options may not be available prior ",
-      "to R 4.0.0 (grDevices::palette.pals(), and R 3.6.0 (grDevices::hcl.pals()))."))
+      "to R 4.0.0 (grDevices::palette.pals(), and R 3.6.0 (grDevices::hcl.pals()))."
+    ))
   }
 
-  if (invert_colours) {
-    colours <- rev(colours)
-  }
+  if (invert_colours) colours <- rev(colours)
 
   return(colours)
 }
@@ -112,11 +168,13 @@
     palette_type,
     invert,
     use_alternative = FALSE,
-    diverge_to_white = FALSE) {
+    diverge_to_white = FALSE
+) {
   
   .check_parameter_value_is_valid(
     x = palette_type, var_name = "palette_type",
-    values = c("qualitative", "sequential", "divergent"))
+    values = c("qualitative", "sequential", "divergent")
+  )
 
   if (palette_type == "qualitative") {
     # Default qualitative palettes are based on the Tableau 10 palette by
@@ -133,7 +191,7 @@
     # * https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782
     # 
     if (!use_alternative) {
-      if (n <= 10) {
+      if (n <= 10L) {
         colours <- c(
           "#4e79a7",
           "#f28e2b",
@@ -145,9 +203,9 @@
           "#ff9da7",
           "#9c755f",
           "#bab0ac"
-        )[1:n]
+        )[1L:n]
         
-      } else if (n <= 20) {
+      } else if (n <= 20L) {
         colours <- c(
           "#4e79a7",
           "#a0cbe8",
@@ -169,18 +227,19 @@
           "#d4a6c8",
           "#9d7660",
           "#d7b5a6"
-        )[1:n]
+        )[1L:n]
         
       } else {
-        stop(paste0(
+        ..error(paste0(
           "The required number (", n, ") of discrete colors is too large for the ",
-          "default qualitative score (max 20). "))
+          "default qualitative score (max 20). "
+        ))
       }
     } else {
       # Alternative colour schemes were the blue and orange colours come last.
       # This is to avoid confusion with other gradients that may be used in the
       # plot.
-      if (n <= 10) {
+      if (n <= 10L) {
         colours <- c(
           "#e15759",
           "#76b7b2",
@@ -192,9 +251,9 @@
           "#bab0ac",
           "#4e79a7",
           "#f28e2b"
-        )[1:n]
+        )[1L:n]
         
-      } else if (n <= 20) {
+      } else if (n <= 20L) {
         colours <- c(
           "#59a14f",
           "#8cd17d",
@@ -216,12 +275,13 @@
           "#a0cbe8",
           "#f28e2b",
           "#ffbe7d"
-        )[1:n]
+        )[1L:n]
         
       } else {
-        stop(paste0(
+        ..error(paste0(
           "The required number (", n, ") of discrete colors is too large for ",
-          "the default qualitative score (max 20). "))
+          "the default qualitative score (max 20). "
+        ))
       }
     }
   } else if (palette_type == "sequential") {

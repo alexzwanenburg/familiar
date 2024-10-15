@@ -54,7 +54,7 @@ test_run_archive_experiment <- function(parameters) {
 }
 
 test_create_experiment_archive <- function(
-    outcome_type = c("binomial", "multinomial", "count", "continuous", "survival")) {
+    outcome_type = c("binomial", "multinomial", "continuous", "survival")) {
   # Creates zip files for testing update_object methods.
 
   test_generate_experiment_parameters <- coro::generator(function(outcome_type) {
@@ -64,14 +64,13 @@ test_create_experiment_archive <- function(
         current_outcome_type,
         "binomial" = c("glm_logistic", "lasso"),
         "multinomial" = c("glm", "lasso"),
-        "count" = c("glm", "lasso"),
         "continuous" = c("glm_gaussian", "lasso"),
         "survival" = c("cox", "survival_regr_weibull"))
 
       coro::yield(list(
         "experimental_design" = "bs(fs+mb,3)",
         "outcome_type" = current_outcome_type,
-        "fs_method" = c("mim", "concordance"),
+        "vimp_method" = c("mim", "concordance"),
         "learner" = learner))
     }
   })

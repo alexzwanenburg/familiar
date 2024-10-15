@@ -4,8 +4,6 @@ NULL
 
 
 
-
-
 # set_data_set_names -----------------------------------------------------------
 
 #' @title Name datasets for plotting and export
@@ -42,14 +40,16 @@ setMethod(
     x,
     old = NULL,
     new = NULL,
-    order = NULL) {
+    order = NULL
+  ) {
     
     x <- .set_labels(
       x = x,
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "data_set_labels")
+      upd_slot = "data_set_labels"
+    )
     
     return(x)
   }
@@ -85,14 +85,16 @@ setMethod(
     x,
     old = NULL,
     new = NULL,
-    order = NULL) {
+    order = NULL
+  ) {
     
     x <- .set_labels(
       x = x,
       old_label = old, 
       new_label = new,
       new_order = order,
-      upd_slot = "learner_labels")
+      upd_slot = "learner_labels"
+    )
     
     return(x)
   }
@@ -100,43 +102,45 @@ setMethod(
 
 
 
-# set_fs_method_names ----------------------------------------------------------
+# set_vimp_method_names ----------------------------------------------------------
 
-#' @title Rename feature selection methods for plotting and export
+#' @title Rename variable importance methods for plotting and export
 #'
 #' @description Tabular exports and figures created from a familiarCollection
-#'   object can be customised by providing names for the feature selection
+#'   object can be customised by providing names for the variable importance
 #'   methods.
 #'
-#' @details Labels convert the internal naming for feature selection methods to
-#'   the requested label at export or when plotting. This enables the use of
+#' @details Labels convert the internal naming for variable importance methods
+#'   to the requested label at export or when plotting. This enables the use of
 #'   more specific naming, e.g. changing \code{mim} to \code{Mutual Information
 #'   Maximisation}. Currently assigned labels can be found using the
-#'   \code{get_fs_method_names} method.
+#'   \code{get_vimp_method_names} method.
 #'
 #' @inheritParams set_data_set_names,familiarCollection-method
 #' @return A familiarCollection object with updated labels.
 #' @export
-#' @aliases set_fs_method_names
+#' @aliases set_vimp_method_names
 #' @seealso * \linkS4class{familiarCollection} for information concerning the
-#' familiarCollection class. * \code{\link{get_fs_method_names}} for obtaining
+#' familiarCollection class. * \code{\link{get_vimp_method_names}} for obtaining
 #' currently assigned labels.
 #' @md
 setMethod(
-  "set_fs_method_names",
+  "set_vimp_method_names",
   signature(x = "familiarCollection"),
   function(
     x,
     old = NULL,
     new = NULL, 
-    order = NULL) {
+    order = NULL
+  ) {
     
     x  <- .set_labels(
       x = x,
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "fs_method_labels")
+      upd_slot = "vimp_method_labels"
+    )
     
     return(x)
   }
@@ -171,14 +175,16 @@ setMethod(
     x,
     old = NULL,
     new = NULL,
-    order = NULL) {
+    order = NULL
+  ) {
     
     x <- .set_labels(
       x = x,
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "feature_labels")
+      upd_slot = "feature_labels"
+    )
     
     return(x)
   }
@@ -214,14 +220,16 @@ setMethod(
     x,
     old = NULL,
     new = NULL,
-    order = NULL) {
+    order = NULL
+  ) {
     
     x <- .set_labels(
       x = x,
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "km_group_labels")
+      upd_slot = "km_group_labels"
+    )
     
     return(x)
   }
@@ -256,14 +264,16 @@ setMethod(
     x,
     old = NULL,
     new = NULL,
-    order = NULL) {
+    order = NULL
+  ) {
     
     x <- .set_labels(
       x = x,
       old_label = old,
       new_label = new,
       new_order = order,
-      upd_slot = "class_labels")
+      upd_slot = "class_labels"
+    )
     
     return(x)
   }
@@ -299,7 +309,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "data_set_labels",
-      get_levels = FALSE))
+      get_levels = FALSE
+    ))
   }
 )
 
@@ -333,42 +344,44 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "learner_labels",
-      get_levels = FALSE))
+      get_levels = FALSE
+    ))
   }
 )
 
 
 
-# get_fs_method_names ----------------------------------------------------------
+# get_vimp_method_names ----------------------------------------------------------
 
-#' @title Get current feature selection method name labels
+#' @title Get current variable importance method name labels
 #'
-#' @description Feature selection methods in familiarCollection objects can have
-#'   custom names for export and plotting. This function retrieves the currently
-#'   assigned names.
-#'
-#' @details Labels convert internal naming of feature selection methods to the
+#' @description Variable importance methods in familiarCollection objects can
+#'   have custom names for export and plotting. This function retrieves the
+#'   currently assigned names.
+#' 
+#' @details Labels convert internal naming of variable importance methods to the
 #'   requested label at export or when plotting. Labels can be changed using the
-#'   \code{set_fs_method_names} method.
+#'   \code{set_vimp_method_names} method.
 #'
 #' @inheritParams get_data_set_names,familiarCollection-method
 #'
-#' @return An ordered array of feature selection method name labels.
+#' @return An ordered array of variable importance method name labels.
 #' @export
-#' @aliases get_fs_method_names
+#' @aliases get_vimp_method_names
 #' @seealso
 #' * \linkS4class{familiarCollection} for information concerning the familiarCollection class.
-#' * \code{\link{set_fs_method_names}} for updating the name of feature selection methods and their ordering.
+#' * \code{\link{set_vimp_method_names}} for updating the name of variable importance methods and their ordering.
 #' @md
 setMethod(
-  "get_fs_method_names",
+  "get_vimp_method_names",
   signature(x = "familiarCollection"),
   function(x) {
     
     return(.get_labels(
       x = x,
-      upd_slot = "fs_method_labels",
-      get_levels = FALSE))
+      upd_slot = "vimp_method_labels",
+      get_levels = FALSE
+    ))
   }
 )
 
@@ -402,7 +415,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "feature_labels",
-      get_levels = FALSE))
+      get_levels = FALSE
+    ))
   }
 )
 
@@ -437,7 +451,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "km_group_labels",
-      get_levels = FALSE))
+      get_levels = FALSE
+    ))
   }
 )
 
@@ -472,7 +487,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "class_labels",
-      get_levels = FALSE))
+      get_levels = FALSE
+    ))
   }
 )
 
@@ -487,7 +503,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "data_set_labels",
-      get_levels = TRUE))
+      get_levels = TRUE
+    ))
   }
 )
 
@@ -502,22 +519,24 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "learner_labels",
-      get_levels = TRUE))
+      get_levels = TRUE
+    ))
   }
 )
 
 
 
-# get_fs_method_name_levels ----------------------------------------------------
+# get_vimp_method_name_levels ----------------------------------------------------
 setMethod(
-  "get_fs_method_name_levels",
+  "get_vimp_method_name_levels",
   signature(x = "familiarCollection"),
   function(x) {
     
     return(.get_labels(
       x = x,
-      upd_slot = "fs_method_labels",
-      get_levels = TRUE))
+      upd_slot = "vimp_method_labels",
+      get_levels = TRUE
+    ))
   }
 )
 
@@ -532,7 +551,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "feature_labels",
-      get_levels = TRUE))
+      get_levels = TRUE
+    ))
   }
 )
 
@@ -547,7 +567,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "km_group_labels",
-      get_levels = TRUE)) 
+      get_levels = TRUE
+    )) 
   }
 )
 
@@ -562,7 +583,8 @@ setMethod(
     return(.get_labels(
       x = x,
       upd_slot = "class_labels",
-      get_levels = TRUE))
+      get_levels = TRUE
+    ))
   }
 )
 
@@ -585,7 +607,8 @@ setMethod(
   "save",
   signature(
     list = "familiarCollection",
-    file = "character"),
+    file = "character"
+  ),
   function(list, file) {
     .save(object = list, dir_path = file)
   }
@@ -599,7 +622,8 @@ setMethod(
   signature(object = "familiarCollection"),
   function(
     object,
-    abbreviated = FALSE) {
+    abbreviated = FALSE
+  ) {
     
     # Get the full name of the object
     object_name <- object@name
@@ -622,11 +646,13 @@ setMethod(
     # Create an initial descriptor.
     cat(paste0(
       "A collection of datasets (", object@name, "; ",
-      .familiar_version_string(object), "):\n"))
+      .familiar_version_string(object), "):\n"
+    ))
     
     lapply(
       object@data_sets,
-      function(x) cat(paste0("  ", x, "\n")))
+      function(x) cat(paste0("  ", x, "\n"))
+    )
     
     # Outcome details
     cat("\nThe collection contains data for the following outcome:\n")
@@ -645,7 +671,8 @@ setMethod(
     old_label,
     new_label,
     new_order,
-    upd_slot) {
+    upd_slot
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     label <- NULL
@@ -668,13 +695,16 @@ setMethod(
     if (!is.null(new_label)) {
       
       # Check that the length of new_label is not 0
-      if (length(new_label) == 0) {
-        stop("The number of \"new\" labels should be larger than 0.")
+      if (length(new_label) == 0L) {
+        ..error(
+          "The number of \"new\" labels should be larger than 0.",
+          error_class = "input_argument_error"
+        )
       }
       
       # Check for duplicates in new_label
       if (anyDuplicated(new_label)) {
-        warning("The \"new\" labels contain duplicate values.")
+        ..warning("The \"new\" labels contain duplicate values.")
       }
       
       # Get old labels, if they were not provided.
@@ -682,9 +712,13 @@ setMethod(
         
         # Check if we can safely assume that the new labels are matching 
         if (length(new_label) != nrow(label_table)) {
-          stop(paste0(
-            "If \"old\" is not provided explicitly, \"new\" should have the ",
-            "same length as the currently existing labels."))
+          ..error(
+            paste0(
+              "If \"old\" is not provided explicitly, \"new\" should have the ",
+              "same length as the currently existing labels."
+            ),
+            error_class = "input_argument_error"
+          )
         }
         
         # Assume that old is the currently known label
@@ -693,33 +727,45 @@ setMethod(
       
       # Check for duplicates in old_label
       if (anyDuplicated(old_label)) {
-        stop("The provided \"old\" labels contain duplicate values.")
+        ..error(
+          "The provided \"old\" labels contain duplicate values.",
+          error_class = "input_argument_error"
+        )
       }
       
       # Check that length of new_label and old_label are the same
       if (length(new_label) != length(old_label)) {
-        stop("The same number of \"old\" and \"new\" labels should be provided.")
+        ..error(
+          "The same number of \"old\" and \"new\" labels should be provided.",
+          error_class = "input_argument_error"
+        )
       }
       
       # Check if all old_label entries are actually existing labels.
       unrecognised_labels <- old_label[!old_label %in% label_table$label]
-      if (length(unrecognised_labels) > 0) {
-        stop(paste0(
-          "The following old labels were not found: ",
-          paste_s(unrecognised_labels)))
+      if (length(unrecognised_labels) > 0L) {
+        ..error(
+          paste0(
+            "The following old labels were not found: ",
+            paste_s(unrecognised_labels)
+          ),
+          error_class = "input_argument_error"
+        )
       }
       
       # Generate a data.table using old_label and new_label
       replacement_table <- data.table::data.table(
         "label" = old_label,
-        "new_label" = new_label)
+        "new_label" = new_label
+      )
       
       # Merge both tables
       label_table <- merge(
         x = label_table,
         y = replacement_table,
         by = "label",
-        all.x = TRUE)
+        all.x = TRUE
+      )
       
       # Copy old labels to the new_label column for labels that were not
       # provided previously
@@ -729,7 +775,8 @@ setMethod(
       data.table::setnames(
         x = label_table,
         old = c("label", "new_label"),
-        new = c("old_label", "label"))
+        new = c("old_label", "label")
+      )
       
       # Drop the "old_label" column as it is no longer required
       label_table[, "old_label" := NULL]
@@ -741,34 +788,46 @@ setMethod(
       
       # Check that new_order has the same length as the label_table
       if (length(new_order) != length(unique(label_table$label))) {
-        stop("\"order\" should match the number of labels.")
+        ..error(
+          "\"order\" should match the number of labels.",
+          error_class = "input_argument_error"
+        )
       }
       
       # Check that there are no duplicates in new_order.
       if (anyDuplicated(new_order)) {
-        warning("\"order\" contains duplicate entries.")
+        ..warning("\"order\" contains duplicate entries.")
       }
       
       # Check that new_order has the same class the label.
       if (!is_any(new_order, class(label_table$label))) {
-        stop(paste0(
-          "\"order should have the same class as the label, i.e. ",
-          paste(class(label_table$label), collapse = " or "), "."))
+        ..error(
+          paste0(
+            "\"order\" should have the same class as the label, i.e. ",
+            paste(class(label_table$label), collapse = " or "), "."
+          ),
+          error_class = "input_argument_error"
+        )
       }
       
       # Check that there are no elements of new_order that do not appear as a label
       unrecognised_labels <- new_order[!new_order %in% label_table$label]
-      if (length(unrecognised_labels) > 0) {
-        stop(paste0(
-          "The following labels were not found for ordering: ",
-          paste_s(unrecognised_labels)))
+      if (length(unrecognised_labels) > 0L) {
+        ..error(
+          paste0(
+            "The following labels were not found for ordering: ",
+            paste_s(unrecognised_labels)
+          ),
+          error_class = "input_argument_error"
+        )
       }
       
       # Find the order by matching the label column in the label table with the
       # provided labels in new_order
       new_label_order <- match(
         label_table$label,
-        new_order)
+        new_order
+      )
       
       # Update the label order
       label_table[, "label_order" := new_label_order]
@@ -800,31 +859,34 @@ setMethod(
     } else if (upd_slot == "learner_labels") {
       data <- slot(x, "learner")
       
-    } else if (upd_slot == "fs_method_labels") {
-      data <- slot(x, "fs_method")
+    } else if (upd_slot == "vimp_method_labels") {
+      data <- slot(x, "vimp_method")
       
     } else if (upd_slot == "feature_labels") {
       data <- unique(c(
         slot(x, "required_features"),
-        x@fs_vimp$vimp_table$name))
+        x@fs_vimp$vimp_table$name
+      ))
       
     } else if (upd_slot == "km_group_labels") {
       data <- unique(c(
         "low", "moderate", "high",
-        unlist(lapply(x@km_data, function(x) (levels(x@data$risk_group))))))
+        unlist(lapply(x@km_data, function(x) (levels(x@data$group))))
+      ))
       
     } else if (upd_slot == "class_labels") {
       data <- get_outcome_class_levels(x)
       
     } else {
-      stop("Slot is not available for familiarCollection objects.")
+      ..error("Slot is not available for familiarCollection objects.")
     }
     
     # Add the new label table to the slot
     slot(x, upd_slot) <- data.table::data.table(
       "internal" = data,
       "label" = data,
-      "label_order" = seq_len(length(data)))
+      "label_order" = seq_along(data)
+    )
     
     return(x)
   }
@@ -839,7 +901,8 @@ setMethod(
   function(
     x,
     upd_slot,
-    get_levels = FALSE) {
+    get_levels = FALSE
+  ) {
     # Get ordered levels (i.e. internal column from the label table) from the
     # specific slot
     

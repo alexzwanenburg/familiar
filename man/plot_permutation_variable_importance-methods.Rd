@@ -23,7 +23,7 @@ plot_permutation_variable_importance(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   conf_int_style = c("point_line", "line", "bar_line", "none"),
   conf_int_alpha = 0.4,
@@ -51,7 +51,7 @@ plot_permutation_variable_importance(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   conf_int_style = c("point_line", "line", "bar_line", "none"),
   conf_int_alpha = 0.4,
@@ -79,7 +79,7 @@ plot_permutation_variable_importance(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   conf_int_style = c("point_line", "line", "bar_line", "none"),
   conf_int_alpha = 0.4,
@@ -124,8 +124,15 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette used to fill the bars in case a
-non-singular variable was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -201,8 +208,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -378,7 +385,7 @@ feature is randomly permuted.
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:
 \itemize{
-\item \code{fs_method}: feature selection methods.
+\item \code{vimp_method}: variable importance methods.
 \item \code{learner}: learners.
 \item \code{data_set}: data sets.
 \item \code{metric}: the model performance metrics.
@@ -387,19 +394,11 @@ and \code{facet_by}:
 of features to permute simultaneously.
 }
 
-By default, the data is split by \code{fs_method}, \code{learner} and \code{metric},
+By default, the data is split by \code{vimp_method}, \code{learner} and \code{metric},
 faceted by \code{data_set} and \code{evaluation_time}, and coloured by
 \code{similarity_threshold}.
 
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
-
-Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_feature_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 

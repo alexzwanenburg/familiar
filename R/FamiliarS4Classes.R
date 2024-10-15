@@ -25,8 +25,7 @@
 #' @slot novelty_detector A familiarNoveltyDetector object that can be used to
 #'   detect out-of-distribution samples.
 #' @slot learner Learning algorithm used to create the model.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model.
+#' @slot vimp_method Method used to determine variable importance for the model.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the model,
@@ -79,8 +78,8 @@ setClass("familiarModel",
     novelty_detector = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
@@ -109,9 +108,10 @@ setClass("familiarModel",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
@@ -122,7 +122,7 @@ setClass("familiarModel",
     calibration_model = NULL,
     novelty_detector = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
@@ -136,7 +136,8 @@ setClass("familiarModel",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -155,8 +156,8 @@ setClass("familiarModel",
 #' @slot data_column_info Data information object containing information
 #'   regarding identifier column names and outcome column names.
 #' @slot learner Learning algorithm used to create the models in the ensemble.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the models in the ensemble.
+#' @slot vimp_method Method used to determine variable importance for the models
+#'   in the ensemble.
 #' @slot feature_info List of objects containing feature information, e.g.,
 #'   name, class levels, transformation, normalisation and clustering
 #'   parameters.
@@ -197,8 +198,8 @@ setClass("familiarEnsemble",
     data_column_info = "ANY",
     # Name of learner.
     learner = "character",
-    # Name of feature selection method.
-    fs_method = "character",
+    # Name of variable importance method.
+    vimp_method = "character",
     # Data required for feature pre-processing.
     feature_info = "ANY",
     # Required features for complete reconstruction, including imputation.
@@ -226,15 +227,16 @@ setClass("familiarEnsemble",
     # Project identifier for consistency tracking.
     project_id = "ANY",
     # Package version for backward compatibility checks.
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model_list = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
     data_column_info = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     feature_info = NULL,
     required_features = NULL,
     model_features = NULL,
@@ -245,7 +247,14 @@ setClass("familiarEnsemble",
     auto_detach = FALSE,
     settings = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+setClassUnion(
+  "familiarModelUnion",
+  members = c("familiarModel", "familiarEnsemble")
 )
 
 
@@ -261,8 +270,7 @@ setClass("familiarEnsemble",
 #' @slot outcome_type Outcome type of the data used to create the object.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected from feature selection
-#'   methods.
+#' @slot fs_vimp Data collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -275,8 +283,8 @@ setClass("familiarEnsemble",
 #'   model or ensemble of models, but without imputation.
 #' @slot learner Learning algorithm used to create the model or ensemble of
 #'   models.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model or ensemble of models.
+#' @slot vimp_method Method used to determine variable importance for the model
+#'   or ensemble of models.
 #' @slot pooling_table Run table for the data underlying the familiarData
 #'   object. Used internally.
 #' @slot prediction_data Model predictions for a model or ensemble of models for
@@ -327,7 +335,7 @@ setClass("familiarData",
     outcome_type = "character",
     # Outcome info, such as class levels, mean values etc.
     outcome_info = "ANY",
-    # Feature selection variable importance
+    # Variable importance method
     fs_vimp = "ANY",
     # Model variable importance
     model_vimp = "ANY",
@@ -344,8 +352,8 @@ setClass("familiarData",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Run table for the current data
     pooling_table = "ANY",
     # Model predictions for later reference
@@ -384,9 +392,10 @@ setClass("familiarData",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -397,7 +406,7 @@ setClass("familiarData",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     pooling_table = NULL,
     prediction_data = NULL,
     confusion_matrix = NULL,
@@ -414,9 +423,10 @@ setClass("familiarData",
     sample_similarity = NULL,
     ice_data = NULL,
     is_validation = FALSE,
-    generating_ensemble = character(0),
+    generating_ensemble = character(0L),
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 # familiarCollection object ----------------------------------------------------
@@ -431,8 +441,7 @@ setClass("familiarData",
 #' @slot outcome_type Outcome type for which the collection was created.
 #' @slot outcome_info Outcome information object, which contains information
 #'   concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected by feature selection
-#'   methods.
+#' @slot fs_vimpData collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -444,7 +453,8 @@ setClass("familiarData",
 #' @slot model_features The set of features that are required for using the
 #'   model, but without imputation.
 #' @slot learner Learning algorithm(s) used for data in the collection.
-#' @slot fs_method Feature selection method(s) used for data in the collection.
+#' @slot vimp_method Variable importance method(s) used for data in the
+#'   collection.
 #' @slot prediction_data Model predictions for the data in the collection.
 #' @slot confusion_matrix Confusion matrix information for the data in the
 #'   collection.
@@ -475,9 +485,9 @@ setClass("familiarData",
 #'   See `get_data_set_names` and `set_data_set_names`.
 #' @slot learner_labels Labels for the different learning algorithms used to
 #'   create the collection. See `get_learner_names` and `set_learner_names`.
-#' @slot fs_method_labels Labels for the different feature selection methods
-#'   used to create the collection. See `get_fs_method_names` and
-#'   `set_fs_method_names`.
+#' @slot vimp_method_labels Labels for the different variable importance methods
+#'   used to create the collection. See `get_vimp_method_names` and
+#'   `set_vimp_method_names`.
 #' @slot feature_labels Labels for the features in this collection. See
 #'   `get_feature_names` and `set_feature_names`.
 #' @slot km_group_labels Labels for the risk strata in this collection. See
@@ -523,8 +533,8 @@ setClass("familiarCollection",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Model predictions for later reference
     prediction_data = "ANY",
     # Confusion matrix for categorical outcomes
@@ -557,8 +567,8 @@ setClass("familiarCollection",
     data_set_labels = "ANY",
     # Label and order of learners
     learner_labels = "ANY",
-    # Label and order of feature selection methods
-    fs_method_labels = "ANY",
+    # Label and order of variable importance methods
+    vimp_method_labels = "ANY",
     # Label and order of features
     feature_labels = "ANY",
     # Label and order of kaplan-meier groups
@@ -568,10 +578,11 @@ setClass("familiarCollection",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
-    data_sets = character(0),
+    name = character(0L),
+    data_sets = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -582,7 +593,7 @@ setClass("familiarCollection",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     prediction_data = NULL,
     confusion_matrix = NULL,
     decision_curve_data = NULL,
@@ -599,12 +610,13 @@ setClass("familiarCollection",
     ice_data = NULL,
     data_set_labels = NULL,
     learner_labels = NULL,
-    fs_method_labels = NULL,
+    vimp_method_labels = NULL,
     feature_labels = NULL,
     km_group_labels = NULL,
     class_labels = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -622,6 +634,8 @@ setClass("familiarCollection",
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted.
 #' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
 #' @slot data_column_info Object containing column information.
 #' @slot delay_loading logical. Allows delayed loading data, which enables data
 #'   parsing downstream without additional workflow complexity or memory
@@ -659,7 +673,8 @@ setClass("dataObject",
     # Flag for aggregation after loading and pre-processing
     aggregate_on_load = "logical",
     # Samples to be loaded
-    sample_set_on_load = "ANY"),
+    sample_set_on_load = "ANY"
+  ),
   prototype = list(
     data = NULL,
     preprocessing_level = "none",
@@ -669,7 +684,8 @@ setClass("dataObject",
     perturb_level = NA_integer_,
     load_validation = TRUE,
     aggregate_on_load = FALSE,
-    sample_set_on_load = NULL)
+    sample_set_on_load = NULL
+  )
 )
 
 
@@ -767,7 +783,8 @@ setClass("featureInfo",
     imputation_parameters = "ANY",
     cluster_parameters = "ANY",
     required_features = "ANY",
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     set_descriptor = NA_character_,
@@ -795,7 +812,8 @@ setClass("featureInfo",
     imputation_parameters = NULL,
     cluster_parameters = NULL,
     required_features = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -822,11 +840,13 @@ setClass("featureInfoParameters",
   slots = list(
     name = "character",
     complete = "logical",
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     complete = FALSE,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -836,7 +856,8 @@ setClass("featureInfoParameters",
 #' Variable importance table
 #'
 #' A vimpTable object contains information concerning variable importance of one
-#' or more features. These objects are created during feature selection.
+#' or more features. These objects are created during variable importance
+#' computation..
 #'
 #' @slot vimp_table Table containing features with corresponding scores.
 #' @slot vimp_method Method used to compute variable importance scores for each
@@ -920,7 +941,8 @@ setClass("vimpTable",
     # Version of familiar used to create the object.
     familiar_version = "ANY",
     # State of the object.
-    state = "character"),
+    state = "character"
+  ),
   prototype = list(
     vimp_table = NULL,
     vimp_method = NA_character_,
@@ -931,7 +953,8 @@ setClass("vimpTable",
     invert = FALSE,
     project_id = NULL,
     familiar_version = NULL,
-    state = "initial")
+    state = "initial"
+  )
 )
 
 
@@ -998,7 +1021,8 @@ setClass("outcomeInfo",
     # Transformation parameters for the outcome data.
     transformation_parameters = "ANY",
     # Normalisation parameters for the outcome data.
-    normalisation_parameters = "ANY"),
+    normalisation_parameters = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     outcome_type = NA_character_,
@@ -1014,7 +1038,8 @@ setClass("outcomeInfo",
     data_id = NA_integer_,
     run_id = NA_integer_,
     transformation_parameters = NULL,
-    normalisation_parameters = NULL)
+    normalisation_parameters = NULL
+  )
 )
 
 
@@ -1070,7 +1095,8 @@ setClass("familiarVimpMethod",
     # Run table for the current vimp method
     run_table = "ANY",
     # Project identifier for consistency tracking
-    project_id = "ANY"),
+    project_id = "ANY"
+  ),
   prototype = list(
     outcome_type = NA_character_,
     hyperparameters = NULL,
@@ -1081,7 +1107,8 @@ setClass("familiarVimpMethod",
     required_features = NULL,
     package = NULL,
     run_table = NULL,
-    project_id = NULL)
+    project_id = NULL
+  )
 )
 
 
@@ -1163,9 +1190,10 @@ setClass("familiarNoveltyDetector",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     learner = NA_character_,
     model = NULL,
     data_column_info = NULL,
@@ -1180,7 +1208,8 @@ setClass("familiarNoveltyDetector",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1247,9 +1276,10 @@ setClass("familiarHyperparameterLearner",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     learner = NA_character_,
     target_learner = NA_character_,
     target_outcome_type = NA_character_,
@@ -1260,7 +1290,8 @@ setClass("familiarHyperparameterLearner",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1284,7 +1315,8 @@ setClass("familiarHyperparameterLearner",
 #'
 #' @export
 
-setClass("familiarMetric",
+setClass(
+  "familiarMetric",
   slots = list(
     # The metric itself.
     metric = "character",
@@ -1298,14 +1330,16 @@ setClass("familiarMetric",
     # function from.
     baseline_value = "ANY",
     # Flag that sets whether higher values denote better performance.
-    higher_better = "logical"),
+    higher_better = "logical"
+  ),
   prototype = list(
     metric = NA_character_,
     outcome_type = NA_character_,
     name = NA_character_,
     value_range = c(NA_real_, NA_real_),
     baseline_value = NULL,
-    higher_better = TRUE)
+    higher_better = TRUE
+  )
 )
 
 
@@ -1403,12 +1437,13 @@ setClass("familiarMetric",
 #'
 #' @export
 
-setClass("familiarDataElement",
+setClass(
+  "familiarDataElement",
   slots = list(
     # The primary results.
     data = "ANY",
-    # Identifiers of the data, e.g. the generating model name, the
-    # feature-selection method and learner.
+    # Identifiers of the data, e.g. the generating model name, the variable
+    # importance method and learner.
     identifiers = "ANY",
     # The level of detail at which the data was computed.
     detail_level = "character",
@@ -1428,7 +1463,8 @@ setClass("familiarDataElement",
     grouping_column = "ANY",
     # Flag that signals whether the data is aggregated, e.g. by computing
     # confidence intervals and a bias-corrected value.
-    is_aggregated = "logical"),
+    is_aggregated = "logical"
+  ),
   prototype = list(
     data = NULL,
     identifiers = NULL,
@@ -1438,7 +1474,8 @@ setClass("familiarDataElement",
     bootstrap_ci_method = NA_character_,
     value_column = NA_character_,
     grouping_column = NULL,
-    is_aggregated = FALSE)
+    is_aggregated = FALSE
+  )
 )
 
 
@@ -1474,7 +1511,8 @@ setClass("familiarDataElement",
 #'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
 #' @export
 
-setClass("experimentData",
+setClass(
+  "experimentData",
   slots = list(
     # Experimental design.
     experiment_setup = "ANY",
@@ -1487,12 +1525,43 @@ setClass("experimentData",
     # Project identifier for consistency tracking
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     experiment_setup = NULL,
     iteration_list = NULL,
     feature_info = NULL,
     vimp_table_list = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+
+# familiarDataElementPredictionTable object ------------------------------------
+setClass(
+  "familiarDataElementPredictionTable",
+  contains = "familiarDataElement",
+  slots = list(
+    "learner" = "character",
+    "vimp_method" = "character",
+    "ensemble_method" = "character",
+    "percentiles" = "ANY",
+    "outcome_type" = "ANY",
+    "identifier_data" = "ANY",
+    "reference_data" = "ANY",
+    "prediction_data" = "ANY"
+  ),
+  prototype = methods::prototype(
+    bootstrap_ci_method = "percentile",
+    learner = "custom_learner",
+    vimp_method = "custom_vimp_method",
+    ensemble_method = "median",
+    percentiles = NULL,
+    outcome_type = NULL,
+    identifier_data = NULL,
+    reference_data = NULL, 
+    prediction_data = NULL
+  )
 )

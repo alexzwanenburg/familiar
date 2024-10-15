@@ -5,7 +5,8 @@ run_preprocessing <- function(
     settings,
     file_paths,
     message_indent = 0L,
-    verbose) {
+    verbose
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   data_id <- run_id <- list_name <- complete <- NULL
@@ -22,11 +23,14 @@ run_preprocessing <- function(
     cl_outer <- cl
     
     if (!is.null(cl_outer)) {
-      logger_message(paste0(
-        "\nPre-processing: Load-balanced parallel processing is done in the outer loop. ",
-        "No progress can be displayed."),
+      logger_message(
+        paste0(
+          "\nPre-processing: Load-balanced parallel processing is done in the outer loop. ",
+          "No progress can be displayed."
+        ),
         indent = message_indent,
-        verbose = verbose)
+        verbose = verbose
+      )
     }
     
   } else {
@@ -41,7 +45,8 @@ run_preprocessing <- function(
       data = get_data_from_backend(),
       file_paths = file_paths,
       project_id = project_info$project_id,
-      outcome_type = settings$data$outcome_type)
+      outcome_type = settings$data$outcome_type
+    )
   } 
   
   # TODO: Check if the generic contains all the required data -- particularly
@@ -52,10 +57,13 @@ run_preprocessing <- function(
   data_id <- c(
     .get_process_step_data_identifier(
       project_info = project_info,
-      process_step = "fs"),
+      process_step = "vimp"
+    ),
     .get_process_step_data_identifier(
       project_info = project_info,
-      process_step = "mb"))
+      process_step = "mb"
+    )
+  )
   
   # Create a list of runs, with data_id and run_id.
   run_list <- data.table::rbindlist(lapply(
@@ -66,19 +74,23 @@ run_preprocessing <- function(
       pre_process_data_id <- .get_preprocessing_iteration_identifiers(run = .get_run_list(
         iteration_list = project_info$iter_list,
         data_id = data_id,
-        run_id = 1))$data
+        run_id = 1L
+      ))$data
       
       # Find data and run ids.
       iteration_list <- .get_run_list(
         iteration_list = project_info$iter_list,
-        data_id = pre_process_data_id)
+        data_id = pre_process_data_id
+      )
       
       # Iterate over the iteration list, extract the run-table and return it.
       return(data.table::rbindlist(lapply(
         iteration_list,
-        function(x) (tail(x$run_table, n = 1L)))))
+        function(x) (tail(x$run_table, n = 1L))
+      )))
     },
-    project_info = project_info))
+    project_info = project_info
+  ))
   
   # Remove duplicates.
   run_list <- unique(run_list)
@@ -86,7 +98,8 @@ run_preprocessing <- function(
   # Add list names and check for completeness.
   run_list[, ":="(
     "list_name" = .get_feature_info_list_name(data_id = data_id, run_id = run_id),
-    "complete" = FALSE)]
+    "complete" = FALSE
+  )]
   
   # Iterate over the runs and check which feature information lists are already
   # fully complete.
@@ -99,7 +112,8 @@ run_preprocessing <- function(
     # Set preprocessing run identifier and total number of datasets.
     run_list[, ":="(
       "preprocessing_run_id" = .I,
-      "n_preprocessing_runs" = nrow(run_list))]
+      "n_preprocessing_runs" = nrow(run_list)
+    )]
     
     # Iterate over data subsets for which parameters have not yet been set.
     new_feature_info_list <- fam_mapply_lb(
@@ -114,7 +128,9 @@ run_preprocessing <- function(
         "project_info" = project_info,
         "settings" = settings,
         "message_indent" = message_indent,
-        "verbose" = verbose & is.null(cl_outer)))
+        "verbose" = verbose & is.null(cl_outer)
+      )
+    )
     
     # Set names of the new feature list.
     names(new_feature_info_list) <- run_list$list_name
@@ -128,7 +144,8 @@ run_preprocessing <- function(
     # Determine file name
     feature_info_file <- .get_feature_info_file_name(
       file_paths = file_paths,
-      project_id = project_info$project_id)
+      project_id = project_info$project_id
+    )
     
     # Write to file
     saveRDS(feature_info_list, file = feature_info_file)
@@ -149,21 +166,25 @@ run_preprocessing <- function(
     project_info,
     settings,
     message_indent,
-    verbose) {
+    verbose
+) {
   
   logger_message(
     paste0(
       "\nPre-processing: Starting preprocessing for run ",
       run$preprocessing_run_id, " of ",
-      run$n_preprocessing_runs, "."),
+      run$n_preprocessing_runs, "."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Selected feature information list.
   template_feature_info <- combine_feature_info_list(
     preferred = feature_info_list[[run$list_name]],
     custom = feature_info_list[["custom"]],
-    generic = feature_info_list[["generic"]])
+    generic = feature_info_list[["generic"]]
+  )
   
   # Find pre-processing parameters
   feature_info_list <- determine_preprocessing_parameters(
@@ -174,7 +195,8 @@ run_preprocessing <- function(
     project_info = project_info,
     settings = settings,
     message_indent = message_indent + 1L,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   return(feature_info_list)
 }
@@ -189,34 +211,40 @@ determine_preprocessing_parameters <- function(
     project_info,
     settings,
     message_indent,
-    verbose) {
+    verbose
+) {
   
   # Add workflow control info.
   feature_info_list <- add_control_info(
     feature_info_list = feature_info_list,
     data_id = data_id,
-    run_id = run_id)
+    run_id = run_id
+  )
   
   # Add signature feature info.
   feature_info_list <- add_signature_info(
     feature_info_list = feature_info_list,
-    signature = settings$data$signature)
+    signature = settings$data$signature
+  )
   
   # Add novelty feature info.
   feature_info_list <- add_novelty_info(
     feature_info_list = feature_info_list,
-    novelty_features = settings$data$novelty_features)
+    novelty_features = settings$data$novelty_features
+  )
   
   # Find the run list.
   run_list <- .get_run_list(
     iteration_list = project_info$iter_list,
     data_id = data_id,
-    run_id = run_id)
+    run_id = run_id
+  )
   
   # Select unique samples.
   sample_identifiers <- .get_sample_identifiers(
     run = run_list,
-    train_or_validate = "train")
+    train_or_validate = "train"
+  )
   sample_identifiers <- unique(sample_identifiers)
   
   # Find currently available features.
@@ -227,12 +255,11 @@ determine_preprocessing_parameters <- function(
     "dataObject",
     data = get_data_from_backend(sample_identifiers = sample_identifiers),
     preprocessing_level = "none",
-    outcome_type = settings$data$outcome_type)
+    outcome_type = settings$data$outcome_type
+  )
   
   # Remove unavailable features from the data object.
-  data <- filter_features(
-    data = data,
-    available_features = available_features)
+  data <- filter_features(data = data, available_features = available_features)
   
   return(.determine_preprocessing_parameters(
     cl = cl,
@@ -240,7 +267,8 @@ determine_preprocessing_parameters <- function(
     feature_info_list = feature_info_list,
     settings = settings,
     message_indent = message_indent,
-    verbose = verbose))
+    verbose = verbose
+  ))
 }
 
 
@@ -251,7 +279,8 @@ determine_preprocessing_parameters <- function(
   
   # Add file path and normalise according to the OS
   file_name <- normalizePath(file.path(
-    file_paths$process_data_dir, file_name), mustWork = FALSE)
+    file_paths$process_data_dir, file_name
+  ), mustWork = FALSE)
   
   return(file_name)
 }
@@ -272,7 +301,8 @@ determine_preprocessing_parameters <- function(
   # Load feature info list from backend
   feature_info_list <- get_feature_info_from_backend(
     data_id = pre_proc_id_list$data,
-    run_id = pre_proc_id_list$run)
+    run_id = pre_proc_id_list$run
+  )
   
   return(feature_info_list)
 }
@@ -285,42 +315,43 @@ determine_preprocessing_parameters <- function(
     feature_info_list,
     settings,
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+) {
   
   if (!is(data, "dataObject")) {
     ..error_reached_unreachable_code(
-      ".determine_preprocessing_parameters: data is not a dataObject.")
+      ".determine_preprocessing_parameters: data is not a dataObject."
+    )
   }
-  if (is_empty(data)) stop("The provided dataset does not contain any samples.")
-  if (!has_feature_data(data)) stop("The provided dataset does not contain any features.")
   
+  if (is_empty(data)) ..error_data_set_is_empty()
+  if (!has_feature_data(data)) ..error_data_set_has_no_features()
   
   # Remove samples with missing outcome data -----------------------------------
-  n_samples_current <- data.table::uniqueN(
-    x = data@data,
-    by = get_id_columns(id_depth = "sample"))
+  n_samples_current <- get_n_samples(data)
   
   logger_message(
     paste0("Pre-processing: ", n_samples_current, " samples were initially available."),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Remove all samples with missing outcome data
   data <- filter_missing_outcome(data = data, is_validation = FALSE)
-  if (is_empty(data)) stop("The provided training dataset lacks outcome data.")
+  if (is_empty(data)) ..error_data_set_has_no_outcome()
   
-  n_samples_remain <- data.table::uniqueN(
-    x = data@data,
-    by = get_id_columns(id_depth = "sample"))
-  
+  n_samples_remain <- get_n_samples(data)
   n_samples_removed <- n_samples_current - n_samples_remain
   
   logger_message(
-    paste0("Pre-processing: ", n_samples_removed,
-           " samples were removed because of missing outcome data. ",
-           n_samples_remain, " samples remain."),
+    paste0(
+      "Pre-processing: ", n_samples_removed,
+      " samples were removed because of missing outcome data. ",
+      n_samples_remain, " samples remain."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   
   #Remove features with a large fraction of missing values ---------------------
@@ -328,28 +359,32 @@ determine_preprocessing_parameters <- function(
   logger_message(
     paste0("Pre-processing: ", n_features_current, " features were initially available."),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Determine the fraction of missing values
   feature_info_list <- add_missing_value_fractions(
     cl = cl,
     feature_info_list = feature_info_list,
     data = data,
-    threshold = settings$prep$feature_max_fraction_missing)
+    threshold = settings$prep$feature_max_fraction_missing
+  )
   
   # Find features that are not missing too many values.
   available_features <- get_available_features(feature_info_list = feature_info_list)
   
   # Remove features with a high fraction of missing values
-  data <- filter_features(
-    data = data,
-    available_features = available_features)
+  data <- filter_features(data = data, available_features = available_features)
   
   if (!has_feature_data(data)) {
-    stop(paste0(
-      "The provided dataset lacks features with sufficient available values. ",
-      "Please investigate missing values in the dataset or increase the missingness ",
-      "threshold by increasing the feature_max_fraction_missing configuration parameter."))
+    ..error(
+      paste0(
+        "The provided dataset lacks features with sufficient available values. ",
+        "Please investigate missing values in the dataset or increase the missingness ",
+        "threshold by increasing the feature_max_fraction_missing configuration parameter."
+      ),
+      error_class = "dataset_error"
+    )
   } 
   
   # Message how many features were removed
@@ -357,9 +392,11 @@ determine_preprocessing_parameters <- function(
     paste0(
       "Pre-processing: ", n_features_current - length(available_features),
       " features were removed because of a high fraction of missing values. ",
-      length(available_features), " features remain."),
+      length(available_features), " features remain."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   n_samples_current <- n_samples_remain
   
@@ -368,27 +405,32 @@ determine_preprocessing_parameters <- function(
   
   data <- filter_bad_samples(
     data = data,
-    threshold = settings$prep$sample_max_fraction_missing)
+    threshold = settings$prep$sample_max_fraction_missing
+  )
   
   if (is_empty(data)) {
-    stop(paste0(
-      "The provided dataset lacks samples with sufficient available feature values. ",
-      "Please investigate missing values in the dataset or increase the missingness ",
-      "threshold by increasing the sample_max_fraction_missing configuration parameter."))
+    ..error(
+      paste0(
+        "The provided dataset lacks samples with sufficient available feature values. ",
+        "Please investigate missing values in the dataset or increase the missingness ",
+        "threshold by increasing the sample_max_fraction_missing configuration parameter."
+      ),
+      error_class = "dataset_error"
+    )
   }
   
-  # Message how many subjects were removed
-  n_samples_remain <- data.table::uniqueN(
-    x = data@data,
-    by = get_id_columns(id_depth = "sample"))
+  # Message how many samples were removed
+  n_samples_remain <- get_n_samples(data)
   
   logger_message(
     paste0(
       "Pre-processing: ", n_samples_current - n_samples_remain,
       " samples were removed because of missing feature data. ",
-      n_samples_remain, " samples remain."),
+      n_samples_remain, " samples remain."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   n_features_current <- length(available_features)
   
@@ -399,20 +441,23 @@ determine_preprocessing_parameters <- function(
   feature_info_list  <- find_invariant_features(
     cl = cl,
     feature_info_list = feature_info_list,
-    data = data)
+    data = data
+  )
   
   # Find available features.
   available_features <- get_available_features(feature_info_list = feature_info_list)
   
   # Remove invariant features from the data
-  data <- filter_features(
-    data = data,
-    available_features = available_features)
+  data <- filter_features(data = data, available_features = available_features)
   
   if (!has_feature_data(data)) {
-    stop(paste0(
-      "Remaining features in the dataset only have a single value for all samples ",
-      "and cannot be used for training."))
+    ..error(
+      paste0(
+        "Remaining features in the dataset only have a single value for all samples ",
+        "and cannot be used for training."
+      ),
+      error_class = "dataset_error"
+    )
   }
   
   # Message number of features removed by the no-variance filter.
@@ -420,29 +465,34 @@ determine_preprocessing_parameters <- function(
     paste0(
       "Pre-processing: ", n_features_current - length(available_features),
       " features were removed due to invariance. ",
-      length(available_features), " features remain."),
+      length(available_features), " features remain."
+    ),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   
   # Add feature distribution data ----------------------------------------------
   logger_message(
     paste0("Pre-processing: Adding value distribution statistics to features."),
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
     
   # Add feature distribution data
   feature_info_list <- compute_feature_distribution_data(
     cl = cl,
     feature_info_list = feature_info_list,
-    data = data)
+    data = data
+  )
   
   
   # Transform features ---------------------------------------------------------
   logger_message(
     "Pre-processing: Performing transformations to normalise feature value distributions.",
     indent = message_indent,
-    verbose = verbose && settings$prep$transform_method != "none")
+    verbose = verbose && settings$prep$transform_method != "none"
+  )
   
   # Add skeletons to the feature information list.
   feature_info_list <- create_transformation_parameter_skeleton(
@@ -457,17 +507,20 @@ determine_preprocessing_parameters <- function(
     cl = cl,
     feature_info_list = feature_info_list,
     data = data,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Apply transformation.
   data <- transform_features(
     data = data,
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   logger_message(
     "Pre-processing: Feature distributions have been transformed for normalisation.",
     indent = message_indent,
-    verbose = verbose & settings$prep$transform_method != "none")
+    verbose = verbose & settings$prep$transform_method != "none"
+  )
   
 
   # Remove low-variance features -----------------------------------------------
@@ -479,21 +532,24 @@ determine_preprocessing_parameters <- function(
       cl = cl,
       feature_info_list = feature_info_list,
       data = data,
-      settings = settings)
+      settings = settings
+    )
     
     # Check available features.
     available_features <- get_available_features(feature_info_list = feature_info_list)
     
     # Remove invariant features from the data
-    data <- filter_features(
-      data = data,
-      available_features = available_features)
+    data <- filter_features(data = data, available_features = available_features)
     
     if (!has_feature_data(data)) {
-      stop(paste0(
-        "Remaining features in the dataset have a variance that is lower than the threshold ",
-        "and were therefore all removed. Please investigate your data, or increase the threshold ",
-        "through the low_var_minimum_variance_threshold configuration parameter."))
+      ..error(
+        paste0(
+          "Remaining features in the dataset have a variance that is lower than the threshold ",
+          "and were therefore all removed. Please investigate your data, or increase the threshold ",
+          "through the low_var_minimum_variance_threshold configuration parameter."
+        ),
+        error_class = "dataset_error"
+      )
     } 
     
     # Message number of features removed by the low-variance filter.
@@ -501,9 +557,11 @@ determine_preprocessing_parameters <- function(
       paste0(
         "Pre-processing: ", n_features_current - length(available_features),
         " features were removed due to low variance. ",
-        length(available_features), " features remain."),
+        length(available_features), " features remain."
+      ),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   
@@ -512,59 +570,75 @@ determine_preprocessing_parameters <- function(
   logger_message(
     "Pre-processing: Extracting normalisation parameters from feature data.",
     indent = message_indent,
-    verbose = verbose && settings$prep$normalisation_method != "none")
+    verbose = verbose && settings$prep$normalisation_method != "none"
+  )
   
   
   # Add skeletons to the feature information list.
   feature_info_list <- create_normalisation_parameter_skeleton(
     feature_info_list = feature_info_list,
-    normalisation_method = settings$prep$normalisation_method)
+    normalisation_method = settings$prep$normalisation_method
+  )
   
   # Add normalisation parameters to the feature information list.
   feature_info_list <- add_normalisation_parameters(
     cl = cl,
     feature_info_list = feature_info_list,
     data = data,
-    verbose = verbose)
+    verbose = verbose
+  )
 
   # Apply normalisation to data before clustering
   data <- normalise_features(
     data = data,
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   logger_message(
     "Pre-processing: Feature data were normalised.",
     indent = message_indent,
-    verbose = verbose && settings$prep$normalisation_method != "none")
+    verbose = verbose && settings$prep$normalisation_method != "none"
+  )
   
   
   # Batch normalise features ---------------------------------------------------
   logger_message(
     "Pre-processing: Extracting batch normalisation parameters from feature data.",
     indent = message_indent,
-    verbose = verbose && settings$prep$batch_normalisation_method != "none")
+    verbose = verbose && settings$prep$batch_normalisation_method != "none"
+  )
+  
+  # Check that assumptions for batch normalisation are fulfilled.
+  .check_batch_normalisation_assumptions(
+    data = data,
+    normalisation_method = settings$prep$batch_normalisation_method
+  )
   
   # Add batch normalisation skeletons.
   feature_info_list <- create_batch_normalisation_parameter_skeleton(
     feature_info_list = feature_info_list,
-    normalisation_method = settings$prep$batch_normalisation_method)
+    normalisation_method = settings$prep$batch_normalisation_method
+  )
   
   # Add batch normalisation parameters to the feature information list.
   feature_info_list <- add_batch_normalisation_parameters(
     cl = cl, 
     feature_info_list = feature_info_list,
     data = data,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Batch-normalise feature values
   data <- batch_normalise_features(
     data = data,
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   logger_message(
     "Pre-processing: Feature data were batch-normalised.",
     indent = message_indent,
-    verbose = verbose && settings$prep$batch_normalisation_method != "none")
+    verbose = verbose && settings$prep$batch_normalisation_method != "none"
+  )
   
   
   # Remove non-robust features -------------------------------------------------
@@ -576,20 +650,23 @@ determine_preprocessing_parameters <- function(
       cl = cl,
       feature_info_list = feature_info_list,
       data = data,
-      settings = settings)
+      settings = settings
+    )
     
     available_features <- get_available_features(feature_info_list = feature_info_list)
     
     # Remove non-robust features from the data
-    data <- filter_features(
-      data = data,
-      available_features = available_features)
+    data <- filter_features(data = data, available_features = available_features)
     
     if (!has_feature_data(data)) {
-      stop(paste0(
-        "Remaining features in the dataset have a robustness that is lower than the threshold ",
-        "and were therefore all removed. Please investigate your data, or decrease the threshold ",
-        "through the robustness_threshold_value configuration parameter."))
+      ..error(
+        paste0(
+          "Remaining features in the dataset have a robustness that is lower than the threshold ",
+          "and were therefore all removed. Please investigate your data, or decrease the threshold ",
+          "through the robustness_threshold_value configuration parameter."
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Message number of features removed by the robustness filter.
@@ -597,9 +674,11 @@ determine_preprocessing_parameters <- function(
       paste0(
         "Pre-processing: ", n_features_current - length(available_features),
         " features were removed due to low robustness. ",
-        length(available_features), " features remain."),
+        length(available_features), " features remain."
+      ),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   
@@ -612,20 +691,23 @@ determine_preprocessing_parameters <- function(
       cl = cl,
       feature_info_list = feature_info_list,
       data = data,
-      settings = settings)
+      settings = settings
+    )
     
     available_features <- get_available_features(feature_info_list = feature_info_list)
     
     # Remove unimportant features from the data
-    data <- filter_features(
-      data = data,
-      available_features = available_features)
+    data <- filter_features(data = data, available_features = available_features)
     
     if (!has_feature_data(data)) {
-      stop(paste0(
-        "Remaining features in the dataset have a p-value that is higher than the threshold ",
-        "and were therefore all removed. Please investigate your data, or increase the threshold ",
-        "through the univariate_test_threshold configuration parameter."))
+      ..error(
+        paste0(
+          "Remaining features in the dataset have a p-value that is higher than the threshold ",
+          "and were therefore all removed. Please investigate your data, or increase the threshold ",
+          "through the univariate_test_threshold configuration parameter."
+        ),
+        error_class = "dataset_error"
+      )
     }
     
     # Message number of features removed by the importance filter.
@@ -633,9 +715,11 @@ determine_preprocessing_parameters <- function(
       paste0(
         "Pre-processing: ", n_features_current - length(available_features),
         " features were removed due to low importance. ",
-        length(available_features), " features remain."),
+        length(available_features), " features remain."
+      ),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
   }
   
   
@@ -643,31 +727,36 @@ determine_preprocessing_parameters <- function(
   logger_message(
     "Pre-processing: Adding imputation information to features.",
     indent = message_indent,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Add imputation skeletons.
   feature_info_list <- create_imputation_parameter_skeleton(
     feature_info_list = feature_info_list,
-    imputation_method = settings$prep$imputation_method)
+    imputation_method = settings$prep$imputation_method
+  )
   
   # Add imputation info
   feature_info_list <- add_imputation_info(
     cl = cl,
     feature_info_list = feature_info_list,
     data = data,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Impute features with censored data prior to clustering
   data <- impute_features(
     data = data,
-    feature_info_list = feature_info_list)
+    feature_info_list = feature_info_list
+  )
   
   
   # Cluster features -----------------------------------------------------------
   logger_message(
     "Pre-processing: Starting clustering of redundant features",
     indent = message_indent,
-    verbose = verbose && settings$prep$cluster_method != "none")
+    verbose = verbose && settings$prep$cluster_method != "none"
+  )
   
   # Add clustering skeletons.
   feature_info_list <- create_cluster_parameter_skeleton(
@@ -677,7 +766,8 @@ determine_preprocessing_parameters <- function(
     cluster_cut_method = settings$prep$cluster_cut_method,
     cluster_similarity_threshold = settings$prep$cluster_similarity_threshold,
     cluster_similarity_metric = settings$prep$cluster_similarity_metric,
-    cluster_representation_method = settings$prep$cluster_representation_method)
+    cluster_representation_method = settings$prep$cluster_representation_method
+  )
   
   # Extract clustering information
   feature_info_list  <- add_cluster_info(
@@ -685,7 +775,8 @@ determine_preprocessing_parameters <- function(
     feature_info_list = feature_info_list,
     data = data,
     message_indent = message_indent + 1L,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Build cluster table.
   cluster_table <- .create_clustering_table(feature_info_list = feature_info_list)
@@ -699,17 +790,19 @@ determine_preprocessing_parameters <- function(
   logger_message(
     paste0(
       nrow(cluster_table),
-      ifelse(nrow(cluster_table) == 1, " feature cluster was", " feature clusteres were"),
+      ifelse(nrow(cluster_table) == 1L, " feature cluster was", " feature clusteres were"),
       " created from ", n_features_current,
-      ifelse(n_features_current == 1, " feature. ", " features. "),
+      ifelse(n_features_current == 1L, " feature. ", " features. "),
       sum(cluster_table$cluster_size > 1L),
-      ifelse(sum(cluster_table$cluster_size > 1L) == 1, " cluster contains", " clusters contain"),
+      ifelse(sum(cluster_table$cluster_size > 1L) == 1L, " cluster contains", " clusters contain"),
       " more than one feature. The remaining ",
       sum(cluster_table$cluster_size == 1L),
-      ifelse(sum(cluster_table$cluster_size == 1L) == 1, " cluster is", " clusters are"),
-      " singular."),
+      ifelse(sum(cluster_table$cluster_size == 1L) == 1L, " cluster is", " clusters are"),
+      " singular."
+    ),
     indent = message_indent + 1L,
-    verbose = verbose && settings$prep$cluster_method != "none")
+    verbose = verbose && settings$prep$cluster_method != "none"
+  )
   
   # Add required features
   feature_info_list <- add_required_features(feature_info_list = feature_info_list)
@@ -726,7 +819,8 @@ determine_preprocessing_parameters <- function(
 combine_feature_info_list <- function(
     preferred = NULL,
     custom = NULL,
-    generic = NULL) {
+    generic = NULL
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- present <- list_name <- complete <- NULL
@@ -735,7 +829,8 @@ combine_feature_info_list <- function(
   feature_names <- unique(c(
     names(preferred),
     names(custom),
-    names(generic)))
+    names(generic)
+  ))
   
   # Identify which features appear where.
   data <- mapply(
@@ -746,7 +841,8 @@ combine_feature_info_list <- function(
         "list_name" = x_name,
         "name" = feature_names,
         "present" = FALSE,
-        "complete" = FALSE)
+        "complete" = FALSE
+      )
       
       # Mark feature names that are present in the current dataset.
       data[name %in% names(x), "present" := TRUE]
@@ -755,17 +851,20 @@ combine_feature_info_list <- function(
       data[
         present == TRUE,
         "complete" := feature_info_complete(object = x[[name]]),
-        by = "name"]
+        by = "name"
+      ]
       
       return(data)
     },
     x = list(
       "preferred" = preferred,
       "custom" = custom,
-      "generic" = generic),
+      "generic" = generic
+    ),
     x_name = c("preferred", "custom", "generic"),
     MoreArgs = list("feature_names" = feature_names),
-    SIMPLIFY = FALSE)
+    SIMPLIFY = FALSE
+  )
   
   # Combine list.
   data <- data.table::rbindlist(data)
@@ -778,7 +877,7 @@ combine_feature_info_list <- function(
   selected_feature_names <- data[list_name == "preferred" & complete == TRUE]$name
   
   # Add to feature list and remove from set of features.
-  if (length(selected_feature_names) > 0) {
+  if (length(selected_feature_names) > 0L) {
     new_feature_list <- c(new_feature_list, preferred[selected_feature_names])
     feature_names <- setdiff(feature_names, selected_feature_names)
   }
@@ -787,7 +886,7 @@ combine_feature_info_list <- function(
   selected_feature_names <- data[name %in% feature_names & list_name == "custom" & complete == TRUE, ]$name
   
   # Add to feature list and remove from set of features.
-  if (length(selected_feature_names) > 0) {
+  if (length(selected_feature_names) > 0L) {
     new_feature_list <- c(new_feature_list, custom[selected_feature_names])
     feature_names <- setdiff(feature_names, selected_feature_names)
   }
@@ -796,7 +895,7 @@ combine_feature_info_list <- function(
   selected_feature_names <- data[name %in% feature_names & list_name == "preferred" & present == TRUE, ]$name
   
   # Add to feature list and remove from set of features.
-  if (length(selected_feature_names) > 0) {
+  if (length(selected_feature_names) > 0L) {
     new_feature_list <- c(new_feature_list, preferred[selected_feature_names])
     feature_names <- setdiff(feature_names, selected_feature_names)
   }
@@ -805,7 +904,7 @@ combine_feature_info_list <- function(
   selected_feature_names <- data[name %in% feature_names & list_name == "custom" & present == TRUE, ]$name
   
   # Add to feature list and remove from set of features.
-  if (length(selected_feature_names) > 0) {
+  if (length(selected_feature_names) > 0L) {
     new_feature_list <- c(new_feature_list, custom[selected_feature_names])
     feature_names <- setdiff(feature_names, selected_feature_names)
   }
@@ -814,7 +913,7 @@ combine_feature_info_list <- function(
   selected_feature_names <- data[name %in% feature_names & list_name == "generic" & present == TRUE, ]$name
   
   # Add to feature list and remove from set of features.
-  if (length(selected_feature_names) > 0) {
+  if (length(selected_feature_names) > 0L) {
     new_feature_list <- c(new_feature_list, generic[selected_feature_names])
     feature_names <- setdiff(feature_names, selected_feature_names)
   }

@@ -26,6 +26,7 @@
   experimental_design = waiver(),
   imbalance_correction_method = waiver(),
   imbalance_n_partitions = waiver(),
+  iteration_seed = waiver(),
   ...
 )
 }
@@ -61,7 +62,7 @@ details.
 
 If unset, every row will be identified as a single sample.}
 
-\item{series_id_column}{(\strong{optional}) Name of the column containing series
+\item{series_id_column}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -84,8 +85,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
@@ -96,13 +97,12 @@ status.}
 
 \item{outcome_type}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -112,7 +112,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
 
 \item{event_indicator}{(\strong{recommended}) Indicator for events in \code{survival}
 and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},
@@ -138,7 +139,7 @@ present in the outcome column.}
 
 \item{signature}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
 
 \item{novelty_features}{(\emph{optional}) One or more names of feature columns
@@ -173,10 +174,11 @@ prior to familiar version 1.3.0.
 
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building, and external validation. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building, and external validation. The basic workflow
+components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (required) variable importance computation step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
 to subsampling will always be conducted if the subsampling methods create
@@ -241,6 +243,11 @@ that defines the design.}
 \item{imbalance_n_partitions}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+
+\item{iteration_seed}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
 
 \item{...}{Unused arguments.}
 }

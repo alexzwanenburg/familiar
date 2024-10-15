@@ -11,13 +11,16 @@ setClass(
     "outcome_table" = "ANY",
     "outcome_shift" = "numeric",
     "outcome_scale" = "numeric",
-    "feature_order" = "character"),
+    "feature_order" = "character"
+  ),
   prototype = list(
     "encoding_reference_table" = NULL,
     "outcome_table" = NULL,
     "outcome_shift" = 0.0,
     "outcome_scale" = 1.0,
-    "feature_order" = character()))
+    "feature_order" = character()
+  )
+)
 
 setClass("familiarXGBoostLM", contains = "familiarXGBoost")
 setClass("familiarXGBoostTree", contains = "familiarXGBoost")
@@ -55,42 +58,36 @@ setMethod(
       x = object@learner,
       pattern = c("xgboost_lm", "xgboost_tree", "xgboost_dart"),
       replacement = "",
-      fixed = TRUE)
+      fixed = TRUE
+    )
     
     if (startsWith(learner, "_")) {
       learner <- sub(
         x = learner,
         pattern = "_",
         replacement = "",
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     if (
       outcome_type == "continuous" &&
-      learner %in% c("", "logistic", "gaussian", "gamma")) {
+      learner %in% c("", "logistic", "gaussian", "gamma", "poisson")
+    ) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "multinomial" &&
-      learner %in% c("", "logistic")) {
+    } else if (outcome_type == "multinomial" && learner %in% c("", "logistic")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "binomial" &&
-      learner %in% c("", "logistic")) {
+    } else if (outcome_type == "binomial" && learner %in% c("", "logistic")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "survival" &&
-      learner %in% c("", "cox")) {
+    } else if (outcome_type == "survival" && learner %in% c("", "cox")) {
       return(TRUE)
       
-    } else if (
-      outcome_type == "count" &&
-      learner %in% c("", "poisson", "gaussian")) {
+    } else if (outcome_type == "count" && learner %in% c("", "poisson", "gaussian")) {
       ..deprecation_count()
-      return(TRUE)
-      
+      return(FALSE)
     }
      
     return(FALSE)
@@ -103,7 +100,12 @@ setMethod(
 setMethod(
   "get_default_hyperparameters",
   signature(object = "familiarXGBoost"),
-  function(object, data = NULL, user_list = NULL, ...) {
+  function(
+    object, 
+    data = NULL, 
+    user_list = NULL,
+    ...
+  ) {
     # Initialise list and declare hyperparameter entries
     param <- list()
     param$sign_size <- list()
@@ -139,9 +141,7 @@ setMethod(
     outcome_type <- object@outcome_type
 
     # Determine number of samples.
-    n_samples <- data.table::uniqueN(
-      data@data, 
-      by = get_id_columns(id_depth = "series"))
+    n_samples <- get_n_samples(data)
 
     # signature size -----------------------------------------------------------
     param$sign_size <- .get_default_sign_size(data = data)
@@ -155,14 +155,16 @@ setMethod(
       x = object@learner,
       pattern = c("xgboost_lm", "xgboost_tree", "xgboost_dart"),
       replacement = "",
-      fixed = TRUE)
+      fixed = TRUE
+    )
     
     if (fam != "") {
       fam <- sub(
         x = fam, 
         pattern = "_",
         replacement = "", 
-        fixed = TRUE)
+        fixed = TRUE
+      )
     }
 
     # Define the objective based on the name of the learner.
@@ -170,12 +172,13 @@ setMethod(
       # No specific objective is provided.
       if (outcome_type == "continuous") {
         learn_objective_default <- c("gaussian", "continuous_logistic", "gamma")
-      } else if (outcome_type == "count") {
-        learn_objective_default <- c("gaussian", "poisson")
+        
       } else if (outcome_type == "binomial") {
         learn_objective_default <- "binomial_logistic"
+        
       } else if (outcome_type == "multinomial") {
         learn_objective_default <- "multinomial_logistic"
+        
       } else if (outcome_type == "survival") {
         learn_objective_default <- "cox"
       }
@@ -185,8 +188,10 @@ setMethod(
       # defined according to the type of outcome.
       if (outcome_type == "binomial") {
         learn_objective_default <- "binomial_logistic"
+        
       } else if (outcome_type == "multinomial") {
         learn_objective_default <- "multinomial_logistic"
+        
       } else if (outcome_type == "continuous") {
         learn_objective_default <- "continuous_logistic"
       }
@@ -201,18 +206,20 @@ setMethod(
       default = learn_objective_default,
       type = "factor",
       range = learn_objective_default,
-      randomise = length(learn_objective_default) > 1)
+      randomise = length(learn_objective_default) > 1L
+    )
 
     # number of boosting iterations --------------------------------------------
 
     # This hyper-parameter is expressed on the log 10 scale. It is called
     # nrounds in xgboost.
     param$n_boost <- .set_hyperparameter(
-      default = c(0, 1, 2, 3),
+      default = c(0.0, 1.0, 2.0, 3.0),
       type = "numeric",
-      range = c(0, 3),
-      valid_range = c(0, Inf),
-      randomise = TRUE)
+      range = c(0.0, 3.0),
+      valid_range = c(0.0, Inf),
+      randomise = TRUE
+    )
 
     # learning rate ------------------------------------------------------------
 
@@ -221,33 +228,36 @@ setMethod(
     # lead to better models, but take longer to learn. This parameter is called
     # eta by xgboost.
     param$learning_rate <- .set_hyperparameter(
-      default = c(-3, -2, -1),
+      default = c(-3.0, -2.0, -1.0),
       type = "numeric",
-      range = c(-5, 0),
-      valid_range = c(-Inf, 0),
-      randomise = TRUE)
+      range = c(-5.0, 0.0),
+      valid_range = c(-Inf, 0.0),
+      randomise = TRUE
+    )
 
     # L2 regularisation term ---------------------------------------------------
 
     # The L2 regularisation term lambda lies in the half-open range [0, inf).
     # This term is implemented as a power(10) with a 10^-6 offset.
     param$lambda <- .set_hyperparameter(
-      default = c(-6, -3, -1, 1, 3),
+      default = c(-6.0, -3.0, -1.0, 1.0, 3.0),
       type = "numeric",
-      range = c(-6, 3),
-      valid_range = c(-6, Inf),
-      randomise = TRUE)
+      range = c(-6.0, 3.0),
+      valid_range = c(-6.0, Inf),
+      randomise = TRUE
+    )
 
     # L1 regularisation term ---------------------------------------------------
 
     # The L1 regularisation term alpha is implemented as the L2 regularisation
     # term.
     param$alpha <- .set_hyperparameter(
-      default = c(-6, -3, -1, 1, 3),
+      default = c(-6.0, -3.0, -1.0, 1.0, 3.0),
       type = "numeric",
-      range = c(-6, 3),
-      valid_range = c(-6, Inf),
-      randomise = TRUE)
+      range = c(-6.0, 3.0),
+      valid_range = c(-6.0, Inf),
+      randomise = TRUE
+    )
 
     # sample weighting method --------------------------------------------------
     
@@ -262,8 +272,10 @@ setMethod(
     param$sample_weighting_beta <- .get_default_sample_weighting_beta(
       method = c(
         param$sample_weighting$init_config,
-        user_list$sample_weighting),
-      outcome_type = object@outcome_type)
+        user_list$sample_weighting
+      ),
+      outcome_type = object@outcome_type
+    )
 
     # Parameters for tree-based gradient boosting
     if (is(object, "familiarXGBoostTree") || is(object, "familiarXGBoostDart")) {
@@ -272,11 +284,12 @@ setMethod(
       # This hyperparameter is only used by tree models. The parameter is called
       # max_depth by xgboost. Larger depths increase the risk of overfitting.
       param$tree_depth <- .set_hyperparameter(
-        default = c(1, 2, 3, 7),
+        default = c(1L, 2L, 3L, 7L),
         type = "integer",
-        range = c(1, 10),
-        valid_range = c(1, Inf),
-        randomise = TRUE)
+        range = c(1L, 10L),
+        valid_range = c(1L, Inf),
+        randomise = TRUE
+      )
 
       # data subsampling fraction ----------------------------------------------
 
@@ -285,9 +298,10 @@ setMethod(
       param$sample_size <- .set_hyperparameter(
         default = c(0.30, 0.50, 0.70, 1.00),
         type = "numeric",
-        range = c(2 / n_samples, 1.0),
-        valid_range = c(0, 1),
-        randomise = TRUE)
+        range = c(2.0 / n_samples, 1.0),
+        valid_range = c(0.0, 1.0),
+        randomise = TRUE
+      )
 
       # minimum sum of instance weight -----------------------------------------
 
@@ -301,11 +315,12 @@ setMethod(
       #
       # We implement this on a power(10) scale, with -1 offset.
       param$min_child_weight <- .set_hyperparameter(
-        default = c(0, 1, 2),
+        default = c(0.0, 1.0, 2.0),
         type = "numeric",
-        range = c(0, 2),
-        valid_range = c(0, Inf),
-        randomise = TRUE)
+        range = c(0.0, 2.0),
+        valid_range = c(0.0, Inf),
+        randomise = TRUE
+      )
 
       # minimum splitting error reduction --------------------------------------
 
@@ -313,15 +328,16 @@ setMethod(
       # called gamma or min_split_loss in xgboost. We implement it on the
       # power(10) scale, with 10^-6 offset.
       #
-      # For continuous and count-type outcomes, this parameter can be a bit
-      # tricky due to a wide range in possible scales, and thus in error values.
-      # This is resolved by normalising the outcome to the [0, 1] range.
+      # For continuous type outcomes, this parameter can be a bit tricky due to
+      # a wide range in possible scales, and thus in error values. This is
+      # resolved by normalising the outcome to the [0, 1] range.
       param$gamma <- .set_hyperparameter(
-        default = c(-6, -3, -1, 1, 3),
+        default = c(-6.0, -3.0, -1.0, 1.0, 3.0),
         type = "numeric",
-        range = c(-6, 3),
-        valid_range = c(-6, Inf),
-        randomise = TRUE)
+        range = c(-6.0, 3.0),
+        valid_range = c(-6.0, Inf),
+        randomise = TRUE
+      )
     }
 
     # Parameters for dart tree-based gradient boosting
@@ -333,16 +349,18 @@ setMethod(
         default = c("uniform", "weighted"),
         type = "factor",
         range = c("uniform", "weighted"),
-        randomise = TRUE)
+        randomise = TRUE
+      )
 
       ## dart booster tree drop rate --------------------------------------------
 
       # Fraction of previous trees to drop during dropout.
       param$rate_drop <- .set_hyperparameter(
-        default = c(0, 0.1, 0.3),
+        default = c(0.0, 0.1, 0.3),
         type = "numeric",
-        range = c(0, 1),
-        randomise = TRUE)
+        range = c(0.0, 1.0),
+        randomise = TRUE
+      )
     }
 
     # Return hyper-parameters
@@ -362,14 +380,19 @@ setMethod(
 
     # The prediction type is a bit more complicated for xgboost methods.
     if (type == "default") {
-      return("hazard_ratio")
+      if (as.character(object@hyperparameters$learn_objective %in% c("cox"))) {
+        return("hazard_ratio")
+      }
+      
     } else if (type == "survival_probability") {
       return("survival_probability")
+      
     } else {
       ..error_reached_unreachable_code(paste0(
         "get_prediction_type,familiarXGBoost: unknown type (", type,
         ") for the current objective (",
-        as.character(object@hyperparameters$learn_objective), ")."))
+        as.character(object@hyperparameters$learn_objective), ")."
+      ))
     }
   }
 )
@@ -381,7 +404,8 @@ setMethod(
   "..train",
   signature(
     object = "familiarXGBoost",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome <- NULL
@@ -394,14 +418,16 @@ setMethod(
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object, 
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -414,7 +440,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -427,20 +454,23 @@ setMethod(
       # Convert categorical outcomes to numerical labels expected by
       # xgboost.
       class_levels <- get_outcome_class_levels(x = object)
-      class_num_labels <- as.numeric(seq_along(class_levels) - 1)
+      class_num_labels <- as.numeric(seq_along(class_levels) - 1L)
       class_conversion_table <- data.table::data.table(
         "class_level" = factor(class_levels, levels = class_levels),
-        "num_label" = class_num_labels)
+        "num_label" = class_num_labels
+      )
 
       # Convert categorical outcomes by adding numerical labels to the outcome
       # data.
       outcome_data <- data.table::copy(
-        encoded_data$encoded_data@data[, mget(outcome_columns)])
+        encoded_data$encoded_data@data[, mget(outcome_columns)]
+      )
       
       for (ii in seq_along(class_levels)) {
         outcome_data[
           outcome == class_conversion_table$class_level[ii],
-          "outcome_label" := class_conversion_table$num_label[ii]]
+          "outcome_label" := class_conversion_table$num_label[ii]
+        ]
       }
 
       # Save conversion table to model_list
@@ -449,9 +479,9 @@ setMethod(
       # Set outcome_labels
       outcome_labels <- outcome_data$outcome_label
       
-    } else if (object@outcome_type %in% c("continuous", "count")) {
+    } else if (object@outcome_type %in% c("continuous")) {
       # Set outcome_labels
-      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1]]]
+      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1L]]]
 
       # # Determine normalisation parameters so that outcome can be # normalised
       # to [0, 1] range (for logistic regression).
@@ -466,10 +496,10 @@ setMethod(
     } else if (object@outcome_type == "survival") {
       # According to the xgboost documentation, right censored survival time
       # should be represented by negative values.
-      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1]]]
+      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1L]]]
 
       # Identify right-censored entries
-      right_censored <- encoded_data$encoded_data@data[[outcome_columns[2]]] == 0
+      right_censored <- encoded_data$encoded_data@data[[outcome_columns[2L]]] == 0L
 
       # Parse right-censored entries in outcome_labels to the correct
       # representation.
@@ -481,16 +511,19 @@ setMethod(
       data = encoded_data$encoded_data,
       method = object@hyperparameters$sample_weighting,
       beta = ..compute_effective_number_of_samples_beta(
-        object@hyperparameters$sample_weighting_beta),
-      normalisation = "average_one")
+        object@hyperparameters$sample_weighting_beta
+      ),
+      normalisation = "average_one"
+    )
 
     # Create a data_matrix object
     data_matrix <- xgboost::xgb.DMatrix(
       data = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-      label = outcome_labels)
+      label = outcome_labels
+    )
 
     # Set the number of classes for the multi:softmax objective
-    n_classes <- 1
+    n_classes <- 1L
     if (object@outcome_type == "multinomial") n_classes <- length(class_levels)
 
     # Identify the booster to use.
@@ -503,7 +536,8 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "..train,familiarXGBoost: could not set booster for object of unknown class: ",
-        paste_s(class(object))))
+        paste_s(class(object))
+      ))
     }
 
     # Select shared arguments.
@@ -511,15 +545,17 @@ setMethod(
       "params" = list(
         "booster" = booster,
         "nthread" = 1L,
-        "eta" = 10^object@hyperparameters$learning_rate,
-        "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-        "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+        "eta" = 10.0^object@hyperparameters$learning_rate,
+        "lambda" = 10.0^object@hyperparameters$lambda - 10.0^-6.0,
+        "alpha" = 10.0^object@hyperparameters$alpha - 10.0^-6.0,
         "objective" = ..get_distribution_family(object),
-        "num_class" = n_classes),
+        "num_class" = n_classes
+      ),
       "data" = data_matrix,
       "weight" = weights,
-      "nrounds" = round(10^object@hyperparameters$n_boost),
-      "verbose" = 0)
+      "nrounds" = round(10.0^object@hyperparameters$n_boost),
+      "verbose" = 0L
+    )
 
     if (is(object, "familiarXGBoostTree") || is(object, "familiarXGBoostDart")) {
       learner_arguments$params <- c(
@@ -527,8 +563,10 @@ setMethod(
         list(
           "max_depth" = object@hyperparameters$tree_depth,
           "subsample" = object@hyperparameters$sample_size,
-          "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
-          "gamma" = 10^object@hyperparameters$gamma - 10^-6))
+          "min_child_weight" = 10.0^object@hyperparameters$min_child_weight - 1.0,
+          "gamma" = 10.0^object@hyperparameters$gamma - 10.0^-6.0
+        )
+      )
     }
 
     if (is(object, "familiarXGBoostDart")) {
@@ -536,13 +574,16 @@ setMethod(
         learner_arguments$params,
         list(
           "sample_type" = as.character(object@hyperparameters$sample_type),
-          "rate_drop" = object@hyperparameters$rate_drop))
+          "rate_drop" = object@hyperparameters$rate_drop
+        )
+      )
     }
 
     # Train the model.
     model <- do.call_with_handlers(
       xgboost::xgboost,
-      args = learner_arguments)
+      args = learner_arguments
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -576,9 +617,10 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarXGBoost",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
-    if (object@outcome_type %in% c("count", "continuous", "binomial", "multinomial")) {
+    if (object@outcome_type %in% c("continuous", "binomial", "multinomial")) {
       # Turn into a Naive model.
       object <- methods::new("familiarNaiveModel", object)
       
@@ -590,7 +632,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -601,37 +644,39 @@ setMethod(
   "..predict",
   signature(
     object = "familiarXGBoost",
-    data = "dataObject"),
-  function(object, data, type = "default", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default", 
+    time = NULL,
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
 
+    # Check if the model was trained.
+    if (!model_is_trained(object)) return(callNextMethod())
+    
+    # Check if the data is empty.
+    if (is_empty(data)) return(callNextMethod())
+    
+    # Load model through unserialisation.
+    if (inherits(object@model, "raw")) {
+      object@model <- xgboost::xgb.load.raw(object@model)
+    }
+    
+    # Encode data so that the features are the same as in the training.
+    encoded_data <- encode_categorical_variables(
+      data = data,
+      object = object,
+      encoding_method = "dummy",
+      drop_levels = FALSE
+    )
+    
     if (type == "default") {
-      # Default method ---------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(callNextMethod())
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(callNextMethod())
-
-      # Load model through unserialisation.
-      if (inherits(object@model, "raw")) {
-        object@model <- xgboost::xgb.load.raw(object@model)
-      }
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
-        object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+      # default ----------------------------------------------------------------
 
       # Make predictions. If the booster object is DART type, predict() will
       # perform dropouts, i.e. only some of the trees will be evaluated. This
@@ -647,8 +692,9 @@ setMethod(
           object = object@model,
           newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
           outputmargin = object@outcome_type == "survival",
-          ntreelimit = round(10^object@hyperparameters$n_boost),
-          reshape = TRUE)
+          ntreelimit = round(10.0^object@hyperparameters$n_boost),
+          reshape = TRUE
+        )
         
       } else {
         # From version 1.4 onward, ntreelimit was deprecated, and
@@ -657,8 +703,9 @@ setMethod(
           object = object@model,
           newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
           outputmargin = object@outcome_type == "survival",
-          iterationrange = c(1, round(10^object@hyperparameters$n_boost)),
-          reshape = TRUE)
+          iterationrange = c(1L, round(10.0^object@hyperparameters$n_boost)),
+          reshape = TRUE
+        )
       }
 
       if (object@outcome_type == "binomial") {
@@ -669,19 +716,16 @@ setMethod(
 
         # Add class probabilities (glm always gives probability for the second
         # class).
-        class_probability_columns <- get_class_probability_name(x = object)
-        prediction_table[, (class_probability_columns[1]) := 1.0 - model_predictions]
-        prediction_table[, (class_probability_columns[2]) := model_predictions]
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+        prediction_list <- list()
+        prediction_list[[tail(class_levels, n = 1L)]] <- model_predictions
         
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
-        
-        prediction_table[, "predicted_class" := class_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data,
+          model_object = object
+        )
         
       } else if (object@outcome_type == "multinomial") {
         # multinomial outcomes -------------------------------------------------
@@ -689,101 +733,102 @@ setMethod(
         # Obtain class levels.
         class_levels <- get_outcome_class_levels(x = object)
 
-        # Add class probabilities.
-        class_probability_columns <- get_class_probability_name(x = object)
-        for (ii in seq_along(class_probability_columns)) {
+        prediction_list <- list()
+        for (ii in seq_along(class_levels)) {
           if (is.matrix(model_predictions)) {
-            # Check if model_predictions is a matrix.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[, ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[, ii]
+            
           } else {
-            # Or not.
-            prediction_table[, (class_probability_columns[ii]) := model_predictions[ii]]
+            prediction_list[[class_levels[ii]]] <- model_predictions[ii]
           }
         }
-
-        # Update predicted class based on provided probabilities.
-        class_predictions <- class_levels[
-          apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
         
-        class_predictions <- factor(
-          x = class_predictions,
-          levels = class_levels)
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = prediction_list,
+          type = "classification",
+          data = data,
+          model_object = object
+        )
         
-        prediction_table[, "predicted_class" := class_predictions]
-        
-      } else if (object@outcome_type %in% c("continuous", "count")) {
+      } else if (object@outcome_type %in% c("continuous")) {
         # Numerical outcomes ---------------------------------------------------
 
         # Map predictions back to original scale.
         model_predictions <- model_predictions * object@outcome_scale + object@outcome_shift
 
-        # Extract predicted regression values.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "regression",
+          data = data,
+          model_object = object
+        )
         
       } else if (object@outcome_type %in% c("survival")) {
         # Survival outcomes ----------------------------------------------------
 
-        # Add predictions to the prediction table.
-        prediction_table[, "predicted_outcome" := model_predictions]
+        # Store as prediction table. Note that the raw prediction output needs
+        # to be recalibrated.
+        prediction_table <- as_prediction_table(
+          x = model_predictions,
+          type = "survival",
+          data = data,
+          model_object = object
+        )
         
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
 
       return(prediction_table)
+    
+    } else if (type == "survival_probability" && object@outcome_type == "survival") {
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) return(NULL)
-
-      # Check if the data is empty.
-      if (is_empty(data)) return(NULL)
-
-      # Encode data so that the features are the same as in the training.
-      encoded_data <- encode_categorical_variables(
-        data = data,
+      # Only compute for cox-like objectives.
+      if (!as.character(object@hyperparameters$learn_objective) %in% c("cox")) {
+        return(callNextMethod())
+      }
+      
+      # If time is unset, read the max time stored by the model.
+      if (is.null(time)) time <- object@settings$time_max
+      
+      return(.survival_probability_relative_risk(
         object = object,
-        encoding_method = "dummy",
-        drop_levels = FALSE)
+        data = data, 
+        time = time
+      ))
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified method --------------------------------------------------
 
       # Note that xgboost:::predict.xgb.Booster does not have a type argument.
       return(predict(
         object = object@model,
         newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
   }
 )
 
 
-
-# ..predict_survival_probability -----------------------------------------------
+# ..get_prediction_table_type --------------------------------------------------
 setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarXGBoost",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    # Only predict survival probability for survival outcomes.
-    if (!object@outcome_type %in% c("survival")) return(callNextMethod())
-
-    # We can only predict probability for Cox.
-    if (!as.character(object@hyperparameters$learn_objective) %in% c("cox")) {
-      return(callNextMethod())
+  "..get_prediction_table_type",
+  signature(object = "familiarXGBoost"),
+  function(object, type, ...) {
+    prediction_table_type <- NULL
+    if (object@outcome_type %in% c("survival") && type == "default") {
+      prediction_table_type <- "survival"
+    } else {
+      prediction_table_type <- callNextMethod()
     }
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    return(.survival_probability_relative_risk(
-      object = object,
-      data = data, 
-      time = time))
+    
+    return(prediction_table_type)
   }
 )
 
@@ -813,7 +858,8 @@ setMethod(
     # data.table.
     xgboost_score <- tryCatch(
       xgboost::xgb.importance(model = object@model),
-      error = identity)
+      error = identity
+    )
 
     if (inherits(xgboost_score, "error")) return(callNextMethod())
     
@@ -821,7 +867,9 @@ setMethod(
       # Process to variable importance table.
       vimp_table <- data.table::data.table(
         "score" = xgboost_score$Gain,
-        "name" = xgboost_score$Feature)
+        "name" = xgboost_score$Feature
+      )
+      
     } else if (is(object, "familiarXGBoostLM")) {
       # Output are linear coefficients, which may be negative. We keep
       # the maximum weight of each feature.
@@ -830,12 +878,14 @@ setMethod(
       # Parse score to data.table
       vimp_table <- data.table::data.table(
         "score" = xgboost_score$Weight,
-        "name" = xgboost_score$Feature)
+        "name" = xgboost_score$Feature
+      )
       
     } else {
       ..error_reached_unreachable_code(paste0(
         "..vimp,familiarXGBoost: could not process vimp for object of unknown class: ",
-        paste_s(class(object))))
+        paste_s(class(object))
+      ))
     }
 
     # Create variable importance object.
@@ -843,7 +893,8 @@ setMethod(
       vimp_table = vimp_table,
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }
@@ -885,7 +936,8 @@ setMethod(
     if (!is.character(objective) && !is.factor(objective)) {
       ..error_reached_unreachable_code(paste0(
         "..get_distribution_family,familiarXGBoost: learn_objective ",
-        "hyperparameter was not set."))
+        "hyperparameter was not set."
+      ))
     }
 
     # Load objective for extreme gradient boosting.
@@ -906,7 +958,8 @@ setMethod(
     } else {
       ..error_reached_unreachable_code(paste0(
         "..get_distribution_family,familiarXGBoost: unknown learn objective: ",
-        objective))
+        objective
+      ))
     }
 
     return(boost_objective)
@@ -920,7 +973,8 @@ setMethod(
   "..set_recalibration_model",
   signature(
     object = "familiarXGBoost",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, time = NULL) {
     # Recalibration is performed using standard methods
     if (object@outcome_type %in% c("survival")) {
@@ -928,7 +982,8 @@ setMethod(
       object@calibration_model <- .set_recalibration(
         object = object,
         data = data,
-        time = time)
+        time = time
+      )
 
       # Return object.
       return(object)

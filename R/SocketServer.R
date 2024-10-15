@@ -1,7 +1,7 @@
 socket_server <- function(
     host = "local_host",
-    port = 6311,
-    timeout = 2678400) {
+    port = 6311L,
+    timeout = 2678400.0) {
   # The socket server basically runs until a client gives a shutdown command.
   server_status <- "active"
 
@@ -46,9 +46,12 @@ socket_server_handshake <- function(con) {
     serialize(
       list(
         "FUN" = eval, 
-        "args" = list(quote(Sys.getpid()))),
-      connection = con),
-    error = identity)
+        "args" = list(quote(Sys.getpid()))
+      ),
+      connection = con
+    ),
+    error = identity
+  )
 
   # Check if the attempt was successful, otherwise return FALSE, which closes
   # the connection.
@@ -57,7 +60,8 @@ socket_server_handshake <- function(con) {
   # Attempt to read the process id of the client.
   pid <- tryCatch(
     unserialize(con),
-    error = identity)
+    error = identity
+  )
 
   # Return TRUE or FALSE. TRUE indicates that the connection is accepted and
   # works. FALSE closes the connection.
@@ -71,7 +75,8 @@ socket_server_execution_loop <- function(con) {
   input <- tryCatch(
     unserialize(connection = con),
     warning = identity,
-    error = identity)
+    error = identity
+  )
 
   # Break from loop in case a warning or error is given.
   if (inherits(input, "warning") || inherits(input, "error")) {
@@ -87,7 +92,8 @@ socket_server_execution_loop <- function(con) {
     # Send back output of the function.
     output_send <- tryCatch(
       serialize(object = output, connection = con),
-      error = identity)
+      error = identity
+    )
 
     return("active")
     
@@ -105,7 +111,8 @@ socket_server_execution_loop <- function(con) {
 
 socket_client_open_connection <- function(
     host = "localhost",
-    port = 6311) {
+    port = 6311L
+) {
   # Open a client-side connection.
 
   repeat {
@@ -119,9 +126,11 @@ socket_client_open_connection <- function(
         blocking = TRUE,
         server = FALSE, 
         open = "a+b",
-        timeout = 1),
+        timeout = 1.0
+      ),
       warning = identity,
-      error = identity)
+      error = identity
+    )
 
     if (inherits(con, "sockconn")) {
       # Try to perform the handshake with the server process. The connection is
@@ -145,7 +154,8 @@ socket_client_handshake <- function(con) {
   # the client pid.
   received <- tryCatch(
     unserialize(con),
-    error = identity)
+    error = identity
+  )
 
   # If the socket connection cannot be read, return a FALSE. This closes the
   # connection in the socket_client_open_connection.
@@ -158,7 +168,8 @@ socket_client_handshake <- function(con) {
   # Try to send the pid to the server.
   success <- tryCatch(
     serialize(pid, connection = con),
-    error = identity)
+    error = identity
+  )
 
   return(!inherits(success, "error"))
 }
@@ -175,14 +186,17 @@ socket_client_do_call <- function(con, FUN, args = NULL) {
     object = list(
       "type" = "EXEC",
       "FUN" = FUN,
-      "args" = args),
-    connection = con)
+      "args" = args
+    ),
+    connection = con
+  )
 
   # Wait for output to be received from server.
   repeat {
     output <- tryCatch(
       unserialize(connection = con),
-      error = identity)
+      error = identity
+    )
 
     # Break from the loop if the output is not an error.
     if (!inherits(output, "error")) break
@@ -213,7 +227,8 @@ socket_client_close_connection <- function(con) {
 socket_client_server_shutdown <- function(
     con = NULL,
     host = "localhost",
-    port = 6311) {
+    port = 6311L
+) {
   
   if (!inherits(con, "sockconn")) {
     # Open a connection
@@ -235,7 +250,8 @@ socket_client_server_shutdown <- function(
   # Signal the server to close the connection and shutdown.
   serialize(
     list("type" = "SHUTDOWN"),
-    connection = con)
+    connection = con
+  )
   
   return(invisible(NULL))
 }

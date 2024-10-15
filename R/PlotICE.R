@@ -15,13 +15,27 @@ NULL
 #'   conditional expectation plots are saved to. Output is saved in the
 #'   `explanation` subdirectory. If `NULL`, figures are written to the folder,
 #'   but are returned instead.
-#' @param discrete_palette (*optional*) Palette to use to colour the different
-#'   plot elements in case a value was provided to the `color_by` argument. For
-#'   2D individual conditional expectation plots without novelty, the initial
-#'   colour determines the colour of the points indicating sample values.
+#' @param discrete_palette (*optional*) Palette for colouring plot elements
+#'   indicated by the `color_by` argument (if any). For 2D individual
+#'   conditional expectation plots without novelty, the initial colour
+#'   determines the colour of the points indicating sample values. `familiar`
+#'   has a default palette. Other palettes are supported by the `paletteer`
+#'   package, `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'   palettes of the same name in `grDevices`. You may also specify your own
+#'   palette by providing a vector of colour names listed by
+#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
 #'   colour the raster in 2D individual conditional expectation or partial
-#'   dependence plots. This argument is not used for 1D plots.
+#'   dependence plots. This argument is not used for 1D plots. `familiar` has a
+#'   default palette. Other palettes are supported by the `paletteer` package,
+#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
+#'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
+#'   `topo.colors` and `cm.colors`, which correspond to the palettes of the same
+#'   name in `grDevices`. You may also specify your own palette by providing a
+#'   vector of colour names listed by `grDevices::colors()` or through
+#'   hexadecimal RGB strings.
 #' @param gradient_palette_range (*optional*) Numerical range used to span the
 #'   gradient for 2D plots. This should be a range of two values, e.g. `c(0,
 #'   1)`. By default, values are determined from the data, dependent on the
@@ -92,28 +106,17 @@ NULL
 #'   predicted value as a function of two features.
 #'
 #'   Available splitting variables are: `feature_x`, `feature_y` (2D only),
-#'   `fs_method`, `learner`, `data_set` and `positive_class` (categorical
+#'   `vimp_method`, `learner`, `data_set` and `positive_class` (categorical
 #'   outcomes) or `evaluation_time` (survival outcomes). By default, for 1D ICE
-#'   plots the data are split by `feature_x`, `fs_method` and `learner`, with
+#'   plots the data are split by `feature_x`, `vimp_method` and `learner`, with
 #'   faceting by `data_set`, `positive_class` or `evaluation_time`. If only
 #'   partial dependence is shown, `positive_class` and `evaluation_time` are
 #'   used to set colours instead. For 2D plots, by default the data are split by
-#'   `feature_x`, `fs_method` and `learner`, with faceting by `data_set`,
+#'   `feature_x`, `vimp_method` and `learner`, with faceting by `data_set`,
 #'   `positive_class` or `evaluation_time`. The `color_by` argument cannot be
 #'   used with 2D plots, and attempting to do so causes an error. Attempting to
 #'   specify `feature_x` or `feature_y` for `color_by` will likewise result in
 #'   an error, as multiple features cannot be shown in the same facet.
-#'
-#'   The splitting variables indicated by `color_by` are coloured according to
-#'   the `discrete_palette` parameter. This parameter is therefore only used for
-#'   1D plots. Available palettes for `discrete_palette` and `gradient_palette`
-#'   are those listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. If not specified, a default
-#'   palette based on palettes in Tableau are used. You may also specify your
-#'   own palette by using colour names listed by `grDevices::colors()` or
-#'   through hexadecimal RGB strings.
 #'
 #'   Bootstrap confidence intervals of the partial dependence plots can be shown
 #'   using various styles set by `conf_int_style`:
@@ -133,7 +136,7 @@ NULL
 #'   plots. To avoid clutter, only point estimates for individual samples are
 #'   shown.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -162,10 +165,10 @@ setGeneric(
     plot_sub_title = NULL,
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     novelty_range = NULL,
     value_scales = waiver(),
@@ -182,7 +185,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_ice")
   }
 )
@@ -214,10 +218,10 @@ setMethod(
     plot_sub_title = NULL,
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     novelty_range = NULL,
     value_scales = waiver(),
@@ -234,15 +238,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object,
-          "data_element" = "ice_data"),
-        list(...)))
+          "data_element" = "ice_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_ice,
@@ -284,7 +292,9 @@ setMethod(
         "width" = width,
         "height" = height,
         "units" = units,
-        "export_collection" = export_collection)))
+        "export_collection" = export_collection
+      )
+    ))
   }
 )
 
@@ -308,13 +318,13 @@ setMethod(
 #'   a function of two features.
 #'
 #'   Available splitting variables are: `feature_x`, `feature_y` (2D only),
-#'   `fs_method`, `learner`, `data_set` and `positive_class` (categorical
+#'   `vimp_method`, `learner`, `data_set` and `positive_class` (categorical
 #'   outcomes) or `evaluation_time` (survival outcomes). By default, for 1D ICE
-#'   plots the data are split by `feature_x`, `fs_method` and `learner`, with
+#'   plots the data are split by `feature_x`, `vimp_method` and `learner`, with
 #'   faceting by `data_set`, `positive_class` or `evaluation_time`. If only
 #'   partial dependence is shown, `positive_class` and `evaluation_time` are
 #'   used to set colours instead. For 2D plots, by default the data are split by
-#'   `feature_x`, `fs_method` and `learner`, with faceting by `data_set`,
+#'   `feature_x`, `vimp_method` and `learner`, with faceting by `data_set`,
 #'   `positive_class` or `evaluation_time`. The `color_by` argument cannot be
 #'   used with 2D plots, and attempting to do so causes an error. Attempting to
 #'   specify `feature_x` or `feature_y` for `color_by` will likewise result in
@@ -344,7 +354,7 @@ setMethod(
 #'  * `none`: confidence intervals are not shown. The point estimate of the
 #'   partial dependence is shown as usual.
 #'
-#'   Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'   Labelling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
 #'
@@ -373,10 +383,10 @@ setGeneric(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     novelty_range = NULL,
     value_scales = waiver(),
@@ -389,7 +399,8 @@ setGeneric(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("plot_pd")
   }
 )
@@ -421,10 +432,10 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     novelty_range = NULL,
     value_scales = waiver(),
@@ -437,15 +448,19 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Attempt conversion to familiarCollection object.
     object <- do.call(
       as_familiar_collection,
       args = c(
         list(
           "object" = object, 
-          "data_element" = "ice_data"),
-        list(...)))
+          "data_element" = "ice_data"
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       plot_ice,
@@ -486,7 +501,8 @@ setMethod(
         "height" = height,
         "units" = units,
         "export_collection" = export_collection
-      )))
+      )
+    ))
   }
 )
 
@@ -517,10 +533,10 @@ setMethod(
     plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
-    x_n_breaks = 5,
+    x_n_breaks = 5L,
     x_breaks = NULL,
     y_range = NULL,
-    y_n_breaks = 5,
+    y_n_breaks = 5L,
     y_breaks = NULL,
     novelty_range = NULL,
     value_scales = waiver(),
@@ -537,7 +553,8 @@ setMethod(
     height = waiver(),
     units = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     
     # Make sure the collection object is updated.
@@ -546,35 +563,40 @@ setMethod(
     # Get input data.
     ice_data <- export_ice_data(
       object = object,
-      aggregate_results = TRUE)
-    
+      aggregate_results = TRUE
+    )
+
     pd_data <- export_partial_dependence_data(
       object = object,
-      aggregate_results = TRUE)
+      aggregate_results = TRUE
+    )
 
     # Check anchor values.
-    if (length(ice_data) > 0 && !is.null(anchor_values)) {
+    if (length(ice_data) > 0L && !is.null(anchor_values)) {
       # Determine feature names.
       feature_names <- unique(c(
         sapply(ice_data, function(x) (x@identifiers$feature_x)),
-        sapply(ice_data, function(x) (x@identifiers$feature_y))))
+        sapply(ice_data, function(x) (x@identifiers$feature_y))
+      ))
 
       # Check if names are provided to anchor values.
-      if (length(feature_names) > 1 && length(names(anchor_values)) == 0) {
-        stop(paste0(
+      if (length(feature_names) > 1L && length(names(anchor_values)) == 0L) {
+        ..error(paste0(
           "Data for plotting individual conditional expectation plots for more ",
           "than one feature are present. However, the anchor values for ",
           "centering the plots could not be assigned because they were not named. ",
-          "Please provide a named vector or list."))
+          "Please provide a named vector or list."
+        ))
       }
 
       # Check if the names provided to anchor values match existing values.
-      if (length(setdiff(names(anchor_values), feature_names)) > 0) {
-        warning(paste0(
+      if (length(setdiff(names(anchor_values), feature_names)) > 0L) {
+        ..warning(paste0(
           "One or more feature names specified as anchor values do not exist ",
           "as features for which data for plotting individual conditional ",
           "expectation plots were computed: ",
-          paste_s(setdiff(names(anchor_values), feature_names))))
+          paste_s(setdiff(names(anchor_values), feature_names))
+        ))
       }
     }
 
@@ -602,15 +624,16 @@ setMethod(
       .check_number_in_valid_range(
         x = n_max_samples_shown, 
         var_name = "n_max_samples_shown",
-        range = c(0, Inf))
+        range = c(0L, Inf)
+      )
     }
 
     # If the maximum number of ICE samples shown equal 0, set to NULL.
-    if (n_max_samples_shown == 0) {
+    if (n_max_samples_shown == 0L) {
       show_ice <- FALSE
       n_max_samples_shown <- NULL
     }
-
+    
     # Update the output so that it is more consistent.
     data <- mapply(
       .update_ice_and_pd_output,
@@ -620,19 +643,38 @@ setMethod(
         "outcome_type" = object@outcome_type,
         "anchor_values" = anchor_values,
         "n_samples" = n_max_samples_shown,
-        "seed" = sample.int(n = 10000L, size = 1L)),
-      SIMPLIFY = FALSE)
+        "seed" = sample.int(n = 10000L, size = 1L)
+      ),
+      SIMPLIFY = FALSE
+    )
     
     # Flatten nested list.
     data <- .flatten_nested_list(data)
     ice_data <- data$ice_data
     pd_data <- data$pd_data
-
+    
+    # Add in sample to ice_data, and drop identifier columns.
+    ice_data <- lapply(
+      ice_data,
+      function(x) {
+        x@data[, "sample" := get_unique_row_names(x = x@data)]
+        for (id_column in get_id_columns()) {
+          x@data[, (id_column) := NULL]
+        }
+        
+        x@grouping_column <- setdiff(x@grouping_column, get_id_columns())
+        x@grouping_column <- c(x@grouping_column, "sample")
+        
+        return(x)
+      }
+    )
+    
     # Check that show_pd and show_ice are not both FALSE.
     if (!show_pd && !show_ice) {
-      warning(paste0(
+      ..warning(paste0(
         "One or both of \"show_pd\" and \"show_ice\" should be TRUE to plot ",
-        "individual conditional expectation and/or partial dependence plots."))
+        "individual conditional expectation and/or partial dependence plots."
+      ))
       return(NULL)
     }
 
@@ -640,7 +682,8 @@ setMethod(
     if (!require_package(
       x = ..required_plotting_packages(extended = TRUE),
       purpose = "to create ICE/PD plots",
-      message_type = "warning")) {
+      message_type = "warning"
+    )) {
       return(NULL)
     }
 
@@ -652,7 +695,8 @@ setMethod(
     # Determine whether 1D or 2D plots are shown.
     show_2d <- any(sapply(
       ice_data, 
-      function(x) (!is.null(x@identifiers$feature_y))))
+      function(x) (!is.null(x@identifiers$feature_y))
+    ))
 
     # If the y-axis will contain a feature, only the partial dependence
     # can be shown.
@@ -662,8 +706,8 @@ setMethod(
     }
 
     # conf_int_style
-    if (length(conf_int_style) > 1) {
-      conf_int_style <- head(conf_int_style, n = 1)
+    if (length(conf_int_style) > 1L) {
+      conf_int_style <- head(conf_int_style, n = 1L)
     }
 
     # Set the style of the confidence interval to none, in case no confidence
@@ -671,7 +715,8 @@ setMethod(
     if (show_pd && !show_2d) {
       if (!all(sapply(
         pd_data,
-        function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) {
+        function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))
+      ))) {
         conf_int_style <- "none"
       }
       
@@ -687,27 +732,29 @@ setMethod(
     } else {
       dropped_identifiers <- c("feature_x_value")
     }
-
+    
     # Determine splitting variables present in the dataset.
     if (show_ice) {
       plot_data <- identify_element_sets(
         ice_data,
         ignore_grouping_column = FALSE,
         ignore_list_identifier = FALSE,
-        drop_identiers = dropped_identifiers)
+        drop_identiers = dropped_identifiers
+      )
       
     } else {
       plot_data <- identify_element_sets(
         pd_data,
         ignore_grouping_column = FALSE,
         ignore_list_identifier = FALSE,
-        drop_identiers = dropped_identifiers)
+        drop_identiers = dropped_identifiers
+      )
     }
 
     # Set default splitting variables.
     if (is.null(split_by) && is.null(facet_by) && is.null(color_by)) {
       if (show_2d) {
-        split_by <- c("fs_method", "learner", "feature_x", "feature_y")
+        split_by <- c("vimp_method", "learner", "feature_x", "feature_y")
 
         facet_by <- c("data_set")
         if (object@outcome_type == "multinomial") {
@@ -720,7 +767,7 @@ setMethod(
         color_by <- NULL
         
       } else if (show_ice) {
-        split_by <- c("fs_method", "learner", "feature_x")
+        split_by <- c("vimp_method", "learner", "feature_x")
 
         facet_by <- c("data_set")
         if (object@outcome_type == "multinomial") {
@@ -733,7 +780,7 @@ setMethod(
         color_by <- NULL
         
       } else if (show_pd) {
-        split_by <- c("fs_method", "learner", "feature_x")
+        split_by <- c("vimp_method", "learner", "feature_x")
         facet_by <- c("data_set")
 
         color_by <- NULL
@@ -747,7 +794,7 @@ setMethod(
     }
 
     # Determine splitting variables.
-    available_splitting_vars <- c("fs_method", "learner", "data_set", "feature_x")
+    available_splitting_vars <- c("vimp_method", "learner", "data_set", "feature_x")
     if (show_2d) {
       available_splitting_vars <- c(available_splitting_vars, "feature_y")
     }
@@ -760,10 +807,11 @@ setMethod(
 
     # Check that the color_by parameter is not set for 2d plots.
     if (show_2d && !is.null(color_by)) {
-      stop(paste0(
+      ..error(paste0(
         "The \"color_by\" parameter cannot be used when creating 2D ",
         "individual conditional expection and partial dependence plots, ",
-        "as additional colour-coding would making interpretation very difficult."))
+        "as additional colour-coding would making interpretation very difficult."
+      ))
     }
 
     # Check splitting variables and generate sanitised output
@@ -772,7 +820,8 @@ setMethod(
       split_by = split_by,
       color_by = color_by,
       facet_by = facet_by,
-      available = available_splitting_vars)
+      available = available_splitting_vars
+    )
 
     # Update splitting variables
     split_by <- split_var_list$split_by
@@ -780,23 +829,26 @@ setMethod(
     facet_by <- split_var_list$facet_by
 
     if ("feature_x" %in% color_by || "feature_y" %in% color_by) {
-      stop("Features cannot be used to specify colors.")
+      ..error("Features cannot be used to specify colors.")
     }
 
     # Create a legend label
     if (show_2d & is.waive(legend_label)) {
-      legend_label <- switch(object@outcome_type,
+      legend_label <- switch(
+        object@outcome_type,
         "binomial" = "probability",
         "multinomial" = "probability",
         "count" = "value",
         "continuous" = "value",
         "survival" = "probability",
-        "competing_risk" = "probability")
+        "competing_risk" = "probability"
+      )
       
     } else if (!show_2d) {
       legend_label <- .create_plot_legend_title(
         user_label = legend_label,
-        color_by = color_by)
+        color_by = color_by
+      )
     }
 
     # Check input arguments for validity.
@@ -809,7 +861,8 @@ setMethod(
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption)
+      caption = caption
+    )
 
     # Set unused data to NULL.
     if (!show_ice) ice_data <- NULL
@@ -823,13 +876,15 @@ setMethod(
       .check_parameter_value_is_valid(
         x = value_scales, 
         var_name = "value_scales",
-        values = c("fixed", "figure"))
+        values = c("fixed", "figure")
+      )
       
     } else {
       .check_parameter_value_is_valid(
         x = value_scales,
         var_name = "value_scales",
-        values = c("fixed", "figure", "feature", "facet"))
+        values = c("fixed", "figure", "feature", "facet")
+      )
     }
 
     # Set value ranges.
@@ -837,15 +892,17 @@ setMethod(
       # The value range is provided by the user.
       value_range <- unique(plot_data[, c("feature_x", "feature_y")])
       value_range[, ":="(
-        "min_value" = gradient_palette_range[1],
-        "max_value" = gradient_palette_range[2])]
+        "min_value" = gradient_palette_range[1L],
+        "max_value" = gradient_palette_range[2L]
+      )]
       
     } else if (!show_2d && !is.null(y_range)) {
       # The value range is provided by the user.
       value_range <- unique(plot_data[, c("feature_x")])
       value_range[, ":="(
-        "min_value" = y_range[1],
-        "max_value" = y_range[2])]
+        "min_value" = y_range[1L],
+        "max_value" = y_range[2L]
+      )]
       
     } else if (show_2d & value_scales == "fixed") {
       # The value range is the same for all features.
@@ -853,7 +910,8 @@ setMethod(
         x = pd_data,
         scale_method = "fixed",
         outcome_type = object@outcome_type,
-        confidence_interval = conf_int_style != "none")
+        confidence_interval = conf_int_style != "none"
+      )
       
     } else if (!show_2d & value_scales == "fixed") {
       # The value range is the same for all features.
@@ -862,14 +920,16 @@ setMethod(
           x = ice_data,
           scale_method = "fixed",
           outcome_type = object@outcome_type,
-          confidence_interval = conf_int_style != "none")
+          confidence_interval = conf_int_style != "none"
+        )
         
       } else {
         value_range <- .create_ice_plot_value_range(
           x = pd_data,
           scale_method = "fixed",
           outcome_type = object@outcome_type,
-          confidence_interval = conf_int_style != "none")
+          confidence_interval = conf_int_style != "none"
+        )
       }
       
     } else if (!show_2d & value_scales == "feature") {
@@ -879,14 +939,16 @@ setMethod(
           x = ice_data,
           scale_method = "feature",
           outcome_type = object@outcome_type,
-          confidence_interval = conf_int_style != "none")
+          confidence_interval = conf_int_style != "none"
+        )
         
       } else {
         value_range <- .create_ice_plot_value_range(
           x = pd_data,
           scale_method = "feature",
           outcome_type = object@outcome_type,
-          confidence_interval = conf_int_style != "none")
+          confidence_interval = conf_int_style != "none"
+        )
       }
       
     } else {
@@ -903,13 +965,15 @@ setMethod(
     .check_parameter_value_is_valid(
       x = novelty_scales, 
       var_name = "novelty_scales",
-      values = c("fixed", "figure"))
+      values = c("fixed", "figure")
+    )
 
     if (!is.null(novelty_range)) {
       # The value range is provided by the user.
       novelty_range <- unique(plot_data[, c("feature_x", "feature_y")])[, ":="(
-        "min_value" = novelty_range[1],
-        "max_value" = novelty_range[2])]
+        "min_value" = novelty_range[1L],
+        "max_value" = novelty_range[2L]
+      )]
       
     } else if (novelty_scales == "fixed") {
       # The novelty range is the same for all features.
@@ -917,13 +981,15 @@ setMethod(
         novelty_range <- .create_ice_plot_novelty_range(
           x = ice_data,
           scale_method = "fixed",
-          outcome_type = object@outcome_type)
+          outcome_type = object@outcome_type
+        )
         
       } else {
         novelty_range <- .create_ice_plot_novelty_range(
           x = pd_data,
           scale_method = "fixed",
-          outcome_type = object@outcome_type)
+          outcome_type = object@outcome_type
+        )
       }
       
     } else {
@@ -934,7 +1000,8 @@ setMethod(
     .check_number_in_valid_range(
       x = ice_default_alpha,
       var_name = "ice_default_alpha",
-      range = c(0.0, 1.0))
+      range = c(0.0, 1.0)
+    )
 
     # Set plot function.
     if (show_2d) {
@@ -967,7 +1034,8 @@ setMethod(
         plot_title <- ifelse(
           show_ice,
           "Individual conditional expectation",
-          "Partial dependence")
+          "Partial dependence"
+        )
       }
 
       # Declare subtitle components.
@@ -975,20 +1043,24 @@ setMethod(
 
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
-      if (!"evaluation_time" %in% c(split_by, color_by, facet_by) &&
-          object@outcome_type %in% c("survival")) {
+      if (
+        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        object@outcome_type %in% c("survival")
+      ) {
         additional_subtitle <- c(
           additional_subtitle,
-          .add_time_to_plot_subtitle(x_split[[ii]]$evaluation_time[1]))
+          .add_time_to_plot_subtitle(x_split[[ii]]$evaluation_time[1L])
+        )
       }
 
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = x_split[[ii]])
+          x = x_split[[ii]]
+        )
       }
-
+      
       # Generate plot
       p <- .plot_ice(
         x = x_split[[ii]],
@@ -1025,7 +1097,8 @@ setMethod(
         show_ice = show_ice,
         show_pd = show_pd,
         show_2d = show_2d,
-        outcome_type = object@outcome_type)
+        outcome_type = object@outcome_type
+      )
 
       # Check empty output
       if (is.null(p)) next
@@ -1043,7 +1116,8 @@ setMethod(
         def_plot_dims <- .determine_ice_plot_dimensions(
           x = x_split[[ii]],
           facet_by = facet_by,
-          facet_wrap_cols = facet_wrap_cols)
+          facet_wrap_cols = facet_wrap_cols
+        )
 
         # Save to file.
         do.call(
@@ -1057,10 +1131,13 @@ setMethod(
               "subtype" = subtype,
               "x" = x_split[[ii]],
               "split_by" = split_by,
-              "height" = ifelse(is.waive(height), def_plot_dims[1], height),
-              "width" = ifelse(is.waive(width), def_plot_dims[2], width),
-              "units" = ifelse(is.waive(units), "cm", units)),
-            list(...)))
+              "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
+              "width" = ifelse(is.waive(width), def_plot_dims[2L], width),
+              "units" = ifelse(is.waive(units), "cm", units)
+            ),
+            list(...)
+          )
+        )
         
       } else {
         # Store as list for export.
@@ -1073,7 +1150,8 @@ setMethod(
       dir_path = dir_path,
       plot_list = plot_list,
       export_collection = export_collection,
-      object = object))
+      object = object
+    ))
   }
 )
 
@@ -1116,18 +1194,21 @@ setMethod(
     show_ice,
     show_pd,
     show_2d,
-    outcome_type) {
+    outcome_type
+) {
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- .get_plot_layout_table(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Split data into facets. This is done by row.
   data_facet_list <- .split_data_by_plot_facet(
     x = x,
-    plot_layout_table = plot_layout_table)
+    plot_layout_table = plot_layout_table
+  )
 
   # Set value scales.
   if (is.null(value_range) && value_scales == "figure") {
@@ -1140,14 +1221,16 @@ setMethod(
         x = plot_ice_data,
         scale_method = "figure",
         outcome_type = outcome_type,
-        confidence_interval = conf_int_style != "none")
+        confidence_interval = conf_int_style != "none"
+      )
       
     } else {
       value_range <- .create_ice_plot_value_range(
         x = plot_pd_data,
         scale_method = "figure",
         outcome_type = outcome_type,
-        confidence_interval = conf_int_style != "none")
+        confidence_interval = conf_int_style != "none"
+      )
     }
   }
 
@@ -1161,13 +1244,15 @@ setMethod(
       novelty_range <- .create_ice_plot_novelty_range(
         x = plot_ice_data,
         scale_method = "figure",
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
       
     } else {
       novelty_range <- .create_ice_plot_novelty_range(
         x = plot_pd_data,
         scale_method = "figure",
-        outcome_type = outcome_type)
+        outcome_type = outcome_type
+      )
     }
   }
 
@@ -1176,7 +1261,7 @@ setMethod(
     # Default value.
     x_label_shared <- "column"
 
-    if (length(facet_by) > 1) {
+    if (length(facet_by) > 1L) {
       if ("feature_x" %in% c(tail(facet_by, n = length(facet_by) - 1L))) {
         # Same feature is used row-wise, not column-wise.
         x_label_shared <- "individual"
@@ -1192,8 +1277,9 @@ setMethod(
     if (value_scales == "facet") {
       # If y-axis is scaled per individual facet
       y_label_shared <- "individual"
-    } else if (show_2d && length(facet_by) > 0) {
-      if ("feature_y" == facet_by[1]) {
+      
+    } else if (show_2d && length(facet_by) > 0L) {
+      if ("feature_y" == facet_by[1L]) {
         # Same feature is used column-wise, not row-wise.
         y_label_shared <- "individual"
       }
@@ -1203,7 +1289,8 @@ setMethod(
   # Check label sharing.
   .check_input_plot_args(
     x_label_shared = x_label_shared,
-    y_label_shared = y_label_shared)
+    y_label_shared = y_label_shared
+  )
 
   # Placeholders for plots and plot elements.
   figure_list <- list()
@@ -1252,7 +1339,9 @@ setMethod(
         "show_novelty" = show_novelty,
         "show_ice" = show_ice,
         "show_pd" = show_pd,
-        "outcome_type" = outcome_type))
+        "outcome_type" = outcome_type
+      )
+    )
     
     # Extract plot elements from the main calibration plot.
     extracted_elements <- .extract_plot_grobs(p = p_main)
@@ -1263,7 +1352,8 @@ setMethod(
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(
       g = .convert_to_grob(p_main),
-      extension = "main")
+      extension = "main"
+    )
 
     # Add combined grob to list
     figure_list <- c(figure_list, list(g_calibration))
@@ -1271,7 +1361,8 @@ setMethod(
     # Add extract elements to the grob_element_list
     extracted_element_list <- c(
       extracted_element_list,
-      list(extracted_elements))
+      list(extracted_elements)
+    )
   }
 
   # Update the layout table.
@@ -1282,14 +1373,16 @@ setMethod(
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
     plot_layout_table = plot_layout_table,
     element_grobs = extracted_element_list,
-    ggtheme = ggtheme)
+    ggtheme = ggtheme
+  )
 
   return(g)
 }
@@ -1326,7 +1419,8 @@ setMethod(
     show_ice,
     show_pd,
     outcome_type,
-    ...) {
+    ...
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x <- color_breaks <- sample <- NULL
   
@@ -1335,22 +1429,22 @@ setMethod(
   
   # Get the data that determines the main plot characteristics.
   if (show_ice) {
-    if (!is_empty(ice_data[[1]])) {
-      plot_data <- data.table::copy(ice_data[[1]]@data)
+    if (!is_empty(ice_data[[1L]])) {
+      plot_data <- data.table::copy(ice_data[[1L]]@data)
     } else {
       plot_data <- facet_data
       data_present <- FALSE
     }
     
   } else {
-    if (!is_empty(pd_data[[1]])) {
-      plot_data <- data.table::copy(pd_data[[1]]@data)
+    if (!is_empty(pd_data[[1L]])) {
+      plot_data <- data.table::copy(pd_data[[1L]]@data)
     } else {
       plot_data <- facet_data
       data_present <- FALSE
     }
   }
-
+  
   # Set value range
   if (is.null(value_range) && value_scales == "facet" && data_present) {
     if (show_ice) {
@@ -1358,14 +1452,16 @@ setMethod(
         x = ice_data,
         scale_method = "facet",
         outcome_type = outcome_type,
-        confidence_interval = conf_int_style != "none")
+        confidence_interval = conf_int_style != "none"
+      )
       
     } else {
       value_range <- .create_ice_plot_value_range(
         x = pd_data,
         scale_method = "facet",
         outcome_type = outcome_type,
-        confidence_interval = conf_int_style != "none")
+        confidence_interval = conf_int_style != "none"
+      )
     }
   }
 
@@ -1374,7 +1470,8 @@ setMethod(
     if (is.null(x_range)) {
       x_range <- c(
         min(plot_data$feature_x_value),
-        max(plot_data$feature_x_value))
+        max(plot_data$feature_x_value)
+      )
     }
 
     # x_breaks
@@ -1384,14 +1481,16 @@ setMethod(
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
         m = x_n_breaks,
-        dmin = x_range[1],
-        dmax = x_range[2],
-        only.loose = TRUE)
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
 
       # Update x_range
       x_range <- c(
-        head(x_breaks, n = 1),
-        tail(x_breaks, n = 1))
+        head(x_breaks, n = 1L),
+        tail(x_breaks, n = 1L)
+      )
     }
 
     .check_input_plot_args(x_range = x_range)
@@ -1401,7 +1500,7 @@ setMethod(
   }
 
   # Find the correct y-range
-  value_range <- value_range[feature_x == as.character(plot_data$feature_x[1])]
+  value_range <- value_range[feature_x == as.character(plot_data$feature_x[1L])]
   if (is_empty(value_range)) {
     y_range <- c(NA_real_, NA_real_)
   } else {
@@ -1414,14 +1513,16 @@ setMethod(
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
         m = y_n_breaks,
-        dmin = y_range[1],
-        dmax = y_range[2],
-        only.loose = TRUE)
+        dmin = y_range[1L],
+        dmax = y_range[2L],
+        only.loose = TRUE
+      )
 
       # Update y-range
       y_range <- c(
-        head(y_breaks, n = 1),
-        tail(y_breaks, n = 1))
+        head(y_breaks, n = 1L),
+        tail(y_breaks, n = 1L)
+      )
     }
   }
 
@@ -1429,8 +1530,8 @@ setMethod(
 
   # Set x-label
   if (is.waive(x_label)) {
-    if (!is.na(plot_data$feature_x[1])) {
-      x_label <- as.character(plot_data$feature_x[1])
+    if (!is.na(plot_data$feature_x[1L])) {
+      x_label <- as.character(plot_data$feature_x[1L])
     } else {
       x_label <- NULL
     }
@@ -1451,14 +1552,15 @@ setMethod(
 
   .check_input_plot_args(
     x_label = x_label,
-    y_label = y_label)
-
+    y_label = y_label
+  )
+  
   # Update show_novelty to check for non-finite values in the novelty data.
-  show_novelty <- show_novelty && all(is.finite(plot_data$novelty))
+  show_novelty <- show_novelty && !is.null(plot_data$novelty) && all(is.finite(plot_data$novelty))
 
   if (show_novelty) {
     # Find the correct novelty-range
-    novelty_range <- novelty_range[feature_x == as.character(plot_data$feature_x[1])]
+    novelty_range <- novelty_range[feature_x == as.character(plot_data$feature_x[1L])]
 
     if (is_empty(novelty_range)) {
       novelty_range <- c(NA_real_, NA_real_)
@@ -1471,13 +1573,15 @@ setMethod(
   # single legend.
   if (show_ice && data_present) {
     ice_guide_list <- .create_plot_guide_table(
-      x = ice_data[[1]]@data,
+      x = ice_data[[1L]]@data,
       color_by = color_by,
       discrete_palette = discrete_palette,
-      combine_legend = FALSE)
+      combine_legend = FALSE
+    )
 
     # Add column to force proper grouping of lines.
     ice_guide_list$data[, "color_breaks_sample" := paste0(color_breaks, "_", sample)]
+    
   } else {
     ice_guide_list <- NULL
   }
@@ -1486,14 +1590,15 @@ setMethod(
   # single legend.
   if (show_pd && data_present) {
     pd_guide_list <- .create_plot_guide_table(
-      x = pd_data[[1]]@data,
+      x = pd_data[[1L]]@data,
       color_by = color_by,
       discrete_palette = discrete_palette,
-      combine_legend = FALSE)
+      combine_legend = FALSE
+    )
 
     # Set grouping variable to deal with point-group complaints.
     if (is.factor(pd_guide_list$data$feature_x_value)) {
-      pd_group_variable <- 1
+      pd_group_variable <- 1L
       
     } else {
       pd_group_variable <- NULL
@@ -1505,7 +1610,7 @@ setMethod(
 
   # Make pd line thicker than ice lines.
   ice_line_size <- 0.5 * ..get_plot_theme_linewidth(ggtheme = ggtheme)
-  pd_line_size <- 6 * ice_line_size
+  pd_line_size <- 6.0 * ice_line_size
 
   # In case only partial dependency plots are shown, update ice_default_alpha
   if (!show_ice) ice_default_alpha <- 1.0
@@ -1515,7 +1620,9 @@ setMethod(
     data = plot_data,
     mapping = ggplot2::aes(
       x = !!sym("feature_x_value"),
-      y = !!sym("value")))
+      y = !!sym("value")
+    )
+  )
   p <- p + ggtheme
 
   if (!all(is.finite(y_range))) {
@@ -1541,8 +1648,10 @@ setMethod(
               y = !!sym("value"),
               alpha = !!sym("novelty"),
               colour = !!sym("color_breaks"),
-              group = !!sym("color_breaks_sample")),
-            linewidth = ice_line_size)
+              group = !!sym("color_breaks_sample")
+            ),
+            linewidth = ice_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1552,8 +1661,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               group = !!sym("sample"),
-              alpha = !!sym("novelty")),
-            linewidth = ice_line_size)
+              alpha = !!sym("novelty")
+            ),
+            linewidth = ice_line_size
+          )
         }
       }
 
@@ -1567,8 +1678,10 @@ setMethod(
               y = !!sym("value"),
               alpha = !!sym("novelty"),
               colour = !!sym("color_breaks"),
-              group = pd_group_variable),
-            linewidth = pd_line_size)
+              group = pd_group_variable
+            ),
+            linewidth = pd_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1578,8 +1691,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               alpha = !!sym("novelty"),
-              group = pd_group_variable),
-            linewidth = pd_line_size)
+              group = pd_group_variable
+            ),
+            linewidth = pd_line_size
+          )
         }
       }
     } else {
@@ -1595,8 +1710,10 @@ setMethod(
               y = !!sym("value"),
               alpha = !!sym("novelty"),
               colour = !!sym("color_breaks"),
-              group = !!sym("color_breaks_sample")),
-            size = ice_line_size)
+              group = !!sym("color_breaks_sample")
+            ),
+            size = ice_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1606,8 +1723,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               group = !!sym("sample"),
-              alpha = !!sym("novelty")),
-            size = ice_line_size)
+              alpha = !!sym("novelty")
+            ),
+            size = ice_line_size
+          )
         }
       }
 
@@ -1621,8 +1740,10 @@ setMethod(
               y = !!sym("value"),
               alpha = !!sym("novelty"),
               colour = !!sym("color_breaks"),
-              group = pd_group_variable),
-            size = pd_line_size)
+              group = pd_group_variable
+            ),
+            size = pd_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1632,8 +1753,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               alpha = !!sym("novelty"),
-              group = pd_group_variable),
-            size = pd_line_size)
+              group = pd_group_variable
+            ),
+            size = pd_line_size
+          )
         }
       }
     }
@@ -1642,7 +1765,8 @@ setMethod(
     p <- p + ggplot2::scale_alpha(
       trans = "reverse",
       limits = novelty_range,
-      range = c(0.1, 1.0) * ice_default_alpha)
+      range = c(0.1, 1.0) * ice_default_alpha
+    )
     
   } else {
     # Plot without novelty.
@@ -1659,9 +1783,11 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               group = !!sym("color_breaks_sample"),
-              colour = !!sym("color_breaks")),
+              colour = !!sym("color_breaks")
+            ),
             linewidth = ice_line_size,
-            alpha = ice_default_alpha)
+            alpha = ice_default_alpha
+          )
           
         } else {
           # Create lines with alpha.
@@ -1670,9 +1796,11 @@ setMethod(
             mapping = ggplot2::aes(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
-              group = !!sym("sample")),
+              group = !!sym("sample")
+            ),
             linewidth = ice_line_size,
-            alpha = ice_default_alpha)
+            alpha = ice_default_alpha
+          )
         }
       }
 
@@ -1685,8 +1813,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               colour = !!sym("color_breaks"),
-              group = pd_group_variable),
-            linewidth = pd_line_size)
+              group = pd_group_variable
+            ),
+            linewidth = pd_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1695,8 +1825,10 @@ setMethod(
             mapping = ggplot2::aes(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
-              group = pd_group_variable),
-            linewidth = pd_line_size)
+              group = pd_group_variable
+            ),
+            linewidth = pd_line_size
+          )
         }
       }
     } else {
@@ -1711,9 +1843,11 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               group = !!sym("color_breaks_sample"),
-              colour = !!sym("color_breaks")),
+              colour = !!sym("color_breaks")
+            ),
             size = ice_line_size,
-            alpha = ice_default_alpha)
+            alpha = ice_default_alpha
+          )
           
         } else {
           # Create lines with alpha.
@@ -1722,9 +1856,11 @@ setMethod(
             mapping = ggplot2::aes(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
-              group = !!sym("sample")),
+              group = !!sym("sample")
+            ),
             size = ice_line_size,
-            alpha = ice_default_alpha)
+            alpha = ice_default_alpha
+          )
         }
       }
 
@@ -1737,8 +1873,10 @@ setMethod(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
               colour = !!sym("color_breaks"),
-              group = pd_group_variable),
-            size = pd_line_size)
+              group = pd_group_variable
+            ),
+            size = pd_line_size
+          )
           
         } else {
           # Create lines with alpha.
@@ -1747,8 +1885,10 @@ setMethod(
             mapping = ggplot2::aes(
               x = !!sym("feature_x_value"),
               y = !!sym("value"),
-              group = pd_group_variable),
-            size = pd_line_size)
+              group = pd_group_variable
+            ),
+            size = pd_line_size
+          )
         }
       }
     }
@@ -1767,7 +1907,8 @@ setMethod(
       name = legend_label$guide_color,
       values = g_color$color_values,
       breaks = g_color$color_breaks,
-      drop = FALSE)
+      drop = FALSE
+    )
   }
 
   # Update x and y scales
@@ -1775,22 +1916,26 @@ setMethod(
   if (!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks = y_breaks)
 
   # Plot confidence intervals.
-  if (conf_int_style[1] != "none") {
-    if (conf_int_style[1] == "step") {
+  if (conf_int_style[1L] != "none") {
+    if (conf_int_style[1L] == "step") {
       if (is.null(color_by)) {
         p <- p + ggplot2::geom_step(
           data = pd_guide_list$data,
           mapping = ggplot2::aes(
             x = !!sym("feature_x_value"),
-            y = !!sym("value_ci_low")),
-          linetype = "dashed")
+            y = !!sym("value_ci_low")
+          ),
+          linetype = "dashed"
+        )
 
         p <- p + ggplot2::geom_step(
           data = pd_guide_list$data,
           mapping = ggplot2::aes(
             x = !!sym("feature_x_value"),
-            y = !!sym("value_ci_up")),
-          linetype = "dashed")
+            y = !!sym("value_ci_up")
+          ),
+          linetype = "dashed"
+        )
         
       } else {
         p <- p + ggplot2::geom_step(
@@ -1798,23 +1943,27 @@ setMethod(
           mapping = ggplot2::aes(
             x = !!sym("feature_x_value"),
             y = !!sym("value_ci_low"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
 
         p <- p + ggplot2::geom_step(
           data = pd_guide_list$data,
           mapping = ggplot2::aes(
             x = !!sym("feature_x_value"),
             y = !!sym("value_ci_up"),
-            colour = !!sym("color_breaks")),
-          linetype = "dashed")
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed"
+        )
       }
 
 
       # Remove linetype from the legend.
       p <- p + ggplot2::scale_linetype(guide = FALSE)
       
-    } else if (conf_int_style[1] == "ribbon") {
+    } else if (conf_int_style[1L] == "ribbon") {
       if (show_novelty) conf_int_alpha <- conf_int_alpha * ice_default_alpha
 
       if (is.null(color_by)) {
@@ -1823,8 +1972,10 @@ setMethod(
           mapping = ggplot2::aes(
             x = !!sym("feature_x_value"),
             ymin = !!sym("value_ci_low"),
-            ymax = !!sym("value_ci_up")),
-          alpha = conf_int_alpha)
+            ymax = !!sym("value_ci_up")
+          ),
+          alpha = conf_int_alpha
+        )
         
       } else {
         p <- p + ggplot2::geom_ribbon(
@@ -1833,8 +1984,10 @@ setMethod(
             x = !!sym("feature_x_value"),
             ymin = !!sym("value_ci_low"),
             ymax = !!sym("value_ci_up"),
-            fill = !!sym("color_breaks")),
-          alpha = conf_int_alpha)
+            fill = !!sym("color_breaks")
+          ),
+          alpha = conf_int_alpha
+        )
       }
     }
   }
@@ -1843,7 +1996,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = plot_data,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -1851,12 +2005,14 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
@@ -1866,7 +2022,8 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Plot to Cartesian coordinates.
   p <- p + ggplot2::coord_cartesian(xlim = x_range, ylim = y_range)
@@ -1904,13 +2061,14 @@ setMethod(
     conf_int_alpha,
     show_novelty,
     outcome_type,
-    ...) {
+    ...
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x <- feature_y <- feature_x_value <- feature_y_value <- NULL
 
   # Get the data that determines the plot characteristics.
-  if (!is_empty(pd_data[[1]])) {
-    plot_data <- data.table::copy(pd_data[[1]]@data)[order(feature_x_value, feature_y_value)]
+  if (!is_empty(pd_data[[1L]])) {
+    plot_data <- data.table::copy(pd_data[[1L]]@data)[order(feature_x_value, feature_y_value)]
   } else {
     plot_data <- facet_data
   }
@@ -1921,12 +2079,14 @@ setMethod(
       x = pd_data,
       scale_method = "facet",
       outcome_type = outcome_type,
-      confidence_interval = conf_int_style != "none")
+      confidence_interval = conf_int_style != "none"
+    )
     
   } else if (is.null(value_range)) {
     ..error_reached_unreachable_code(paste0(
       ".create_2d_ice_plot: No value range was set, and value_scales ",
-      "was not recognised either."))
+      "was not recognised either."
+    ))
   }
 
   # x_range
@@ -1934,7 +2094,8 @@ setMethod(
     if (is.null(x_range)) {
       x_range <- c(
         min(plot_data$feature_x_value, na.rm = TRUE),
-        max(plot_data$feature_x_value, na.rm = TRUE))
+        max(plot_data$feature_x_value, na.rm = TRUE)
+      )
     }
 
     # x_breaks
@@ -1944,14 +2105,16 @@ setMethod(
       # Create breaks and update x_range
       x_breaks <- labeling::extended(
         m = x_n_breaks,
-        dmin = x_range[1],
-        dmax = x_range[2],
-        only.loose = TRUE)
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
 
       # Update x_range
       x_range <- c(
-        head(x_breaks, n = 1),
-        tail(x_breaks, n = 1))
+        head(x_breaks, n = 1L),
+        tail(x_breaks, n = 1L)
+      )
     }
 
     .check_input_plot_args(x_range = x_range)
@@ -1965,7 +2128,8 @@ setMethod(
     if (is.null(y_range)) {
       y_range <- c(
         min(plot_data$feature_y_value, na.rm = TRUE),
-        max(plot_data$feature_y_value, na.rm = TRUE))
+        max(plot_data$feature_y_value, na.rm = TRUE)
+      )
     }
 
     # y_breaks
@@ -1975,14 +2139,16 @@ setMethod(
       # Create breaks and update y_range
       y_breaks <- labeling::extended(
         m = y_n_breaks,
-        dmin = y_range[1],
-        dmax = y_range[2],
-        only.loose = TRUE)
+        dmin = y_range[1L],
+        dmax = y_range[2L],
+        only.loose = TRUE
+      )
 
       # Update y_range
       y_range <- c(
-        head(y_breaks, n = 1),
-        tail(y_breaks, n = 1))
+        head(y_breaks, n = 1L),
+        tail(y_breaks, n = 1L)
+      )
     }
 
     .check_input_plot_args(y_range = y_range)
@@ -1992,8 +2158,11 @@ setMethod(
   }
 
   # Find the correct value-range
-  value_range <- value_range[feature_x == as.character(plot_data$feature_x[1]) &
-    feature_y == as.character(plot_data$feature_y[1])]
+  value_range <- value_range[
+    feature_x == as.character(plot_data$feature_x[1L]) &
+    feature_y == as.character(plot_data$feature_y[1L])
+  ]
+  
   if (is_empty(value_range)) {
     value_range <- c(NA_real_, NA_real_)
   } else {
@@ -2001,13 +2170,15 @@ setMethod(
   }
 
   # Update show_novelty to check for non-finite values in the novelty data.
-  show_novelty <- show_novelty && all(is.finite(plot_data$novelty))
+  show_novelty <- show_novelty && !is.null(plot_data$novelty) && all(is.finite(plot_data$novelty))
 
   if (show_novelty) {
     # Find the correct novelty-range
     novelty_range <- novelty_range[
-      feature_x == as.character(plot_data$feature_x[1]) &
-      feature_y == as.character(plot_data$feature_y[1])]
+      feature_x == as.character(plot_data$feature_x[1L]) &
+      feature_y == as.character(plot_data$feature_y[1L])
+    ]
+    
     if (is_empty(novelty_range)) {
       novelty_range <- c(NA_real_, NA_real_)
     } else {
@@ -2017,8 +2188,8 @@ setMethod(
 
   # Set x-label
   if (is.waive(x_label)) {
-    if (!is.na(plot_data$feature_x[1])) {
-      x_label <- as.character(plot_data$feature_x[1])
+    if (!is.na(plot_data$feature_x[1L])) {
+      x_label <- as.character(plot_data$feature_x[1L])
     } else {
       x_label <- NULL
     }
@@ -2026,8 +2197,8 @@ setMethod(
 
   # Set y-label
   if (is.waive(y_label)) {
-    if (!is.na(plot_data$feature_y[1])) {
-      y_label <- as.character(plot_data$feature_y[1])
+    if (!is.na(plot_data$feature_y[1L])) {
+      y_label <- as.character(plot_data$feature_y[1L])
     } else {
       y_label <- NULL
     }
@@ -2035,14 +2206,17 @@ setMethod(
 
   .check_input_plot_args(
     x_label = x_label,
-    y_label = y_label)
+    y_label = y_label
+  )
 
   # Create basic plot.
   p <- ggplot2::ggplot(
     data = plot_data,
     mapping = ggplot2::aes(
       x = !!sym("feature_x_value"),
-      y = !!sym("feature_y_value")))
+      y = !!sym("feature_y_value")
+    )
+  )
   p <- p + ggtheme
 
   if (!all(is.finite(value_range))) {
@@ -2056,7 +2230,8 @@ setMethod(
       axis.text.x = ggplot2::element_blank(),
       axis.line.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank())
+      axis.text.y = ggplot2::element_blank()
+    )
     
   } else if (show_novelty) {
     # Create point cloud with size of points by novelty -> bubblechart.
@@ -2064,12 +2239,15 @@ setMethod(
       data = plot_data,
       mapping = ggplot2::aes(
         colour = !!sym("value"),
-        size = !!sym("novelty")))
+        size = !!sym("novelty")
+      )
+    )
 
     # Invert novelty values, since higher values indicates greater novelty.
     p <- p + ggplot2::scale_size(
       trans = "reverse",
-      limits = novelty_range)
+      limits = novelty_range
+    )
     
   } else {
     # Set colour for value points.
@@ -2077,19 +2255,32 @@ setMethod(
       colour <- .get_palette(
         x = discrete_palette,
         n = 1L,
-        palette_type = "qualitative")
+        palette_type = "qualitative"
+      )
       
     } else {
       colour <- "white"
     }
 
     # Specify coordinates for rectangle.
-    plot_data[, c("xmin", "xmax") := ..set_edge_points(
-      feature_x_value, range = x_range, type = "x"),
-      by = "feature_y_value"]
-    plot_data[, c("ymin", "ymax") := ..set_edge_points(
-      feature_y_value, range = y_range, type = "y"),
-      by = "feature_x_value"]
+    plot_data[
+      ,
+      c("xmin", "xmax") := ..set_edge_points(
+        feature_x_value,
+        range = x_range, 
+        type = "x"
+      ),
+      by = "feature_y_value"
+    ]
+    plot_data[
+      ,
+      c("ymin", "ymax") := ..set_edge_points(
+        feature_y_value,
+        range = y_range, 
+        type = "y"
+      ),
+      by = "feature_x_value"
+    ]
 
     # Insert points. This will help set up the figure - otherwise the plot
     # cannot be drawn.
@@ -2103,7 +2294,9 @@ setMethod(
         xmax = !!sym("xmax"),
         ymin = !!sym("ymin"),
         ymax = !!sym("ymax"),
-        fill = !!sym("value")))
+        fill = !!sym("value")
+      )
+    )
 
     # Draw points on top.
     p <- p + ggplot2::geom_point(colour = colour)
@@ -2112,13 +2305,15 @@ setMethod(
   # Set colours used for plotting
   gradient_colours <- .get_palette(
     x = gradient_palette,
-    palette_type = "sequential")
+    palette_type = "sequential"
+  )
 
   # Add gradient palette as fill.
   p <- p + ggplot2::scale_fill_gradientn(
     name = legend_label,
     colors = gradient_colours,
-    limits = value_range)
+    limits = value_range
+  )
 
   # Update x and y scales
   if (!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
@@ -2128,7 +2323,8 @@ setMethod(
   facet_by_list <- .parse_plot_facet_by(
     x = plot_data,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   if (!is.null(facet_by)) {
     if (is.null(facet_wrap_cols)) {
@@ -2136,12 +2332,14 @@ setMethod(
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by,
-        labeller = "label_context")
+        labeller = "label_context"
+      )
     }
   }
 
@@ -2151,12 +2349,11 @@ setMethod(
     y = y_label,
     title = plot_title,
     subtitle = plot_sub_title,
-    caption = caption)
+    caption = caption
+  )
 
   # Plot to Cartesian coordinates.
-  p <- p + ggplot2::coord_cartesian(
-    xlim = x_range,
-    ylim = y_range)
+  p <- p + ggplot2::coord_cartesian(xlim = x_range, ylim = y_range)
 
   return(p)
 }
@@ -2166,22 +2363,24 @@ setMethod(
 .determine_ice_plot_dimensions <- function(
     x,
     facet_by,
-    facet_wrap_cols) {
+    facet_wrap_cols
+) {
   # Obtain faceting dimensions
   plot_dims <- .get_plot_layout_dims(
     x = x,
     facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols)
+    facet_wrap_cols = facet_wrap_cols
+  )
 
   # Set default height and width for each subplot (in cm).
-  default_width <- 6
-  default_height <- 4
+  default_width <- 6.0
+  default_height <- 4.0
 
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2 + plot_dims[1] * default_height, 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
 
   # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * default_width, 19))
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
 
   return(c(height, width))
 }
@@ -2192,7 +2391,8 @@ setMethod(
     x,
     scale_method, 
     outcome_type,
-    confidence_interval = FALSE) {
+    confidence_interval = FALSE
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   min_value <- max_value <- NULL
 
@@ -2204,10 +2404,12 @@ setMethod(
   value_range <- lapply(
     x, 
     ..create_ice_plot_value_range,
-    confidence_interval = confidence_interval)
+    confidence_interval = confidence_interval
+  )
   value_range <- data.table::rbindlist(
     value_range,
-    use.names = TRUE)
+    use.names = TRUE
+  )
 
   if (scale_method %in% c("fixed", "figure")) {
     if (outcome_type %in% c("binomial", "multinomial", "survival")) {
@@ -2215,34 +2417,43 @@ setMethod(
       if (all(value_range$min_value >= 0.0) && all(value_range$max_value <= 1.0)) {
         value_range[, ":="(
           "min_value" = 0.0,
-          "max_value" = 1.0)]
+          "max_value" = 1.0
+        )]
       } else {
         value_range[, ":="(
           "min_value" = min(min_value),
-          "max_value" = max(max_value))]
+          "max_value" = max(max_value)
+        )]
       }
     } else {
       value_range[, ":="(
         "min_value" = min(min_value),
-        "max_value" = max(max_value))]
+        "max_value" = max(max_value)
+      )]
     }
   } else if (scale_method == "facet") {
     # Facet scaling does not make the value ranges nice (i.e. map to (0,1) in
     # case of probabilities.)
     value_range[, ":="(
       "min_value" = min(min_value),
-      "max_value" = max(max_value))]
+      "max_value" = max(max_value)
+    )]
     
   } else if (scale_method == "feature") {
-    value_range[, ":="(
-      "min_value" = min(min_value),
-      "max_value" = max(max_value)),
-      by = c("feature_x")]
+    value_range[
+      ,
+      ":="(
+        "min_value" = min(min_value),
+        "max_value" = max(max_value)
+      ),
+      by = c("feature_x")
+    ]
     
   } else {
     ..error_reached_unreachable_code(paste0(
       ".create_ice_plot_value_range: unknown scale_method encountered: ",
-      scale_method))
+      scale_method
+    ))
   }
 
   return(value_range)
@@ -2260,19 +2471,28 @@ setMethod(
   if (!is.null(x@identifiers$feature_y)) {
     value_range <- c(
       value_range,
-      list("feature_y" = x@identifiers$feature_y))
+      list("feature_y" = x@identifiers$feature_y)
+    )
   }
 
   # Get minimum and maximum values.
   if (confidence_interval) {
-    value_range <- c(value_range, list(
-      "min_value" = min(x@data$value_ci_low),
-      "max_value" = max(x@data$value_ci_up)))
+    value_range <- c(
+      value_range, 
+      list(
+        "min_value" = min(x@data$value_ci_low),
+        "max_value" = max(x@data$value_ci_up)
+      )
+    )
     
   } else {
-    value_range <- c(value_range, list(
-      "min_value" = min(x@data$value),
-      "max_value" = max(x@data$value)))
+    value_range <- c(
+      value_range, 
+      list(
+        "min_value" = min(x@data$value),
+        "max_value" = max(x@data$value)
+      )
+    )
   }
 
   # Return as data.table.
@@ -2290,22 +2510,26 @@ setMethod(
   }
 
   # Obtain value ranges.
-  novelty_range <- lapply(
-    x, 
-    ..create_ice_plot_novelty_range)
+  novelty_range <- lapply(x, ..create_ice_plot_novelty_range)
   novelty_range <- data.table::rbindlist(
     novelty_range, 
-    use.names = TRUE)
+    use.names = TRUE
+  )
 
-  if (any(is.finite(novelty_range$min_novelty)) &&
-      any(is.finite(novelty_range$max_novelty))) {
+  if (
+    any(is.finite(novelty_range$min_novelty)) &&
+    any(is.finite(novelty_range$max_novelty))
+  ) {
     novelty_range[, ":="(
       "min_novelty" = min(min_novelty, na.rm = TRUE),
-      "max_novelty" = max(max_novelty, na.rm = TRUE))]
+      "max_novelty" = max(max_novelty, na.rm = TRUE)
+    )]
+    
   } else {
     novelty_range[, ":="(
       "min_novelty" = NA_real_,
-      "max_novelty" = NA_real_)]
+      "max_novelty" = NA_real_
+    )]
   }
   
   return(novelty_range)
@@ -2321,18 +2545,29 @@ setMethod(
 
   # Get the y-feature, if present.
   if (!is.null(x@identifiers$feature_y)) {
-    novelty_range <- c(novelty_range, list("feature_y" = x@identifiers$feature_y))
+    novelty_range <- c(
+      novelty_range, 
+      list("feature_y" = x@identifiers$feature_y)
+    )
   }
 
   if (any(is.finite(x@data$novelty))) {
     # Get minimum and maximum novelty features.
-    novelty_range <- c(novelty_range, list(
-      "min_novelty" = min(x@data$novelty, na.rm = TRUE),
-      "max_novelty" = max(x@data$novelty, na.rm = TRUE)))
+    novelty_range <- c(
+      novelty_range,
+      list(
+        "min_novelty" = min(x@data$novelty, na.rm = TRUE),
+        "max_novelty" = max(x@data$novelty, na.rm = TRUE)
+      )
+    )
   } else {
-    novelty_range <- c(novelty_range, list(
-      "min_novelty" = NA_real_,
-      "max_novelty" = NA_real_))
+    novelty_range <- c(
+      novelty_range,
+      list(
+        "min_novelty" = NA_real_,
+        "max_novelty" = NA_real_
+      )
+    )
   }
 
   # Return as data.table.
@@ -2348,7 +2583,8 @@ setMethod(
   return(lapply(
     split(x, by = "list_id"),
     ..select_ice_plot_data,
-    data = data))
+    data = data
+  ))
 }
 
 
@@ -2358,7 +2594,7 @@ setMethod(
   .NATURAL <- NULL
 
   # Get list identifier.
-  selected_list_index <- x$list_id[1]
+  selected_list_index <- x$list_id[1L]
 
   # Check if data exists or is NA.
   if (is.na(selected_list_index)) return(NULL)

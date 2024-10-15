@@ -13,7 +13,7 @@ create_randomised_groups(
   n_max_groups = NULL,
   n_min_groups = NULL,
   n_min_y_in_group = NULL,
-  n_groups_init = 30,
+  n_groups_init = 30L,
   fast_mode = TRUE
 )
 }

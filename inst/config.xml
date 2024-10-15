@@ -10,13 +10,15 @@
     </paths>
     <data>
       <!-- String for experimental design, e.g. cv(bt(fs+mb,10),3,2) for internal validation using 2x 3-fold cross-validation with 10x bootstrapped
-      feature selection and model building (required). Alternatively, a path relative to experiment_dir to a file containing iterations, or an absolute path
+      variable importance computation and model building (required). Alternatively, a path relative to experiment_dir to a file containing iterations, or an absolute path
       to a file containing iterations.-->
       <experimental_design>required</experimental_design>
       <!-- String for the method used to correct class imbalances for categorical (binomial, multinomial) outcomes (optional, default: full_undersampling; otherwise random_undersampling)-->
       <imbalance_correction_method></imbalance_correction_method>
       <!-- Number of partitions with random sampling (optional, default:10; only used when random_sample is selected as class imbalance correction method)-->
       <imbalance_n_partitions></imbalance_n_partitions>
+      <!-- Seed for sampling algorithms used in setting up the experiment (optional, default: no fixed seed) -->
+      <iteration_seed></iteration_seed>
        <!-- Name of data column with cohort identifiers (required for external validation experiments, otherwise optional) -->
       <batch_id_column></batch_id_column>
       <!-- Name of data column with sample identifiers (required for separate data and outcome files, otherwise optional) -->
@@ -114,21 +116,21 @@
       <cluster_similarity_threshold></cluster_similarity_threshold>
       <!-- Method for determining how a cluster of features should be represented (optional, default: best_predictor; otherwise: mean, medioid). Note pam uses medioid by definition. -->
       <cluster_representation_method></cluster_representation_method>
-      <!-- Parallel processing for feature selection (optional, default:true) -->
+      <!-- Parallel processing for pre-processing (optional, default:true) -->
       <parallel_preprocessing></parallel_preprocessing>
     </preprocessing>
-    <feature_selection>
-      <!-- Feature selection methods (required, multiple possible)-->
-      <fs_method>required</fs_method>
-      <!-- List of parameters for feature selection, grouped by feature selection method (optional) -->
-      <fs_method_parameter></fs_method_parameter>
+    <variable_importance>
+      <!-- Variable importance methods (required, multiple possible)-->
+      <vimp_method>required</vimp_method>
+      <!-- List of parameters for computing variable importances, grouped by method (optional) -->
+      <vimp_method_parameter></vimp_method_parameter>
       <!-- Method for variable importance aggregation (optional, default: mean) -->
       <vimp_aggregation_method></vimp_aggregation_method>
       <!-- Rank threshold for determining the best features. Several aggregation methods count features when rank is better (below) the threshold (optional) -->
       <vimp_aggregation_rank_threshold></vimp_aggregation_rank_threshold>
-      <!-- Parallel processing for feature selection (optional, default: true) -->
-      <parallel_feature_selection></parallel_feature_selection>
-    </feature_selection>
+      <!-- Parallel processing for computing variable importance (optional, default: true) -->
+      <parallel_vimp></parallel_vimp>
+    </variable_importance>
     <model_development>
       <!-- Learners (required, multiple possible) -->
       <learner>required</learner>
@@ -154,7 +156,7 @@
       <hyperparameter_learner></hyperparameter_learner>
       <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 20) -->
       <optimisation_bootstraps></optimisation_bootstraps>
-      <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
+      <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the initial variable importance results should be used (false). (optional, default: true) -->
       <optimisation_determine_vimp></optimisation_determine_vimp>
       <!-- Randomisation of the initial hyperparameter grid. (optional, default: fixed_subsample) -->
       <smbo_random_initialisation></smbo_random_initialisation>
@@ -182,6 +184,8 @@
     <evaluation>
       <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
       <evaluate_top_level_only></evaluate_top_level_only>
+      <!-- Evaluation steps that should be performed (optional, default: all) -->
+      <evaluation_elements></evaluation_elements>
       <!-- Evaluation steps that should be skipped (optional, default: none) -->
       <skip_evaluation_elements></skip_evaluation_elements>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->

@@ -98,10 +98,11 @@ setMethod(
 
     # Update attached feature info objects.
     feature_names <- names(object@feature_info)
-    if (length(feature_names) > 0) {
+    if (length(feature_names) > 0L) {
       object@feature_info <- lapply(
         object@feature_info, 
-        update_object)
+        update_object
+      )
       names(object@feature_info) <- feature_names
     }
 
@@ -110,9 +111,10 @@ setMethod(
       object@novelty_detector <- update_object(object@novelty_detector)
     }
 
-
-    if (tail(object@familiar_version, n = 1L) < "1.3.0" &&
-        is(object, "familiarGLM")) {
+    if (
+      tail(object@familiar_version, n = 1L) < "1.3.0" &&
+      is(object, "familiarGLM")
+    ) {
       # Add feature_order slot to familiarGLM objects.
       attr(object, "feature_order") <- character()
     }
@@ -127,7 +129,7 @@ setMethod(
     }
 
     if (!methods::validObject(object)) {
-      stop("Could not update the familiarModel object to the most recent definition.")
+      ..error("Could not update the familiarModel object to the most recent definition.")
     }
 
     # Update package version.
@@ -174,11 +176,12 @@ setMethod(
     feature_names <- names(object@feature_info)
     object@feature_info <- lapply(
       object@feature_info,
-      update_object)
+      update_object
+    )
     names(object@feature_info) <- feature_names
 
     if (!methods::validObject(object)) {
-      stop("Could not update the familiarEnsemble object to the most recent definition.")
+      ..error("Could not update the familiarEnsemble object to the most recent definition.")
     }
 
     # Update package version.
@@ -232,7 +235,8 @@ setMethod(
             function(x, fs_method, project_id) {
               as_vimp_table_object(
                 x = list("vimp" = x, "fs_method" = fs_method),
-                project_id = project_id)
+                project_id = project_id
+              )
             },
             fs_method = fs_method,
             project_id = project_id
@@ -241,7 +245,8 @@ setMethod(
           return(x)
         },
         fs_method = object@fs_method,
-        project_id = object@project_id)
+        project_id = object@project_id
+      )
       
       # Update model_vimp slot by iterating over its contents.
       object@model_vimp <- lapply(
@@ -256,7 +261,8 @@ setMethod(
             function(x, learner, project_id) {
               as_vimp_table_object(
                 x = list("vimp" = x, "fs_method" = learner),
-                project_id = project_id)
+                project_id = project_id
+              )
             },
             learner = learner,
             project_id = project_id
@@ -265,7 +271,8 @@ setMethod(
           return(x)
         },
         learner = object@learner,
-        project_id = object@project_id)
+        project_id = object@project_id
+      )
       
       # Update feature_expressions slot by iterating over its contents.
       object@feature_expressions <- lapply(
@@ -274,7 +281,8 @@ setMethod(
           x@feature_info <- update_object(x@feature_info)
           
           return(x)
-        })
+        }
+      )
     }
     
     if (tail(object@familiar_version, n = 1L) < "1.5.0") {
@@ -291,7 +299,7 @@ setMethod(
     }
     
     if (!methods::validObject(object)) {
-      stop("Could not update the familiarData object to the most recent definition.")
+      ..error("Could not update the familiarData object to the most recent definition.")
     }
     
     # Update package version.
@@ -349,14 +357,17 @@ setMethod(
             function(x, fs_method, project_id) {
               as_vimp_table_object(
                 x = list("vimp" = x, "fs_method" = fs_method),
-                project_id = project_id)
+                project_id = project_id
+              )
             },
             fs_method = x@identifiers$fs_method,
-            project_id = project_id)
+            project_id = project_id
+          )
           
           return(x)
         },
-        project_id = object@project_id)
+        project_id = object@project_id
+      )
       
       # Update model_vimp slot by iterating over its contents.
       object@model_vimp <- lapply(
@@ -371,14 +382,17 @@ setMethod(
             function(x, fs_method, project_id) {
               as_vimp_table_object(
                 x = list("vimp" = x, "fs_method" = fs_method),
-                project_id = project_id)
+                project_id = project_id
+              )
             },
             fs_method = x@identifiers$learner,
-            project_id = project_id)
+            project_id = project_id
+          )
           
           return(x)
         },
-        project_id = object@project_id)
+        project_id = object@project_id
+      )
 
       # Update feature_expressions slot by iterating over its contents.
       object@feature_expressions <- lapply(
@@ -387,7 +401,8 @@ setMethod(
           x@feature_info <- update_object(x@feature_info)
           
           return(x)
-        })
+        }
+      )
     }
     
     if (tail(object@familiar_version, n = 1L) < "1.5.0") {
@@ -404,7 +419,7 @@ setMethod(
     }
     
     if (!methods::validObject(object)) {
-      stop("Could not update the familiarCollection object to the most recent definition.")
+      ..error("Could not update the familiarCollection object to the most recent definition.")
     }
     
     # Update package version.
@@ -439,13 +454,13 @@ setMethod(
   function(object, ...) {
     # Update attached feature info objects.
     feature_names <- names(object@feature_info)
-    if (length(feature_names) > 0) {
+    if (length(feature_names) > 0L) {
       object@feature_info <- lapply(object@feature_info, update_object)
       names(object@feature_info) <- feature_names
     }
 
     if (!methods::validObject(object)) {
-      stop("Could not update the familiarNoveltyDetector object to the most recent definition.")
+      ..error("Could not update the familiarNoveltyDetector object to the most recent definition.")
     }
 
     # Update package version.
@@ -491,14 +506,16 @@ setMethod(
             feature_type = object@feature_type,
             available = is_available(object),
             method = object@transformation_parameters$transform_method,
-            lambda = object@transformation_parameters$transform_lambda)
+            lambda = object@transformation_parameters$transform_lambda
+          )
           
         } else {
           object@transformation_parameters <- ..create_transformation_parameter_skeleton(
             feature_name = object@name,
             feature_type = object@feature_type,
             available = is_available(object),
-            method = "none")
+            method = "none"
+          )
         }
         
         # Revise familiar version, because these now correspond basically to
@@ -518,14 +535,16 @@ setMethod(
             available = is_available(object),
             method = object@normalisation_parameters$norm_method,
             shift = object@normalisation_parameters$norm_shift,
-            scale = object@normalisation_parameters$norm_scale)
+            scale = object@normalisation_parameters$norm_scale
+          )
           
         } else {
           object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(
             feature_name = object@name,
             feature_type = object@feature_type,
             available = is_available(object),
-            method = "none")
+            method = "none"
+          )
         }
 
         ### Batch normalisation ------------------------------------------------
@@ -535,9 +554,11 @@ setMethod(
           # Determine the method used for batch normalisation.
           batch_normalisation_method <- unique(sapply(
             object@batch_normalisation_parameters,
-            function(x) (x$norm_method)))
+            function(x) (x$norm_method)
+          ))
           batch_normalisation_method <- setdiff(
-            batch_normalisation_method, c("none", "unknown"))
+            batch_normalisation_method, c("none", "unknown")
+          )
           
           if (is_empty(batch_normalisation_method)) {
             batch_normalisation_method <- "none"
@@ -552,7 +573,8 @@ setMethod(
           feature_name = object@name,
           feature_type = object@feature_type,
           available = is_available(object),
-          method = batch_normalisation_method)
+          method = batch_normalisation_method
+        )
 
         # Update the container contents.
         batch_normalisation_parameters@batch_parameters <- mapply(
@@ -564,11 +586,13 @@ setMethod(
               method = x$norm_method,
               batch = batch,
               shift = x$norm_shift,
-              scale = x$norm_scale))
+              scale = x$norm_scale
+            ))
           },
           x = object@batch_normalisation_parameters,
           batch = names(object@batch_normalisation_parameters),
-          MoreArgs = list("object" = object))
+          MoreArgs = list("object" = object)
+        )
 
         # Update names.
         names(batch_normalisation_parameters@batch_parameters) <- names(object@batch_normalisation_parameters)
@@ -585,14 +609,16 @@ setMethod(
         imputation_method <- ifelse(
           is.null(object@imputation_parameters),
           "none",
-          "simple")
+          "simple"
+        )
 
         # Create an S4 skeleton.
         imputation_object <- ..create_imputation_parameter_skeleton(
           feature_name = object@name,
           feature_type = object@feature_type,
           available = is_available(object),
-          method = imputation_method)
+          method = imputation_method
+        )
 
         # Attach to imputation object.
         if (!is.null(object@imputation_parameters)) {
@@ -626,12 +652,14 @@ setMethod(
             "cluster_representation_method" = object@cluster_parameters$method,
             "cluster_linkage" = "average",
             "cluster_similarity_metric" = "mcfadden_r2",
-            "cluster_similarity_threshold" = 0.3)
+            "cluster_similarity_threshold" = 0.3
+          )
 
           # Form parameter object.
           cluster_parameter_object <- do.call(
             .create_cluster_parameter_skeleton,
-            args = cluster_parameter_options)
+            args = cluster_parameter_options
+          )
 
           # Extract cluster parameters.
           cluster_parameter_object <- cluster_parameter_object@cluster_parameters
@@ -640,18 +668,20 @@ setMethod(
           cluster_parameter_object@weight <- object@cluster_parameters$weight
           cluster_parameter_object@invert <- object@cluster_parameters$invert
           cluster_parameter_object@cluster_name <- ifelse(
-            object@cluster_parameters$cluster_size > 1,
+            object@cluster_parameters$cluster_size > 1L,
             object@cluster_parameters$cluster_name,
-            object@name)
+            object@name
+          )
           cluster_parameter_object@cluster_size <- object@cluster_parameters$cluster_size
           cluster_parameter_object@required_features <- object@cluster_parameters$required_features
 
           # Previously, features that form the cluster were not stored as
           # information. To prevent issues with functions that generate a
           # cluster table, set the required features instead.
-          cluster_parameter_object@cluster_features <- unique(c(
+          cluster_parameter_object@cluster_features <- union(
             object@cluster_parameters$required_features,
-            object@name))
+            object@name
+          )
 
           # Mark complete.
           cluster_parameter_object@complete <- TRUE
@@ -663,12 +693,14 @@ setMethod(
           # Assume singular cluster.
           cluster_parameter_options <- list(
             "feature_info" = object,
-            "method" = "none")
+            "method" = "none"
+          )
 
           # Form parameter object.
           cluster_parameter_object <- do.call(
             .create_cluster_parameter_skeleton,
-            args = cluster_parameter_options)
+            args = cluster_parameter_options
+          )
           
           # Extract cluster parameters.
           cluster_parameter_object <- cluster_parameter_object@cluster_parameters
@@ -689,7 +721,7 @@ setMethod(
         }
       }
     }
-    
+
     # Update objects separately.
     object@transformation_parameters <- update_object(object =  object@transformation_parameters)
     object@normalisation_parameters <- update_object(object = object@normalisation_parameters)
@@ -764,9 +796,10 @@ setMethod(
     }
     
     if (!methods::validObject(object)) {
-      stop(paste0(
+      rlang::abort(paste0(
         "Could not update the featureInfoParametersTransformationPowerTransform ",
-        "object to the most recent definition."))
+        "object to the most recent definition."
+      ))
     }
     
     # Update package version.
@@ -790,7 +823,8 @@ setMethod(
       for (feature_info_set in names(object@feature_info)) {
         object@feature_info[[feature_info_set]] <- lapply(
           object@feature_info[[feature_info_set]],
-          update_object)
+          update_object
+        )
       }
     }
 
@@ -799,12 +833,15 @@ setMethod(
       for (vimp_method in names(object@vimp_table_list)) {
         object@vimp_table_list[[vimp_method]] <- lapply(
           object@vimp_table_list[[vimp_method]],
-          update_object)
+          update_object
+        )
       }
     }
 
     if (!methods::validObject(object)) {
-      stop("Could not update the experimentData object to the most recent definition.")
+      rlang::abort(
+        "Could not update the experimentData object to the most recent definition."
+      )
     }
 
     # Update package version.
@@ -827,7 +864,8 @@ setMethod(
     object <- lapply(
       object,
       update_object,
-      ...)
+      ...
+    )
 
     return(object)
   }

@@ -88,14 +88,11 @@ All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
 
 \item{univariate_test_threshold_metric}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
 
 \item{univariate_test_max_feature_set_size}{(\emph{optional}) Maximum size of the
@@ -457,8 +454,6 @@ Internal function for parsing settings related to preprocessing
 }
 \references{
 \enumerate{
-\item Storey, J. D. A direct approach to false discovery rates. J.
-R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
 \item Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 rater reliability. Psychol. Bull. 86, 420–428 (1979).
 \item Koo, T. K. & Li, M. Y. A guideline of selecting and reporting intraclass

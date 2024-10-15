@@ -75,7 +75,8 @@ setMethod(
       
     } else {
       ..error_reached_unreachable_code(
-        "get_prediction_type,familiarCoxPH: unknown type")
+        "get_prediction_type,familiarCoxPH: unknown type"
+      )
     }
   }
 )
@@ -87,20 +88,23 @@ setMethod(
   "..train",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(object = object, data = data)) {
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
-        reason = reason)))
+        reason = reason
+      )))
     }
 
     # Check if hyperparameters are set.
     if (is.null(object@hyperparameters)) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_no_optimised_hyperparameters_available())))
+        ..error_message_no_optimised_hyperparameters_available()
+      )))
     }
 
     # Check that required packages are loaded and installed.
@@ -113,7 +117,8 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
@@ -121,10 +126,11 @@ setMethod(
     # Parse formula
     formula <- stats::reformulate(
       termlabels = feature_columns,
-      response = quote(survival::Surv(outcome_time, outcome_event)))
+      response = quote(survival::Surv(outcome_time, outcome_event))
+    )
 
     # Generate model.
-    model_control <- survival::coxph.control(iter.max = 100)
+    model_control <- survival::coxph.control(iter.max = 100L)
 
     # Train the model
     model <- do.call_with_handlers(
@@ -133,7 +139,9 @@ setMethod(
         formula,
         "data" = encoded_data$encoded_data@data,
         "control" = model_control,
-        "y" = FALSE))
+        "y" = FALSE
+      )
+    )
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
@@ -146,10 +154,11 @@ setMethod(
     }
 
     # Check if the model fitter converged in time.
-    if (model$iter >= 100) {
+    if (model$iter >= 100L) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        "Model fitter ran out of iterations and did not converge.")))
+        "Model fitter ran out of iterations and did not converge."
+      )))
     }
 
     # Check if all coefficients could not be estimated. Sometimes models could
@@ -158,10 +167,11 @@ setMethod(
     # selected during hyperparameter optimisation, especially in situations
     # where there is not a lot of signal. Checking for non-finite coefficients
     # is an easy way to figure out if the model is not properly trained.
-    if (any(!sapply(stats::coef(model), is.finite))) {
+    if (!all(sapply(stats::coef(model), is.finite))) {
       return(callNextMethod(object = ..update_errors(
         object = object,
-        ..error_message_failed_model_coefficient_estimation())))
+        ..error_message_failed_model_coefficient_estimation()
+      )))
     }
 
     # Add model
@@ -184,7 +194,8 @@ setMethod(
   "..train_naive",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
+    data = "dataObject"
+  ),
   function(object, data, ...) {
     # Turn into a Naive model.
     object <- methods::new("familiarNaiveCoxModel", object)
@@ -192,7 +203,8 @@ setMethod(
     return(..train(
       object = object,
       data = data,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -203,100 +215,89 @@ setMethod(
   "..predict",
   signature(
     object = "familiarCoxPH",
-    data = "dataObject"),
-  function(object, data, type = "default", ...) {
+    data = "dataObject"
+  ),
+  function(
+    object, 
+    data, 
+    type = "default",
+    time = NULL,
+    ...
+  ) {
     # Check that required packages are loaded and installed.
     require_package(object, "predict")
-
+    
+    # Check if the model was trained.
+    if (!model_is_trained(object)) {
+      return(callNextMethod())
+    }
+    
+    # Check if the data is empty.
+    if (is_empty(data)) {
+      return(callNextMethod())
+    }
+    
     if (type == "default") {
-      # Default method --------------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(callNextMethod())
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(callNextMethod())
-      }
+      # default ----------------------------------------------------------------
 
       # Encode data so that the features are the same as in the training.
       encoded_data <- encode_categorical_variables(
         data = data,
         object = object,
         encoding_method = "dummy",
-        drop_levels = FALSE)
-
-      # Get an empty prediction table.
-      prediction_table <- get_placeholder_prediction_table(
-        object = object,
-        data = encoded_data$encoded_data,
-        type = type)
+        drop_levels = FALSE
+      )
 
       # Use the model for prediction.
       model_predictions <- predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
-        type = "risk")
-
-      # Update the prediction table.
-      prediction_table[, "predicted_outcome" := model_predictions]
-
+        type = "risk"
+      )
+      
+      # Store as prediction table.
+      prediction_table <- as_prediction_table(
+        x = model_predictions,
+        type = "hazard_ratio",
+        data = data,
+        model_object = object
+      )
+      
       return(prediction_table)
       
-    } else {
-      # User-specified method --------------------------------------------------
-
-      # Check if the model was trained.
-      if (!model_is_trained(object)) {
-        return(NULL)
-      }
-
-      # Check if the data is empty.
-      if (is_empty(data)) {
-        return(NULL)
-      }
+    } else if (type == "survival_probability") {
+      # survival probability ---------------------------------------------------
+      
+      # If time is unset, read the max time stored by the model.
+      if (is.null(time)) time <- object@settings$time_max
+      
+      return(.survival_probability_relative_risk(
+        object = object,
+        data = data,
+        time = time
+      ))
+      
+    } else if (!.is_available_prediction_type(type)) {
+      # user-specified ---------------------------------------------------------
 
       # Encode data so that the features are the same as in the training.
       encoded_data <- encode_categorical_variables(
         data = data,
         object = object,
         encoding_method = "dummy",
-        drop_levels = FALSE)
+        drop_levels = FALSE
+      )
 
       return(predict(
         object = object@model,
         newdata = encoded_data$encoded_data@data,
         type = type,
-        ...))
+        ...
+      ))
+      
+    } else {
+      ..error_no_predictions_possible(object, type)
     }
-  }
-)
-
-
-
-# ..predict_survival_probability -----------------------------------------------
-setMethod(
-  "..predict_survival_probability",
-  signature(
-    object = "familiarCoxPH",
-    data = "dataObject"),
-  function(object, data, time, ...) {
-    if (object@outcome_type != "survival") {
-      return(callNextMethod())
-    }
-
-    # If time is unset, read the max time stored by the model.
-    if (is.null(time)) time <- object@settings$time_max
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "predict")
-
-    return(.survival_probability_relative_risk(
-      object = object,
-      data = data,
-      time = time))
   }
 )
 
@@ -317,7 +318,8 @@ setMethod(
     # Define p-values
     coefficient_z_values <- tryCatch(
       .compute_z_statistic(object),
-      error = identity)
+      error = identity
+    )
 
     if (inherits(coefficient_z_values, "error")) {
       return(callNextMethod())
@@ -326,7 +328,7 @@ setMethod(
     # Remove any coefficients for the intercept.
     coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
 
-    if (length(coefficient_z_values) == 0) {
+    if (length(coefficient_z_values) == 0L) {
       return(callNextMethod())
     }
 
@@ -334,10 +336,12 @@ setMethod(
     vimp_object <- methods::new("vimpTable",
       vimp_table = data.table::data.table(
         "score" = abs(coefficient_z_values),
-        "name" = names(coefficient_z_values)),
+        "name" = names(coefficient_z_values)
+      ),
       encoding_table = object@encoding_reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }
